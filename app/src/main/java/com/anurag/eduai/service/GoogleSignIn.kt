@@ -11,7 +11,8 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
-import com.anurag.eduai.data.User
+import com.anurag.eduai.BuildConfig
+import com.anurag.eduai.data.Firebase.User
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.utils.GoogleInfoExtractor
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -19,7 +20,6 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-import com.anurag.eduai.R
 class GoogleSignIn {
 
     companion object {
@@ -27,8 +27,8 @@ class GoogleSignIn {
             context: Context,
             scope: CoroutineScope,
             launcher: ManagedActivityResultLauncher<Intent, ActivityResult>?,
-            onLoginSuccess: (user: User) -> Unit // a lambda method that will take GoogleUserInfo as parameter and return no value used to handle Login Success case
-            //  It works as a callback
+            onLoginSuccess: (user: User) -> Unit,
+            onLoginFailed: (error: Throwable) -> Unit
         ) {
             val credentialManager = CredentialManager.create(context)
 
@@ -39,28 +39,43 @@ class GoogleSignIn {
             scope.launch {
                 try {
                     val result = credentialManager.getCredential(context, request)
-                    when(result.credential) {
+
+                    when (result.credential) {
                         is CustomCredential -> {
-                            if(result.credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(result.credential.data)
+                            if (result.credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
 
-                                // Extract user information
-                                val user : User = GoogleInfoExtractor.extractAndLogUserInfo(googleIdTokenCredential)
+                                val googleIdTokenCredential =
+                                    GoogleIdTokenCredential.createFrom(result.credential.data)
 
-                                // Call success callback with user info
+                                val user: User =
+                                    GoogleInfoExtractor.extractAndLogUserInfo(googleIdTokenCredential)
+
                                 onLoginSuccess(user)
+                            } else {
+                                val error = IllegalStateException("Unexpected credential type: ${result.credential.type}")
+                                DebugLogger.errorLog("GoogleSignIn", error.message ?: "")
+                                onLoginFailed(error)
                             }
                         }
                         else -> {
-                            DebugLogger.errorLog("GoogleSignIn", "Unexpected credential type: ${result.credential.type}")
+                            val error = IllegalStateException("Unknown credential object")
+                            DebugLogger.errorLog("GoogleSignIn", error.message ?: "")
+                            onLoginFailed(error)
                         }
                     }
+
                 } catch (e: NoCredentialException) {
                     DebugLogger.errorLog("GoogleSignIn", "No credentials found $e")
                     launcher?.launch(getIntent())
+                    onLoginFailed(e)
+
                 } catch (e: GetCredentialException) {
                     DebugLogger.errorLog("GoogleSignIn", "Credential exception $e")
-                    e.printStackTrace()
+                    onLoginFailed(e)
+
+                } catch (e: Exception) {
+                    DebugLogger.errorLog("GoogleSignIn", "Unexpected exception $e")
+                    onLoginFailed(e)
                 }
             }
         }
@@ -73,9 +88,9 @@ class GoogleSignIn {
 
         private fun getCredentialOptions(context: Context): CredentialOption {
             return GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(false) //show all accounts
-                .setAutoSelectEnabled(false) // avoid auto login
-                .setServerClientId(context.getString(R.string.web_client_id))
+                .setFilterByAuthorizedAccounts(false)
+                .setAutoSelectEnabled(false)
+                .setServerClientId(BuildConfig.AUTH_KEY)
                 .build()
         }
     }

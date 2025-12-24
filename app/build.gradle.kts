@@ -1,3 +1,6 @@
+import java.util.Properties
+import kotlin.apply
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -18,6 +21,13 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val localProps = Properties().apply {
+            val f = rootProject.file("local.properties")
+            if (f.exists()) load(f.inputStream())
+        }
+        fun prop(name: String, default: String = ""): String = localProps.getProperty(name, default)
+        buildConfigField("String", "AUTH_KEY", "\"${prop("AUTH_KEY")}\"")
 
     }
     buildFeatures {

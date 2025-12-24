@@ -3,6 +3,7 @@ package com.anurag.eduai.ui.screens.login
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.People
@@ -32,7 +33,7 @@ fun FooterCard() {
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         FeatureItem(
-            icon = Icons.Default.MenuBook,
+            icon = Icons.AutoMirrored.Filled.MenuBook,
             title = stringResource(R.string.complete_ncert),
             subtitle = stringResource(R.string.language_number),
             modifier = Modifier.weight(1f)

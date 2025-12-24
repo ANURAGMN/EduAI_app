@@ -1,4 +1,4 @@
-package com.anurag.eduai.data
+package com.anurag.eduai.data.Firebase
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
