@@ -5,6 +5,7 @@ plugins {
 //    id("com.google.gms.google-services")
     id("kotlin-parcelize")
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.21"
+    alias(libs.plugins.ksp)
 }
 android {
     namespace = "com.anurag.eduai"
@@ -76,4 +77,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
 
+// room database
+    implementation("androidx.room:room-runtime:2.8.4")
+    implementation("androidx.room:room-ktx:2.8.4")
+    ksp("androidx.room:room-compiler:2.8.4")
 }
