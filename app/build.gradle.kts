@@ -51,6 +51,7 @@ dependencies {
 // Jetpack Compose - Core
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation(libs.androidx.foundation.layout)
     debugImplementation("androidx.compose.ui:ui-tooling")
 
 // Material Design
