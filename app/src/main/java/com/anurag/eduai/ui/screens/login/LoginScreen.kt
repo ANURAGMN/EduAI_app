@@ -113,90 +113,90 @@ fun LoginScreen() {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // OR Divider
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Divider(modifier = Modifier.weight(1f), color = ColorHint)
-                        Text(
-                            text = "OR",
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = TextSecondary,
-                            fontSize = 12.sp
-                        )
-                        Divider(modifier = Modifier.weight(1f), color = ColorHint)
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Login/SignUp Tabs
-                    LoginSignUpTabs(
-                        selectedIndex = selectedTab,
-                        onSelected = { selectedTab = it }
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Form Fields based on selected tab
-                    if (selectedTab == 1) {
-                        // Sign Up Form
-                        SignUpForm(
-                            fullName = fullName,
-                            onFullNameChange = { fullName = it },
-                            email = email,
-                            onEmailChange = { email = it },
-                            password = password,
-                            onPasswordChange = { password = it },
-                            confirmPassword = confirmPassword,
-                            onConfirmPasswordChange = { confirmPassword = it },
-                            passwordVisible = passwordVisible,
-                            onPasswordVisibilityToggle = { passwordVisible = !passwordVisible },
-                            confirmPasswordVisible = confirmPasswordVisible,
-                            onConfirmPasswordVisibilityToggle = { confirmPasswordVisible = !confirmPasswordVisible }
-                        )
-                    } else {
-                        // Login Form
-                        LoginForm(
-                            email = email,
-                            onEmailChange = { email = it },
-                            password = password,
-                            onPasswordChange = { password = it },
-                            passwordVisible = passwordVisible,
-                            onPasswordVisibilityToggle = { passwordVisible = !passwordVisible }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Action Button
-                    Button(
-                        onClick = { /* Handle login/signup */ },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary)
-                    ) {
-                        Text(
-                            text = if (selectedTab == 0) stringResource(R.string.sign_in)
-                                else stringResource(R.string.create_account),
-                            fontSize = 16.sp
-                        )
-                    }
-
-                    // Forgot Password (only for login)
-                    if (selectedTab == 0) {
-                        TextButton(
-                            onClick = { /* Handle forgot password */ },
-                            modifier = Modifier.padding(top = 8.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.forget_password),
-                                color = BrandPrimary,
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
+//                    Row(
+//                        modifier = Modifier.fillMaxWidth(),
+//                        verticalAlignment = Alignment.CenterVertically
+//                    ) {
+//                        Divider(modifier = Modifier.weight(1f), color = ColorHint)
+//                        Text(
+//                            text = "OR",
+//                            modifier = Modifier.padding(horizontal = 16.dp),
+//                            color = TextSecondary,
+//                            fontSize = 12.sp
+//                        )
+//                        Divider(modifier = Modifier.weight(1f), color = ColorHint)
+//                    }
+//
+//                    Spacer(modifier = Modifier.height(16.dp))
+//
+//                    // Login/SignUp Tabs
+//                    LoginSignUpTabs(
+//                        selectedIndex = selectedTab,
+//                        onSelected = { selectedTab = it }
+//                    )
+//
+//                    Spacer(modifier = Modifier.height(20.dp))
+//
+//                    // Form Fields based on selected tab
+//                    if (selectedTab == 1) {
+//                        // Sign Up Form
+//                        SignUpForm(
+//                            fullName = fullName,
+//                            onFullNameChange = { fullName = it },
+//                            email = email,
+//                            onEmailChange = { email = it },
+//                            password = password,
+//                            onPasswordChange = { password = it },
+//                            confirmPassword = confirmPassword,
+//                            onConfirmPasswordChange = { confirmPassword = it },
+//                            passwordVisible = passwordVisible,
+//                            onPasswordVisibilityToggle = { passwordVisible = !passwordVisible },
+//                            confirmPasswordVisible = confirmPasswordVisible,
+//                            onConfirmPasswordVisibilityToggle = { confirmPasswordVisible = !confirmPasswordVisible }
+//                        )
+//                    } else {
+//                        // Login Form
+//                        LoginForm(
+//                            email = email,
+//                            onEmailChange = { email = it },
+//                            password = password,
+//                            onPasswordChange = { password = it },
+//                            passwordVisible = passwordVisible,
+//                            onPasswordVisibilityToggle = { passwordVisible = !passwordVisible }
+//                        )
+//                    }
+//
+//                    Spacer(modifier = Modifier.height(20.dp))
+//
+//                    // Action Button
+//                    Button(
+//                        onClick = { /* Handle login/signup */ },
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .height(50.dp),
+//                        shape = RoundedCornerShape(12.dp),
+//                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary)
+//                    ) {
+//                        Text(
+//                            text = if (selectedTab == 0) stringResource(R.string.sign_in)
+//                                else stringResource(R.string.create_account),
+//                            fontSize = 16.sp
+//                        )
+//                    }
+//
+//                    // Forgot Password (only for login)
+//                    if (selectedTab == 0) {
+//                        TextButton(
+//                            onClick = { /* Handle forgot password */ },
+//                            modifier = Modifier.padding(top = 8.dp)
+//                        ) {
+//                            Text(
+//                                text = stringResource(R.string.forget_password),
+//                                color = BrandPrimary,
+//                                fontSize = 14.sp
+//                            )
+//                        }
+//                    }
 
                     // Terms and Privacy (only for signup)
                     if (selectedTab == 1) {
