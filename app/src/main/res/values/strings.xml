@@ -1,3 +1,25 @@
 <resources>
     <string name="app_name">EduAI</string>
+
+<!--   Login Screen -->
+    <string name="choose_your_language">Choose Your Language</string>
+    <string name="welcome_message">Welcome Back</string>
+    <string name="welcome_message_secondary">Sign in to continue your learning journey\n</string>
+    <string name="enter_email">Enter your email</string>
+    <string name="enter_password">Enter your password</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="create_account">Create Account</string>
+    <string name="forget_password">Forgot Password?</string>
+    <string name="policy_msg">By signing up, you agree to our Terms of Service and Privacy Policy</string>
+    <string name="continue_with_google">Continue with Gmail</string>
+    <string name="full_name">Full Name</string>
+    <string name="confirm_password">Confirm Password</string>
+<!--    login screen footer-->
+    <string name="complete_ncert">Complete NCERT</string>
+    <string name="language_number">2 Languages</string>
+    <string name="ai_title">AI-Powered</string>
+    <string name="smart_learning">Smart Learning</string>
+    <string name="student_count">1M+ Students</string>
+    <string name="trusted_globally">Trusted Globally</string>
 </resources>
