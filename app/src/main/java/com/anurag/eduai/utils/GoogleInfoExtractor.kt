@@ -1,6 +1,6 @@
 package com.anurag.eduai.utils
 
-import com.anurag.eduai.data.Firebase.User
+import com.anurag.eduai.data.firebase.User
 import com.anurag.eduai.debug.DebugLogger
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 
