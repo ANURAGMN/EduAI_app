@@ -29,5 +29,8 @@ fun LoginNavigator(
                 userViewModel = userViewModel
             )
         }
+        composable("main") {
+            BottomNavBar()
+        }
     }
 }
