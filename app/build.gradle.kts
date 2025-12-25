@@ -89,6 +89,8 @@ dependencies {
 
 // Firebase
     implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
+    implementation("com.google.firebase:firebase-firestore-ktx:25.0.0")
+
 
 // Legacy / AppCompat / AndroidX Libs from Version Catalog
     implementation(libs.androidx.appcompat)

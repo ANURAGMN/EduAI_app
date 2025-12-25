@@ -15,17 +15,20 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.anurag.eduai.R
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.GoogleSignIn
 import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
+import com.anurag.eduai.ui.viewModel.UserViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun GoogleLoginButton(
-    onClick: () -> Unit = {},
-    enabled: Boolean = true
+    navController: NavController,
+    userViewModel: UserViewModel,
 ) {
     var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -49,7 +52,6 @@ fun GoogleLoginButton(
         onClick = {
             if (!isLoading) {
                 isLoading = true
-                onClick()
 
                 DebugLogger.debugLog("GoogleSignIn", "Google Sign In Button Clicked")
 
@@ -60,7 +62,27 @@ fun GoogleLoginButton(
                     onLoginSuccess = {user ->
                         // TODO: store  user to local DB
                         DebugLogger.debugLog("GoogleSignIn", "User: \n $user")
-                        isLoading = false
+                        scope.launch {
+                            val userExists = userViewModel.handleGoogleLogin(user)
+
+                            isLoading = false
+
+                            if (userExists) {
+                                // Existing user → go to home
+                                navController.navigate("home") {
+                                    popUpTo("login") { inclusive = true }
+                                }
+                            } else {
+                                // New user → pre-fill ViewModel data
+                                userViewModel.updateId(user.id)
+                                userViewModel.updateName(user.displayName)
+                                userViewModel.updateEmail(user.email)
+                                userViewModel.updateProfilePictureUri(user.profilePictureUri)
+
+                                // Then navigate to detail entry screen
+                                navController.navigate("userDetailEntry")
+                            }
+                        }
                     },
                     onLoginFailed = {error ->
                         DebugLogger.errorLog("GoogleSignIn", "Error:\n $error")
@@ -69,7 +91,7 @@ fun GoogleLoginButton(
                 )
             }
         },
-        enabled = enabled && !isLoading,
+        enabled = !isLoading,
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = White,
             contentColor = TextPrimary
