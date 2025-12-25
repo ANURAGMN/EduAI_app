@@ -69,7 +69,7 @@ fun GoogleLoginButton(
 
                             if (userExists) {
                                 // Existing user → go to home
-                                navController.navigate("home") {
+                                navController.navigate("main") {
                                     popUpTo("login") { inclusive = true }
                                 }
                             } else {

@@ -321,7 +321,10 @@ fun UserDetailEntryScreen(
                             scope.launch {
                                 userViewModel.submit { success ->
                                     if (success) {
-                                        Toast.makeText(context, "Uploaded!", Toast.LENGTH_SHORT).show()
+                                        navController.navigate("main") {
+                                            popUpTo("login") { inclusive = true }
+                                        }
+                                        Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }
