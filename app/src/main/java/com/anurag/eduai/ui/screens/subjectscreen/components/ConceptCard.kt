@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.components
+package com.anurag.eduai.ui.screens.subjectscreen.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,9 +18,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.anurag.eduai.ui.screens.home.Concept
+import com.anurag.eduai.ui.screens.subjectscreen.Concept
 import com.anurag.eduai.ui.theme.ChipBackground
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
@@ -70,7 +71,6 @@ fun ConceptCard(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Concept and steps info
         Row(
             modifier = Modifier
                 .fillMaxWidth(),
@@ -78,16 +78,6 @@ fun ConceptCard(
         ) {
             Text(
                 text = concept.conceptCount,
-                fontSize = 12.sp,
-                color = TextSecondary
-            )
-            Text(
-                text = "•",
-                fontSize = 12.sp,
-                color = TextSecondary
-            )
-            Text(
-                text = concept.totalSteps,
                 fontSize = 12.sp,
                 color = TextSecondary
             )
@@ -149,4 +139,26 @@ fun ConceptActionButton(
             color = TextPrimary
         )
     }
+}
+
+@Preview
+@Composable
+fun ConceptCardPreview() {
+    ConceptCard(
+        concept = Concept(
+            id = "1",
+            name = "Number Systems",
+            conceptCount = "8 main concepts",
+            status = com.anurag.eduai.ui.screens.subjectscreen.ConceptStatus.COMPLETED
+        )
+    )
+}
+
+@Preview
+@Composable
+fun ConceptActionButtonPreview() {
+    ConceptActionButton(
+        label = "Study",
+        icon = "📚"
+    )
 }

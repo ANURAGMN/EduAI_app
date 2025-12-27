@@ -4,7 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -15,12 +15,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.anurag.eduai.ui.theme.AccentBlue
-import com.anurag.eduai.ui.theme.BrandPrimary
+import com.anurag.eduai.ui.theme.HeaderGradientEnd
+import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.TextOnPrimary
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +46,7 @@ fun Header(title: String = "Class 7", subtitle: String = "NCERT Curriculum") {
         navigationIcon = {
             IconButton( onClick = {}) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector =  Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
                     tint = TextOnPrimary,
                     modifier = Modifier.size(24.dp)
@@ -71,13 +72,14 @@ fun Header(title: String = "Class 7", subtitle: String = "NCERT Curriculum") {
             }
         },
         colors = TopAppBarDefaults.largeTopAppBarColors(
-            containerColor = AccentBlue
+            containerColor = Transparent,
+            scrolledContainerColor = Transparent
         ),
         modifier = Modifier.background(
             brush = androidx.compose.ui.graphics.Brush.linearGradient(
                 colors = listOf(
-                    AccentBlue,
-                    BrandPrimary
+                    HeaderGradientStart,
+                    HeaderGradientEnd
                 )
             )
         )

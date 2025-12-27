@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.home
+package com.anurag.eduai.ui.screens.classscreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.ui.components.Header
-import com.anurag.eduai.ui.components.SubjectCard
+import com.anurag.eduai.ui.screens.classscreen.components.SubjectCard
 import com.anurag.eduai.ui.theme.*
 
 data class Subject(
