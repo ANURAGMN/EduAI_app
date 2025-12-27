@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.components
+package com.anurag.eduai.ui.screens.subjectscreen.components
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -8,8 +8,9 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.anurag.eduai.ui.screens.home.ConceptStatus
+import com.anurag.eduai.ui.screens.subjectscreen.ConceptStatus
 import com.anurag.eduai.ui.theme.ColorError
 import com.anurag.eduai.ui.theme.ColorSuccess
 import com.anurag.eduai.ui.theme.ColorWarning
@@ -42,4 +43,20 @@ fun StatusBadge(status: ConceptStatus) {
             )
         }
     }
+}
+
+@Preview
+@Composable
+fun StatusBadgeCompletePreview() {
+    StatusBadge(status = ConceptStatus.COMPLETED)
+}
+@Preview
+@Composable
+fun StatusBadgeInProgressPreview() {
+    StatusBadge(status = ConceptStatus.IN_PROGRESS)
+}
+@Preview
+@Composable
+fun StatusBadgeNotStartedPreview() {
+    StatusBadge(status = ConceptStatus.NOT_STARTED)
 }

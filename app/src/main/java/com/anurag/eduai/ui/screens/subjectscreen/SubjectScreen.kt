@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.home
+package com.anurag.eduai.ui.screens.subjectscreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.anurag.eduai.ui.components.ConceptCard
+import com.anurag.eduai.ui.screens.subjectscreen.components.ConceptCard
 import com.anurag.eduai.ui.components.Header
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 
@@ -27,7 +27,6 @@ data class Concept(
     val id: String,
     val name: String,
     val conceptCount: String,
-    val totalSteps: String,
     val status: ConceptStatus,
 )
 
@@ -39,21 +38,18 @@ fun SubjectScreen(
             id = "1",
             name = "Number Systems",
             conceptCount = "8 main concepts",
-            totalSteps = "12 total steps",
             status = ConceptStatus.COMPLETED
         ),
         Concept(
             id = "2",
             name = "Polynomials",
             conceptCount = "4 main concepts",
-            totalSteps = "8 total steps",
             status = ConceptStatus.IN_PROGRESS
         ),
         Concept(
             id = "3",
             name = "Linear Equations",
             conceptCount = "6 main concepts",
-            totalSteps = "10 total steps",
             status = ConceptStatus.NOT_STARTED
         )
     )

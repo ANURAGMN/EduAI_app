@@ -18,6 +18,25 @@ val BackgroundSecondary = Color(0xFFE2E8F0) // Card and input background
 val AiMessageBackground = Color(0xFFD7D9FF) // AI chat bubble (light indigo hint)
 val ChipBackground = Color(0xFFE7EAFC)      // Status chip background (soft indigo tint)
 
+//Header gradient colors
+val HeaderGradientStart = Color(0xFF397BFD) //blue
+val HeaderGradientEnd = Color(0xFF9326F9)  //purple
+
+//Concept Action Box Colors
+val CompleteButtonColor = Color(0xFFDCFCE7) // faint Green
+val InProgressButtonColor = Color(0xFFF0F9FF) // Blue
+val NotStartedButtonColor = Color(0xFFF9FAFB) // Gray
+
+//Concept Progress Icon background Colors
+val CompleteIconBackground = Color(0xFFDCFCE7) // Green
+val InProgressIconBackground = Color(0xFF3B82F6) // Blue
+val NotStartedIconBackground = Color(0xFFF3F4F6) // Gray
+
+//concept Progress Text Colors
+val CompleteTextColor = Color(0xFFFBBC04) // Green
+val InProgressTextColor = Color(0xFF3B82F6) // Blue
+val NotStartedTextColor = Color(0xFF6B7280) // Gray
+
 // Text Colors
 val TextPrimary = Color(0xFF111827)      // Main headings
 val TextSecondary = Color(0xFF6B7280)    // Subtext, timestamps

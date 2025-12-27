@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.components
+package com.anurag.eduai.ui.screens.classscreen.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.anurag.eduai.ui.screens.home.Subject
+import com.anurag.eduai.ui.screens.classscreen.Subject
 import com.anurag.eduai.ui.theme.TextOnAccent
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
