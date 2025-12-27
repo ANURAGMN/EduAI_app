@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.FlightClass
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -45,12 +44,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.anurag.eduai.R
+import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.ui.component.DropDownMenu
+import com.anurag.eduai.ui.components.DropDownMenu
 import com.anurag.eduai.ui.theme.*
 import com.anurag.eduai.ui.viewModel.UserViewModel
 import kotlinx.coroutines.launch
@@ -73,7 +72,8 @@ fun UserDetailEntryScreen(
 
     val classOptions = (1..10).map { "Class $it" }
 
-
+    // shared preference object
+    val sharedPreference: SharedPreferenceUtils = SharedPreferenceUtils(context)
     Surface(
         modifier = Modifier
             .fillMaxSize()
@@ -317,10 +317,21 @@ fun UserDetailEntryScreen(
                             userViewModel.updateSchool(schoolName)
                             userViewModel.updateClass(selectedClass)
                             userViewModel.updatePhoneNumber(phoneNumber)
+                            userViewModel.updateUpdatedAt(System.currentTimeMillis())
+                            userViewModel.updateCreatedAt(System.currentTimeMillis())
 
                             scope.launch {
                                 userViewModel.submit { success ->
                                     if (success) {
+                                        // Firebase has been update if this line is called
+                                        // TODO: update the room DB here with user details
+                                        // get the user detail from userViewmodel
+
+                                        // updating sharedpreference
+                                        sharedPreference.setLoggedIn(true)
+                                        sharedPreference.setLanguagePreference(userViewModel.user.value.language)
+                                        sharedPreference.setUserId(userViewModel.user.value.id)
+
                                         navController.navigate("main") {
                                             popUpTo("login") { inclusive = true }
                                         }

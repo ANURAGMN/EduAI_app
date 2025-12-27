@@ -10,9 +10,17 @@ class FirebaseRepository(
 ) {
     private val usersCollection = firestore.collection("users")
 
-    suspend fun checkUserExists(userId: String): Boolean {
-        val snapshot = usersCollection.document(userId).get().await()
-        return snapshot.exists()
+    suspend fun checkUserExists(userId: String): User? {
+        return try {
+            val snapshot = usersCollection.document(userId).get().await()
+
+            if (!snapshot.exists()) return null
+
+            snapshot.toObject(User::class.java)
+        } catch (e: Exception) {
+            DebugLogger.errorLog("Firestore", "Error\n $e")
+            null
+        }
     }
 
     suspend fun createNewUser(user: User): Boolean {
@@ -24,7 +32,11 @@ class FirebaseRepository(
                 "profilePictureUri" to user.profilePictureUri,
                 "schoolName" to user.schoolName,
                 "phoneNumber" to user.phoneNumber,
-                "studentClass" to user.studentClass
+                "studentClass" to user.studentClass,
+                "language" to user.language,
+                "createdAt" to user.createdAt,
+                "updatedAt" to user.lastLogin
+
             )
 
             usersCollection.document(user.id).set(data).await()

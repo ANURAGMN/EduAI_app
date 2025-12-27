@@ -125,6 +125,7 @@ fun LoginScreen(
 
                     // Google Sign in
                     GoogleLoginButton(
+                        selectedLanguage = selectedLanguage,
                         userViewModel = userViewModel,
                         navController = navController
                     )

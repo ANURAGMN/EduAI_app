@@ -34,6 +34,15 @@ class UserViewModel(
     fun updateClass(stdClass: String) {
         _user.value = _user.value.copy(studentClass = stdClass)
     }
+    fun updateLanguage(language: String) {
+        _user.value = _user.value.copy(language = language)
+    }
+    fun updateCreatedAt(createdAt: Long) {
+        _user.value = _user.value.copy(createdAt = createdAt)
+    }
+    fun updateUpdatedAt(updatedAt: Long) {
+        _user.value = _user.value.copy(lastLogin = updatedAt)
+    }
 
     suspend fun submit(onResult: (Boolean) -> Unit) {
         val currentUser = _user.value
@@ -42,12 +51,14 @@ class UserViewModel(
     }
 
 
-    suspend fun handleGoogleLogin(firebaseUser: User): Boolean {
+    suspend fun handleGoogleLogin(firebaseUser: User): User? {
         return try {
-            repo.checkUserExists(firebaseUser.id)
+            val existingUser = repo.checkUserExists(firebaseUser.id)
+            DebugLogger.debugLog("HandleGoogleSignIn", "User: $existingUser")
+            return existingUser
         } catch (e: Exception) {
             DebugLogger.errorLog("GoogleSignIn", "Error\n $e")
-            false
+            null
         }
     }
 

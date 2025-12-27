@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.anurag.eduai.R
+import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.GoogleSignIn
 import com.anurag.eduai.ui.theme.ColorHint
@@ -24,14 +25,18 @@ import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
 import com.anurag.eduai.ui.viewModel.UserViewModel
 import kotlinx.coroutines.launch
+import org.intellij.lang.annotations.Language
 
 @Composable
 fun GoogleLoginButton(
+    selectedLanguage: String,
     navController: NavController,
     userViewModel: UserViewModel,
 ) {
     var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
+    val sharedPreference = SharedPreferenceUtils(context)
     val scope = rememberCoroutineScope()
     /**
      * Using rememberLauncherForActivityResult to keep the launcher alive and stable
@@ -60,15 +65,21 @@ fun GoogleLoginButton(
                     scope = scope,
                     launcher = launcher,
                     onLoginSuccess = {user ->
-                        // TODO: store  user to local DB
                         DebugLogger.debugLog("GoogleSignIn", "User: \n $user")
                         scope.launch {
                             val userExists = userViewModel.handleGoogleLogin(user)
 
                             isLoading = false
 
-                            if (userExists) {
+                            if (userExists != null) {
                                 // Existing user → go to home
+                                // TODO: store  user to local DB
+                                // existing user is the User detail fetched from firebase
+                                sharedPreference.setLoggedIn(true)
+                                sharedPreference.setLanguagePreference(userViewModel.user.value.language)
+                                sharedPreference.setUserId(userViewModel.user.value.id)
+
+
                                 navController.navigate("main") {
                                     popUpTo("login") { inclusive = true }
                                 }
@@ -78,6 +89,7 @@ fun GoogleLoginButton(
                                 userViewModel.updateName(user.displayName)
                                 userViewModel.updateEmail(user.email)
                                 userViewModel.updateProfilePictureUri(user.profilePictureUri)
+                                userViewModel.updateLanguage(selectedLanguage)
 
                                 // Then navigate to detail entry screen
                                 navController.navigate("userDetailEntry")

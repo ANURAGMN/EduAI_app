@@ -11,5 +11,8 @@ data class User(
     val profilePictureUri: String? = "", // link: from google
     val schoolName: String = "", // input from user
     val phoneNumber: String = "", // input from user
-    val studentClass: String= "" // input from user
+    val studentClass: String= "", // input from user
+    val language: String = "en", // default english
+    val createdAt: Long = System.currentTimeMillis(),
+    val lastLogin: Long = System.currentTimeMillis()
 ) : Parcelable

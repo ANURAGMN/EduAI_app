@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.component
+package com.anurag.eduai.ui.components
 
 import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.TextPrimary
@@ -6,12 +6,10 @@ import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.theme.White
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
