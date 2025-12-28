@@ -19,23 +19,22 @@ interface AppAnalyticsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAnalyticsList(analyticsList: List<AppAnalyticsEntity>)
 
-    @Query("SELECT * FROM app_analytics WHERE studentId = :studentId ORDER BY timestamp DESC")
+    @Query("SELECT * FROM app_analytics ORDER BY timestamp DESC")
     fun getAnalyticsForStudent(studentId: String): Flow<List<AppAnalyticsEntity>>
 
-    @Query("SELECT * FROM app_analytics WHERE studentId = :studentId ORDER BY timestamp DESC")
+    @Query("SELECT * FROM app_analytics ORDER BY timestamp DESC")
     suspend fun getAnalyticsForStudentSync(studentId: String): List<AppAnalyticsEntity>
 
-    @Query("SELECT * FROM app_analytics WHERE studentId = :studentId AND screenName = :screenName ORDER BY timestamp DESC")
+    @Query("SELECT * FROM app_analytics WHERE screenName = :screenName ORDER BY timestamp DESC")
     suspend fun getAnalyticsForScreen(studentId: String, screenName: String): List<AppAnalyticsEntity>
 
-    @Query("SELECT * FROM app_analytics WHERE studentId = :studentId AND sessionId = :sessionId ORDER BY timestamp ASC")
+    @Query("SELECT * FROM app_analytics WHERE sessionId = :sessionId ORDER BY timestamp ASC")
     suspend fun getAnalyticsForSession(studentId: String, sessionId: String): List<AppAnalyticsEntity>
 
     // screen visit count
     @Query("""
         SELECT COUNT(*) FROM app_analytics 
-        WHERE studentId = :studentId 
-        AND screenName = :screenName 
+        WHERE screenName = :screenName 
         AND eventType = 'ENTRY'
     """)
     suspend fun getScreenVisitCount(studentId: String, screenName: String): Int

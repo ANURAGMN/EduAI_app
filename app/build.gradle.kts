@@ -53,6 +53,7 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation(libs.androidx.foundation.layout)
+    implementation(libs.androidx.lifecycle.process)
     debugImplementation("androidx.compose.ui:ui-tooling")
 
 // Material Design
