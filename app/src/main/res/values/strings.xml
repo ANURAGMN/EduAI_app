@@ -22,8 +22,6 @@
     <string name="smart_learning">Smart Learning</string>
     <string name="student_count">1M+ Students</string>
     <string name="trusted_globally">Trusted Globally</string>
-<!--user detail entry screen-->
-<!--    <string name="welcome_to_ai_tutor_message">Welcome to AI Tutor!</string>-->
     <string name="lets_go_to_know_you_message">Let\'s get to know you better to personalize your learning experience</string>
     <string name="full_name_label">Full Name</string>
     <string name="phone_number_label">Phone Number</string>
@@ -34,4 +32,11 @@
     <string name="school_name_hint">Enter your school name</string>
     <string name="get_started">Get Started</string>
     <string name="class_selection">Select your class</string>
+    
+<!--    Home Screen-->
+    <string name="today_progress">"Today's Progress"</string>
+    <string name="concept">Concept</string>
+    <string name="simulation">Simulation</string>
+    <string name="pending">Pending</string>
+    <string name="practice_simulation">Practice Simulations</string>
 </resources>

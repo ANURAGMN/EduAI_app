@@ -327,10 +327,11 @@ fun UserDetailEntryScreen(
                                         // TODO: update the room DB here with user details
                                         // get the user detail from userViewmodel
 
-                                        // updating sharedpreference
+                                        // updating shared preference
                                         sharedPreference.setLoggedIn(true)
                                         sharedPreference.setLanguagePreference(userViewModel.user.value.language)
                                         sharedPreference.setUserId(userViewModel.user.value.id)
+
 
                                         navController.navigate("main") {
                                             popUpTo("login") { inclusive = true }
