@@ -19,13 +19,12 @@ import androidx.navigation.NavController
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.service.GoogleSignIn
+import com.anurag.eduai.service.auth.GoogleSignIn
 import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
 import com.anurag.eduai.ui.viewModel.UserViewModel
 import kotlinx.coroutines.launch
-import org.intellij.lang.annotations.Language
 
 @Composable
 fun GoogleLoginButton(
