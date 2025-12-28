@@ -1,33 +1,49 @@
 package com.anurag.eduai.ui.screens.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.anurag.eduai.data.local.EduAiDatabase
+import com.anurag.eduai.data.local.SharedPreferenceUtils
+import com.anurag.eduai.data.local.entities.StudentEntity
+import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.screens.home.components.HomeScreenTopBar
-import com.anurag.eduai.ui.screens.home.components.ProgressCard
 import com.anurag.eduai.ui.screens.home.components.SimulationCard
 import com.anurag.eduai.ui.screens.home.components.TodayProgressCard
-import com.anurag.eduai.ui.theme.AccentBlue
-import com.anurag.eduai.ui.theme.AccentGreen
 import com.anurag.eduai.ui.theme.BackgroundSecondary
-import com.anurag.eduai.ui.theme.BrandPrimary
 
 @Composable
 fun HomeScreen() {
+
+    val context = LocalContext.current
+
+    val db = remember { EduAiDatabase.getInstance(context) }
+    val studentDao = db.studentDao()
+    val sharedPreferenceUtils = SharedPreferenceUtils(context)
+
+    val userId = sharedPreferenceUtils.getUserId().toString()
+    var student by remember { mutableStateOf<StudentEntity?>(null) }
+
+    // Testing if user is added to LocalDB or not
+    LaunchedEffect (Unit) {
+        student = studentDao.getStudentSync(userId)
+        DebugLogger.debugLog("HomeScreen", "CurrentUser:\n $student")
+    }
     Surface(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -37,7 +53,9 @@ fun HomeScreen() {
                 .background(BackgroundSecondary)
                 .verticalScroll(rememberScrollState())
         ) {
-            HomeScreenTopBar()
+            HomeScreenTopBar(
+                userName = student?.studentName ?: "John Doe"
+            )
 
             Column(
                 modifier = Modifier

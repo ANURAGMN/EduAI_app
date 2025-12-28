@@ -17,8 +17,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.anurag.eduai.R
+import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.service.auth.GoogleSignIn
 import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.TextPrimary
@@ -34,6 +36,11 @@ fun GoogleLoginButton(
 ) {
     var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
+    val db = remember { EduAiDatabase.getInstance(context) }
+    val studentDao = db.studentDao()
+    val localRepo = remember { StudentLocalRepository(studentDao) }
+
 
     val sharedPreference = SharedPreferenceUtils(context)
     val scope = rememberCoroutineScope()
@@ -71,12 +78,12 @@ fun GoogleLoginButton(
                             isLoading = false
 
                             if (userExists != null) {
-                                // Existing user → go to home
-                                // TODO: store  user to local DB
-                                // existing user is the User detail fetched from firebase
+
+                                localRepo.saveStudentLocally(userExists.toStudentEntity())
+
                                 sharedPreference.setLoggedIn(true)
-                                sharedPreference.setLanguagePreference(userViewModel.user.value.language)
-                                sharedPreference.setUserId(userViewModel.user.value.id)
+                                sharedPreference.setLanguagePreference(selectedLanguage)
+                                sharedPreference.setUserId(userExists.id)
 
 
                                 navController.navigate("main") {

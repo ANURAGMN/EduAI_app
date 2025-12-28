@@ -47,8 +47,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.anurag.eduai.R
+import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
+import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.ui.components.DropDownMenu
 import com.anurag.eduai.ui.theme.*
 import com.anurag.eduai.ui.viewModel.UserViewModel
@@ -64,7 +67,8 @@ fun UserDetailEntryScreen(
 
     var fullName by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
-    var selectedClass by remember { mutableStateOf("") }
+    var selectedClass by remember { mutableStateOf(7) } // default Class 7
+
     var schoolName by remember { mutableStateOf("") }
 
     var phoneError by remember { mutableStateOf<String?>(null) }
@@ -73,7 +77,12 @@ fun UserDetailEntryScreen(
     val classOptions = (1..10).map { "Class $it" }
 
     // shared preference object
-    val sharedPreference: SharedPreferenceUtils = SharedPreferenceUtils(context)
+    val sharedPreference = SharedPreferenceUtils(context)
+    // localDB instances
+    val db = remember { EduAiDatabase.getInstance(context) }
+    val studentDao = db.studentDao()
+    val localRepo = remember { StudentLocalRepository(studentDao) }
+
     Surface(
         modifier = Modifier
             .fillMaxSize()
@@ -238,8 +247,11 @@ fun UserDetailEntryScreen(
                             DropDownMenu(
                                 label = stringResource(R.string.class_selection),
                                 options =classOptions,
-                                selectedValue = selectedClass,
-                                onValueSelected = {selectedClass = it}
+                                selectedValue = "Class $selectedClass",
+                                onValueSelected = { selectedString ->
+                                    selectedClass = selectedString.removePrefix("Class ").trim().toInt()
+                                }
+
                             )
                         }
 
@@ -313,7 +325,7 @@ fun UserDetailEntryScreen(
                                 "UserDetailEntryScreen",
                                 "Get Started Button Clicked"
                             )
-
+                            userViewModel.updateName(fullName)
                             userViewModel.updateSchool(schoolName)
                             userViewModel.updateClass(selectedClass)
                             userViewModel.updatePhoneNumber(phoneNumber)
@@ -323,11 +335,22 @@ fun UserDetailEntryScreen(
                             scope.launch {
                                 userViewModel.submit { success ->
                                     if (success) {
-                                        // Firebase has been update if this line is called
-                                        // TODO: update the room DB here with user details
-                                        // get the user detail from userViewmodel
+                                        scope.launch { // new coroutine scope for saveStudentLocally() method
+                                            val studentEntity = StudentEntity(
+                                                studentId = userViewModel.user.value.id,
+                                                studentName = userViewModel.user.value.displayName.toString(),
+                                                email = userViewModel.user.value.email,
+                                                phoneNumber = userViewModel.user.value.phoneNumber,
+                                                language = userViewModel.user.value.language,
+                                                classLevel = userViewModel.user.value.studentClass,
+                                                profilePhotoUrl = userViewModel.user.value.profilePictureUri,
+                                                createdAt = userViewModel.user.value.createdAt,
+                                                updatedAt = userViewModel.user.value.lastLogin,
+                                                isSynced = true
+                                            )
+                                            localRepo.saveStudentLocally(studentEntity)
+                                        }
 
-                                        // updating shared preference
                                         sharedPreference.setLoggedIn(true)
                                         sharedPreference.setLanguagePreference(userViewModel.user.value.language)
                                         sharedPreference.setUserId(userViewModel.user.value.id)

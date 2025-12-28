@@ -36,7 +36,7 @@ fun getGreeting(): String {
 
 @Composable
 fun HomeScreenTopBar(
-    userName: String = "Rahul Kumar",
+    userName: String = "John Doe",
     subject: String = "Science",
     streakDays: Int = 7
 ) {
