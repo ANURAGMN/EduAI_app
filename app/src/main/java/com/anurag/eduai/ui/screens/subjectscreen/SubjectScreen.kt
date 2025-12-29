@@ -31,8 +31,7 @@ data class Concept(
 )
 
 @Composable
-fun SubjectScreen(
-) {
+fun SubjectScreen() {
     val concepts = listOf(
         Concept(
             id = "1",
