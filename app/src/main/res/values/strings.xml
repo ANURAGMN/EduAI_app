@@ -39,4 +39,8 @@
     <string name="simulation">Simulation</string>
     <string name="pending">Pending</string>
     <string name="practice_simulation">Practice Simulations</string>
+
+<!--    Progress Screen-->
+    <string name="your_progress">Your Progress</string>
+    <string name="last_seven_days">Last 7 days</string>
 </resources>
