@@ -51,10 +51,12 @@ import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.ui.components.DropDownMenu
 import com.anurag.eduai.ui.theme.*
 import com.anurag.eduai.ui.viewModel.UserViewModel
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
 @Composable
@@ -81,6 +83,7 @@ fun UserDetailEntryScreen(
     // localDB instances
     val db = remember { EduAiDatabase.getInstance(context) }
     val studentDao = db.studentDao()
+    val conceptDao = db.conceptDao()
     val localRepo = remember { StudentLocalRepository(studentDao) }
 
     Surface(
@@ -349,11 +352,19 @@ fun UserDetailEntryScreen(
                                                 isSynced = true
                                             )
                                             localRepo.saveStudentLocally(studentEntity)
+
+//                                            val repo = ConceptRepository(
+//                                                firestore = FirebaseFirestore.getInstance(),
+//                                                conceptDao = conceptDao,
+//                                                sharedPreferenceUtils = SharedPreferenceUtils(context)
+//                                            )
+//                                            repo.syncManually()
                                         }
 
                                         sharedPreference.setLoggedIn(true)
                                         sharedPreference.setLanguagePreference(userViewModel.user.value.language)
                                         sharedPreference.setUserId(userViewModel.user.value.id)
+
 
 
                                         navController.navigate("main") {
