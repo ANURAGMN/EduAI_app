@@ -8,6 +8,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
     object Home : BottomNavItem("home", Icons.Default.Home, "Home")
-    object Progress : BottomNavItem("progress", Icons.AutoMirrored.Filled.ShowChart, "Progess")
+    object Progress : BottomNavItem("progress", Icons.AutoMirrored.Filled.ShowChart, "Progress")
     object Setting : BottomNavItem("setting", Icons.Default.Settings, "Setting")
 }
