@@ -53,6 +53,8 @@ import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.repository.StudentLocalRepository
+import com.anurag.eduai.service.analytics.ScreenName
+import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.sync.FirebaseSyncManager
 import com.anurag.eduai.ui.components.DropDownMenu
 import com.anurag.eduai.ui.theme.*
@@ -65,6 +67,10 @@ fun UserDetailEntryScreen(
     navController: NavController,
     userViewModel: UserViewModel = UserViewModel()
 ) {
+
+    // Analytics Tracking
+    TrackScreenEvent(screenName = ScreenName.USER_DETAIL_ENTRY)
+
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 

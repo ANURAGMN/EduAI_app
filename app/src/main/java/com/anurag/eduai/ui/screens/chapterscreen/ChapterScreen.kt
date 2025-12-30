@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.anurag.eduai.service.analytics.ScreenName
+import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.components.Header
 import com.anurag.eduai.ui.screens.chapterscreen.components.ChapterCard
 import com.anurag.eduai.ui.theme.BackgroundPrimary
@@ -33,6 +35,10 @@ data class Chapter(
 @Composable
 fun ChapterScreen(
 ) {
+
+    // Analytics Tracking
+    TrackScreenEvent(screenName = ScreenName.CHAPTER)
+
     val chapters = listOf(
         Chapter(
             id = "1",

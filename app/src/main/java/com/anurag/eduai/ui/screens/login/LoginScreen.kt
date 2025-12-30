@@ -40,6 +40,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.internal.NavContext
 import com.anurag.eduai.R
+import com.anurag.eduai.service.analytics.ScreenName
+import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.theme.BrandPrimary
@@ -54,6 +56,9 @@ fun LoginScreen(
     navController: NavController,
     userViewModel: UserViewModel
 ) {
+
+    // Analytics Tracking
+    TrackScreenEvent(screenName = ScreenName.LOGIN)
 
     var selectedLanguage by remember { mutableStateOf("English") }
 
