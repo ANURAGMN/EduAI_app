@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.classscreen.components
+package com.anurag.eduai.ui.screens.subjectscreen.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.anurag.eduai.ui.screens.classscreen.Subject
+import com.anurag.eduai.ui.screens.subjectscreen.Subject
 import com.anurag.eduai.ui.theme.TextOnAccent
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
@@ -80,7 +80,7 @@ fun SubjectCard(
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            text = subject.conceptCount,
+            text = subject.chapterCount,
             fontSize = 11.sp,
             color = TextSecondary
         )
@@ -112,7 +112,7 @@ fun SubjectCardPreview() {
             id = "1",
             name = "Mathematics",
             color = Color(0xFF3B82F6),
-            conceptCount = "12 Concepts"
+            chapterCount = "12 Chapters"
         )
     )
 }

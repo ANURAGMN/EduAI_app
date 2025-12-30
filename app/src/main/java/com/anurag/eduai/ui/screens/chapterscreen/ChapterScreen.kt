@@ -1,46 +1,56 @@
 package com.anurag.eduai.ui.screens.chapterscreen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.anurag.eduai.ui.components.Header
-import com.anurag.eduai.ui.screens.chapterscreen.components.ConceptsSection
+import com.anurag.eduai.ui.screens.chapterscreen.components.ChapterCard
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 
-enum class ConceptStatus {
+
+enum class ChapterStatus {
     COMPLETED,
     IN_PROGRESS,
     NOT_STARTED
 }
 
-data class Concept(
+data class Chapter(
     val id: String,
     val name: String,
-    val status: ConceptStatus,
+    val chapterCount: String,
+    val status: ChapterStatus,
 )
 
 @Composable
 fun ChapterScreen(
-    chapterName: String = "Polynomials",
-    className: String = "Class 7 - Mathematics",
 ) {
-    val concepts = listOf(
-        Concept(
+    val chapters = listOf(
+        Chapter(
             id = "1",
-            name = "Introduction to Polynomials",
-            status = ConceptStatus.COMPLETED
+            name = "Number Systems",
+            chapterCount = "8 main chapters",
+            status = ChapterStatus.COMPLETED
         ),
-        Concept(
+        Chapter(
             id = "2",
-            name = "Types of Polynomials",
-            status = ConceptStatus.IN_PROGRESS
+            name = "Polynomials",
+            chapterCount = "4 main chapters",
+            status = ChapterStatus.IN_PROGRESS
         ),
-        Concept(
+        Chapter(
             id = "3",
-            name = "Operations on Polynomials",
-            status = ConceptStatus.NOT_STARTED
+            name = "Linear Equations",
+            chapterCount = "6 main chapters",
+            status = ChapterStatus.NOT_STARTED
         )
     )
 
@@ -49,20 +59,26 @@ fun ChapterScreen(
             .fillMaxSize()
             .background(BackgroundPrimary)
     ) {
-        // Top Header
-        Header(
-           className,
-           chapterName,
+        Header(title="Class 7- Mathematics", subtitle="NCERT Curriculum")
 
-        )
-        // Concepts Section
-        ConceptsSection(
-            concepts = concepts
-        )
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(chapters) { chapter ->
+                ChapterCard(
+                    chapter = chapter,
+                    onStudyClick = {},
+                )
+            }
+        }
     }
 }
 
-@Preview(showBackground = true)
+@Preview
 @Composable
 fun ChapterScreenPreview() {
     ChapterScreen()

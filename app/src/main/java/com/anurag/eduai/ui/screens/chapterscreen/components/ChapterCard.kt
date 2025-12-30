@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.subjectscreen.components
+package com.anurag.eduai.ui.screens.chapterscreen.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,14 +21,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.anurag.eduai.ui.screens.subjectscreen.Concept
+import com.anurag.eduai.ui.screens.chapterscreen.Chapter
+import com.anurag.eduai.ui.screens.chapterscreen.ChapterStatus
 import com.anurag.eduai.ui.theme.ChipBackground
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 
 @Composable
-fun ConceptCard(
-    concept: Concept,
+fun ChapterCard(
+    chapter: Chapter,
     onStudyClick: () -> Unit = {},
 ) {
     Column(
@@ -40,7 +41,7 @@ fun ConceptCard(
             )
             .padding(16.dp)
     ) {
-        // Concept title and status
+        // Chapter title and status
         Row(
             modifier = Modifier
                 .fillMaxWidth(),
@@ -53,20 +54,20 @@ fun ConceptCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = concept.id,
+                    text = chapter.id,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextSecondary
                 )
                 Text(
-                    text = concept.name,
+                    text = chapter.name,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = TextPrimary
                 )
             }
 
-            StatusBadge(status = concept.status)
+            StatusBadge(status = chapter.status)
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -77,7 +78,7 @@ fun ConceptCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = concept.conceptCount,
+                text = chapter.chapterCount,
                 fontSize = 12.sp,
                 color = TextSecondary
             )
@@ -92,19 +93,19 @@ fun ConceptCard(
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ConceptActionButton(
+            ChapterActionButton(
                 label = "Study",
                 icon = "📚",
                 modifier = Modifier.weight(1f),
                 onClick = onStudyClick
             )
-            ConceptActionButton(
+            ChapterActionButton(
                 label = "Videos",
                 icon = "🎬",
                 modifier = Modifier.weight(1f),
                 onClick = {}
             )
-            ConceptActionButton(
+            ChapterActionButton(
                 label = "Simulations",
                 icon = "🧪",
                 modifier = Modifier.weight(1f),
@@ -115,7 +116,7 @@ fun ConceptCard(
     }
 
 @Composable
-fun ConceptActionButton(
+fun ChapterActionButton(
     label: String,
     icon: String,
     modifier: Modifier = Modifier,
@@ -143,21 +144,21 @@ fun ConceptActionButton(
 
 @Preview
 @Composable
-fun ConceptCardPreview() {
-    ConceptCard(
-        concept = Concept(
+fun ChapterCardPreview() {
+    ChapterCard(
+        chapter = Chapter(
             id = "1",
             name = "Number Systems",
-            conceptCount = "8 main concepts",
-            status = com.anurag.eduai.ui.screens.subjectscreen.ConceptStatus.COMPLETED
+            chapterCount = "8 main chapters",
+            status = ChapterStatus.COMPLETED
         )
     )
 }
 
 @Preview
 @Composable
-fun ConceptActionButtonPreview() {
-    ConceptActionButton(
+fun ChapterActionButtonPreview() {
+    ChapterActionButton(
         label = "Study",
         icon = "📚"
     )
