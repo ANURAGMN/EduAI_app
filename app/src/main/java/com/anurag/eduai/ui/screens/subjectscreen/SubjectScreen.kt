@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.anurag.eduai.service.analytics.ScreenName
+import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.components.Header
 import com.anurag.eduai.ui.screens.subjectscreen.components.SubjectCard
 import com.anurag.eduai.ui.theme.*
@@ -25,6 +27,9 @@ fun SubjectScreen(
     onBackClick: () -> Unit = {},
     onSubjectClick: (Subject) -> Unit = {}
 ) {
+    // Analytics Setup
+    TrackScreenEvent(screenName = ScreenName.SUBJECT)
+
     val subjects = listOf(
         Subject("1", "Mathematics", Color(0xFF3B82F6), "12 Concepts"),
         Subject("2", "English", Color(0xFF22C55E), "10 Concepts"),

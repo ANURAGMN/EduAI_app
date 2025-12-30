@@ -19,17 +19,12 @@ interface AppAnalyticsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAnalyticsList(analyticsList: List<AppAnalyticsEntity>)
 
-    @Query("SELECT * FROM app_analytics ORDER BY timestamp DESC")
-    fun getAnalyticsForStudent(studentId: String): Flow<List<AppAnalyticsEntity>>
-
-    @Query("SELECT * FROM app_analytics ORDER BY timestamp DESC")
-    suspend fun getAnalyticsForStudentSync(studentId: String): List<AppAnalyticsEntity>
 
     @Query("SELECT * FROM app_analytics WHERE screenName = :screenName ORDER BY timestamp DESC")
-    suspend fun getAnalyticsForScreen(studentId: String, screenName: String): List<AppAnalyticsEntity>
+    suspend fun getAnalyticsForScreen(screenName: String): List<AppAnalyticsEntity>
 
     @Query("SELECT * FROM app_analytics WHERE sessionId = :sessionId ORDER BY timestamp ASC")
-    suspend fun getAnalyticsForSession(studentId: String, sessionId: String): List<AppAnalyticsEntity>
+    suspend fun getAnalyticsForSession( sessionId: String): List<AppAnalyticsEntity>
 
     // screen visit count
     @Query("""
@@ -37,7 +32,7 @@ interface AppAnalyticsDao {
         WHERE screenName = :screenName 
         AND eventType = 'ENTRY'
     """)
-    suspend fun getScreenVisitCount(studentId: String, screenName: String): Int
+    suspend fun getScreenVisitCount(screenName: String): Int
 
     @Query("SELECT * FROM app_analytics WHERE isSynced = 0")
     suspend fun getUnsyncedAnalytics(): List<AppAnalyticsEntity>

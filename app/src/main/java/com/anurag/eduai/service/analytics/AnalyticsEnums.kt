@@ -1,0 +1,19 @@
+package com.anurag.eduai.service.analytics
+
+
+enum class ScreenName(val displayName: String) {
+    LOGIN("LOGIN"),
+    USER_DETAIL_ENTRY("USER_DETAIL_ENTRY"),
+    HOME("HOME"),
+    SUBJECT("SUBJECT"),
+    CHAPTER("CHAPTER"),
+    CONCEPT("CONCEPT"),
+    CONCEPT_DETAIL("CONCEPT_DETAIL"),
+    PROGRESS("PROGRESS"),
+    SETTINGS("SETTINGS")
+}
+
+enum class EventType(val type: String) {
+    ENTRY("ENTRY"),
+    EXIT("EXIT")
+}

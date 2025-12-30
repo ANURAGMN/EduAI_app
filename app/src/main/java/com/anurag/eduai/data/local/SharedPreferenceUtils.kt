@@ -14,6 +14,7 @@ class SharedPreferenceUtils(context: Context) {
         private const val KEY_LANGUAGE = "key_language"
         private const val KEY_IS_LOGGED_IN = "key_is_logged_in"
         private const val KEY_LAST_SYNC = "last_sync_timestamp"
+        private const val KEY_SESSION = "key_current_session"
     }
 
     fun setUserId(id: String) {
@@ -47,5 +48,19 @@ class SharedPreferenceUtils(context: Context) {
     /** Stores the timestamp of last successful sync. */
     fun updateLastSyncTime(time: Long = System.currentTimeMillis()) {
         prefs.edit { putLong(KEY_LAST_SYNC, time) }
+    }
+
+    /** Stores current session id **/
+    fun setCurrentSession(sessionId:String){
+        prefs.edit{putString(KEY_SESSION,sessionId)}
+    }
+
+    /** Retrieves current session id **/
+    fun getCurrentSession(): String? {
+        return prefs.getString(KEY_SESSION, null)
+    }
+    /** Clears current session id **/
+    fun clearCurrentSession() {
+        prefs.edit { remove(KEY_SESSION) }
     }
 }

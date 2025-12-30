@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.anurag.eduai.service.analytics.ScreenName
+import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.components.Header
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptCard
 import com.anurag.eduai.ui.theme.BackgroundPrimary
@@ -26,6 +28,10 @@ fun ConceptScreen(
     chapterName: String = "Polynomials",
     className: String = "Class 7 - Mathematics",
 ) {
+
+    // Analytics Tracking
+    TrackScreenEvent(screenName = ScreenName.CONCEPT)
+
     val concepts = listOf(
         Concept(
             id = "1",

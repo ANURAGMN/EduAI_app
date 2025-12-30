@@ -1,9 +1,8 @@
 package com.anurag.eduai
 
 import android.app.Application
-import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.repository.SessionRepository
+import com.anurag.eduai.service.analytics.SessionManager
 import com.anurag.eduai.utils.AppLifecycleObserver
 
 class EduAiApplication : Application() {
@@ -14,12 +13,11 @@ class EduAiApplication : Application() {
         super.onCreate()
         DebugLogger.debugLog("EduAiApplication", "Application onCreate")
 
-        // Initialize database and repository
-        val database = EduAiDatabase.getInstance(this)
-        val sessionRepository = SessionRepository(database.sessionDao())
+        // Initialize SessionManager (handles both sessions and analytics)
+        SessionManager.initialize(this)
 
         // Register app lifecycle observer
-        appLifecycleObserver = AppLifecycleObserver(sessionRepository)
+        appLifecycleObserver = AppLifecycleObserver()
         appLifecycleObserver.register()
 
         DebugLogger.debugLog("EduAiApplication", "AppLifecycleObserver registered")

@@ -23,6 +23,8 @@ import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.repository.ConceptRepository
+import com.anurag.eduai.service.analytics.ScreenName
+import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.home.components.HomeScreenTopBar
 import com.anurag.eduai.ui.screens.home.components.SimulationCard
 import com.anurag.eduai.ui.screens.home.components.TodayProgressCard
@@ -30,6 +32,9 @@ import com.anurag.eduai.ui.theme.BackgroundSecondary
 
 @Composable
 fun HomeScreen() {
+
+    // Analytics Tracking
+    TrackScreenEvent(screenName = ScreenName.HOME)
 
     val context = LocalContext.current
 

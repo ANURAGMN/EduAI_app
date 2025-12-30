@@ -17,10 +17,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.anurag.eduai.service.analytics.ScreenName
+import com.anurag.eduai.service.analytics.TrackScreenEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingScreen() {
+    // Analytics Tracking
+    TrackScreenEvent(screenName = ScreenName.SETTINGS)
+
     var selectedLanguage by remember { mutableStateOf("English") }
 
     Scaffold(

@@ -11,6 +11,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.anurag.eduai.service.analytics.ScreenName
+import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.progess.component.ProgressScreenTopBar
 import com.anurag.eduai.ui.screens.progess.component.ShareButton
 import com.anurag.eduai.ui.screens.progess.component.SkillsProgressSection
@@ -19,7 +21,12 @@ import com.anurag.eduai.ui.screens.progess.component.WeeklyActivitySection
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 
 @Composable
-fun ProgressScreen() {
+fun ProgressScreen(
+
+)
+{
+    // Analytics Tracking
+    TrackScreenEvent(screenName = ScreenName.PROGRESS)
 
     Column(
         modifier = Modifier
