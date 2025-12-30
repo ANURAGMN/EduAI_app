@@ -17,7 +17,7 @@ class GoogleInfoExtractor {
                 profilePictureUri = googleIdTokenCredential.profilePictureUri?.toString(),
                 schoolName = "",
                 phoneNumber = "",
-                studentClass = ""
+                studentClass = 7 // default value
             )
         }
 

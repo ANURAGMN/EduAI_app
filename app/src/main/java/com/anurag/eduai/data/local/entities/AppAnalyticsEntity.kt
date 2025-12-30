@@ -10,14 +10,6 @@ import androidx.room.PrimaryKey
  */
 @Entity(
     tableName = "app_analytics",
-    foreignKeys = [
-        ForeignKey(
-            entity = StudentEntity::class,
-            parentColumns = ["studentId"],
-            childColumns = ["studentId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
     indices = [
         Index(value = ["studentId"]),
         Index(value = ["screenName"]),
@@ -27,7 +19,6 @@ import androidx.room.PrimaryKey
 data class AppAnalyticsEntity(
     @PrimaryKey(autoGenerate = true)
     val analyticsId: Long = 0,
-    val studentId: String,
     val sessionId: String,
     val screenName: String, // "LOGIN", "HOME", "SUBJECT", "CONCEPT", "SIMULATION"
     val eventType: String, // "ENTRY", "EXIT", "APP_OPEN", "APP_CRASH", "SESSION_START", "SESSION_END"

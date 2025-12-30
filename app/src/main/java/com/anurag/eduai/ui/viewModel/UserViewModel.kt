@@ -31,7 +31,7 @@ class UserViewModel(
     fun updatePhoneNumber(phone: String) {
         _user.value = _user.value.copy(phoneNumber = phone)
     }
-    fun updateClass(stdClass: String) {
+    fun updateClass(stdClass: Int) {
         _user.value = _user.value.copy(studentClass = stdClass)
     }
     fun updateLanguage(language: String) {

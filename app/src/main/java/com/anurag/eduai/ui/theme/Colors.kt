@@ -9,7 +9,7 @@ val LightGray = Color(0xFFE0E0E0)
 
 // Brand & Accent Colors
 val BrandPrimary = Color(0xFF6366F1) // Indigo – app identity (send button, active elements)
-val AccentGreen = Color(0xFF22C55E)  // Emerald – user chat bubble
+val AccentGreen = Color(0xFF0FBB4E)  // Emerald – user chat bubble
 val AccentBlue = Color(0xFF3B82F6)   // Bright blue – highlights, links, or icons
 
 // Background Colors
