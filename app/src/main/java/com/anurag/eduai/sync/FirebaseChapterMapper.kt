@@ -17,7 +17,7 @@ object FirebaseChapterMapper {
             subjectId = document.getString("subject_id") ?: "",
             chapterName = document.getString("unit_name") ?: "",
             chapterNameKannada = "", // Not provided by Firestore
-            orderIndex = 0,          // You may map this if Firestore contains it
+            orderIndex = 0,          // Not provided by Firestore
             totalConcepts = 0,       // Can be calculated separately
             createdAt = System.currentTimeMillis(),
             isSynced = true

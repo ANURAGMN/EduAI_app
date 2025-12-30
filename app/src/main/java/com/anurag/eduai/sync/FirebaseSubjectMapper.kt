@@ -25,7 +25,7 @@ object FirebaseSubjectMapper {
             subjectNameKannada = "", // Not provided by Firestore
             classLevel = classLevel,
             iconUrl = null,          // Not provided by Firestore
-            orderIndex = 0,          // You may map this if Firestore contains it
+            orderIndex = 0,          // Not provided by Firestore
             createdAt = System.currentTimeMillis(),
             isSynced = true
         )

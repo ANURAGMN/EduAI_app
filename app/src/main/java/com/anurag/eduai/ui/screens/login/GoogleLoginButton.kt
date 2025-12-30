@@ -23,6 +23,7 @@ import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.service.auth.GoogleSignIn
+import com.anurag.eduai.sync.FirebaseSyncManager
 import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
@@ -88,12 +89,17 @@ fun GoogleLoginButton(
                                 sharedPreference.setLanguagePreference(selectedLanguage)
                                 sharedPreference.setUserId(userExists.id)
 
-//                                val repo = ConceptRepository(
-//                                    firestore = FirebaseFirestore.getInstance(),
-//                                    conceptDao = conceptDao,
-//                                    sharedPreferenceUtils = SharedPreferenceUtils(context)
-//                                )
-//                                repo.syncManually()
+                                // Sync with firebase
+                                val syncManager = FirebaseSyncManager(
+                                    subjectDao = db.subjectDao(),
+                                    chapterDao = db.chapterDao(),
+                                    conceptDao = conceptDao
+                                )
+
+                                scope.launch {
+                                    val result = syncManager.syncAllContent()
+                                    DebugLogger.debugLog("LoginSync", result.message)
+                                }
 
                                 navController.navigate("main") {
                                     popUpTo("login") { inclusive = true }

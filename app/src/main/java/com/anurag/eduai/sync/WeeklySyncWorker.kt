@@ -1,6 +1,7 @@
 package com.anurag.eduai.sync
 
 import android.content.Context
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.anurag.eduai.data.local.EduAiDatabase
@@ -20,18 +21,22 @@ class WeeklySyncWorker(
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
 
+
     override suspend fun doWork(): Result {
         return try {
-            val db = EduAiDatabase.getInstance(applicationContext)
-            val conceptDao = db.conceptDao()
 
-            val repo = ConceptRepository(
-                firestore = FirebaseFirestore.getInstance(),
-                conceptDao = conceptDao,
-                sharedPreferenceUtils = SharedPreferenceUtils(applicationContext)
+            val database = EduAiDatabase.getInstance(applicationContext)
+            val syncManager = FirebaseSyncManager(
+                subjectDao = database.subjectDao(),
+                chapterDao = database.chapterDao(),
+                conceptDao = database.conceptDao()
             )
 
-            repo.syncWeekly()
+
+            val result = syncManager.syncAllContent()
+            if (result.success) {
+                DebugLogger.debugLog("WeeklySync", "Successfuly sync with firebase")
+            }
 
             Result.success()
         } catch (e: Exception) {

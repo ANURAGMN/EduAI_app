@@ -53,6 +53,7 @@ import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.repository.StudentLocalRepository
+import com.anurag.eduai.sync.FirebaseSyncManager
 import com.anurag.eduai.ui.components.DropDownMenu
 import com.anurag.eduai.ui.theme.*
 import com.anurag.eduai.ui.viewModel.UserViewModel
@@ -353,12 +354,16 @@ fun UserDetailEntryScreen(
                                             )
                                             localRepo.saveStudentLocally(studentEntity)
 
-//                                            val repo = ConceptRepository(
-//                                                firestore = FirebaseFirestore.getInstance(),
-//                                                conceptDao = conceptDao,
-//                                                sharedPreferenceUtils = SharedPreferenceUtils(context)
-//                                            )
-//                                            repo.syncManually()
+                                            val syncManager = FirebaseSyncManager(
+                                                subjectDao = db.subjectDao(),
+                                                chapterDao = db.chapterDao(),
+                                                conceptDao = conceptDao
+                                            )
+
+                                            scope.launch {
+                                                val result = syncManager.syncAllContent()
+                                                DebugLogger.debugLog("LoginSync", result.message)
+                                            }
                                         }
 
                                         sharedPreference.setLoggedIn(true)
