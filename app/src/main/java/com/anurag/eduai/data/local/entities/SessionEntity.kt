@@ -10,23 +10,13 @@ import androidx.room.PrimaryKey
  */
 @Entity(
     tableName = "sessions",
-    foreignKeys = [
-        ForeignKey(
-            entity = StudentEntity::class,
-            parentColumns = ["studentId"],
-            childColumns = ["studentId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
     indices = [
-        Index(value = ["studentId"]),
         Index(value = ["sessionDate"])
     ]
 )
 data class SessionEntity(
     @PrimaryKey
     val sessionId: String,
-    val studentId: String,
     val sessionDate: String, // Format: "yyyy-MM-dd"
     val sessionStartTime: Long,
     val sessionEndTime: Long? = null,

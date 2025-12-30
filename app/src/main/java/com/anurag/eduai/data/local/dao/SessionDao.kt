@@ -23,42 +23,39 @@ interface SessionDao {
     @Update
     suspend fun updateSession(session: SessionEntity)
 
+    // Get a specific session
     @Query("SELECT * FROM sessions WHERE sessionId = :sessionId")
     suspend fun getSession(sessionId: String): SessionEntity?
 
-    @Query("SELECT * FROM sessions WHERE sessionId = :sessionId")
-    fun getSessionFlow(sessionId: String): Flow<SessionEntity?>
+    // Get all sessions (for current user, sorted by most recent)
+    @Query("SELECT * FROM sessions ORDER BY sessionStartTime DESC")
+    fun getAllSessions(): Flow<List<SessionEntity>>
 
-    @Query("SELECT * FROM sessions WHERE studentId = :studentId AND sessionDate = :date")
-    suspend fun getSessionsForDate(studentId: String, date: String): List<SessionEntity>
+    // Get sessions for a specific date
+    @Query("SELECT * FROM sessions WHERE sessionDate = :date ORDER BY sessionStartTime DESC")
+    suspend fun getSessionsForDate(date: String): List<SessionEntity>
 
-    @Query("SELECT * FROM sessions WHERE studentId = :studentId AND sessionDate = :date")
-    fun getSessionsForDateFlow(studentId: String, date: String): Flow<List<SessionEntity>>
+    // Get the latest session
+    @Query("SELECT * FROM sessions ORDER BY sessionStartTime DESC LIMIT 1")
+    suspend fun getLatestSession(): SessionEntity?
 
-    @Query("SELECT * FROM sessions WHERE studentId = :studentId ORDER BY sessionStartTime DESC LIMIT 1")
-    suspend fun getLatestSession(studentId: String): SessionEntity?
+    // Get session count for a date
+    @Query("SELECT COUNT(*) FROM sessions WHERE sessionDate = :date")
+    suspend fun getSessionCountForDate(date: String): Int
 
-    @Query("SELECT * FROM sessions WHERE studentId = :studentId ORDER BY sessionStartTime DESC")
-    fun getAllSessionsForStudent(studentId: String): Flow<List<SessionEntity>>
-
-    // Get average session duration
-    @Query("SELECT AVG(durationMillis) FROM sessions WHERE studentId = :studentId AND durationMillis > 0")
-    suspend fun getAverageDuration(studentId: String): Long?
-
-    // Get all durations for percentile calculation (p50, p90)
-    @Query("SELECT durationMillis FROM sessions WHERE studentId = :studentId AND durationMillis > 0 ORDER BY durationMillis ASC")
-    suspend fun getAllDurationsForPercentile(studentId: String): List<Long>
-
-    @Query("SELECT COUNT(*) FROM sessions WHERE studentId = :studentId AND sessionDate = :date")
-    suspend fun getSessionCountForDate(studentId: String, date: String): Int
-
+    // Get unsynced sessions (for cloud backup)
     @Query("SELECT * FROM sessions WHERE isSynced = 0")
     suspend fun getUnsyncedSessions(): List<SessionEntity>
 
+    // Mark session as synced
     @Query("UPDATE sessions SET isSynced = 1 WHERE sessionId = :sessionId")
     suspend fun markSessionAsSynced(sessionId: String)
 
+    // Delete a session
     @Query("DELETE FROM sessions WHERE sessionId = :sessionId")
     suspend fun deleteSession(sessionId: String)
 
+    // Delete all sessions (useful for logout/testing)
+    @Query("DELETE FROM sessions")
+    suspend fun deleteAllSessions()
 }
