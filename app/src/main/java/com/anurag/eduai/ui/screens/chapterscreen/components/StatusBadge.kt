@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.subjectscreen.components
+package com.anurag.eduai.ui.screens.chapterscreen.components
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -10,15 +10,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.anurag.eduai.ui.screens.subjectscreen.ConceptStatus
+import com.anurag.eduai.ui.screens.chapterscreen.ChapterStatus
 import com.anurag.eduai.ui.theme.ColorError
 import com.anurag.eduai.ui.theme.ColorSuccess
 import com.anurag.eduai.ui.theme.ColorWarning
 
 @Composable
-fun StatusBadge(status: ConceptStatus) {
+fun StatusBadge(status: ChapterStatus) {
     when (status) {
-        ConceptStatus.COMPLETED -> {
+        ChapterStatus.COMPLETED -> {
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = "Completed",
@@ -26,7 +26,7 @@ fun StatusBadge(status: ConceptStatus) {
                 modifier = Modifier.size(24.dp)
             )
         }
-        ConceptStatus.IN_PROGRESS -> {
+        ChapterStatus.IN_PROGRESS -> {
             Icon(
                 imageVector = Icons.Default.PlayArrow,
                 contentDescription = "In Progress",
@@ -34,7 +34,7 @@ fun StatusBadge(status: ConceptStatus) {
                 modifier = Modifier.size(24.dp)
             )
         }
-        ConceptStatus.NOT_STARTED -> {
+        ChapterStatus.NOT_STARTED -> {
             Icon(
                 imageVector = Icons.Default.Lock,
                 contentDescription = "Not Started",
@@ -48,15 +48,15 @@ fun StatusBadge(status: ConceptStatus) {
 @Preview
 @Composable
 fun StatusBadgeCompletePreview() {
-    StatusBadge(status = ConceptStatus.COMPLETED)
+    StatusBadge(status = ChapterStatus.COMPLETED)
 }
 @Preview
 @Composable
 fun StatusBadgeInProgressPreview() {
-    StatusBadge(status = ConceptStatus.IN_PROGRESS)
+    StatusBadge(status = ChapterStatus.IN_PROGRESS)
 }
 @Preview
 @Composable
 fun StatusBadgeNotStartedPreview() {
-    StatusBadge(status = ConceptStatus.NOT_STARTED)
+    StatusBadge(status = ChapterStatus.NOT_STARTED)
 }

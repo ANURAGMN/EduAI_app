@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.chapterscreen.components
+package com.anurag.eduai.ui.screens.conceptscreen.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -25,21 +25,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.anurag.eduai.ui.screens.chapterscreen.Concept
-import com.anurag.eduai.ui.screens.chapterscreen.ConceptStatus
+import com.anurag.eduai.ui.screens.conceptscreen.Concept
+import com.anurag.eduai.ui.screens.conceptscreen.ConceptStatus
 import com.anurag.eduai.ui.theme.AccentGreen
 import com.anurag.eduai.ui.theme.CompleteIconBackground
 import com.anurag.eduai.ui.theme.CompleteTextColor
 import com.anurag.eduai.ui.theme.InProgressIconBackground
 import com.anurag.eduai.ui.theme.InProgressTextColor
-import com.anurag.eduai.ui.theme.LightGray
 import com.anurag.eduai.ui.theme.NotStartedIconBackground
 import com.anurag.eduai.ui.theme.NotStartedTextColor
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 
 @Composable
-fun ConceptsSection(
+fun ConceptCard(
     concepts: List<Concept>,
 ) {
     Column(

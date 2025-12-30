@@ -1,57 +1,39 @@
 package com.anurag.eduai.ui.screens.subjectscreen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.anurag.eduai.ui.screens.subjectscreen.components.ConceptCard
 import com.anurag.eduai.ui.components.Header
-import com.anurag.eduai.ui.theme.BackgroundPrimary
+import com.anurag.eduai.ui.screens.subjectscreen.components.SubjectCard
+import com.anurag.eduai.ui.theme.*
 
-
-enum class ConceptStatus {
-    COMPLETED,
-    IN_PROGRESS,
-    NOT_STARTED
-}
-
-data class Concept(
+data class Subject(
     val id: String,
     val name: String,
-    val conceptCount: String,
-    val status: ConceptStatus,
+    val color: Color,
+    val chapterCount: String
 )
-
 @Composable
 fun SubjectScreen(
+    onBackClick: () -> Unit = {},
+    onSubjectClick: (Subject) -> Unit = {}
 ) {
-    val concepts = listOf(
-        Concept(
-            id = "1",
-            name = "Number Systems",
-            conceptCount = "8 main concepts",
-            status = ConceptStatus.COMPLETED
-        ),
-        Concept(
-            id = "2",
-            name = "Polynomials",
-            conceptCount = "4 main concepts",
-            status = ConceptStatus.IN_PROGRESS
-        ),
-        Concept(
-            id = "3",
-            name = "Linear Equations",
-            conceptCount = "6 main concepts",
-            status = ConceptStatus.NOT_STARTED
-        )
+    val subjects = listOf(
+        Subject("1", "Mathematics", Color(0xFF3B82F6), "12 Concepts"),
+        Subject("2", "English", Color(0xFF22C55E), "10 Concepts"),
+        Subject("3", "Hindi", Color(0xFFF97316), "15 Concepts"),
+        Subject("4", "Science", Color(0xFF8B5CF6), "20 Concepts"),
+        Subject("5", "Physics", Color(0xFF06B6D4), "18 Concepts"),
+        Subject("6", "Chemistry", Color(0xFFEC4899), "16 Concepts"),
+        Subject("7", "Geography", Color(0xFF14B8A6), "14 Concepts"),
+        Subject("8", "Electronics", Color(0xFF6366F1), "12 Concepts")
     )
 
     Column(
@@ -59,26 +41,31 @@ fun SubjectScreen(
             .fillMaxSize()
             .background(BackgroundPrimary)
     ) {
-        Header(title="Class 7- Mathematics", subtitle="NCERT Curriculum")
+        Header(
+            title = "Class 7",
+            subtitle = "NCERT Curriculum"
+        )
 
-        LazyColumn(
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(concepts) { concept ->
-                ConceptCard(
-                    concept = concept,
-                    onStudyClick = {},
+
+            items(subjects) { subject ->
+                SubjectCard(
+                    subject = subject,
+                    onClick = { onSubjectClick(subject) }
                 )
             }
         }
     }
 }
-
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun SubjectScreenPreview() {
     SubjectScreen()
