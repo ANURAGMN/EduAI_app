@@ -96,10 +96,8 @@ fun GoogleLoginButton(
                                     conceptDao = conceptDao
                                 )
 
-                                scope.launch {
-                                    val result = syncManager.syncAllContent()
-                                    DebugLogger.debugLog("LoginSync", result.message)
-                                }
+                                val result = syncManager.syncAllContent()
+                                DebugLogger.debugLog("LoginSync", result.message)
 
                                 navController.navigate("main") {
                                     popUpTo("login") { inclusive = true }

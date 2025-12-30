@@ -360,10 +360,8 @@ fun UserDetailEntryScreen(
                                                 conceptDao = conceptDao
                                             )
 
-                                            scope.launch {
-                                                val result = syncManager.syncAllContent()
-                                                DebugLogger.debugLog("LoginSync", result.message)
-                                            }
+                                            val result = syncManager.syncAllContent()
+                                            DebugLogger.debugLog("LoginSync", result.message)
                                         }
 
                                         sharedPreference.setLoggedIn(true)
