@@ -20,12 +20,15 @@ import com.anurag.eduai.R
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.service.auth.GoogleSignIn
+import com.anurag.eduai.sync.FirebaseSyncManager
 import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
 import com.anurag.eduai.ui.viewModel.UserViewModel
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
 @Composable
@@ -39,6 +42,7 @@ fun GoogleLoginButton(
 
     val db = remember { EduAiDatabase.getInstance(context) }
     val studentDao = db.studentDao()
+    val conceptDao = db.conceptDao()
     val localRepo = remember { StudentLocalRepository(studentDao) }
 
 
@@ -85,6 +89,15 @@ fun GoogleLoginButton(
                                 sharedPreference.setLanguagePreference(selectedLanguage)
                                 sharedPreference.setUserId(userExists.id)
 
+                                // Sync with firebase
+                                val syncManager = FirebaseSyncManager(
+                                    subjectDao = db.subjectDao(),
+                                    chapterDao = db.chapterDao(),
+                                    conceptDao = conceptDao
+                                )
+
+                                val result = syncManager.syncAllContent()
+                                DebugLogger.debugLog("LoginSync", result.message)
 
                                 navController.navigate("main") {
                                     popUpTo("login") { inclusive = true }

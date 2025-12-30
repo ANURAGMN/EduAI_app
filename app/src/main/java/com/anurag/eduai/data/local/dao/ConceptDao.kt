@@ -20,7 +20,8 @@ interface ConceptDao {
 
     @Update
     suspend fun updateConcept(concept: ConceptEntity)
-
+    @Query("SELECT * FROM concepts ORDER BY chapterId ASC, orderIndex ASC")
+    suspend fun getAllConceptsSync(): List<ConceptEntity>
     @Query("SELECT * FROM concepts WHERE chapterId = :chapterId ORDER BY orderIndex ASC")
     fun getConceptsForChapter(chapterId: String): Flow<List<ConceptEntity>>
 

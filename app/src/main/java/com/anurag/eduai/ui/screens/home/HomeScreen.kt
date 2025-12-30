@@ -22,6 +22,7 @@ import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.ui.screens.home.components.HomeScreenTopBar
 import com.anurag.eduai.ui.screens.home.components.SimulationCard
 import com.anurag.eduai.ui.screens.home.components.TodayProgressCard
@@ -34,6 +35,7 @@ fun HomeScreen() {
 
     val db = remember { EduAiDatabase.getInstance(context) }
     val studentDao = db.studentDao()
+    val conceptDao = db.conceptDao()
     val sharedPreferenceUtils = SharedPreferenceUtils(context)
 
     val userId = sharedPreferenceUtils.getUserId().toString()
@@ -44,6 +46,15 @@ fun HomeScreen() {
         student = studentDao.getStudentSync(userId)
         DebugLogger.debugLog("HomeScreen", "CurrentUser:\n $student")
     }
+    // Log all concepts once
+    LaunchedEffect(Unit) {
+        val allConcepts = conceptDao.getAllConceptsSync()
+        DebugLogger.debugLog(
+            "HomeScreen",
+            "Concepts in LocalDB:\n${allConcepts.joinToString("\n")}"
+        )
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize()
     ) {
