@@ -1,75 +1,74 @@
 package com.anurag.eduai.ui.screens.conceptscreen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
+import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
-import com.anurag.eduai.ui.components.Header
+import com.anurag.eduai.ui.components.ScreenWithHeader
+import com.anurag.eduai.ui.screens.conceptscreen.components.Concept
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptCard
-import com.anurag.eduai.ui.theme.BackgroundPrimary
-
-enum class ConceptStatus {
-    COMPLETED,
-    IN_PROGRESS,
-    NOT_STARTED
-}
-
-data class Concept(
-    val id: String,
-    val name: String,
-    val status: ConceptStatus,
-)
+import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptStatus
+import com.anurag.eduai.ui.viewModel.ConceptViewModel
 
 @Composable
 fun ConceptScreen(
-    chapterName: String = "Polynomials",
-    className: String = "Class 7 - Mathematics",
+    chapterId: String,
+    onBackClick: () -> Unit = {},
+    onConceptClick: (String) -> Unit = {}
 ) {
-
-    // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.CONCEPT)
 
-    val concepts = listOf(
-        Concept(
-            id = "1",
-            name = "Introduction to Polynomials",
-            status = ConceptStatus.COMPLETED
-        ),
-        Concept(
-            id = "2",
-            name = "Types of Polynomials",
-            status = ConceptStatus.IN_PROGRESS
-        ),
-        Concept(
-            id = "3",
-            name = "Operations on Polynomials",
-            status = ConceptStatus.NOT_STARTED
-        )
-    )
+    val context = LocalContext.current
+    val db = remember { EduAiDatabase.getInstance(context) }
+    val conceptDao = db.conceptDao()
+    val chapterDao = db.chapterDao()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundPrimary)
-    ) {
-        // Top Header
-        Header(
-           className,
-           chapterName,
+    val viewModel = remember { ConceptViewModel(conceptDao, chapterDao) }
+    val state by viewModel.state.collectAsState()
 
-        )
-        // Concepts Card
-        ConceptCard(
-            concepts = concepts
-        )
+    LaunchedEffect(chapterId) {
+        viewModel.loadConcepts(chapterId)
     }
-}
 
-@Preview(showBackground = true)
-@Composable
-fun ChapterScreenPreview() {
-    ConceptScreen()
+    ScreenWithHeader(
+        title = state.chapter?.chapterName ?: "Concepts",
+        onBackClick = onBackClick
+    ) {
+        if (state.isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else if (state.error != null) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "Error: ${state.error}")
+            }
+        } else {
+            ConceptCard(
+                concepts = state.concepts.map {
+                    Concept(
+                        id = it.conceptId,
+                        order=it.orderIndex,
+                        name = it.conceptName,
+                    )
+                },
+                onConceptClick = onConceptClick
+            )
+        }
+    }
 }

@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.local.entities.StudentEntity
@@ -31,7 +32,9 @@ import com.anurag.eduai.ui.screens.home.components.TodayProgressCard
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onNavigateToLearning: () -> Unit = {}
+) {
 
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.HOME)
@@ -70,7 +73,9 @@ fun HomeScreen() {
                 .verticalScroll(rememberScrollState())
         ) {
             HomeScreenTopBar(
-                userName = student?.studentName ?: "John Doe"
+                userName = student?.studentName ?: "John Doe",
+                onChangeSubject = {
+                    onNavigateToLearning()                 }
             )
 
             Column(

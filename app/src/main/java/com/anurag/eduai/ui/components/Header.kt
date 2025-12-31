@@ -5,67 +5,46 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.anurag.eduai.ui.theme.HeaderGradientEnd
 import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.TextOnPrimary
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Header(title: String = "Class 7", subtitle: String = "NCERT Curriculum") {
-    LargeTopAppBar(
+internal fun Header(
+    title: String = "Class 7",
+    onBackClick: () -> Unit = {},
+    scrollBehavior: TopAppBarScrollBehavior
+) {
+   LargeTopAppBar(
         title = {
             Column {
                 Text(
-                    text =title,
-                    fontSize = 28.sp,
+                    text = title,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextOnPrimary
-                )
-                Text(
-                    text = subtitle,
-                    fontSize = 14.sp,
-                    color = TextOnPrimary.copy(alpha = 0.9f),
-                    fontWeight = FontWeight.Normal
                 )
             }
         },
         navigationIcon = {
-            IconButton( onClick = {}) {
+            IconButton(onClick = onBackClick) {
                 Icon(
-                    imageVector =  Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
-                    tint = TextOnPrimary,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        },
-        actions = {
-            IconButton(onClick = {}) {
-                Icon(
-                    imageVector = Icons.Default.Home,
-                    contentDescription = "Home",
-                    tint = TextOnPrimary,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-            IconButton(onClick = {}) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
                     tint = TextOnPrimary,
                     modifier = Modifier.size(24.dp)
                 )
@@ -82,11 +61,7 @@ fun Header(title: String = "Class 7", subtitle: String = "NCERT Curriculum") {
                     HeaderGradientEnd
                 )
             )
-        )
+        ),
+        scrollBehavior = scrollBehavior
     )
-}
-@Preview
-@Composable
-fun HeaderPreview() {
-    Header()
 }

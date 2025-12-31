@@ -1,6 +1,7 @@
 package com.anurag.eduai.ui.screens.home.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -35,6 +36,7 @@ fun SubjectCard(
                 ),
                 shape = RoundedCornerShape(18.dp)
             )
+            .clickable(onClick = onChangeClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

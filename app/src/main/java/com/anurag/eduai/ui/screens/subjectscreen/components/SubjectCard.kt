@@ -25,10 +25,11 @@ import com.anurag.eduai.ui.screens.subjectscreen.Subject
 import com.anurag.eduai.ui.theme.TextOnAccent
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
+
 @Composable
 fun SubjectCard(
     subject: Subject,
-    onClick: () -> Unit = {}
+    onClick: (Subject) -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -37,7 +38,7 @@ fun SubjectCard(
                 color = Color.White,
                 shape = RoundedCornerShape(12.dp)
             )
-            .clickable(onClick = onClick)
+            .clickable { onClick(subject) }
             .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -88,7 +89,7 @@ fun SubjectCard(
         Spacer(modifier = Modifier.height(10.dp))
 
         Button(
-            onClick = onClick,
+            onClick = { onClick(subject) },
             modifier = Modifier
                 .fillMaxWidth(0.85f)
                 .height(36.dp),
