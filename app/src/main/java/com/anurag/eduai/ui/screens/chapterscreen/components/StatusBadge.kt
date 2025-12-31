@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.anurag.eduai.ui.screens.chapterscreen.ChapterStatus
 import com.anurag.eduai.ui.theme.ColorError
 import com.anurag.eduai.ui.theme.ColorSuccess
 import com.anurag.eduai.ui.theme.ColorWarning

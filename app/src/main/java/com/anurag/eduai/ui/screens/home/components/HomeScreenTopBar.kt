@@ -38,7 +38,8 @@ fun getGreeting(): String {
 fun HomeScreenTopBar(
     userName: String = "John Doe",
     subject: String = "Science",
-    streakDays: Int = 7
+    streakDays: Int = 7,
+    onChangeSubject: () -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -72,9 +73,7 @@ fun HomeScreenTopBar(
 
             SubjectCard(
                 subject,
-                onChangeClick = {
-
-                }
+                onChangeClick = onChangeSubject
             )
             StreakCard(streakDays)
         }

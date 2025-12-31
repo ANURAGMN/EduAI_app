@@ -1,5 +1,7 @@
 package com.anurag.eduai.ui.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -8,8 +10,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
-import androidx.navigation.Navigation
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -52,11 +52,28 @@ fun BottomNavBar() {
         NavHost(
             navController = navController,
             startDestination = BottomNavItem.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
         ) {
-            composable(BottomNavItem.Home.route) { HomeScreen() }
+            composable(BottomNavItem.Home.route) {
+                HomeScreen(
+                    onNavigateToLearning = {
+                        navController.navigate("learning")
+                    }
+                )
+            }
             composable(BottomNavItem.Progress.route) { ProgressScreen() }
             composable(BottomNavItem.Setting.route) { SettingScreen() }
+            composable("learning") {
+                LearningNavigator(
+                    onBackToHome = {
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
     }
 }

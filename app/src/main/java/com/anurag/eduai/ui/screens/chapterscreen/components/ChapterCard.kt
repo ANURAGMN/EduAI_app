@@ -21,11 +21,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.anurag.eduai.ui.screens.chapterscreen.Chapter
-import com.anurag.eduai.ui.screens.chapterscreen.ChapterStatus
 import com.anurag.eduai.ui.theme.ChipBackground
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
+
+enum class ChapterStatus {
+    COMPLETED,
+    IN_PROGRESS,
+    NOT_STARTED
+}
+
+data class Chapter(
+    val id: String,
+    val name: String,
+    val chapterCount: String,
+    val status: ChapterStatus = ChapterStatus.NOT_STARTED
+)
 
 @Composable
 fun ChapterCard(
@@ -84,7 +95,6 @@ fun ChapterCard(
             )
         }
 
-
         Spacer(modifier = Modifier.height(12.dp))
 
         // Action buttons
@@ -111,9 +121,9 @@ fun ChapterCard(
                 modifier = Modifier.weight(1f),
                 onClick = {}
             )
-            }
         }
     }
+}
 
 @Composable
 fun ChapterActionButton(
@@ -155,11 +165,3 @@ fun ChapterCardPreview() {
     )
 }
 
-@Preview
-@Composable
-fun ChapterActionButtonPreview() {
-    ChapterActionButton(
-        label = "Study",
-        icon = "📚"
-    )
-}

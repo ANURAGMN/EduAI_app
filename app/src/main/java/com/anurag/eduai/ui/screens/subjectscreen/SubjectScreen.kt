@@ -1,20 +1,27 @@
 package com.anurag.eduai.ui.screens.subjectscreen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
-import com.anurag.eduai.ui.components.Header
+import com.anurag.eduai.ui.components.ScreenWithHeader
 import com.anurag.eduai.ui.screens.subjectscreen.components.SubjectCard
-import com.anurag.eduai.ui.theme.*
+import com.anurag.eduai.ui.viewModel.SubjectViewModel
 
 data class Subject(
     val id: String,
@@ -22,56 +29,60 @@ data class Subject(
     val color: Color,
     val chapterCount: String
 )
+
 @Composable
 fun SubjectScreen(
     onBackClick: () -> Unit = {},
     onSubjectClick: (Subject) -> Unit = {}
 ) {
-    // Analytics Setup
     TrackScreenEvent(screenName = ScreenName.SUBJECT)
 
-    val subjects = listOf(
-        Subject("1", "Mathematics", Color(0xFF3B82F6), "12 Concepts"),
-        Subject("2", "English", Color(0xFF22C55E), "10 Concepts"),
-        Subject("3", "Hindi", Color(0xFFF97316), "15 Concepts"),
-        Subject("4", "Science", Color(0xFF8B5CF6), "20 Concepts"),
-        Subject("5", "Physics", Color(0xFF06B6D4), "18 Concepts"),
-        Subject("6", "Chemistry", Color(0xFFEC4899), "16 Concepts"),
-        Subject("7", "Geography", Color(0xFF14B8A6), "14 Concepts"),
-        Subject("8", "Electronics", Color(0xFF6366F1), "12 Concepts")
-    )
+    val context = LocalContext.current
+    val db = remember { EduAiDatabase.getInstance(context) }
+    val subjectDao = db.subjectDao()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundPrimary)
+    val viewModel = remember { SubjectViewModel(subjectDao) }
+    val state by viewModel.state.collectAsState()
+
+    ScreenWithHeader(
+        title = "Class ${state.classLevel}",
+        onBackClick = onBackClick
     ) {
-        Header(
-            title = "Class 7",
-            subtitle = "NCERT Curriculum"
-        )
-
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-
-            items(subjects) { subject ->
-                SubjectCard(
-                    subject = subject,
-                    onClick = { onSubjectClick(subject) }
-                )
+        if (state.isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else if (state.error != null) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "Error: ${state.error}")
+            }
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(state.subjects) { subject ->
+                    SubjectCard(
+                        subject = Subject(
+                            id = subject.subjectId,
+                            name = subject.subjectName,
+                            color = Color(0xFF3B82F6),
+                            chapterCount = "Chapters"
+                        ),
+                        onClick = onSubjectClick
+                    )
+                }
             }
         }
     }
-}
-@Preview(showBackground = true)
-@Composable
-fun SubjectScreenPreview() {
-    SubjectScreen()
 }
