@@ -126,7 +126,7 @@ fun ConceptItemCard(
                         text = concept.name,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary
+                        color = if (isEnabled) TextPrimary else TextSecondary
                     )
 
                     // Subtitle based on status
@@ -201,7 +201,7 @@ fun ConceptStatusBadge(
 
 private fun getSubtitle(status: ConceptStatus): String = when (status) {
     ConceptStatus.COMPLETED -> "Completed"
-    ConceptStatus.IN_PROGRESS -> "Continue Learning"
+    ConceptStatus.IN_PROGRESS -> "In Progress - Continue Learning"
     ConceptStatus.NOT_STARTED -> "Complete previous concepts"
 }
 

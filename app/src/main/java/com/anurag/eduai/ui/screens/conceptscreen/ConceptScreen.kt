@@ -11,13 +11,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.anurag.eduai.data.local.EduAiDatabase
+import com.anurag.eduai.data.local.SharedPreferenceUtils
+import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.components.ScreenWithHeader
 import com.anurag.eduai.ui.screens.conceptscreen.components.Concept
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptCard
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptStatus
+import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.viewModel.ConceptViewModel
 
 @Composable
@@ -32,8 +36,12 @@ fun ConceptScreen(
     val db = remember { EduAiDatabase.getInstance(context) }
     val conceptDao = db.conceptDao()
     val chapterDao = db.chapterDao()
+    val progressDao = db.progressDao()
+    val sharedPrefs = remember { SharedPreferenceUtils(context) }
 
-    val viewModel = remember { ConceptViewModel(conceptDao, chapterDao) }
+    val viewModel = remember {
+        ConceptViewModel(conceptDao, chapterDao, progressDao, sharedPrefs)
+    }
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(chapterId) {
@@ -53,21 +61,31 @@ fun ConceptScreen(
             }
         } else if (state.error != null) {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "Error: ${state.error}")
+                Text(text = "Error: ${state.error}", color = TextPrimary)
             }
         } else {
             ConceptCard(
-                concepts = state.concepts.map {
+                concepts = state.concepts.map { conceptWithProgress ->
                     Concept(
-                        id = it.conceptId,
-                        order=it.orderIndex,
-                        name = it.conceptName,
+                        id = conceptWithProgress.concept.conceptId,
+                        order = conceptWithProgress.concept.orderIndex,
+                        name = conceptWithProgress.concept.conceptName,
+                        status = when (conceptWithProgress.status) {
+                            "COMPLETED" -> ConceptStatus.COMPLETED
+                            "IN_PROGRESS", "STARTED" -> ConceptStatus.IN_PROGRESS // Treat STARTED and IN_PROGRESS the same in list
+                            else -> ConceptStatus.NOT_STARTED
+                        }
                     )
                 },
-                onConceptClick = onConceptClick
+                onConceptClick = { conceptId ->
+                    DebugLogger.debugLog("ConceptScreen", "Concept clicked: $conceptId")
+                    onConceptClick(conceptId)
+                }
             )
         }
     }
