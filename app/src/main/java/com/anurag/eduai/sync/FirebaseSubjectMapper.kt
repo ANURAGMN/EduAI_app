@@ -8,24 +8,20 @@ import com.google.firebase.firestore.DocumentSnapshot
  * Ensures strong separation between API layer and local database layer.
  */
 object FirebaseSubjectMapper {
-    /**
-     * Converts Firebase document into SubjectEntity
-     */
+
     fun map(document: DocumentSnapshot): SubjectEntity {
-        // Extract class level from class_id (e.g., "7" -> 7)
-        val classLevel = try {
-            document.getString("class_id")?.toIntOrNull() ?: 0
-        } catch (e: Exception) {
-            0
-        }
-        
+
+        val classLevel = document.getString("class_id")?.toIntOrNull() ?: 0
+        val totalChapters = document.getLong("subjectCount")?.toInt() ?: 0
+
         return SubjectEntity(
             subjectId = document.getString("subject_id") ?: "",
-            subjectName = document.getString("subject_id") ?: "", // Firestore doesn't have subject_name, using ID
-            subjectNameKannada = "", // Not provided by Firestore
+            subjectName = document.getString("subject_id") ?: "",
+            subjectNameKannada = "",
             classLevel = classLevel,
-            iconUrl = null,          // Not provided by Firestore
-            orderIndex = 0,          // Not provided by Firestore
+            iconUrl = null,
+            orderIndex = 0,
+            totalChapters = totalChapters,
             createdAt = System.currentTimeMillis(),
             isSynced = true
         )
