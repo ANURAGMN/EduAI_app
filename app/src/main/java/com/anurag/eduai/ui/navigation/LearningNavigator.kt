@@ -10,9 +10,11 @@ import androidx.navigation.compose.rememberNavController
 import com.anurag.eduai.ui.screens.chapterscreen.ChapterScreen
 import com.anurag.eduai.ui.screens.conceptdetailscreen.ConceptDetailScreen
 import com.anurag.eduai.ui.screens.conceptscreen.ConceptScreen
+import com.anurag.eduai.ui.screens.home.HomeScreen
 import com.anurag.eduai.ui.screens.subjectscreen.SubjectScreen
 
 object LearningRoutes {
+    const val HOME = "home"
     const val SUBJECTS = "subjects"
     const val CHAPTERS = "chapters/{subjectId}"
     const val CONCEPTS = "concepts/{chapterId}"
@@ -32,6 +34,14 @@ fun LearningNavigator(
         popEnterTransition = { EnterTransition.None },
         popExitTransition = { ExitTransition.None }
     ) {
+        composable(LearningRoutes.HOME) {
+            HomeScreen(
+                onLessonClick = { conceptId ->
+                    navController.navigate("concept_detail/$conceptId")
+                }
+            )
+        }
+
         composable(LearningRoutes.SUBJECTS) {
             SubjectScreen(
                 onBackClick = onBackToHome,
