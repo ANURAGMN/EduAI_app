@@ -1,6 +1,7 @@
 package com.anurag.eduai.ui.screens.home.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,12 +37,14 @@ fun LessonStatusCard(
     backgroundColor: Color,
     status: String,
     icon: @Composable () -> Unit,
+    onClick: () -> Unit = {},
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(backgroundColor)
+            .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

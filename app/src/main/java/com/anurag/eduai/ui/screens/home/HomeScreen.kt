@@ -19,7 +19,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.local.entities.StudentEntity
@@ -31,11 +30,11 @@ import com.anurag.eduai.ui.screens.home.components.SimulationCard
 import com.anurag.eduai.ui.screens.home.components.TodayProgressCard
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.viewModel.HomeViewModel
-import com.anurag.eduai.ui.viewModel.factory.HomeViewModelFactory
 
 @Composable
 fun HomeScreen(
-    onNavigateToLearning: () -> Unit = {}
+    onNavigateToLearning: () -> Unit = {},
+    onLessonClick: (String) -> Unit = {}
 ) {
 
     // Analytics Tracking
@@ -52,15 +51,19 @@ fun HomeScreen(
     val userId = sharedPreferenceUtils.getUserId().toString()
     var student by remember { mutableStateOf<StudentEntity?>(null) }
 
-    val viewModel: HomeViewModel =
-            viewModel(factory = HomeViewModelFactory(conceptDao, progressDao))
+    val viewModel = remember { HomeViewModel(conceptDao, progressDao, userId) }
+
+    val progressConcepts by viewModel.progressConcepts.collectAsState()
+
+
     // Testing if user is added to LocalDB or not
     LaunchedEffect(Unit) {
         student = studentDao.getStudentSync(userId)
         DebugLogger.debugLog("HomeScreen", "CurrentUser:\n $student")
+        DebugLogger.debugLog("HomeScreen", "Concept:\n $progressConcepts")
     }
 
-    val progressConcepts by viewModel.progressConcepts.collectAsState()
+
 
     Surface(modifier = Modifier
         .fillMaxSize()
@@ -78,7 +81,10 @@ fun HomeScreen(
 
             Column(modifier = Modifier.padding(10.dp)) {
 
-                TodayProgressCard(progressConcepts = progressConcepts)
+                TodayProgressCard(
+                    progressConcepts = progressConcepts,
+                    onLessonClick = onLessonClick
+                )
 
                 Spacer(modifier = Modifier.height(15.dp))
 

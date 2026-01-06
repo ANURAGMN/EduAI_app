@@ -6,12 +6,14 @@ import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.data.local.entities.ProgressEntity
 import com.anurag.eduai.data.local.dao.ConceptDao
 import com.anurag.eduai.data.local.entities.ConceptEntity
+import com.anurag.eduai.debug.DebugLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
     private val conceptDao: ConceptDao,
     private val progressDao: ProgressDao,
+    private val userId: String
 ) : ViewModel(){
     
     // Pair of ProgressEntity and its corresponding ConceptEntity
@@ -20,9 +22,10 @@ class HomeViewModel(
 
     init {
         viewModelScope.launch {
-            progressDao.getHomeScreenConcepts("userId", "CONCEPT")
+            progressDao.getHomeScreenConcepts(userId, "CONCEPT")
                 .collect { progressList ->
                     val conceptIds = progressList.map { it.itemId }
+                    DebugLogger.debugLog("HomeViewModel", "ConceptId,\n $progressList")
                     
                     // We need to fetch concepts. Since we are inside a collect, ideally we should use flatMapLatest or combine
                     // But for simplicity in this Flow setup, we can collect inside or just use a suspend function if Dao supports it.

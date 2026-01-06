@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.data.local.entities.ProgressEntity
+import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.AccentGreen
 import com.anurag.eduai.ui.theme.BackgroundPrimary
@@ -34,7 +35,8 @@ import com.anurag.eduai.ui.theme.White
 
 @Composable
 fun TodayProgressCard(
-    progressConcepts: List<Pair<ProgressEntity, ConceptEntity?>>
+    progressConcepts: List<Pair<ProgressEntity, ConceptEntity?>>,
+    onLessonClick: (String) -> Unit
 ) {
 
     Card(
@@ -108,26 +110,30 @@ fun TodayProgressCard(
                         } else {
                             // Active or Pending
                             LessonStatusCard(
-                                    title = concept?.conceptName ?: "Unknown Concept",
-                                    subtitle = "Status: ${progress.status}", // Or detailed score if
-                                    // available
-                                    iconColor = AccentBlue,
-                                    backgroundColor = AccentBlue.copy(alpha = 0.1f),
-                                    icon = {
-                                        Icon(
-                                                imageVector =
-                                                        if (progress.status == "COMPLETED")
-                                                                Icons.Outlined.CheckCircle
-                                                        else
-                                                                Icons.AutoMirrored.Outlined
-                                                                        .LibraryBooks,
-                                                contentDescription = null,
-                                                tint = White
-                                        )
-                                    },
-                                    status =
-                                            if (progress.status == "IN_PROGRESS") "pending"
-                                            else "completed", // Mapping to UI status
+                                title = concept?.conceptName ?: "Unknown Concept",
+                                subtitle = "Status: ${progress.status}", // Or detailed score if
+                                // available
+                                iconColor = AccentBlue,
+                                backgroundColor = AccentBlue.copy(alpha = 0.1f),
+                                icon = {
+                                    Icon(
+                                        imageVector =
+                                            if (progress.status == "COMPLETED")
+                                                Icons.Outlined.CheckCircle
+                                            else
+                                                Icons.AutoMirrored.Outlined
+                                                    .LibraryBooks,
+                                        contentDescription = null,
+                                        tint = White
+                                    )
+                                },
+                                status =
+                                    if (progress.status == "IN_PROGRESS") "pending"
+                                    else "completed", // Mapping to UI status
+                                onClick = {
+                                    DebugLogger.debugLog("TodayProgressCard", "Concept Clicked id ${concept?.conceptId}")
+                                    concept?.let { onLessonClick(it.conceptId) }
+                                }
                             )
                         }
                         Spacer(modifier = Modifier.padding(5.dp))
