@@ -14,9 +14,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.outlined.SmartToy
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -27,24 +26,40 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.anurag.eduai.ui.theme.HeaderGradientEnd
-import com.anurag.eduai.ui.theme.HeaderGradientStart
+import com.anurag.eduai.R
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
+import com.anurag.eduai.ui.theme.AccentBlue
+import com.anurag.eduai.ui.theme.AiMessageBackground
+import com.anurag.eduai.ui.theme.IconPrimary
+
 
 /**
  * A composable representing a message bubble from the AI agent.
  */
+
+@Composable
+fun MessageBubble(
+    message : ChatMessageModel
+){
+    val isFromAI = message.sender == "ai"
+    if(isFromAI){
+        AgentMessageBubble(text=message.content)
+    }else{
+        UserMessageBubble(text = message.content)
+    }
+}
+
 @Composable
 fun AgentMessageBubble(
-    text: String,
-    onListenClick: () -> Unit,
+    text : String,
     modifier: Modifier = Modifier
 ) {
+
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -56,21 +71,13 @@ fun AgentMessageBubble(
             modifier = Modifier
                 .size(40.dp)
                 .clip(RoundedCornerShape(20.dp))
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            HeaderGradientStart,
-                            HeaderGradientEnd
-                        )
-                    )
-                ),
+                .background(AccentBlue),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector =
-                    Icons.Default.SmartToy,
-                contentDescription = "Agent",
-                tint = Color(0xFFFFD700),
+                imageVector = Icons.Outlined.SmartToy,
+                contentDescription = stringResource(R.string.agent),
+                tint = Color.White,
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -79,49 +86,27 @@ fun AgentMessageBubble(
 
         // Message bubble
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(0.85f),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFF0F4FF)
+                containerColor = AiMessageBackground
             ),
             shape = RoundedCornerShape(12.dp)
-        )
-        {
+        ) {
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Lightbulb,
-                        contentDescription = null,
-                        tint = Color(0xFFFFB800),
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Think about this:",
-                        fontSize = 14.sp,
-                        color = Color(0xFF5A6C7D),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
                 Text(
-                    text = "Can you count all the numbers between 1 and 2?",
-                    fontSize = 16.sp,
-                    color = Color(0xFF2D3748),
-                    fontWeight = FontWeight.Medium
+                    text = text,
+                    fontSize = androidx.compose.material3.MaterialTheme.typography.bodyMedium.fontSize,
+                    color = Color(0xFF2D3748)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 TextButton(
-                    onClick = { /* Listen action */ },
+                    onClick ={} ,
                     colors = ButtonDefaults.textButtonColors(
-                        contentColor = Color(0xFF5B8EF8)
+                        contentColor = IconPrimary
                     )
                 ) {
                     Icon(
@@ -136,10 +121,10 @@ fun AgentMessageBubble(
         }
     }
 }
-
 /**
  * A composable representing a message bubble from the user.
  */
+
 @Composable
 fun UserMessageBubble(
     text: String,
@@ -163,20 +148,14 @@ fun UserMessageBubble(
                     )
                 )
                 .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            HeaderGradientStart,
-                            HeaderGradientEnd
-                        )
-                    )
+                    color = AccentBlue
                 )
                 .padding(12.dp)
         ) {
             Text(
                 text = text,
-                fontSize = 15.sp,
-                color = Color.White,
-                lineHeight = 20.sp
+                fontSize = androidx.compose.material3.MaterialTheme.typography.bodyMedium.fontSize,
+                color = Color.White
             )
         }
     }
@@ -186,7 +165,6 @@ fun UserMessageBubble(
 fun AgentMessageBubblePreview() {
     AgentMessageBubble(
         text = "Hello! How can I assist you today?",
-        onListenClick = {}
     )
 }
 @Composable
