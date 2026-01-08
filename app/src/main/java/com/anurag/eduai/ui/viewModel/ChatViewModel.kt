@@ -3,13 +3,14 @@ package com.anurag.eduai.ui.viewModel
 import ChatMessageModel
 import android.app.Application
 import android.content.Context
-import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.anurag.eduai.BuildConfig
+import com.anurag.eduai.R
 import com.anurag.eduai.data.local.ConceptSessionRepository
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.remote.AgenticAIClient
+import com.anurag.eduai.data.remote.SessionMetadata
 import com.anurag.eduai.debug.DebugLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -19,26 +20,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlin.collections.set
 
 
 /**
  * ViewModel for managing chat interactions with an AI agent.
  */
-class ChatViewModel (
-    application: Application
-): ViewModel() {
-
+class ChatViewModel (): ViewModel() {
 
     private val agenticAIClient = AgenticAIClient(BuildConfig.AGENTIC_AI_BASE_URL)
 
-    private val sharedPreferenceUtils = SharedPreferenceUtils(application)
-    val userId = sharedPreferenceUtils.getUserId().toString()
-    //student level
-    private val _studentLevel = MutableStateFlow("medium")
-    val studentLevel: StateFlow<String> = _studentLevel
-    private val _currentLanguage = MutableStateFlow("en")
-    val currentLanguage: StateFlow<String> = _currentLanguage
+    // Chat messages
+    private val _messages = MutableStateFlow<List<ChatMessageModel>>(emptyList())
+    val messages: StateFlow<List<ChatMessageModel>> = _messages
+
     // Loading state
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -50,6 +46,11 @@ class ChatViewModel (
     private val _isTyping = MutableStateFlow(false)
     val isTyping: StateFlow<Boolean> = _isTyping
 
+    //student level
+    private val _studentLevel = MutableStateFlow("medium")
+    val studentLevel: StateFlow<String> = _studentLevel
+    private val _currentLanguage = MutableStateFlow("en")
+    val currentLanguage: StateFlow<String> = _currentLanguage
     // Selected concept state
     private val _selectedConcept = MutableStateFlow<String?>(null)
     val selectedConcept: StateFlow<String?> = _selectedConcept
@@ -78,22 +79,55 @@ class ChatViewModel (
 
     // Last user message for when the send msg failed
     private val _lastUserMessage = MutableStateFlow("")
-    val lastUserMessage: StateFlow<String> = _lastUserMessage
-
-    // Chat messages
-    private val _messages = MutableStateFlow<List<ChatMessageModel>>(emptyList())
-    val messages: StateFlow<List<ChatMessageModel>> = _messages
-
-
     //Job for typing animation
     private var typingJob: Job? = null
 
+    //agent/session metadata
+    private val _agentMetadata = MutableStateFlow<SessionMetadata?>(null)
+    val agentMetadata: StateFlow<SessionMetadata?> = _agentMetadata
 
     // Available concepts
     private val _availableConcepts = MutableStateFlow<List<String>>(emptyList())
     val availableConcepts: StateFlow<List<String>> = _availableConcepts
 
+    // Input text state
+    private val _inputText = MutableStateFlow("")
+    val inputText: StateFlow<String> = _inputText
 
+    // Pending first user message if session not ready
+    private val _pendingFirstUserMessage = MutableStateFlow<String?>(null)
+
+
+    // Chat UI state (wrapper for all UI state)
+    data class ChatUIState(
+        val messages: List<ChatMessageModel> = emptyList(),
+        val inputText: String = ""
+    )
+
+    private val _uiState = MutableStateFlow(ChatUIState())
+    val uiState: StateFlow<ChatUIState> = _uiState
+    private var userId: String = ""
+
+    /**
+     * Update the input text field
+     */
+    fun updateInputText(text: String) {
+        _inputText.value = text
+        _uiState.update { it.copy(inputText = text) }
+    }
+
+
+    /**
+     * Update UI state with new messages
+     */
+    private fun updateUIState() {
+        _uiState.update { currentState ->
+            currentState.copy(
+                messages = _messages.value,
+                inputText = _inputText.value
+            )
+        }
+    }
     /**
      * Set the student level
      */
@@ -101,8 +135,82 @@ class ChatViewModel (
         _studentLevel.value = level
         DebugLogger.debugLog("ChatViewModel", "Student level changed to: $level")
     }
+    fun initialize(context: Context, id : String) {
+        viewModelScope.launch {
+            DebugLogger.debugLog("ChatViewModel", "Starting full initialization")
+            refreshAvailableConcepts(context, _currentLanguage.value)
+            if (userId.isEmpty()) {
+                userId = id
+                refreshAvailableConcepts(context)
+            }
+            DebugLogger.debugLog("ChatViewModel", "Initialization complete")
+        }
+    }
 
+    /**
+     * Refresh the list of available concepts from the server
+     */
+    fun refreshAvailableConcepts(context: Context, languageShort: String = "en") {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
 
+                // Call getConceptsList() which returns Result<ConceptsListResponse>
+                val result = agenticAIClient.getConceptsList()
+
+                if (result.isSuccess) {
+                    val response = result.getOrNull()
+
+                    // Extract the concepts list from the response
+                    val conceptsList = response?.concepts ?: emptyList()
+
+                    if (conceptsList.isNotEmpty()) {
+                        // Update the state with the concepts
+                        _availableConcepts.value = conceptsList
+                        DebugLogger.debugLog("ChatViewModel", "Concepts refreshed successfully: ${conceptsList.size} concepts loaded")
+                    } else {
+                        DebugLogger.debugLog("ChatViewModel", "No concepts returned from server")
+                    }
+                } else {
+                    DebugLogger.errorLog("ChatViewModel", "Failed to refresh concepts: ${result.exceptionOrNull()?.message}")
+                }
+            } catch (e: Exception) {
+                DebugLogger.errorLog("ChatViewModel", "refreshAvailableConcepts exception: ${e.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun clearAllSessions(context: Context) {
+        viewModelScope.launch {
+            try {
+                // Clear in-memory maps
+                conceptThreadMap.clear()
+                conceptSessionMap.clear()
+
+                // Clear SharedPreferences
+                withContext(Dispatchers.IO) {
+                    ConceptSessionRepository(context.applicationContext).clearAllMappings()
+                }
+
+                // Reset current session state
+                _isSessionStarted.value = false
+                agenticAIClient.setCurrentThreadAndSession(null, null)
+
+                // Clear messages and states
+                _messages.value = emptyList()
+                _selectedConcept.value = null
+                _pendingFirstUserMessage.value = null
+                _fullTextForTTS.value = ""
+                _autosuggestions.value = emptyList()
+
+                DebugLogger.debugLog("ChatViewModel", "All sessions cleared successfully")
+            } catch (e: Exception) {
+                DebugLogger.errorLog("ChatViewModel", "clearAllSessions failed: ${e.message}")
+            }
+        }
+    }
     // Save the thread and session mapping for a concept
     private fun saveThreadMapping(context: Context, concept: String, threadId: String?, sessionId: String?) {
         if (threadId.isNullOrBlank()) return
@@ -145,9 +253,85 @@ class ChatViewModel (
 
         _lastUserMessage.value = userMessage
 
-        // Add user message
-        _messages.update { it + ChatMessageModel(content = userMessage, sender = "user") }
+        if (!_isSessionStarted.value) {
+            _pendingFirstUserMessage.value = userMessage
+            _messages.update { it + ChatMessageModel(content = userMessage, sender = "user") }
+            DebugLogger.debugLog("ChatViewModel", "Session not ready - queued message")
+            return
+        }
+        sendMessageAfterSessionReady(userMessage, context)
 
+        }
+
+    private fun sendMessageAfterSessionReady(userMessage: String, context: Context) {
+        _messages.update { it + ChatMessageModel(content = userMessage, sender = "user") }
+        _isLoading.value = true
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+
+                // Get response from AI agent
+                val response =withTimeout(120_000L) {
+                        agenticAIClient.continueSession(
+                        userMessage = userMessage,
+                        clickedAutosuggestion = clickedAutosuggestion,
+                        studentLevel = _studentLevel.value
+                    )
+                }
+
+                if (response.isSuccess) {
+                    val resp = response.getOrNull()!!
+                    val text = resp.agentResponse.orEmpty()
+                    // Add agent message with typing animation
+                    resp.metadata.let { _agentMetadata.value = it }
+
+                    updateAutosuggestions(resp.autosuggestions)
+                    DebugLogger.debugLog("ChatViewModel", "├─ Autosuggestions from continueSession: ${resp.autosuggestions.size}")
+                    resp.autosuggestions.forEachIndexed { idx, suggestion ->
+                        DebugLogger.debugLog("ChatViewModel", "  [$idx] $suggestion")
+                    }
+                    startTypingAnimation(text, context)
+
+
+                } else {
+                    // Handle error - add error message
+                    _messages.update {
+                        it + ChatMessageModel(
+                            content = context.getString(R.string.sorry_i_couldn_t_process_that_please_try_again),
+                            sender = "ai",
+                            isError = true,
+                            canRetry = true
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                DebugLogger.errorLog("ChatViewModel", "sendMessage error: ${e.message}")
+                _messages.update {
+                    it + ChatMessageModel(
+                        content = "An error occurred. Please try again.",
+                        sender = "ai",
+                        isError = true,
+                        canRetry = true
+                    )
+                }
+            } finally {
+                _isLoading.value = false
+            }
+        }
+
+    }
+    /**
+     * Update autosuggestions from API response
+     */
+    private fun updateAutosuggestions(suggestions: List<String>) {
+        _autosuggestions.value = suggestions
+        DebugLogger.debugLog(
+            "ChatViewModel",
+            "Autosuggestions updated: ${suggestions.size} suggestions"
+        )
+        suggestions.forEachIndexed { index, suggestion ->
+            DebugLogger.debugLog("ChatViewModel", "  [$index] $suggestion")
+        }
     }
 
     /**
@@ -163,8 +347,11 @@ class ChatViewModel (
             _isLoading.value = true
             //reset autosuggestions when selecting new concept
             _autosuggestions.value = emptyList()
+            _selectedConcept.value = concept
+            cancelAnimations()
+
             try {
-                val stored = loadThreadMapping(context, _selectedConcept.toString())
+                val stored = loadThreadMapping(context, concept)
                 if (stored != null) {
                     resumeExistingSession(context, stored.first,stored.second)
                 } else {
@@ -172,57 +359,50 @@ class ChatViewModel (
                 }
             } catch (e: Exception) {
                 DebugLogger.errorLog("ChatViewModel", "selectConcept error: ${e.message}")
+                _isLoading.value =false
             }
         }
     }
-
     fun sessionStart(context: Context, concept: String) {
         viewModelScope.launch {
-
             try {
-                val result =
-                    agenticAIClient.startSession(
-                        conceptTitle = concept,
-                        studentId = userId,
-                        isKannada = false,
-                        studentLevel = _studentLevel.value
-                    )
+                val result = agenticAIClient.startSession(
+                    conceptTitle = concept,
+                    studentId = userId,
+                    isKannada = false,
+                    studentLevel = _studentLevel.value
+                )
+
                 if (result.isSuccess) {
-                    val agentResponse = result.getOrNull()
-                    if (agentResponse != null && agentResponse.success) {
-                        saveThreadMapping(
-                            context, concept, agentResponse.threadId, agentResponse.sessionId
-                        )
+                    val response = result.getOrNull()
+                    val text= response?.agentResponse
+                    if (response != null && response.success) {
+                        // Save the mapping and update thread/session
+                        _isSessionStarted.value = true
+                        saveThreadMapping(context, concept, response.threadId, response.sessionId)
+                        agenticAIClient.setCurrentThreadAndSession(response.threadId, response.sessionId)
+                        updateAutosuggestions(response.autosuggestions)
+                        _isSessionStarted.value = true
+
+                        // Show the initial agent response with typing animation if available
+                        if (!text.isNullOrBlank()) {
+                            startTypingAnimation(text, context)
+                        }
+
+                        DebugLogger.debugLog("ChatViewModel", "Session started for concept: $concept")
                     }
                 }
             } catch (e: Exception) {
-
+                DebugLogger.errorLog("ChatViewModel", "sessionStart error: ${e.message}")
+            } finally {
+                _isLoading.value = false
+            }
+            _pendingFirstUserMessage.value?.let { msg ->
+                _pendingFirstUserMessage.value = null
+                sendMessageAfterSessionReady(msg, context)
             }
         }
     }
-
-    /**
-     * Continue an existing session with a user message
-     */
-    fun SessionContinue(context: Context, userMessage: String) {
-        viewModelScope.launch{
-            try{
-                val response =
-                    agenticAIClient.continueSession(
-                        userMessage = userMessage,
-                        clickedAutosuggestion = false,
-                        studentLevel = _studentLevel.value
-                    )
-                if(response.isSuccess){
-                    val agentResponse = response.getOrNull()?.agentResponse ?: "No response"
-                    addAgentMessage(agentResponse)
-                }
-            } catch (e: Exception){
-
-            }
-        }
-    }
-
 
     /**
      * Resume an existing session given thread and session IDs
@@ -231,6 +411,14 @@ class ChatViewModel (
      * - Fetches session history and appends last assistant message with typing animation
      * - Sends any pending user message that was queued before session was ready
      */
+    /**
+     * Resume an existing session given thread and session IDs
+     * - Clears previous messages
+     * - Sets current thread and session
+     * - Marks session as started
+     * - Fetches FULL session history and loads ALL messages
+     * - Loads last assistant message with typing animation
+     */
     private suspend fun resumeExistingSession(
         context: Context,
         threadId: String,
@@ -238,8 +426,13 @@ class ChatViewModel (
     ) {
         DebugLogger.debugLog("ChatViewModel", "Resuming session - thread=$threadId")
 
+        // ✓ CLEAR previous messages first
+        _messages.value = emptyList()
+        updateUIState()
+
         // Set current thread and session
         agenticAIClient.setCurrentThreadAndSession(threadId, sessionId)
+
         // Mark session as started
         _isSessionStarted.value = true
 
@@ -247,45 +440,79 @@ class ChatViewModel (
             // Fetch session history
             val histResult = agenticAIClient.getSessionHistory(threadId)
 
-            // On success, extract last assistant message
+            // On success, load ALL messages from history
             if (histResult.isSuccess) {
                 val history = histResult.getOrNull()
                 val messages = history?.messages ?: emptyList()
-                // Append past messages to chat
-                val lastAssistant = messages
-                    .lastOrNull { msg ->
-                        (msg["role"] as? String)?.lowercase() in listOf("assistant", "ai")
-                    }
-                    ?.get("content") as? String
-                // Show last assistant message with typing animation
-                if (!lastAssistant.isNullOrBlank()) {
-                    _fullTextForTTS.value = lastAssistant
 
-                    startTypingAnimation(lastAssistant, context)
+                DebugLogger.debugLog(
+                    "ChatViewModel",
+                    "Loaded ${messages.size} messages from history"
+                )
+
+                // Convert history to ChatMessageModel and add to messages
+                val chatMessages = messages.mapNotNull { msg ->
+                    val role = (msg["role"] as? String)?.lowercase() ?: return@mapNotNull null
+                    val content = msg["content"] as? String ?: return@mapNotNull null
+
+                    val sender = when (role) {
+                        "assistant", "ai" -> "ai"
+                        "user" -> "user"
+                        else -> return@mapNotNull null
+                    }
+
+                    ChatMessageModel(
+                        sender = sender,
+                        content = content,
+                        timestamp = (msg["timestamp"] as? Long) ?: System.currentTimeMillis()
+                    )
                 }
+
+                // Add all messages to chat
+                if (chatMessages.isNotEmpty()) {
+                    _messages.value = chatMessages
+                    updateUIState()
+
+                    DebugLogger.debugLog(
+                        "ChatViewModel",
+                        "Added ${chatMessages.size} messages to chat"
+                    )
+                }
+            } else {
+                DebugLogger.errorLog(
+                    "ChatViewModel",
+                    "Failed to fetch history: ${histResult.exceptionOrNull()?.message}"
+                )
             }
         } catch (e: Exception) {
             DebugLogger.errorLog("ChatViewModel", "Error resuming session: ${e.message}")
         } finally {
             _isLoading.value = false
         }
-
     }
 
     /**
      * Start typing animation for AI response
-     * - Translates text if needed
-     * - Updates original AI response
-     * - Updates translated output and TTS text
+     * - Adds message to chat IMMEDIATELY (before animation)
+     * - Updates TTS and typing text state
      * - Animates typing word by word
-     * - Finally appends full message to chat
      */
     private fun startTypingAnimation(fullText: String, context: Context) {
-
         typingJob?.cancel()
         typingJob = viewModelScope.launch {
+            _messages.update {
+                it + ChatMessageModel(sender = "ai", content = fullText)
+            }
+            updateUIState()
+
             _isTyping.value = true
             _typingText.value = ""
+            _fullTextForTTS.value = fullText
+
+            // Trigger TTS to start
+            _shouldStartTTS.value = true
+            delay(100)
+            _shouldStartTTS.value = false
 
             DebugLogger.debugLog("ChatViewModel", "AI RAW OUTPUT (preview): ${fullText.take(1000)}")
 
@@ -295,25 +522,71 @@ class ChatViewModel (
                 delay(120L + (word.length * 8L).coerceAtMost(200L))
             }
 
-            _messages.update {
-                it+ChatMessageModel( "ai",fullText)
-            }
             _isTyping.value = false
             _typingText.value = ""
         }
     }
+    /**
+     * Start fresh session - clears all history
+     */
+    fun startFreshSession(concept: String, context: Context) {
+        viewModelScope.launch {
+            try {
+                conceptThreadMap.remove(concept)
+                conceptSessionMap.remove(concept)
 
+                withContext(Dispatchers.IO) {
+                    ConceptSessionRepository(context.applicationContext).deleteMapping(concept)
+                }
 
+                // Clear messages BEFORE selecting new concept
+                _isSessionStarted.value = false
+                agenticAIClient.setCurrentThreadAndSession(null, null)
+                _messages.value = emptyList()
+                _autosuggestions.value = emptyList()
+                updateUIState()
+                cancelAnimations()
+
+                // Now start the new session
+                selectConcept(concept, context)
+            } catch (e: Exception) {
+                DebugLogger.errorLog("ChatViewModel", "startFreshSession failed: ${e.message}")
+                _messages.update {
+                    it + ChatMessageModel(
+                        content = "Error: ${e.message}",
+                        sender = "ai",
+                        isError = true,
+                        canRetry = true
+                    )
+                }
+                _isTyping.value = false
+                _isLoading.value = false
+            }
+        }
+    }
+
+    /**
+     * Add agent message directly (no typing animation)
+     */
     fun addAgentMessage(text: String) {
-        val agentMessage = ChatMessageModel("ai",text)
-        val updatedMessages = agentMessage
+        _messages.update {
+            it + ChatMessageModel(content = text, sender = "ai")
+        }
     }
-
+    /**
+     * Add user message directly
+     */
     fun addUserMessage(text: String) {
-        val userMessage = ChatMessageModel("user",text)
-        val updatedMessages =  userMessage
+        _messages.update {
+            it + ChatMessageModel(content = text, sender = "user")
+        }
     }
 
+    private fun cancelAnimations() {
+        typingJob?.cancel()
+        _isTyping.value = false
+        _typingText.value = ""
+    }
     fun hasExistingSession(concept: String, context: Context): Boolean {
         val stored = conceptThreadMap[concept]
         return stored != null

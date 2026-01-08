@@ -90,6 +90,8 @@ fun InputSection(
                     unfocusedContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
                     cursorColor = HeaderGradientStart
                 ),
                 interactionSource = interactionSource

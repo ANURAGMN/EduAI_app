@@ -28,12 +28,13 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.R
+import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.ui.screens.chatbotscreen.components.AgentMessageBubble
+import com.anurag.eduai.ui.screens.chatbotscreen.components.AppDialog
 import com.anurag.eduai.ui.screens.chatbotscreen.components.DropDownMenuModel
 import com.anurag.eduai.ui.screens.chatbotscreen.components.InputSection
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ListeningOverlay
-import com.anurag.eduai.ui.screens.chatbotscreen.components.UserMessageBubble
+import com.anurag.eduai.ui.screens.chatbotscreen.components.MessageBubble
 import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.IconPrimary
 import com.anurag.eduai.ui.theme.TextPrimary
@@ -98,6 +99,8 @@ fun ChatbotScreen(
     val availableConcepts by chatViewModel.availableConcepts.collectAsState()
     val selectedConcept by chatViewModel.selectedConcept.collectAsState()
 
+    var pendingConceptSelection by remember { mutableStateOf<String?>(null) }
+
     // Current language
     val currentLanguage by chatViewModel.currentLanguage.collectAsState()
     val voiceOptions = remember(ttsState.availableVoices, currentLanguage, selectedAvatar) {
@@ -133,6 +136,12 @@ fun ChatbotScreen(
     }
 
     LaunchedEffect(Unit) {
+        val sharedPrefs = SharedPreferenceUtils(context)
+        val userId = sharedPrefs.getUserId().toString()
+        chatViewModel.initialize(context,userId)
+        sttController.initialize(context)
+        ttsController.initialize(context)
+
         val hasPermission = ContextCompat.checkSelfPermission(
             context,
             RECORD_AUDIO
@@ -164,13 +173,9 @@ fun ChatbotScreen(
     }
     LaunchedEffect(ttsState.isSpeaking) {
         if (ttsState.isSpeaking) {
-            val startTime = System.currentTimeMillis()
             while (ttsState.isSpeaking) {
-                currentAudioTime = (System.currentTimeMillis() - startTime) / 1000f
                 delay(50)
             }
-        } else {
-            currentAudioTime = 0f
         }
     }
 
@@ -189,8 +194,7 @@ fun ChatbotScreen(
         targetValue = if (isConversationStarted) 20.dp else 0.dp,
         label = "avatarPadding"
     )
-
-        Column(
+    Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.White)
@@ -213,28 +217,31 @@ fun ChatbotScreen(
                         }
                         items(chatState.messages.size) { index ->
                             val message = chatState.messages[index]
-                            if (message.isUser) {
-                                UserMessageBubble(text = message.text)
+                            val isLastMessage = index == chatState.messages.size - 1
+                            val displayText = if (isLastMessage && isTyping && message.sender.lowercase() == "ai") {
+                                typingText
                             } else {
-                                AgentMessageBubble(
-                                    text = message.text,
-                                    onListenClick = {
-                                        if (ttsState.isInitialized) {
-                                            if (!ttsState.isSpeaking) {
-                                                ttsController.speak(message.text)
-                                            } else {
-                                                ttsController.stop()
-                                            }
+                                message.content
+                            }
+                            MessageBubble(
+                                message = message.copy(content = displayText),
+                                onListenClick = { messageText ->
+                                    if (ttsState.isInitialized) {
+                                        if (!ttsState.isSpeaking) {
+                                            ttsController.speak(messageText)
+                                        } else {
+                                            ttsController.stop()
                                         }
                                     }
-                                )
-                            }
+                                }
+                            )
                         }
                         item {
                             Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
                 }
+
 
                 // Avatar WebView
                 Box(
@@ -413,6 +420,7 @@ fun ChatbotScreen(
                                         selectedValue = selectedConcept
                                             ?: stringResource(R.string.tap_to_choose_topic),
                                         onValueSelected = { concept ->
+                                            pendingConceptSelection = concept
                                             if (chatViewModel.hasExistingSession(
                                                     concept,
                                                     context
@@ -421,6 +429,7 @@ fun ChatbotScreen(
                                                 showSessionResumeDialog = true
                                             } else {
                                                 chatViewModel.selectConcept(concept,context)
+                                                showSettingsMenu = false
                                             }
                                         },
                                         modifier = Modifier.fillMaxWidth()
@@ -523,8 +532,9 @@ fun ChatbotScreen(
                             },
                             onSendClick = {
                                 if (chatState.inputText.isNotBlank()) {
-                                    chatViewModel.sendMessage(chatState.inputText)
-                                    // Hide keyboard after sending
+                                    chatViewModel.sendMessage(chatState.inputText, context)
+                                    // Clear input field after sending
+                                    chatViewModel.updateInputText("")
                                     keyboardController?.hide()
                                 }
                             }
@@ -546,4 +556,32 @@ fun ChatbotScreen(
                 }
             }
         }
+    if(showSessionResumeDialog) {
+        AppDialog(
+
+            show = true,
+            title = stringResource(R.string.existing_session_found),
+            message = stringResource(R.string.resume_or_start_fresh),
+            confirmText = stringResource(R.string.continue_session),
+            dismissText = stringResource(R.string.start_new),
+
+            onConfirm = {
+                pendingConceptSelection?.let { concept ->
+                    chatViewModel.selectConcept(concept, context)
+                }
+                showSessionResumeDialog = false
+                pendingConceptSelection = null
+                showSettingsMenu = false
+            },
+
+            onDismiss = {
+                pendingConceptSelection?.let { concept ->
+                    chatViewModel.startFreshSession(concept, context)
+                }
+                showSessionResumeDialog = false
+                pendingConceptSelection = null
+                showSettingsMenu = false
+            }
+        )
     }
+}

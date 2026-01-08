@@ -1,5 +1,6 @@
 package com.anurag.eduai.ui.screens.chatbotscreen.components
 
+import ChatMessageModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,21 +21,25 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.AiMessageBackground
+import com.anurag.eduai.ui.theme.HeaderGradientEnd
+import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.IconPrimary
+import com.anurag.eduai.ui.theme.TextPrimary
 
 
 /**
@@ -43,19 +48,26 @@ import com.anurag.eduai.ui.theme.IconPrimary
 
 @Composable
 fun MessageBubble(
-    message : ChatMessageModel
-){
-    val isFromAI = message.sender == "ai"
-    if(isFromAI){
-        AgentMessageBubble(text=message.content)
-    }else{
-        UserMessageBubble(text = message.content)
+    message: ChatMessageModel,
+    onListenClick: (String) -> Unit = {}
+) {
+    // Check sender field - "ai" or "user"
+    when (message.sender.lowercase()) {
+        "ai" -> AgentMessageBubble(
+            text = message.content,
+            isError = message.isError,
+            onListenClick = { onListenClick(message.content) }
+        )
+        "user" -> UserMessageBubble(text = message.content)
+        else -> UserMessageBubble(text = message.content)
     }
 }
 
 @Composable
 fun AgentMessageBubble(
     text : String,
+    isError: Boolean = false,
+    onListenClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
 
@@ -97,25 +109,29 @@ fun AgentMessageBubble(
             ) {
                 Text(
                     text = text,
-                    fontSize = androidx.compose.material3.MaterialTheme.typography.bodyMedium.fontSize,
-                    color = Color(0xFF2D3748)
+                    fontSize = typography.bodyMedium.fontSize,
+                    color = TextPrimary
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                TextButton(
-                    onClick ={} ,
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = IconPrimary
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.VolumeUp,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Listen")
+                if (!isError) {
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    TextButton(
+                        onClick = onListenClick,
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = IconPrimary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.VolumeUp,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Listen")
+                    }
                 }
             }
         }
@@ -148,7 +164,12 @@ fun UserMessageBubble(
                     )
                 )
                 .background(
-                    color = AccentBlue
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            HeaderGradientStart,
+                            HeaderGradientEnd
+                        )
+                    )
                 )
                 .padding(12.dp)
         ) {
