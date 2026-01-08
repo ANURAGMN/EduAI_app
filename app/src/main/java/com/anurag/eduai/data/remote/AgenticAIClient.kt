@@ -243,4 +243,9 @@ class AgenticAIClient(
         withContext(Dispatchers.IO) {
             callWithRetry { service.getSessionHistory(threadId) }
         }
+
+    suspend fun getConceptsList(): Result<ConceptsListResponse> =
+        withContext(Dispatchers.IO) {
+            callWithRetry { service.getAvailableConcepts() }
+        }
 }
