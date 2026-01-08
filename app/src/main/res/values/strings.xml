@@ -88,6 +88,8 @@
     <string name="agent">Agent</string>
     <string name="no_response">No response</string>
     <string name="sorry_i_couldn_t_process_that_please_try_again">Sorry, I couldn\'t process that. Please try again.</string>
+    <string name="thinking">Thinking...</string>
+    <string name="close_settings">Close Settings</string>
 
 
 </resources>

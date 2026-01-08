@@ -1,14 +1,12 @@
 package com.anurag.eduai.ui.viewModel
 
 import ChatMessageModel
-import android.app.Application
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.anurag.eduai.BuildConfig
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.ConceptSessionRepository
-import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.remote.AgenticAIClient
 import com.anurag.eduai.data.remote.SessionMetadata
 import com.anurag.eduai.debug.DebugLogger
@@ -135,13 +133,12 @@ class ChatViewModel (): ViewModel() {
         _studentLevel.value = level
         DebugLogger.debugLog("ChatViewModel", "Student level changed to: $level")
     }
-    fun initialize(context: Context, id : String) {
+    fun initialize(id : String) {
         viewModelScope.launch {
             DebugLogger.debugLog("ChatViewModel", "Starting full initialization")
-            refreshAvailableConcepts(context, _currentLanguage.value)
+            refreshAvailableConcepts()
             if (userId.isEmpty()) {
                 userId = id
-                refreshAvailableConcepts(context)
             }
             DebugLogger.debugLog("ChatViewModel", "Initialization complete")
         }
@@ -150,7 +147,7 @@ class ChatViewModel (): ViewModel() {
     /**
      * Refresh the list of available concepts from the server
      */
-    fun refreshAvailableConcepts(context: Context, languageShort: String = "en") {
+    fun refreshAvailableConcepts( ) {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
@@ -253,9 +250,10 @@ class ChatViewModel (): ViewModel() {
 
         _lastUserMessage.value = userMessage
 
+        _messages.update { it + ChatMessageModel(content = userMessage, sender = "user") }
+        updateUIState()
         if (!_isSessionStarted.value) {
             _pendingFirstUserMessage.value = userMessage
-            _messages.update { it + ChatMessageModel(content = userMessage, sender = "user") }
             DebugLogger.debugLog("ChatViewModel", "Session not ready - queued message")
             return
         }
@@ -264,8 +262,6 @@ class ChatViewModel (): ViewModel() {
         }
 
     private fun sendMessageAfterSessionReady(userMessage: String, context: Context) {
-        _messages.update { it + ChatMessageModel(content = userMessage, sender = "user") }
-        _isLoading.value = true
         viewModelScope.launch {
             try {
                 _isLoading.value = true
@@ -345,8 +341,13 @@ class ChatViewModel (): ViewModel() {
         viewModelScope.launch {
 
             _isLoading.value = true
+            _messages.value = emptyList()
             //reset autosuggestions when selecting new concept
             _autosuggestions.value = emptyList()
+            _typingText.value = ""
+            _isTyping.value = false
+            updateUIState()
+
             _selectedConcept.value = concept
             cancelAnimations()
 
@@ -363,6 +364,12 @@ class ChatViewModel (): ViewModel() {
             }
         }
     }
+    /**
+     * Start a new session for a concept
+     * - Creates new thread and session on server
+     * - Clears all previous messages
+     * - Displays only the initial AI response
+     */
     fun sessionStart(context: Context, concept: String) {
         viewModelScope.launch {
             try {
@@ -397,6 +404,7 @@ class ChatViewModel (): ViewModel() {
             } finally {
                 _isLoading.value = false
             }
+            // Send any pending user message that was queued before session was ready
             _pendingFirstUserMessage.value?.let { msg ->
                 _pendingFirstUserMessage.value = null
                 sendMessageAfterSessionReady(msg, context)
@@ -404,13 +412,6 @@ class ChatViewModel (): ViewModel() {
         }
     }
 
-    /**
-     * Resume an existing session given thread and session IDs
-     * - Sets current thread and session
-     * - Marks session as started
-     * - Fetches session history and appends last assistant message with typing animation
-     * - Sends any pending user message that was queued before session was ready
-     */
     /**
      * Resume an existing session given thread and session IDs
      * - Clears previous messages
@@ -544,6 +545,10 @@ class ChatViewModel (): ViewModel() {
                 agenticAIClient.setCurrentThreadAndSession(null, null)
                 _messages.value = emptyList()
                 _autosuggestions.value = emptyList()
+                _selectedConcept.value = null
+                _pendingFirstUserMessage.value = null
+                _typingText.value = ""
+                _isTyping.value = false
                 updateUIState()
                 cancelAnimations()
 

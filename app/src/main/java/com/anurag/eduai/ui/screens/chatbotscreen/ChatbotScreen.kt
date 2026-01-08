@@ -35,6 +35,7 @@ import com.anurag.eduai.ui.screens.chatbotscreen.components.DropDownMenuModel
 import com.anurag.eduai.ui.screens.chatbotscreen.components.InputSection
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ListeningOverlay
 import com.anurag.eduai.ui.screens.chatbotscreen.components.MessageBubble
+import com.anurag.eduai.ui.theme.AiMessageBackground
 import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.IconPrimary
 import com.anurag.eduai.ui.theme.TextPrimary
@@ -47,7 +48,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun ChatbotScreen(
-    chatViewModel: ChatViewModel ,
+    chatViewModel: ChatViewModel = viewModel(),
     ttsController: TextToSpeech = viewModel(),
     sttController: SpeechToText = viewModel(),
 ) {
@@ -57,8 +58,6 @@ fun ChatbotScreen(
     val ttsState by ttsController.state.collectAsState()
     val sttState by sttController.state.collectAsState()
 
-
-    var currentAudioTime by remember { mutableFloatStateOf(0f) }
     val keyboardController = LocalSoftwareKeyboardController.current
 
     // Observe chat UI state
@@ -94,6 +93,7 @@ fun ChatbotScreen(
 
     val typingText by chatViewModel.typingText.collectAsState()
     val isTyping by chatViewModel.isTyping.collectAsState()
+    val isLoading by chatViewModel.isLoading.collectAsState()
 
     // Collect available concepts and selected concept from ViewModel
     val availableConcepts by chatViewModel.availableConcepts.collectAsState()
@@ -138,7 +138,7 @@ fun ChatbotScreen(
     LaunchedEffect(Unit) {
         val sharedPrefs = SharedPreferenceUtils(context)
         val userId = sharedPrefs.getUserId().toString()
-        chatViewModel.initialize(context,userId)
+        chatViewModel.initialize(userId)
         sttController.initialize(context)
         ttsController.initialize(context)
 
@@ -220,7 +220,7 @@ fun ChatbotScreen(
                             val isLastMessage = index == chatState.messages.size - 1
                             val displayText = if (isLastMessage && isTyping && message.sender.lowercase() == "ai") {
                                 typingText
-                            } else {
+                            }else {
                                 message.content
                             }
                             MessageBubble(
@@ -235,6 +235,29 @@ fun ChatbotScreen(
                                     }
                                 }
                             )
+                        }
+                        if (isLoading && !isTyping) {
+                            item {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                                    horizontalArrangement = Arrangement.Start,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                        color = BrandPrimary
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = stringResource(R.string.thinking),
+                                        color = TextSecondary,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
                         }
                         item {
                             Spacer(modifier = Modifier.height(16.dp))
@@ -295,7 +318,7 @@ fun ChatbotScreen(
                         IconButton(onClick = { showSettingsMenu = !showSettingsMenu }) {
                             Icon(
                                 imageVector = Icons.Default.Tune,
-                                contentDescription = "Settings",
+                                contentDescription =stringResource(R.string.settings),
                                 tint = Color.Gray.copy(alpha = 0.6f)
                             )
                         }
@@ -333,7 +356,7 @@ fun ChatbotScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Close,
-                                            contentDescription = "Close Settings",
+                                            contentDescription = stringResource(R.string.close_settings),
                                             tint = IconPrimary
                                         )
                                     }
@@ -350,9 +373,9 @@ fun ChatbotScreen(
                                     label = stringResource(R.string.avatar),
                                     options = listOf(disableAvatar,boyDisplayName, girlDisplayName),
                                     selectedValue = when (selectedAvatar.lowercase()) {
-                                        "disable"-> disableAvatar
-                                        "girl" -> girlDisplayName
-                                        "boy" -> boyDisplayName
+                                        stringResource(R.string.disable)-> disableAvatar
+                                        stringResource(R.string.girl) -> girlDisplayName
+                                        stringResource(R.string.boy)-> boyDisplayName
                                         else -> disableAvatar
                                     },
                                     onValueSelected = { displayName ->
@@ -410,7 +433,8 @@ fun ChatbotScreen(
                                     Text(
                                         text = stringResource(R.string.loading_topics),
                                         color = TextSecondary,
-                                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                                        modifier = Modifier
+                                            .align(Alignment.CenterHorizontally)
                                             .padding(top = 8.dp)
                                     )
                                 } else {
