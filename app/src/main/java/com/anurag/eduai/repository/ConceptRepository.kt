@@ -44,10 +44,4 @@ class ConceptRepository(
         conceptDao.insertConcepts(updates)
         sharedPreferenceUtils.updateLastSyncTime()
     }
-
-    /**
-     * Fetch concepts from localDB
-     */
-    fun getConceptsForChapter(chapterId: String) =
-        conceptDao.getConceptsForChapter(chapterId)
 }

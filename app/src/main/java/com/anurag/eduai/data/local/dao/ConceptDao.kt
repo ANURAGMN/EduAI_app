@@ -41,6 +41,9 @@ interface ConceptDao {
     @Query("DELETE FROM concepts WHERE chapterId = :chapterId")
     suspend fun deleteConceptsForChapter(chapterId: String)
 
+    @Query("SELECT * FROM concepts WHERE conceptId IN (:conceptIds)")
+    fun getConceptsByIds(conceptIds: List<String>): Flow<List<ConceptEntity>>
+
     @Query("DELETE FROM concepts WHERE conceptId = :conceptId")
     suspend fun deleteConcept(conceptId: String)
 }

@@ -11,11 +11,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.anurag.eduai.data.local.entities.ConceptEntity
+import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.theme.HeaderGradientEnd
 import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.TextPrimary
@@ -38,7 +41,8 @@ fun getGreeting(): String {
 fun HomeScreenTopBar(
     userName: String = "John Doe",
     subject: String = "Science",
-    streakDays: Int = 7
+    streakDays: Int = 7,
+    onChangeSubject: () -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -72,9 +76,7 @@ fun HomeScreenTopBar(
 
             SubjectCard(
                 subject,
-                onChangeClick = {
-
-                }
+                onChangeClick = onChangeSubject
             )
             StreakCard(streakDays)
         }

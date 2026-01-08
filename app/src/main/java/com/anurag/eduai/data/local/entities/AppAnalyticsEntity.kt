@@ -19,6 +19,7 @@ import androidx.room.PrimaryKey
         )
     ],
     indices = [
+        Index(value = ["sessionId"]),
         Index(value = ["screenName"]),
         Index(value = ["eventType"])
     ]

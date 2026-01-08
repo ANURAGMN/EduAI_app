@@ -79,5 +79,29 @@ interface ProgressDao {
             )
         }
     }
+    /**
+     * Get home screen concepts with real-time updates:
+     * 1st item - most recently updated IN_PROGRESS concept
+     * Next 3 items - NOT_STARTED concepts ordered by ConceptEntity.orderIndex
+     * Limit to 4 total items
+     *
+     * Automatically emits new list whenever progress changes
+     */
+    @Query("""
+        SELECT p.* FROM progress p
+        INNER JOIN concepts c ON p.itemId = c.conceptId
+        WHERE p.studentId = :studentId 
+        AND p.itemType = :itemType 
+        AND p.status != 'COMPLETED'
+        ORDER BY 
+            CASE WHEN p.status = 'IN_PROGRESS' THEN 0 ELSE 1 END ASC,
+            CASE WHEN p.status = 'IN_PROGRESS' THEN p.lastAccessedAt ELSE 0 END DESC,
+            c.orderIndex ASC
+        LIMIT 4
+    """)
+    fun getHomeScreenConcepts(
+        studentId: String,
+        itemType: String
+    ): Flow<List<ProgressEntity>>
 }
 

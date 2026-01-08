@@ -8,17 +8,21 @@ import com.google.firebase.firestore.DocumentSnapshot
  * Ensures strong separation between API layer and local database layer.
  */
 object FirebaseChapterMapper {
-    /**
-     * Converts Firebase document into ChapterEntity
-     */
+
     fun map(document: DocumentSnapshot): ChapterEntity {
+        val chapterId = document.get("chapter_id").toString()
+        val subjectId = document.get("subject_id").toString()
+        val chapterName = document.get("unit_name").toString()
+        val orderIndex = document.getLong("conceptOrder")?.toInt() ?: 0
+        val totalConcepts = document.getLong("conceptCount")?.toInt() ?: 0
+
         return ChapterEntity(
-            chapterId = document.get("chapter_id").toString(),
-            subjectId = document.getString("subject_id") ?: "",
-            chapterName = document.getString("unit_name") ?: "",
-            chapterNameKannada = "", // Not provided by Firestore
-            orderIndex = 0,          // Not provided by Firestore
-            totalConcepts = 0,       // Can be calculated separately
+            chapterId = chapterId,
+            subjectId = subjectId,
+            chapterName = chapterName,
+            chapterNameKannada = "",
+            orderIndex = orderIndex,
+            totalConcepts = totalConcepts,
             createdAt = System.currentTimeMillis(),
             isSynced = true
         )

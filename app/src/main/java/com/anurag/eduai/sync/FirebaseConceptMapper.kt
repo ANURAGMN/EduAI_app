@@ -20,31 +20,29 @@ import com.google.firebase.firestore.DocumentSnapshot
  *  - class_id: Class level
  */
 object FirebaseConceptMapper {
-    /**
-     * Converts Firebase document into ConceptEntity
-     */
+
     fun map(document: DocumentSnapshot): ConceptEntity {
-        // Combine summary and detail for a complete description
+
         val summary = document.getString("summary") ?: ""
         val detail = document.getString("detail") ?: ""
-        val description = if (detail.isNotEmpty()) {
-            "$summary\n\n$detail"
-        } else {
-            summary
+        val combinedDescription = buildString {
+            append(summary)
+            if (detail.isNotEmpty()) {
+                append("\n\n")
+                append(detail)
+            }
         }
-        
+
         return ConceptEntity(
             conceptId = document.getString("concept_id") ?: "",
             chapterId = document.get("chapter_id").toString(),
             conceptName = document.getString("concept_name") ?: "",
-            conceptNameKannada = "", // Not provided by Firestore
-            orderIndex = 0,          // You may map this if Firestore contains it
-            description = description,
+            conceptNameKannada = "",
+            orderIndex = document.getLong("conceptOrder")?.toInt() ?: 0,
+            description = combinedDescription,
             hasSimulation = false,
             createdAt = System.currentTimeMillis(),
             isSynced = true
         )
-        // Note: Firebase also has 'example' and 'topic_name' fields that could be stored
-        // in additional tables if needed in the future
     }
 }

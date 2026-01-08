@@ -39,6 +39,7 @@
     <string name="simulation">Simulation</string>
     <string name="pending">Pending</string>
     <string name="practice_simulation">Practice Simulations</string>
+    <string name="no_progress_msg">No Progress\nPlease start learning by selecting subject</string>
 
 <!--    Progress Screen-->
     <string name="your_progress">Your Progress</string>

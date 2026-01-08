@@ -1,6 +1,7 @@
 package com.anurag.eduai.ui.screens.conceptscreen.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,11 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.anurag.eduai.ui.screens.conceptscreen.Concept
-import com.anurag.eduai.ui.screens.conceptscreen.ConceptStatus
 import com.anurag.eduai.ui.theme.AccentGreen
 import com.anurag.eduai.ui.theme.CompleteIconBackground
 import com.anurag.eduai.ui.theme.CompleteTextColor
@@ -37,9 +35,23 @@ import com.anurag.eduai.ui.theme.NotStartedTextColor
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 
+enum class ConceptStatus {
+    COMPLETED,
+    IN_PROGRESS,
+    NOT_STARTED
+}
+
+data class Concept(
+    val id: String,
+    val name: String,
+    val order: Int,
+    val status: ConceptStatus = ConceptStatus.NOT_STARTED
+)
+
 @Composable
 fun ConceptCard(
     concepts: List<Concept>,
+    onConceptClick: (String) -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -61,6 +73,7 @@ fun ConceptCard(
             items(concepts) { concept ->
                 ConceptItemCard(
                     concept = concept,
+                    onClick = { onConceptClick(concept.id) }
                 )
             }
         }
@@ -70,6 +83,7 @@ fun ConceptCard(
 @Composable
 fun ConceptItemCard(
     concept: Concept,
+    onClick: () -> Unit = {}
 ) {
     val isEnabled = concept.status != ConceptStatus.NOT_STARTED
 
@@ -80,7 +94,8 @@ fun ConceptItemCard(
                 color = Color.White,
                 shape = RoundedCornerShape(12.dp)
             )
-           .padding(16.dp)
+            .clickable(enabled = isEnabled, onClick = onClick)
+            .padding(16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -97,7 +112,7 @@ fun ConceptItemCard(
             ) {
                 // Status badge (Circle with icon/number)
                 ConceptStatusBadge(
-                    conceptNumber = concept.id,
+                    conceptNumber = concept.order.toString(),
                     status = concept.status
                 )
 
@@ -111,7 +126,7 @@ fun ConceptItemCard(
                         text = concept.name,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary
+                        color = if (isEnabled) TextPrimary else TextSecondary
                     )
 
                     // Subtitle based on status
@@ -186,7 +201,7 @@ fun ConceptStatusBadge(
 
 private fun getSubtitle(status: ConceptStatus): String = when (status) {
     ConceptStatus.COMPLETED -> "Completed"
-    ConceptStatus.IN_PROGRESS -> "Continue Learning"
+    ConceptStatus.IN_PROGRESS -> "In Progress - Continue Learning"
     ConceptStatus.NOT_STARTED -> "Complete previous concepts"
 }
 
@@ -194,69 +209,4 @@ private fun getSubtitleColor(status: ConceptStatus): Color = when (status) {
     ConceptStatus.COMPLETED -> CompleteTextColor
     ConceptStatus.IN_PROGRESS -> InProgressTextColor
     ConceptStatus.NOT_STARTED -> NotStartedTextColor
-}
-
-// Previews
-
-@Preview
-@Composable
-fun ConceptItemCardCompletedPreview() {
-    ConceptItemCard(
-        concept = Concept(
-            id = "1",
-            name = "Introduction to Polynomials",
-            status = ConceptStatus.COMPLETED
-        )
-    )
-}
-
-@Preview
-@Composable
-fun ConceptItemCardInProgressPreview() {
-    ConceptItemCard(
-        concept = Concept(
-            id = "2",
-            name = "Types of Polynomials",
-            status = ConceptStatus.IN_PROGRESS
-        )
-    )
-}
-
-@Preview
-@Composable
-fun ConceptItemCardNotStartedPreview() {
-    ConceptItemCard(
-        concept = Concept(
-            id = "3",
-            name = "Operations on Polynomials",
-            status = ConceptStatus.NOT_STARTED
-        )
-    )
-}
-
-@Preview
-@Composable
-fun ConceptStatusBadgeCompletedPreview() {
-    ConceptStatusBadge(
-        conceptNumber = "1",
-        status = ConceptStatus.COMPLETED
-    )
-}
-
-@Preview
-@Composable
-fun ConceptStatusBadgeInProgressPreview() {
-    ConceptStatusBadge(
-        conceptNumber = "2",
-        status = ConceptStatus.IN_PROGRESS
-    )
-}
-
-@Preview
-@Composable
-fun ConceptStatusBadgeNotStartedPreview() {
-    ConceptStatusBadge(
-        conceptNumber = "3",
-        status = ConceptStatus.NOT_STARTED
-    )
 }
