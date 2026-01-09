@@ -14,13 +14,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.components.ScreenWithHeader
 import com.anurag.eduai.ui.screens.subjectscreen.components.SubjectCard
+import com.anurag.eduai.ui.theme.BrandPrimary
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.SubjectViewModel
 
 data class Subject(
@@ -36,6 +36,7 @@ fun SubjectScreen(
     onSubjectClick: (Subject) -> Unit = {}
 ) {
     TrackScreenEvent(screenName = ScreenName.SUBJECT)
+    val dimens = LocalDimensions.current
 
     val context = LocalContext.current
     val db = remember { EduAiDatabase.getInstance(context) }
@@ -65,19 +66,17 @@ fun SubjectScreen(
         } else {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                contentPadding = PaddingValues(dimens.spaceMedium),
+                horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
+                verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
             ) {
                 items(state.subjects) { subject ->
                     SubjectCard(
                         subject = Subject(
                             id = subject.subjectId,
                             name = subject.subjectName,
-                            color = Color(0xFF3B82F6),
-                            chapterCount = "Chapters"
+                            color = BrandPrimary,
+                            chapterCount = subject.totalChapters.toString()
                         ),
                         onClick = onSubjectClick
                     )

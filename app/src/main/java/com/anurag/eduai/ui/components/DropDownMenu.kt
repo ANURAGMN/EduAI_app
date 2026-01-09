@@ -4,7 +4,6 @@ import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.theme.White
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,7 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 
-
+//change name of composable function
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropDownMenu(
@@ -41,7 +40,7 @@ fun DropDownMenu(
 
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
+        onExpandedChange = { expanded = it },
         modifier = Modifier
             .fillMaxWidth()
             .background(
@@ -76,6 +75,7 @@ fun DropDownMenu(
             onDismissRequest = { expanded = false },
             modifier = Modifier.background(White)
         ) {
+            //check for null or empty options list
             options.forEachIndexed { index, option ->
                 DropdownMenuItem(
                     text = { Text(option, color = TextPrimary) },
