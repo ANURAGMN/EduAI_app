@@ -14,15 +14,16 @@ interface ProgressDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProgressList(progressList: List<ProgressEntity>)
 
-    @Update suspend fun updateProgress(progress: ProgressEntity)
+    @Update
+    suspend fun updateProgress(progress: ProgressEntity)
 
     @Query(
-            "SELECT * FROM progress WHERE studentId = :studentId AND itemType = :itemType AND itemId = :itemId"
+        "SELECT * FROM progress WHERE studentId = :studentId AND itemType = :itemType AND itemId = :itemId"
     )
     suspend fun getProgress(studentId: String, itemType: String, itemId: String): ProgressEntity?
 
     @Query(
-            "SELECT * FROM progress WHERE studentId = :studentId AND itemType = :itemType AND itemId = :itemId"
+        "SELECT * FROM progress WHERE studentId = :studentId AND itemType = :itemType AND itemId = :itemId"
     )
     fun getProgressFlow(studentId: String, itemType: String, itemId: String): Flow<ProgressEntity?>
 
@@ -33,12 +34,12 @@ interface ProgressDao {
     suspend fun getAllProgressSync(studentId: String, itemType: String): List<ProgressEntity>
 
     @Query(
-            "SELECT COUNT(*) FROM progress WHERE studentId = :studentId AND itemType = :itemType AND status = 'COMPLETED' AND completedAt >= :weekStartTimestamp"
+        "SELECT COUNT(*) FROM progress WHERE studentId = :studentId AND itemType = :itemType AND status = 'COMPLETED' AND completedAt >= :weekStartTimestamp"
     )
     suspend fun getWeeklyCompletedCount(
-            studentId: String,
-            weekStartTimestamp: Long,
-            itemType: String
+        studentId: String,
+        weekStartTimestamp: Long,
+        itemType: String
     ): Int
 
     @Query("SELECT * FROM progress WHERE isSynced = 0")
@@ -48,49 +49,50 @@ interface ProgressDao {
     suspend fun markProgressAsSynced(ids: List<Long>)
 
     @Query(
-            "DELETE FROM progress WHERE studentId = :studentId AND itemType = :itemType AND itemId = :itemId"
+        "DELETE FROM progress WHERE studentId = :studentId AND itemType = :itemType AND itemId = :itemId"
     )
     suspend fun deleteProgress(studentId: String, itemType: String, itemId: String)
 
     @Transaction
     suspend fun updateProgressStatus(
-            studentId: String,
-            itemType: String,
-            itemId: String,
-            newStatus: String,
-            timestamp: Long = System.currentTimeMillis()
+        studentId: String,
+        itemType: String,
+        itemId: String,
+        newStatus: String,
+        timestamp: Long = System.currentTimeMillis()
     ) {
         val existing = getProgress(studentId, itemType, itemId)
         if (existing != null) {
             val updated =
-                    existing.copy(
-                            status = newStatus,
-                            completedAt =
-                                    if (newStatus == "COMPLETED") timestamp
-                                    else existing.completedAt,
-                            startedAt = existing.startedAt ?: timestamp,
-                            openedAt = existing.openedAt,
-                            lastAccessedAt = timestamp,
-                            updatedAt = timestamp,
-                            isSynced = false
-                    )
+                existing.copy(
+                    status = newStatus,
+                    completedAt =
+                        if (newStatus == "COMPLETED") timestamp
+                        else existing.completedAt,
+                    startedAt = existing.startedAt ?: timestamp,
+                    openedAt = existing.openedAt,
+                    lastAccessedAt = timestamp,
+                    updatedAt = timestamp,
+                    isSynced = false
+                )
             updateProgress(updated)
         } else {
             insertProgress(
-                    ProgressEntity(
-                            studentId = studentId,
-                            itemType = itemType,
-                            itemId = itemId,
-                            status = newStatus,
-                            startedAt = timestamp,
-                            openedAt = if (newStatus == "IN_PROGRESS") timestamp else null,
-                            completedAt = if (newStatus == "COMPLETED") timestamp else null,
-                            lastAccessedAt = timestamp,
-                            updatedAt = timestamp
-                    )
+                ProgressEntity(
+                    studentId = studentId,
+                    itemType = itemType,
+                    itemId = itemId,
+                    status = newStatus,
+                    startedAt = timestamp,
+                    openedAt = if (newStatus == "IN_PROGRESS") timestamp else null,
+                    completedAt = if (newStatus == "COMPLETED") timestamp else null,
+                    lastAccessedAt = timestamp,
+                    updatedAt = timestamp
+                )
             )
         }
     }
+
     /**
      * Get home screen concepts with real-time updates: 1st item - most recently updated IN_PROGRESS
      * concept Next 3 items - NOT_STARTED concepts ordered by ConceptEntity.orderIndex Limit to 4
@@ -99,7 +101,7 @@ interface ProgressDao {
      * Automatically emits new list whenever progress changes
      */
     @Query(
-            """
+        """
         SELECT p.* FROM progress p
         INNER JOIN concepts c ON p.itemId = c.conceptId
         WHERE p.studentId = :studentId 
@@ -116,7 +118,7 @@ interface ProgressDao {
 
     /** Get the total number of completed concepts for a student */
     @Query(
-            """
+        """
         SELECT COUNT(*) 
         FROM progress 
         WHERE studentId = :studentId 
@@ -131,7 +133,7 @@ interface ProgressDao {
      * DailyConceptCount with date and count Ordered from most recent (today) to 7 days ago
      */
     @Query(
-            """
+        """
         SELECT 
             DATE(completedAt / 1000, 'unixepoch', 'localtime') as date,
             COUNT(*) as count
@@ -145,13 +147,54 @@ interface ProgressDao {
     """
     )
     suspend fun getConceptsClearedLast7Days(
-            studentId: String,
-            sevenDaysAgoTimestamp: Long
+        studentId: String,
+        sevenDaysAgoTimestamp: Long
     ): List<DailyConceptCount>
-}
 
+    @Query(
+        """
+    SELECT 
+        ch.chapterId AS chapterId,
+        ch.chapterName AS chapterName,
+        COUNT(c.conceptId) AS totalConcepts,
+        COUNT(p.progressId) AS completedConcepts,
+        (COUNT(p.progressId) * 100.0 / COUNT(c.conceptId)) AS completionPercentage
+    FROM chapters ch
+    INNER JOIN subjects s 
+        ON ch.subjectId = s.subjectId
+    INNER JOIN concepts c 
+        ON c.chapterId = ch.chapterId
+    LEFT JOIN progress p 
+        ON p.itemId = c.conceptId
+        AND p.itemType = 'CONCEPT'
+        AND p.status = 'COMPLETED'
+        AND p.studentId = :studentId
+    WHERE 
+        s.classLevel = :classLevel
+        AND s.subjectId = :subjectId
+    GROUP BY ch.chapterId
+    ORDER BY ch.orderIndex ASC
+    """)
+    suspend fun getChapterWiseProgress(
+        studentId: String,
+        classLevel: Int,
+        subjectId: String
+    ): List<ChapterProgressSummary>
+
+}
 /** Data class to hold daily concept completion count */
 data class DailyConceptCount(
         val date: String, // Format: YYYY-MM-DD
         val count: Int
+)
+
+/**
+ * Data class to hold the chapter wise progresss
+ */
+data class ChapterProgressSummary(
+    val chapterId: String,
+    val chapterName: String,
+    val totalConcepts: Int,
+    val completedConcepts: Int,
+    val completionPercentage: Float
 )

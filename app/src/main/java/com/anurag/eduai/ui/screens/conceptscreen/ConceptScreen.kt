@@ -23,6 +23,7 @@ import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptCard
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptStatus
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.viewModel.ConceptViewModel
+import com.anurag.eduai.utils.StreakManager
 
 @Composable
 fun ConceptScreen(
@@ -39,11 +40,19 @@ fun ConceptScreen(
     val progressDao = db.progressDao()
     val sharedPrefs = remember { SharedPreferenceUtils(context) }
 
+
+    // streak update
+    val streakManager = StreakManager(context)
+
     val viewModel = remember {
         ConceptViewModel(conceptDao, chapterDao, progressDao, sharedPrefs)
     }
     val state by viewModel.state.collectAsState()
 
+    // updating streak on concept opening
+    LaunchedEffect(Unit) {
+        streakManager.onConceptOpened()
+    }
     LaunchedEffect(chapterId) {
         viewModel.loadConcepts(chapterId)
     }

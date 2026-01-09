@@ -28,6 +28,7 @@ import com.anurag.eduai.ui.screens.progess.component.StatusCardGrid
 import com.anurag.eduai.ui.screens.progess.component.WeeklyActivitySection
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.viewModel.ProgressScreenVIewModel
+import com.anurag.eduai.utils.StreakManager
 import com.anurag.eduai.utils.WeeklyProgressUtils
 
 @Composable
@@ -43,10 +44,12 @@ fun ProgressScreen()
     val sharedPref = SharedPreferenceUtils(context)
     val userId = sharedPref.getUserId().toString()
 
+    val streakManager = StreakManager(context)
+
     val db = remember { EduAiDatabase.getInstance(context) }
     val progressDao = db.progressDao()
 
-    val viewModel = remember { ProgressScreenVIewModel(progressDao) }
+    val viewModel = remember { ProgressScreenVIewModel(progressDao, streakManager) }
 
     // collecting all the values as state
     val totalCompletedConcept by viewModel.totalCompletedConcept.collectAsState()

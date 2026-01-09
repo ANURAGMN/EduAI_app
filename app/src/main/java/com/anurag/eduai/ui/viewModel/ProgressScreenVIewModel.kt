@@ -2,15 +2,19 @@ package com.anurag.eduai.ui.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.anurag.eduai.data.local.dao.ChapterProgressSummary
 import com.anurag.eduai.data.local.dao.DailyConceptCount
 import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.ui.screens.chapterscreen.components.Chapter
+import com.anurag.eduai.utils.StreakManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class ProgressScreenVIewModel(
-    private val progressDao: ProgressDao
+    private val progressDao: ProgressDao,
+    private val streakManager: StreakManager
 ) : ViewModel() {
 
     // --- State holders ---
@@ -23,6 +27,9 @@ class ProgressScreenVIewModel(
     private val _sevenDayProgress = MutableStateFlow<List<DailyConceptCount>>(emptyList())
     val sevenDayProgress: StateFlow<List<DailyConceptCount>> = _sevenDayProgress
 
+    private val _chapterProgressSummary = MutableStateFlow<List<ChapterProgressSummary>>(emptyList())
+    val chapterProgressSummary: StateFlow<List<ChapterProgressSummary>> = _chapterProgressSummary
+
     fun getTotalCompletedConcept(userId: String) {
         viewModelScope.launch {
             val result = progressDao.getTotalCompletedConcepts(userId).toString()
@@ -34,17 +41,23 @@ class ProgressScreenVIewModel(
         viewModelScope.launch {
             val result = progressDao.getConceptsClearedLast7Days(userId, sevenDaysAgoTimeStamp)
             _sevenDayProgress.value = result
-            DebugLogger.debugLog(
-                "ProgressScreenViewModel",
-                "SevenDayProgress = $result"
-            )
         }
     }
 
     fun getStreak(userId:String) {
-        val result = "0" // later i will update this with logic till now logic is not ready
-        _streakCount.value = result
+        val result = streakManager.getCurrentStreak()
+        _streakCount.value = result.toString() ?: "0"
     }
 
+    fun getChapterProgressSummary(userId: String, classLevel: Int, subject: String){
+        viewModelScope.launch {
+            val result = progressDao.getChapterWiseProgress(userId, classLevel,subject )
+            _chapterProgressSummary.value = result
 
+            DebugLogger.debugLog(
+                "ProgressScreenViewModel",
+                "ChapterWiseProgress = $result"
+            )
+        }
+    }
 }
