@@ -32,11 +32,13 @@ object FirebaseConceptMapper {
                 append(detail)
             }
         }
+//        val conceptName = document.getString("concept_name")
+//            ?: error("concept_name missing for concept ${document.id}")
 
         return ConceptEntity(
-            conceptId = document.getString("concept_id") ?: "",
-            chapterId = document.get("chapter_id").toString(),
-            conceptName = document.getString("concept_name") ?: "",
+            conceptId = document.id,
+            chapterId = document.get("chapter_id")?.toString() ?: error("ChapterId missing for concept ${document.id}"),
+            conceptName = document.getString("concept_name") ?: error("concept_name missing for concept ${document.id}"),
             conceptNameKannada = "",
             orderIndex = document.getLong("conceptOrder")?.toInt() ?: 0,
             description = combinedDescription,
