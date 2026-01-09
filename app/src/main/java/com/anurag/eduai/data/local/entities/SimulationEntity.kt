@@ -29,6 +29,6 @@ data class SimulationEntity(
     val simulationUrl: String,
     val description: String? = null,
     val orderIndex: Int = 0,
-    val createdAt: Long = System.currentTimeMillis(),
+    val syncAt: Long = System.currentTimeMillis(),
     val isSynced: Boolean = false
 )

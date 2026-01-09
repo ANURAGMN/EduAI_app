@@ -28,6 +28,6 @@ data class ChapterEntity(
     val chapterNameKannada: String,
     val orderIndex: Int,
     val totalConcepts: Int = 0,
-    val createdAt: Long = System.currentTimeMillis(),
+    val syncAt: Long = System.currentTimeMillis(),
     val isSynced: Boolean = false
 )

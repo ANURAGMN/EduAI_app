@@ -23,7 +23,7 @@ object FirebaseChapterMapper {
             chapterNameKannada = "",
             orderIndex = orderIndex,
             totalConcepts = totalConcepts,
-            createdAt = System.currentTimeMillis(),
+            syncAt = System.currentTimeMillis(),
             isSynced = true
         )
     }

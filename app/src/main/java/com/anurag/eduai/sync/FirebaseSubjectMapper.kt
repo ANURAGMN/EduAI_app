@@ -22,7 +22,7 @@ object FirebaseSubjectMapper {
             iconUrl = null,
             orderIndex = 0,
             totalChapters = totalChapters,
-            createdAt = System.currentTimeMillis(),
+            syncAt = System.currentTimeMillis(),
             isSynced = true
         )
     }
