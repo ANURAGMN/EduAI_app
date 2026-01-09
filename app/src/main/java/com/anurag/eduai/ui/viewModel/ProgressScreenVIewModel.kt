@@ -44,7 +44,7 @@ class ProgressScreenVIewModel(
         }
     }
 
-    fun getStreak(userId:String) {
+    fun getStreak() {
         val result = streakManager.getCurrentStreak()
         _streakCount.value = result.toString() ?: "0"
     }

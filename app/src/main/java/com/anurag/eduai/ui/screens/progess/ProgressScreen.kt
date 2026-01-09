@@ -12,12 +12,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
+import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
@@ -48,6 +51,8 @@ fun ProgressScreen()
 
     val db = remember { EduAiDatabase.getInstance(context) }
     val progressDao = db.progressDao()
+    val studentDao = db.studentDao()
+    var student by remember { mutableStateOf<StudentEntity?>(null) }
 
     val viewModel = remember { ProgressScreenVIewModel(progressDao, streakManager) }
 
@@ -55,12 +60,17 @@ fun ProgressScreen()
     val totalCompletedConcept by viewModel.totalCompletedConcept.collectAsState()
     val streakCount by viewModel.streakCount.collectAsState()
     val sevenDayProgress by viewModel.sevenDayProgress.collectAsState()
+    val skillProgress by viewModel.chapterProgressSummary.collectAsState()
 
+    LaunchedEffect(userId) {
+        student = studentDao.getStudentSync(userId)
+    }
     // loading all the value to their state through method call of viewmodel
     LaunchedEffect(Unit) {
         viewModel.getTotalCompletedConcept(userId)
-        viewModel.getStreak(userId)
+        viewModel.getStreak()
         viewModel.getSevenDayProgress(userId, weeklyProgressUtil.getSevenDaysAgoInMillis())
+        viewModel.getChapterProgressSummary(userId, student?.classLevel ?: 7, "science")
     }
 
     Column(
