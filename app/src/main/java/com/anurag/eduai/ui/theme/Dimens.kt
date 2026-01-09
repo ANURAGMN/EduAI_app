@@ -67,11 +67,14 @@ data class Dimensions(
     val inputHorizontalPadding: Dp,
     val inputBorderWidth: Dp,
 
-    // Cards & Containers
-    val cardPaddingHorizontal :Dp,
-    val cardPaddingVertical : Dp,
+    // Cards
+    val cardPadding: Dp,
     val cardElevation: Dp,
     val containerMinHeight: Dp,
+
+    //box
+    val boxSizeSmall: Dp,
+    val boxSizeMedium: Dp,
 
     // dialogs
     val dialogPadding: Dp,
@@ -87,8 +90,7 @@ data class Dimensions(
     val dividerHeight: Dp,
 
     // spacing around screen edges
-    val screenHorizontalPadding: Dp,
-    val screenVerticalPadding: Dp,
+    val screenPadding: Dp,
     val sectionSpacing: Dp,
 ) {
     companion object {
@@ -140,8 +142,7 @@ data class Dimensions(
             inputBorderWidth = 1.dp,
 
             // Cards & containers
-            cardPaddingHorizontal = 16.dp,
-            cardPaddingVertical = 12.dp,
+            cardPadding = 12.dp,
             cardElevation = 4.dp,
             containerMinHeight = 200.dp,
 
@@ -160,9 +161,12 @@ data class Dimensions(
             dividerHeight = 16.dp,
 
             // Screen spacing
-            screenHorizontalPadding = 16.dp,
-            screenVerticalPadding = 16.dp,
+            screenPadding = 16.dp,
             sectionSpacing = 24.dp,
+
+            //box
+            boxSizeSmall= 60.dp,
+            boxSizeMedium = 80.dp
         )
 
         val Medium = Dimensions(
@@ -213,8 +217,7 @@ data class Dimensions(
             inputBorderWidth = 1.dp,
 
             // Cards & containers
-            cardPaddingHorizontal = 18.dp,
-            cardPaddingVertical = 14.dp,
+            cardPadding = 14.dp,
             cardElevation = 6.dp,
             containerMinHeight = 240.dp,
 
@@ -233,9 +236,12 @@ data class Dimensions(
             dividerHeight = 20.dp,
 
             // Screen spacing
-            screenHorizontalPadding = 20.dp,
-            screenVerticalPadding = 20.dp,
+            screenPadding = 20.dp,
             sectionSpacing = 28.dp,
+
+            //box
+            boxSizeSmall = 80.dp,
+            boxSizeMedium = 100.dp
         )
 
         val Expanded = Dimensions(
@@ -286,8 +292,7 @@ data class Dimensions(
             inputBorderWidth = 1.5.dp,
 
             // Cards & containers
-            cardPaddingHorizontal = 20.dp,
-            cardPaddingVertical = 16.dp,
+            cardPadding = 16.dp,
             cardElevation = 8.dp,
             containerMinHeight = 280.dp,
 
@@ -308,9 +313,12 @@ data class Dimensions(
             dividerHeight = 24.dp,
 
             // Screen spacing
-            screenHorizontalPadding = 24.dp,
-            screenVerticalPadding = 24.dp,
+            screenPadding = 24.dp,
             sectionSpacing = 32.dp,
+
+            //box
+            boxSizeSmall = 100.dp,
+            boxSizeMedium = 120.dp
         )
     }
 }

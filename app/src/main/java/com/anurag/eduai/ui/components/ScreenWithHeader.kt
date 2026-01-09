@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.anurag.eduai.ui.theme.BackgroundPrimary
+import com.anurag.eduai.ui.theme.LocalDimensions
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -20,7 +22,7 @@ fun ScreenWithHeader(
     content: @Composable () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-
+    val dimens =LocalDimensions.current
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
