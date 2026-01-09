@@ -29,6 +29,6 @@ data class ConceptEntity(
     val orderIndex: Int,
     val description: String? = null,
     val hasSimulation: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis(),
+    val syncAt: Long = System.currentTimeMillis(),
     val isSynced: Boolean = false
 )
