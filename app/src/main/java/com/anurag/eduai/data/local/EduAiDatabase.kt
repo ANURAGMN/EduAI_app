@@ -7,7 +7,6 @@ import androidx.room.RoomDatabase
 import com.anurag.eduai.data.local.dao.AppAnalyticsDao
 import com.anurag.eduai.data.local.dao.ChapterDao
 import com.anurag.eduai.data.local.dao.ConceptDao
-import com.anurag.eduai.data.local.dao.ConceptActivityDao
 import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.data.local.dao.SessionDao
 import com.anurag.eduai.data.local.dao.SimulationDao
@@ -15,7 +14,6 @@ import com.anurag.eduai.data.local.dao.StudentDao
 import com.anurag.eduai.data.local.dao.SubjectDao
 import com.anurag.eduai.data.local.entities.AppAnalyticsEntity
 import com.anurag.eduai.data.local.entities.ChapterEntity
-import com.anurag.eduai.data.local.entities.ConceptActivityEntity
 import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.data.local.entities.ProgressEntity
 import com.anurag.eduai.data.local.entities.SessionEntity
@@ -34,7 +32,6 @@ import com.anurag.eduai.data.local.entities.SubjectEntity
         ConceptEntity::class,
         SimulationEntity::class,
         SessionEntity::class,
-        ConceptActivityEntity::class,
         AppAnalyticsEntity::class,
         ProgressEntity::class,
     ],
@@ -47,10 +44,9 @@ abstract class EduAiDatabase : RoomDatabase() {
     abstract fun subjectDao(): SubjectDao
     abstract fun chapterDao(): ChapterDao
     abstract fun conceptDao(): ConceptDao
-    abstract fun simulationDao(): SimulationDao
     abstract fun progressDao(): ProgressDao
+    abstract fun simulationDao(): SimulationDao
     abstract fun sessionDao(): SessionDao
-    abstract fun conceptActivityDao(): ConceptActivityDao
     abstract fun appAnalyticsDao(): AppAnalyticsDao
 
     companion object {

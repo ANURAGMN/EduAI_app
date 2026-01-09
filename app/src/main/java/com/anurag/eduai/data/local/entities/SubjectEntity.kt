@@ -20,6 +20,6 @@ data class SubjectEntity(
     val iconUrl: String? = null,
     val orderIndex: Int = 0,
     val totalChapters: Int = 0,
-    val createdAt: Long = System.currentTimeMillis(),
+    val syncAt: Long = System.currentTimeMillis(),
     val isSynced: Boolean = false
 )

@@ -41,7 +41,7 @@ object FirebaseConceptMapper {
             orderIndex = document.getLong("conceptOrder")?.toInt() ?: 0,
             description = combinedDescription,
             hasSimulation = false,
-            createdAt = System.currentTimeMillis(),
+            syncAt = System.currentTimeMillis(),
             isSynced = true
         )
     }
