@@ -12,108 +12,105 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.anurag.eduai.R
 import com.anurag.eduai.ui.screens.subjectscreen.Subject
+import com.anurag.eduai.ui.theme.CardBackground
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextOnAccent
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 
+/**
+ * Composable function to display a Subject Card with subject details and a start learning button.
+ * 1. Subject Initial in a colored box
+ * 2. Subject Name
+ * 3. Chapter Count
+ * 4. Start Learning Button
+
+ * @param subject The Subject data to display.
+ * @param onClick Lambda function to handle card click events.
+ */
 @Composable
 fun SubjectCard(
     subject: Subject,
     onClick: (Subject) -> Unit = {}
 ) {
-    Column(
+    val dimens = LocalDimensions.current
+
+    ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                color = Color.White,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clickable { onClick(subject) }
-            .padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .clickable{ onClick(subject) },
+        shape=RoundedCornerShape(dimens.cornerRadiusMedium),
+        elevation =CardDefaults.elevatedCardElevation(
+            defaultElevation = dimens.cardElevation
+        ),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = CardBackground
+        )
     ) {
-        Box(
-            modifier = Modifier
-                .size(80.dp)
-                .background(
-                    color = subject.color,
-                    shape = RoundedCornerShape(16.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
+        Column(
+            modifier = Modifier.padding(dimens.cardPadding),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ){
             Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(dimens.boxSizeSmall)
                     .background(
                         color = subject.color,
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(dimens.cornerRadiusMedium)
                     ),
                 contentAlignment = Alignment.Center
-            ) {
+            ) {// Subject Initial
                 Text(
                     text = subject.name.first().toString(),
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineMedium,
                     color = TextOnAccent
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(dimens.spaceMedium))
 
-        Text(
-            text = subject.name,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        Text(
-            text = subject.chapterCount,
-            fontSize = 11.sp,
-            color = TextSecondary
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        Button(
-            onClick = { onClick(subject) },
-            modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .height(36.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = subject.color),
-            shape = RoundedCornerShape(8.dp)
-        ) {
+            // Subject Name
             Text(
-                text = "Start Learning",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextOnAccent
+                text = subject.name,
+                style= MaterialTheme.typography.titleMedium,
+                color = TextPrimary
             )
+
+            Spacer(modifier = Modifier.height(dimens.spaceSmall))
+
+            // total chapters in subject
+            Text(
+                text = "${subject.chapterCount} Chapters",
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary,
+            )
+
+            Spacer(modifier = Modifier.height(dimens.spaceMedium))
+
+            // Start Learning Button
+            Button(
+                onClick = { onClick(subject) },
+                modifier = Modifier
+                    .fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = subject.color),
+                shape = RoundedCornerShape(dimens.cornerRadiusMedium)
+            ) {
+                Text(
+                    text = stringResource(R.string.start_learning),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = TextOnAccent,
+                )
+            }
         }
     }
-}
-@Preview
-@Composable
-fun SubjectCardPreview() {
-    SubjectCard(
-        subject = Subject(
-            id = "1",
-            name = "Mathematics",
-            color = Color(0xFF3B82F6),
-            chapterCount = "12 Chapters"
-        )
-    )
 }

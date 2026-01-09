@@ -52,3 +52,5 @@ val ColorHint = Color(0xFF9CA3AF)
 val ColorError = Color(0xFFEF4444)
 val ColorSuccess = Color(0xFF22C55E)
 val ColorWarning = Color(0xFFF59E0B)
+
+val CardBackground = Color(0xFFFFFFFF)

@@ -1,61 +1,65 @@
 package com.anurag.eduai.ui.screens.chapterscreen.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.anurag.eduai.ui.theme.ChipBackground
+import com.anurag.eduai.ui.screens.chapterscreen.Chapter
+import com.anurag.eduai.ui.screens.chapterscreen.ChapterStatus
+import com.anurag.eduai.ui.theme.CardBackground
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 
-enum class ChapterStatus {
-    COMPLETED,
-    IN_PROGRESS,
-    NOT_STARTED
-}
 
-data class Chapter(
-    val id: String,
-    val name: String,
-    val chapterCount: String,
-    val status: ChapterStatus = ChapterStatus.NOT_STARTED
-)
-
+/**
+ * A card component to display chapter information
+ * 1. Chapter ID and Name
+ * 2. Chapter Count
+ * 3. Status Badge(Completed, In Progress, Not Started)
+ * 4. Action Buttons: Study, Videos, Simulations...
+ *
+ * @param chapter The chapter data to display.
+ * @param onStudyClick Callback when the "Study" button is clicked.
+ *
+ */
 @Composable
 fun ChapterCard(
     chapter: Chapter,
     onStudyClick: () -> Unit = {},
 ) {
-    Column(
+    val dimens = LocalDimensions.current
+    Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = Color.White,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .padding(16.dp)
+            .fillMaxWidth(),
+        shape = CardDefaults.shape,
+        colors =CardDefaults.cardColors(
+            containerColor = CardBackground
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = dimens.cardElevation
+        ),
+
     ) {
         // Chapter title and status
         Row(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(dimens.spaceSmall),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -66,42 +70,52 @@ fun ChapterCard(
             ) {
                 Text(
                     text = chapter.id,
-                    fontSize = 16.sp,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = TextSecondary
                 )
-                Text(
-                    text = chapter.name,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-            }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.Start
+                ){
+                    Text(
+                        text = chapter.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                }
 
+            }
+            // Status Badge
             StatusBadge(status = chapter.status)
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
-
+        Spacer(modifier = Modifier.height(dimens.spaceSmall))
+        // total  concepts  in chapter
         Row(
             modifier = Modifier
                 .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
         ) {
+            Spacer(modifier = Modifier.width(dimens.spaceSmall))
             Text(
                 text = chapter.chapterCount,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodySmall,
                 color = TextSecondary
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(dimens.spaceSmall))
 
         // Action buttons
         Row(
             modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                .fillMaxWidth()
+                .padding(dimens.spaceSmall),
+            horizontalArrangement = Arrangement.Absolute.SpaceEvenly
         ) {
             ChapterActionButton(
                 label = "Study",
@@ -122,33 +136,7 @@ fun ChapterCard(
                 onClick = {}
             )
         }
-    }
-}
 
-@Composable
-fun ChapterActionButton(
-    label: String,
-    icon: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
-) {
-    Box(
-        modifier = modifier
-            .background(
-                color = Color.White,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .clickable(onClick = onClick)
-            .border(1.dp, ChipBackground, RoundedCornerShape(8.dp))
-            .padding(vertical = 10.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "$icon $label",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
     }
 }
 
@@ -159,8 +147,8 @@ fun ChapterCardPreview() {
         chapter = Chapter(
             id = "1",
             name = "Number Systems",
-            chapterCount = "8 main chapters",
-            status = ChapterStatus.COMPLETED
+            chapterCount = "8 main concepts",
+            status = ChapterStatus.NOT_STARTED
         )
     )
 }
