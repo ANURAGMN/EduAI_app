@@ -10,12 +10,14 @@ import com.google.firebase.firestore.DocumentSnapshot
 object FirebaseChapterMapper {
 
     fun map(document: DocumentSnapshot): ChapterEntity {
-        val chapterId = document.get("chapter_id").toString()
-        val subjectId = document.get("subject_id").toString()
-        val chapterName = document.get("unit_name").toString()
-        val orderIndex = document.getLong("conceptOrder")?.toInt() ?: 0
+        val chapterId = document.get("chapter_id")?.toString() ?: error("chapterId missing for concept ${document.id}")
+        val subjectId = document.get("subject_id")?.toString() ?: error("subjectId missing for concept ${document.id}")
+        val chapterName = document.get("unit_name")?.toString() ?: error("chapterName missing for concept ${document.id}")
+        val orderIndex = document.getLong("chapter_id")?.toInt() ?: error("orderIndex missing for concept ${document.id}")
         val totalConcepts = document.getLong("conceptCount")?.toInt() ?: 0
 
+//        val chapterId = document.getString("chapter_id")
+//            ?: error("chapter_id missing in Firestore document ${document.id}")
         return ChapterEntity(
             chapterId = chapterId,
             subjectId = subjectId,

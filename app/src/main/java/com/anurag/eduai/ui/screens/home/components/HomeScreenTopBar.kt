@@ -41,7 +41,7 @@ fun getGreeting(): String {
 fun HomeScreenTopBar(
     userName: String = "John Doe",
     subject: String = "Science",
-    streakDays: Int = 7,
+    streakDays: String,
     onChangeSubject: () -> Unit = {}
 ) {
     Box(

@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.anurag.eduai.ui.theme.White
 
 @Composable
-fun StreakCard(days: Int) {
+fun StreakCard(days: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -47,7 +47,7 @@ fun StreakCard(days: Int) {
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "$days",
+                text = days,
                 fontSize = 22.sp,
                 color = White
             )

@@ -51,15 +51,21 @@ import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.sync.FirebaseSyncManager
 import com.anurag.eduai.ui.components.DropDownMenu
-import com.anurag.eduai.ui.theme.*
+import com.anurag.eduai.ui.theme.AccentBlue
+import com.anurag.eduai.ui.theme.BackgroundPrimary
+import com.anurag.eduai.ui.theme.BackgroundSecondary
+import com.anurag.eduai.ui.theme.BrandPrimary
+import com.anurag.eduai.ui.theme.ColorError
+import com.anurag.eduai.ui.theme.ColorHint
+import com.anurag.eduai.ui.theme.TextPrimary
+import com.anurag.eduai.ui.theme.TextSecondary
+import com.anurag.eduai.ui.theme.White
 import com.anurag.eduai.ui.viewModel.UserViewModel
-import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
 @Composable

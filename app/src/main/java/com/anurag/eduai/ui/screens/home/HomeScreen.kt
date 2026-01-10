@@ -30,6 +30,7 @@ import com.anurag.eduai.ui.screens.home.components.SimulationCard
 import com.anurag.eduai.ui.screens.home.components.TodayProgressCard
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.viewModel.HomeViewModel
+import com.anurag.eduai.utils.StreakManager
 
 @Composable
 fun HomeScreen(
@@ -47,18 +48,21 @@ fun HomeScreen(
     val conceptDao = db.conceptDao()
     val progressDao = db.progressDao()
     val sharedPreferenceUtils = SharedPreferenceUtils(context)
+    val streakManager = StreakManager(context)
 
     val userId = sharedPreferenceUtils.getUserId().toString()
     var student by remember { mutableStateOf<StudentEntity?>(null) }
 
-    val viewModel = remember { HomeViewModel(conceptDao, progressDao, userId) }
+    val viewModel = remember { HomeViewModel(conceptDao, progressDao, userId, streakManager) }
 
     val progressConcepts by viewModel.progressConcepts.collectAsState()
+    val streakCount by viewModel.streakCount.collectAsState()
 
 
     // Testing if user is added to LocalDB or not
     LaunchedEffect(Unit) {
         student = studentDao.getStudentSync(userId)
+        viewModel.getStreak()
         DebugLogger.debugLog("HomeScreen", "CurrentUser:\n $student")
         DebugLogger.debugLog("HomeScreen", "Concept:\n $progressConcepts")
     }
@@ -75,8 +79,9 @@ fun HomeScreen(
                                 .verticalScroll(rememberScrollState())
         ) {
             HomeScreenTopBar(
-                    userName = student?.studentName ?: "John Doe",
-                    onChangeSubject = { onNavigateToLearning() }
+                userName = student?.studentName ?: "John Doe",
+                onChangeSubject = { onNavigateToLearning() },
+                streakDays = streakCount
             )
 
             Column(modifier = Modifier.padding(10.dp)) {

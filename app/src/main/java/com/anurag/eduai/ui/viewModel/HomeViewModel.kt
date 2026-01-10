@@ -7,18 +7,24 @@ import com.anurag.eduai.data.local.entities.ProgressEntity
 import com.anurag.eduai.data.local.dao.ConceptDao
 import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.utils.StreakManager
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
     private val conceptDao: ConceptDao,
     private val progressDao: ProgressDao,
-    private val userId: String
+    private val userId: String,
+    private val streakManager: StreakManager
 ) : ViewModel(){
     
     // Pair of ProgressEntity and its corresponding ConceptEntity
     // Using a simple Map or List of Pairs for UI to consume
     var progressConcepts = MutableStateFlow<List<Pair<ProgressEntity, ConceptEntity?>>>(emptyList())
+
+    private val _streakCount = MutableStateFlow("0")
+    val streakCount: StateFlow<String> = _streakCount
 
     init {
         viewModelScope.launch {
@@ -53,5 +59,9 @@ class HomeViewModel(
                     }
                 }
         }
+    }
+    fun getStreak() {
+        val result = streakManager.getCurrentStreak()
+        _streakCount.value = result.toString() ?: "0"
     }
 }
