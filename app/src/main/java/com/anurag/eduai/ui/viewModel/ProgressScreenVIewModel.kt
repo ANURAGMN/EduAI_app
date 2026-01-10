@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.anurag.eduai.data.local.dao.ChapterProgressSummary
 import com.anurag.eduai.data.local.dao.DailyConceptCount
 import com.anurag.eduai.data.local.dao.ProgressDao
+import com.anurag.eduai.data.local.dao.SubjectDao
+import com.anurag.eduai.data.local.entities.SubjectEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.screens.chapterscreen.components.Chapter
 import com.anurag.eduai.utils.StreakManager
@@ -14,6 +16,7 @@ import kotlinx.coroutines.launch
 
 class ProgressScreenVIewModel(
     private val progressDao: ProgressDao,
+    private val subjectDao: SubjectDao,
     private val streakManager: StreakManager
 ) : ViewModel() {
 
@@ -29,6 +32,14 @@ class ProgressScreenVIewModel(
 
     private val _chapterProgressSummary = MutableStateFlow<List<ChapterProgressSummary>>(emptyList())
     val chapterProgressSummary: StateFlow<List<ChapterProgressSummary>> = _chapterProgressSummary
+
+    // --- New State holders for subjects ---
+    private val _subjects = MutableStateFlow<List<SubjectEntity>>(emptyList())
+    val subjects: StateFlow<List<SubjectEntity>> = _subjects
+
+    private val _selectedSubject = MutableStateFlow<SubjectEntity?>(null)
+    val selectedSubject: StateFlow<SubjectEntity?> = _selectedSubject
+
 
     fun getTotalCompletedConcept(userId: String) {
         viewModelScope.launch {
@@ -59,5 +70,30 @@ class ProgressScreenVIewModel(
                 "ChapterWiseProgress = $result"
             )
         }
+    }
+
+    fun loadSubjects(classLevel: Int) {
+        viewModelScope.launch {
+            val subjectList = subjectDao.getSubjectsForClassSync(classLevel)
+            _subjects.value = subjectList
+
+            // Auto-select first subject if available and none selected
+            if (subjectList.isNotEmpty() && _selectedSubject.value == null) {
+                _selectedSubject.value = subjectList.first()
+            }
+
+            DebugLogger.debugLog(
+                "ProgressScreenViewModel",
+                "Loaded ${subjectList.size} subjects for class $classLevel"
+            )
+        }
+    }
+
+    fun selectSubject(subject: SubjectEntity) {
+        _selectedSubject.value = subject
+        DebugLogger.debugLog(
+            "ProgressScreenViewModel",
+            "Selected subject: ${subject.subjectName}"
+        )
     }
 }

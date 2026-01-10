@@ -70,7 +70,7 @@ fun WeeklyActivitySection(
     Column {
         Text(
             text = "Weekly Activity",
-            fontSize = 18.sp,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = Black,
             modifier = Modifier.padding(bottom = 15.dp)

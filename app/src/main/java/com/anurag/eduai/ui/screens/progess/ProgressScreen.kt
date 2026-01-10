@@ -21,11 +21,9 @@ import androidx.compose.ui.unit.dp
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.local.entities.StudentEntity
-import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.progess.component.ProgressScreenTopBar
-import com.anurag.eduai.ui.screens.progess.component.ShareButton
 import com.anurag.eduai.ui.screens.progess.component.SkillsProgressSection
 import com.anurag.eduai.ui.screens.progess.component.StatusCardGrid
 import com.anurag.eduai.ui.screens.progess.component.WeeklyActivitySection
@@ -46,31 +44,51 @@ fun ProgressScreen()
 
     val sharedPref = SharedPreferenceUtils(context)
     val userId = sharedPref.getUserId().toString()
+    var classLevel = 7
 
     val streakManager = StreakManager(context)
 
     val db = remember { EduAiDatabase.getInstance(context) }
     val progressDao = db.progressDao()
     val studentDao = db.studentDao()
+    val subjectDao = db.subjectDao()
     var student by remember { mutableStateOf<StudentEntity?>(null) }
 
-    val viewModel = remember { ProgressScreenVIewModel(progressDao, streakManager) }
+    val viewModel = remember { ProgressScreenVIewModel(progressDao, subjectDao, streakManager) }
 
     // collecting all the values as state
     val totalCompletedConcept by viewModel.totalCompletedConcept.collectAsState()
     val streakCount by viewModel.streakCount.collectAsState()
     val sevenDayProgress by viewModel.sevenDayProgress.collectAsState()
-    val skillProgress by viewModel.chapterProgressSummary.collectAsState()
+
+    val chapterProgress by viewModel.chapterProgressSummary.collectAsState()
+    val subjects by viewModel.subjects.collectAsState()
+    val selectedSubject by viewModel.selectedSubject.collectAsState()
 
     LaunchedEffect(userId) {
         student = studentDao.getStudentSync(userId)
+        classLevel = student?.classLevel ?: 7 // default value as class 7
     }
     // loading all the value to their state through method call of viewmodel
     LaunchedEffect(Unit) {
         viewModel.getTotalCompletedConcept(userId)
         viewModel.getStreak()
         viewModel.getSevenDayProgress(userId, weeklyProgressUtil.getSevenDaysAgoInMillis())
-        viewModel.getChapterProgressSummary(userId, student?.classLevel ?: 7, "science")
+    }
+
+    // Load subjects when screen launches
+    LaunchedEffect(classLevel) {
+        viewModel.loadSubjects(classLevel)
+    }
+    // Load chapter progress when subject is selected
+    LaunchedEffect(selectedSubject) {
+        selectedSubject?.let { subject ->
+            viewModel.getChapterProgressSummary(
+                userId = userId,
+                classLevel = classLevel,
+                subject = subject.subjectId
+            )
+        }
     }
 
     Column(
@@ -100,7 +118,14 @@ fun ProgressScreen()
 
             Spacer(modifier = Modifier.height(25.dp))
 
-            SkillsProgressSection()
+            SkillsProgressSection(
+                subjects = subjects,
+                selectedSubject = selectedSubject,
+                chapterProgress = chapterProgress,
+                onSubjectSelected = { subject ->
+                    viewModel.selectSubject(subject)
+                }
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
 
