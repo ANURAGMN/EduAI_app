@@ -1,6 +1,7 @@
 package com.anurag.eduai.utils
 
 import android.content.Context
+import java.util.Calendar
 
 /**
  * StreakManager is responsible for tracking the user's learning streak
@@ -17,6 +18,7 @@ class StreakManager(context: Context) {
     private companion object {
 
         const val KEY_LAST_OPEN_TIME = "last_open_time"
+        const val KEY_LAST_STREAK_DAY = "last_streak_day"
         const val KEY_STREAK_COUNT = "streak_count"
         const val STREAK_WINDOW = 24 * 60 * 60 * 1000L
     }
@@ -32,18 +34,25 @@ class StreakManager(context: Context) {
     fun onConceptOpened(): Int {
         val now = System.currentTimeMillis()
 
-        val lastTime = prefs.getLong(KEY_LAST_OPEN_TIME, 0L)
+        val lastStreakDay = prefs.getLong(KEY_LAST_STREAK_DAY, 0L)
         val oldStreak = prefs.getInt(KEY_STREAK_COUNT, 0)
 
-        val newStreak =
-            if (now - lastTime <= STREAK_WINDOW) {
-                oldStreak + 1
-            } else {
-                1
-            }
+        val newStreak = when {
+            // First ever streak event
+            lastStreakDay == 0L -> 1
+
+            // Same calendar day → do NOT increment
+            isSameDay(lastStreakDay, now) -> oldStreak
+
+            // Next valid day within time window → continue streak
+            now - lastStreakDay <= STREAK_WINDOW -> oldStreak + 1
+
+            // Too much time has passed → reset streak
+            else -> 1
+        }
 
         prefs.edit()
-            .putLong(KEY_LAST_OPEN_TIME, now)
+            .putLong(KEY_LAST_STREAK_DAY, now)
             .putInt(KEY_STREAK_COUNT, newStreak)
             .apply()
 
@@ -63,5 +72,12 @@ class StreakManager(context: Context) {
             .remove(KEY_LAST_OPEN_TIME)
             .remove(KEY_STREAK_COUNT)
             .apply()
+    }
+    private fun isSameDay(time1: Long, time2: Long): Boolean {
+        val cal1 = Calendar.getInstance().apply { timeInMillis = time1 }
+        val cal2 = Calendar.getInstance().apply { timeInMillis = time2 }
+
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
     }
 }
