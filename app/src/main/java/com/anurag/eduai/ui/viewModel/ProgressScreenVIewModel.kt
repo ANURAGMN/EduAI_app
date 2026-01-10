@@ -8,7 +8,6 @@ import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.data.local.dao.SubjectDao
 import com.anurag.eduai.data.local.entities.SubjectEntity
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.ui.screens.chapterscreen.components.Chapter
 import com.anurag.eduai.utils.StreakManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
