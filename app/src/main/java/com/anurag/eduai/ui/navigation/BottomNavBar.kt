@@ -4,6 +4,7 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -35,6 +36,7 @@ fun BottomNavBar() {
     val navController = rememberNavController()
 
     Scaffold(
+        modifier = Modifier.statusBarsPadding(),
         bottomBar = {
             NavigationBar(
                 containerColor = BackgroundPrimary,
