@@ -64,9 +64,11 @@ fun HomeScreen(
         student = studentDao.getStudentSync(userId)
         viewModel.getStreak()
         DebugLogger.debugLog("HomeScreen", "CurrentUser:\n $student")
-        DebugLogger.debugLog("HomeScreen", "Concept:\n $progressConcepts")
     }
 
+    LaunchedEffect(progressConcepts) {
+        DebugLogger.debugLog("HomeScreen", "Concept:\n $progressConcepts")
+    }
 
 
     Surface(modifier = Modifier

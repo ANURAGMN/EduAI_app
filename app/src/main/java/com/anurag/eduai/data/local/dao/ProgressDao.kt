@@ -116,6 +116,21 @@ interface ProgressDao {
     )
     fun getHomeScreenConcepts(studentId: String, itemType: String): Flow<List<ProgressEntity>>
 
+    /**
+     * Progress for home screen today progress section
+     */
+    @Query(
+        """
+    SELECT * FROM progress
+    WHERE studentId = :studentId
+      AND itemType = 'CONCEPT'
+      AND status = 'COMPLETED'
+    ORDER BY completedAt DESC
+    LIMIT 1
+"""
+    )
+    suspend fun getLastCompletedConcept(studentId: String): ProgressEntity?
+
     /** Get the total number of completed concepts for a student */
     @Query(
         """

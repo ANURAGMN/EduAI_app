@@ -32,113 +32,131 @@ import com.anurag.eduai.ui.theme.AccentGreen
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
-
 @Composable
 fun TodayProgressCard(
-    progressConcepts: List<Pair<ProgressEntity, ConceptEntity?>>,
+    progressConcepts: List<Pair<ProgressEntity?, ConceptEntity?>>,
     onLessonClick: (String) -> Unit
 ) {
-
     Card(
-            modifier = Modifier
-                .fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = BackgroundPrimary),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 15.dp)
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = BackgroundPrimary),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 15.dp)
     ) {
-        Column(modifier = Modifier
+        Column(
+            modifier = Modifier
                 .fillMaxWidth()
                 .padding(10.dp),
             verticalArrangement = Arrangement.Center
-
         ) {
+
             if (progressConcepts.isEmpty()) {
                 Text(
-                        text = stringResource(R.string.no_progress_msg),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = TextPrimary,
-                        fontStyle = FontStyle.Italic,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(300.dp)
-                            .padding(0.dp, 6.dp),
-                        textAlign = TextAlign.Center,
+                    text = stringResource(R.string.no_progress_msg),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimary,
+                    fontStyle = FontStyle.Italic,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .padding(0.dp, 6.dp),
+                    textAlign = TextAlign.Center,
                 )
-            } else {
-                Text(
-                        text = stringResource(R.string.today_progress),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.fillMaxWidth().padding(0.dp, 6.dp)
+                return@Column
+            }
+
+            Text(
+                text = stringResource(R.string.today_progress),
+                style = MaterialTheme.typography.titleLarge,
+                color = TextPrimary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(0.dp, 6.dp)
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(0.dp, 15.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+
+                // Completed Concepts out of 4
+                ProgressCard(
+                    cardColors = AccentBlue.copy(alpha = 0.3f),
+                    title = stringResource(R.string.concept),
+                    score =
+                        "${progressConcepts.count { it.first?.status == "COMPLETED" }}/4",
+                    scoreColor = AccentBlue,
+                    modifier = Modifier.weight(0.5f)
                 )
 
-                Row(
-                        modifier = Modifier.fillMaxWidth().padding(0.dp, 15.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+                Spacer(modifier = Modifier.padding(20.dp))
 
-                    // completed concept / total number of concept per unit
-                    /**
-                     * Incomplete
-                     */
-                    ProgressCard(
-                            cardColors = AccentBlue.copy(alpha = 0.3f),
-                            title = stringResource(R.string.concept),
-                            score =
-                                    "${progressConcepts.count { it.first.itemType == "CONCEPT" }}/4", // Showing count of visible concepts
-                            scoreColor = AccentBlue,
-                            modifier = Modifier.weight(0.5f)
-                    )
-                    Spacer(modifier = Modifier.padding(20.dp))
-                    ProgressCard(
-                            cardColors = AccentGreen.copy(alpha = 0.3f),
-                            title = stringResource(R.string.simulation),
-                            score =
-                                    "${progressConcepts.count { it.first.itemType == "SIMULATION" }}/4",
-                            scoreColor = AccentGreen,
-                            modifier = Modifier.weight(0.5f)
-                    )
-                }
+                ProgressCard(
+                    cardColors = AccentGreen.copy(alpha = 0.3f),
+                    title = stringResource(R.string.simulation),
+                    score =
+                        "${progressConcepts.count { it.first?.itemType == "SIMULATION" }}/4",
+                    scoreColor = AccentGreen,
+                    modifier = Modifier.weight(0.5f)
+                )
+            }
 
-                progressConcepts.forEach { (progress, concept) ->
-                    if (progress.status != "COMPLETED"
-                    ) { // Though query filters completed, just in case
+            // 🔑 DO NOT FILTER COMPLETED — render all curated items
+            progressConcepts.forEach { (progress, concept) ->
 
-                        val isLocked = progress.status == "NOT_STARTED"
-                        if (isLocked) {
-                            LockedLessons(title = concept?.conceptName ?: "Unknown Concept")
-                        } else {
-                            // Active or Pending
-                            LessonStatusCard(
-                                title = concept?.conceptName ?: "Unknown Concept",
-                                subtitle = "Status: ${progress.status}", // Or detailed score if
-                                // available
-                                iconColor = AccentBlue,
-                                backgroundColor = AccentBlue.copy(alpha = 0.1f),
-                                icon = {
-                                    Icon(
-                                        imageVector =
-                                            if (progress.status == "COMPLETED")
-                                                Icons.Outlined.CheckCircle
-                                            else
-                                                Icons.AutoMirrored.Outlined
-                                                    .LibraryBooks,
-                                        contentDescription = null,
-                                        tint = White
-                                    )
+                val status = progress?.status ?: "NOT_STARTED"
+                val isLocked = status == "NOT_STARTED"
+                val isCompleted = status == "COMPLETED"
+
+
+                when {
+                    isLocked -> {
+                        LockedLessons(
+                            title = concept?.conceptName ?: "Unknown Concept"
+                        )
+                    }
+
+                    else -> {
+                        LessonStatusCard(
+                            title = concept?.conceptName ?: "Unknown Concept",
+                            subtitle = "Status: $status",
+                            iconColor = if (isCompleted) AccentGreen else AccentBlue,
+                            backgroundColor =
+                                if (isCompleted)
+                                    AccentGreen.copy(alpha = 0.1f)
+                                else
+                                    AccentBlue.copy(alpha = 0.1f),
+                            icon = {
+                                Icon(
+                                    imageVector =
+                                        if (isCompleted)
+                                            Icons.Outlined.CheckCircle
+                                        else
+                                            Icons.AutoMirrored.Outlined.LibraryBooks,
+                                    contentDescription = null,
+                                    tint = White
+                                )
+                            },
+                            status =
+                                when (status) {
+                                    "IN_PROGRESS" -> "pending"
+                                    "COMPLETED" -> "completed"
+                                    else -> "locked"
                                 },
-                                status =
-                                    if (progress.status == "IN_PROGRESS") "pending"
-                                    else "completed", // Mapping to UI status
-                                onClick = {
-                                    DebugLogger.debugLog("TodayProgressCard", "Concept Clicked id ${concept?.conceptId}")
-                                    concept?.let { onLessonClick(it.conceptId) }
-                                }
-                            )
-                        }
-                        Spacer(modifier = Modifier.padding(5.dp))
+                            onClick = {
+                                DebugLogger.debugLog(
+                                    "TodayProgressCard",
+                                    "Concept Clicked id ${concept?.conceptId}"
+                                )
+                                concept?.let { onLessonClick(it.conceptId) }
+                            }
+                        )
                     }
                 }
+
+                Spacer(modifier = Modifier.padding(5.dp))
             }
         }
     }
