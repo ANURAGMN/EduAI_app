@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -67,6 +69,24 @@ internal fun Header(
                 )
             )
         ),
+       actions = {
+           IconButton(onClick = {}) {
+               Icon(
+                   imageVector = Icons.Default.Home,
+                   contentDescription = stringResource(R.string.home),
+                   tint = TextOnPrimary,
+                   modifier = Modifier.size(dimens.iconMedium)
+               )
+           }
+           IconButton(onClick = {}) {
+               Icon(
+                   imageVector = Icons.Default.Settings,
+                   contentDescription = stringResource(R.string.settings),
+                   tint = TextOnPrimary,
+                   modifier = Modifier.size(dimens.iconMedium)
+               )
+           }
+       },
         scrollBehavior = scrollBehavior
     )
 }
