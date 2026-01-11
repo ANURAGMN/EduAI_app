@@ -56,6 +56,10 @@ class ChatViewModel (): ViewModel() {
     // Autosuggestions state
     private val _autosuggestions = MutableStateFlow<List<String>>(emptyList())
     val autosuggestions: StateFlow<List<String>> = _autosuggestions
+    // State
+    private val _showAutosuggestions = MutableStateFlow(false)
+    val showAutosuggestions: StateFlow<Boolean> = _showAutosuggestions
+    private var idleJob: Job? = null
 
     // Track if last autosuggestion was clicked
     private var clickedAutosuggestion = false
@@ -126,6 +130,24 @@ class ChatViewModel (): ViewModel() {
             )
         }
     }
+
+    // Start 5s timer after TTS
+    fun startIdleTimer() {
+        idleJob?.cancel()
+        idleJob = viewModelScope.launch {
+            delay(5000L)
+            if (_autosuggestions.value.isNotEmpty()) {
+                _showAutosuggestions.value = true
+            }
+        }
+    }
+
+    // Hide on user action
+    fun hideAutosuggestions() {
+        _showAutosuggestions.value = false
+        idleJob?.cancel()
+    }
+
     /**
      * Set the student level
      */
@@ -263,6 +285,20 @@ class ChatViewModel (): ViewModel() {
 
     }
 
+    /**
+     * Handle autosuggestion tap
+     * Sends the suggestion as a message
+     */
+    fun tapAutosuggestion(suggestion: String, context: Context) {
+        viewModelScope.launch {
+            clickedAutosuggestion = true
+            sendMessage(suggestion, context)
+            // Reset after sending
+            delay(100)
+            clickedAutosuggestion = false
+        }
+    }
+
     private fun sendMessageAfterSessionReady(userMessage: String, context: Context) {
         viewModelScope.launch {
             try {
@@ -342,6 +378,7 @@ class ChatViewModel (): ViewModel() {
     fun selectConcept( concept: String,context: Context) {
         viewModelScope.launch {
             //stop any ongoing TTS
+            hideAutosuggestions()
             _shouldStartTTS.value = false
             _fullTextForTTS.value = ""
 
@@ -432,7 +469,7 @@ class ChatViewModel (): ViewModel() {
     ) {
         DebugLogger.debugLog("ChatViewModel", "Resuming session - thread=$threadId")
 
-        // ✓ CLEAR previous messages first
+        // CLEAR previous messages first
         _messages.value = emptyList()
         updateUIState()
 
