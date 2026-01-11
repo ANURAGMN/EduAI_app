@@ -19,7 +19,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.ui.screens.chapterscreen.Chapter
-import com.anurag.eduai.ui.screens.chapterscreen.ChapterStatus
 import com.anurag.eduai.ui.theme.CardBackground
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
@@ -70,7 +69,7 @@ fun ChapterCard(
             ) {
                 Text(
                     text = chapter.id,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = TextSecondary
                 )
@@ -89,21 +88,17 @@ fun ChapterCard(
                 }
 
             }
-            // Status Badge
-            StatusBadge(status = chapter.status)
         }
-
-        Spacer(modifier = Modifier.height(dimens.spaceSmall))
         // total  concepts  in chapter
         Row(
             modifier = Modifier
                 .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceLarge)
         ) {
             Spacer(modifier = Modifier.width(dimens.spaceSmall))
             Text(
-                text = chapter.chapterCount,
-                style = MaterialTheme.typography.bodySmall,
+                text = "${chapter.conceptCount}  Concepts",
+                style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary
             )
         }
@@ -136,7 +131,6 @@ fun ChapterCard(
                 onClick = {}
             )
         }
-
     }
 }
 
@@ -147,8 +141,7 @@ fun ChapterCardPreview() {
         chapter = Chapter(
             id = "1",
             name = "Number Systems",
-            chapterCount = "8 main concepts",
-            status = ChapterStatus.NOT_STARTED
+            conceptCount = "8",
         )
     )
 }

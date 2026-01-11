@@ -54,4 +54,6 @@
     <string name="in_progress">In Progress</string>
     <string name="not_started">Not Started</string>
     <string name="back">Back</string>
+    <string name="home">Home</string>
+    <string name="settings">Settings</string>
 </resources>
