@@ -13,6 +13,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.anurag.eduai.R
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
@@ -68,7 +70,9 @@ fun ChapterScreen(
 
     ScreenWithHeader(
         title = state.subject?.subjectName ?: "Chapters",
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        subtitle = stringResource(R.string.ncert_curriculum),
+        extraContent = {}
     ) {
         if (state.isLoading) {
             Box(

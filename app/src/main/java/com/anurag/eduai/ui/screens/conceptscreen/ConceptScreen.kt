@@ -22,6 +22,7 @@ import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.components.ScreenWithHeader
+import com.anurag.eduai.ui.screens.conceptscreen.components.ChapterProgressCardOnHeader
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptCard
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
@@ -76,7 +77,11 @@ fun ConceptScreen(
 
     ScreenWithHeader(
         title = state.chapter?.chapterName ?: "Concepts",
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        subtitle = state.chapter?.chapterName ?: "Chapter",
+        extraContent = { ChapterProgressCardOnHeader(
+            4 /*remove hardcoded concept with completed concepts*/,
+            state.chapter?.totalConcepts ?: 0) },
     ) {
         if (state.isLoading) {
             Box(

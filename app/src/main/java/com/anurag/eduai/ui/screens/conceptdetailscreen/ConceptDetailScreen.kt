@@ -52,7 +52,9 @@ fun ConceptDetailScreen(
 
     ScreenWithHeader(
         title = state.concept?.conceptName ?: "Concept",
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        subtitle = "concept detail screen",
+        extraContent = {/* Placeholder for future header content if any*/ }
     ) {
         if (state.isLoading) {
             Box(
