@@ -11,6 +11,8 @@ import com.anurag.eduai.utils.StreakManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
 
 class HomeViewModel(
     private val conceptDao: ConceptDao,
@@ -24,6 +26,24 @@ class HomeViewModel(
     var progressConcepts = MutableStateFlow<List<Pair<ProgressEntity?, ConceptEntity?>>>(emptyList())
     private val _streakCount = MutableStateFlow("0")
     val streakCount: StateFlow<String> = _streakCount
+
+    private val _todayConceptCount = MutableStateFlow("0")
+    val todayConceptCount: StateFlow<String> = _todayConceptCount
+
+    private val _todaySimulationCount = MutableStateFlow("0")
+    val todaySimulationCount: StateFlow<String> = _todaySimulationCount
+
+
+    val startOfDay = LocalDate.now()
+        .atStartOfDay(ZoneId.systemDefault())
+        .toInstant()
+        .toEpochMilli()
+
+    val endOfDay = LocalDate.now()
+        .plusDays(1)
+        .atStartOfDay(ZoneId.systemDefault())
+        .toInstant()
+        .toEpochMilli() - 1
 
     init {
         viewModelScope.launch {
@@ -98,5 +118,19 @@ class HomeViewModel(
     fun getStreak() {
         val result = streakManager.getCurrentStreak()
         _streakCount.value = result.toString() ?: "0"
+    }
+
+    fun getTodayCompletedConcept(){
+        viewModelScope.launch {
+            val result = progressDao.getTodayCompletedConceptCount(userId, startOfDay, endOfDay)
+            _todayConceptCount.value = result.toString() ?: "0"
+        }
+    }
+
+    fun getTodayCompletedSimulation(){
+        viewModelScope.launch {
+            val result = progressDao.getTodayCompletedSimulationCount(userId, startOfDay, endOfDay)
+            _todaySimulationCount.value = result.toString() ?: "0"
+        }
     }
 }

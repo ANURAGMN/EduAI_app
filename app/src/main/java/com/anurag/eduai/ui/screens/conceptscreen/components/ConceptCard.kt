@@ -52,7 +52,7 @@ fun ConceptCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = isEnabled, onClick = onClick),
+            .clickable(onClick = onClick),
         shape = CardDefaults.shape,
         colors =CardDefaults.cardColors(
             containerColor = CardBackground,
@@ -103,14 +103,14 @@ fun ConceptCard(
 
 
             // Right side: Chevron or Lock icon
-            Icon(
-                imageVector = if (isEnabled) Icons.Default.ChevronRight else Icons.Default.Lock,
-                contentDescription =
-                    if (isEnabled) stringResource(R.string.open_concept)
-                    else stringResource(R.string.locked),
-                tint = if (isEnabled) TextSecondary else NotStartedTextColor,
-                modifier = Modifier.size(dimens.iconLarge)
-            )
+//            Icon(
+//                imageVector = if (isEnabled) Icons.Default.ChevronRight else Icons.Default.Lock,
+//                contentDescription =
+//                    if (isEnabled) stringResource(R.string.open_concept)
+//                    else stringResource(R.string.locked),
+//                tint = if (isEnabled) TextSecondary else NotStartedTextColor,
+//                modifier = Modifier.size(dimens.iconLarge)
+//            )
         }
     }
 }

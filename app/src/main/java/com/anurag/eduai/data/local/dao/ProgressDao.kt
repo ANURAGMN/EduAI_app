@@ -196,7 +196,43 @@ interface ProgressDao {
         subjectId: String
     ): List<ChapterProgressSummary>
 
+
+    /** Get count of CONCEPT completed today */
+    @Query(
+        """
+    SELECT COUNT(*) 
+    FROM progress
+    WHERE studentId = :studentId
+      AND itemType = 'CONCEPT'
+      AND status = 'COMPLETED'
+      AND completedAt BETWEEN :startOfDay AND :endOfDay
+    """
+    )
+    suspend fun getTodayCompletedConceptCount(
+        studentId: String,
+        startOfDay: Long,
+        endOfDay: Long
+    ): Int
+
+    /** Get count of SIMULATION completed today */
+    @Query(
+        """
+    SELECT COUNT(*) 
+    FROM progress
+    WHERE studentId = :studentId
+      AND itemType = 'SIMULATION'
+      AND status = 'COMPLETED'
+      AND completedAt BETWEEN :startOfDay AND :endOfDay
+    """
+    )
+    suspend fun getTodayCompletedSimulationCount(
+        studentId: String,
+        startOfDay: Long,
+        endOfDay: Long
+    ): Int
 }
+
+
 /** Data class to hold daily concept completion count */
 data class DailyConceptCount(
         val date: String, // Format: YYYY-MM-DD

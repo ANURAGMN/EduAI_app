@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.ui.theme.Dimensions
 import com.anurag.eduai.ui.theme.HeaderGradientEnd
 import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.TextPrimary
@@ -40,7 +42,7 @@ fun getGreeting(): String {
 @Composable
 fun HomeScreenTopBar(
     userName: String = "John Doe",
-    subject: String = "Science",
+    subject: String,
     streakDays: String,
     onChangeSubject: () -> Unit = {}
 ) {
@@ -54,27 +56,29 @@ fun HomeScreenTopBar(
                         HeaderGradientEnd
                     )
                 ),
-                shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
+                shape = RoundedCornerShape(
+                    bottomStart = Dimensions.Compact.cornerRadiusRound,
+                    bottomEnd = Dimensions.Compact.cornerRadiusRound
+                )
             )
-            .padding(20.dp)
+            .padding(Dimensions.Compact.screenPadding)
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(Dimensions.Compact.spaceSmall)
         ) {
             Text(
                 text = getGreeting(),
                 color = TextPrimary,
-                fontSize = 14.sp
+                style = MaterialTheme.typography.titleSmall,
             )
-
             Text(
                 text = userName,
                 color = TextPrimary,
-                fontSize = 26.sp,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
 
-            SubjectCard(
+            HomeScreenSubjectCard(
                 subject,
                 onChangeClick = onChangeSubject
             )

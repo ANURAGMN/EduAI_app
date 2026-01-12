@@ -18,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.local.entities.StudentEntity
@@ -29,13 +28,15 @@ import com.anurag.eduai.ui.screens.home.components.HomeScreenTopBar
 import com.anurag.eduai.ui.screens.home.components.SimulationCard
 import com.anurag.eduai.ui.screens.home.components.TodayProgressCard
 import com.anurag.eduai.ui.theme.BackgroundSecondary
+import com.anurag.eduai.ui.theme.Dimensions
 import com.anurag.eduai.ui.viewModel.HomeViewModel
 import com.anurag.eduai.utils.StreakManager
 
 @Composable
 fun HomeScreen(
-    onNavigateToLearning: () -> Unit = {},
-    onLessonClick: (String) -> Unit = {}
+        onNavigateToLearning: () -> Unit = {},
+        onNavigateToChapters: (String) -> Unit = {},
+        onLessonClick: (String) -> Unit = {}
 ) {
 
     // Analytics Tracking
@@ -51,18 +52,22 @@ fun HomeScreen(
     val streakManager = StreakManager(context)
 
     val userId = sharedPreferenceUtils.getUserId().toString()
+    val selectedSubject = sharedPreferenceUtils.getSubjectSelection()
     var student by remember { mutableStateOf<StudentEntity?>(null) }
 
     val viewModel = remember { HomeViewModel(conceptDao, progressDao, userId, streakManager) }
 
     val progressConcepts by viewModel.progressConcepts.collectAsState()
     val streakCount by viewModel.streakCount.collectAsState()
-
+    val todayCompletedConceptCount by viewModel.todayConceptCount.collectAsState()
+    val todayCompletedSimulationCount by viewModel.todaySimulationCount.collectAsState()
 
     // Testing if user is added to LocalDB or not
     LaunchedEffect(Unit) {
         student = studentDao.getStudentSync(userId)
         viewModel.getStreak()
+        viewModel.getTodayCompletedConcept()
+        viewModel.getTodayCompletedSimulation()
         DebugLogger.debugLog("HomeScreen", "CurrentUser:\n $student")
     }
 
@@ -70,10 +75,7 @@ fun HomeScreen(
         DebugLogger.debugLog("HomeScreen", "Concept:\n $progressConcepts")
     }
 
-
-    Surface(modifier = Modifier
-        .fillMaxSize()
-    ) {
+    Surface(modifier = Modifier.fillMaxSize()) {
         Column(
                 modifier =
                         Modifier.fillMaxSize()
@@ -81,19 +83,25 @@ fun HomeScreen(
                                 .verticalScroll(rememberScrollState())
         ) {
             HomeScreenTopBar(
-                userName = student?.studentName ?: "John Doe",
-                onChangeSubject = { onNavigateToLearning() },
-                streakDays = streakCount
+                    userName = student?.studentName ?: "John Doe",
+                    subject = selectedSubject ?: "Science",
+                    streakDays = streakCount,
+                    onChangeSubject = { onNavigateToLearning() }
             )
 
-            Column(modifier = Modifier.padding(10.dp)) {
-
+            Column(modifier = Modifier.padding(Dimensions.Compact.screenPadding)) {
                 TodayProgressCard(
-                    progressConcepts = progressConcepts,
-                    onLessonClick = onLessonClick
+                        progressConcepts = progressConcepts,
+                        onLessonClick = onLessonClick,
+                        todayCompletedConcept = todayCompletedConceptCount,
+                        todayCompletedSimulation = todayCompletedSimulationCount,
+                        onShowAllChapters = {
+                            val subjectId = sharedPreferenceUtils.getSubjectSelection() ?: "science"
+                            onNavigateToChapters(subjectId)
+                        }
                 )
 
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(modifier = Modifier.height(Dimensions.Compact.spaceSmall))
 
                 SimulationCard()
             }
