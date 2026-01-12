@@ -1,6 +1,7 @@
 package com.anurag.eduai.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -33,6 +34,8 @@ import com.anurag.eduai.ui.theme.TextOnPrimary
 internal fun Header(
     title: String = "Class 7",
     onBackClick: () -> Unit = {},
+    onGoHome:() -> Unit = {},
+    onGoSetting:() -> Unit = {},
     scrollBehavior: TopAppBarScrollBehavior
 ) {
     val dimens = LocalDimensions.current
@@ -76,6 +79,7 @@ internal fun Header(
                    contentDescription = stringResource(R.string.home),
                    tint = TextOnPrimary,
                    modifier = Modifier.size(dimens.iconMedium)
+                       .clickable(onClick = onGoHome)
                )
            }
            IconButton(onClick = {}) {
@@ -84,6 +88,7 @@ internal fun Header(
                    contentDescription = stringResource(R.string.settings),
                    tint = TextOnPrimary,
                    modifier = Modifier.size(dimens.iconMedium)
+                       .clickable(onClick = onGoSetting)
                )
            }
        },

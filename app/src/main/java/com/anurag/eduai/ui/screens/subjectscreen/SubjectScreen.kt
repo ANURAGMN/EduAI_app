@@ -34,7 +34,9 @@ data class Subject(
 @Composable
 fun SubjectScreen(
     onBackClick: () -> Unit = {},
-    onSubjectClick: (Subject) -> Unit = {}
+    onSubjectClick: (Subject) -> Unit = {},
+    onGoHome:() -> Unit = {},
+    onGoSetting:() -> Unit = {},
 ) {
     TrackScreenEvent(screenName = ScreenName.SUBJECT)
     val dimens = LocalDimensions.current
@@ -49,7 +51,9 @@ fun SubjectScreen(
 
     ScreenWithHeader(
         title = "Class ${state.classLevel}",
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        onGoHome = onGoHome,
+        onGoSetting = onGoSetting
     ) {
         if (state.isLoading) {
             Box(

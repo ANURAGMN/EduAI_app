@@ -127,11 +127,11 @@ fun BottomNavBar() {
                 val subjectId =
                         backStackEntry.arguments?.getString("subjectId") ?: return@composable
                 ChapterScreen(
-                        subjectId = subjectId,
-                        onBackClick = { navController.popBackStack() },
-                        onChapterClick = { chapterId ->
-                            navController.navigate("concepts/$chapterId")
-                        }
+                    subjectId = subjectId,
+                    onBackClick = { navController.popBackStack() },
+                    onChapterClick = { chapterId ->
+                        navController.navigate("concepts/$chapterId")
+                    }
                 )
             }
             composable("concepts/{chapterId}") { backStackEntry ->
@@ -142,16 +142,15 @@ fun BottomNavBar() {
                     onBackClick = { navController.popBackStack() },
                     onConceptClick = { conceptId ->
                         navController.navigate("concept_detail/$conceptId")
-                    },
-
+                    }
                 )
             }
             composable("concept_detail/{conceptId}") { backStackEntry ->
                 val conceptId =
-                        backStackEntry.arguments?.getString("conceptId") ?: return@composable
+                    backStackEntry.arguments?.getString("conceptId") ?: return@composable
                 ConceptDetailScreen(
-                        conceptId = conceptId,
-                        onBackClick = { navController.popBackStack() }
+                    conceptId = conceptId,
+                    onBackClick = { navController.popBackStack() }
                 )
             }
             composable("subjects") {
@@ -166,6 +165,22 @@ fun BottomNavBar() {
                     },
                     onSubjectClick = { subject ->
                         navController.navigate("chapters/${subject.id}")
+                    },
+                    onGoHome = {
+                        navController.navigate("home") {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = false
+                            }
+                            launchSingleTop = true
+                        }
+                    },
+                    onGoSetting = {
+                        navController.navigate("setting") {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = false
+                            }
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
