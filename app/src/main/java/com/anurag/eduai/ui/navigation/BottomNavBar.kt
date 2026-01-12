@@ -25,6 +25,7 @@ import com.anurag.eduai.ui.screens.conceptscreen.ConceptScreen
 import com.anurag.eduai.ui.screens.home.HomeScreen
 import com.anurag.eduai.ui.screens.progess.ProgressScreen
 import com.anurag.eduai.ui.screens.setting.SettingScreen
+import com.anurag.eduai.ui.screens.subjectscreen.SubjectScreen
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
@@ -100,7 +101,24 @@ fun BottomNavBar() {
                         }
                 )
             }
-            composable(BottomNavItem.Progress.route) { ProgressScreen() }
+            composable(BottomNavItem.Progress.route) { ProgressScreen(
+                onGoHome = {
+                    navController.navigate("home") {
+                        popUpTo(navController.graph.startDestinationId) {
+                            inclusive = false
+                        }
+                        launchSingleTop = true
+                    }
+                },
+                onGoSetting = {
+                    navController.navigate("setting") {
+                        popUpTo(navController.graph.startDestinationId) {
+                            inclusive = false
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            ) }
             composable(BottomNavItem.Setting.route) { SettingScreen() }
             composable("learning") {
                 LearningNavigator(onBackToHome = { navController.popBackStack() })
@@ -118,13 +136,14 @@ fun BottomNavBar() {
             }
             composable("concepts/{chapterId}") { backStackEntry ->
                 val chapterId =
-                        backStackEntry.arguments?.getString("chapterId") ?: return@composable
+                    backStackEntry.arguments?.getString("chapterId") ?: return@composable
                 ConceptScreen(
-                        chapterId = chapterId,
-                        onBackClick = { navController.popBackStack() },
-                        onConceptClick = { conceptId ->
-                            navController.navigate("concept_detail/$conceptId")
-                        }
+                    chapterId = chapterId,
+                    onBackClick = { navController.popBackStack() },
+                    onConceptClick = { conceptId ->
+                        navController.navigate("concept_detail/$conceptId")
+                    },
+
                 )
             }
             composable("concept_detail/{conceptId}") { backStackEntry ->
@@ -135,6 +154,22 @@ fun BottomNavBar() {
                         onBackClick = { navController.popBackStack() }
                 )
             }
+            composable("subjects") {
+                SubjectScreen(
+                    onBackClick = {
+                        navController.navigate("home") {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = false
+                            }
+                            launchSingleTop = true
+                        }
+                    },
+                    onSubjectClick = { subject ->
+                        navController.navigate("chapters/${subject.id}")
+                    }
+                )
+            }
+
         }
     }
 }
