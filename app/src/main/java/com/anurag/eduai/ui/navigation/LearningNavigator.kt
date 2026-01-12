@@ -23,67 +23,67 @@ object LearningRoutes {
 
 @Composable
 fun LearningNavigator(
-        navController: NavHostController = rememberNavController(),
-        onBackToHome: () -> Unit,
-        onGoHome: () -> Unit = {},
-        onGoSetting: () -> Unit = {}
+    navController: NavHostController = rememberNavController(),
+    onBackToHome: () -> Unit,
+    onGoHome: () -> Unit = {},
+    onGoSetting: () -> Unit = {}
 ) {
     NavHost(
-            navController = navController,
-            startDestination = LearningRoutes.SUBJECTS,
-            enterTransition = { EnterTransition.None },
-            exitTransition = { ExitTransition.None },
-            popEnterTransition = { EnterTransition.None },
-            popExitTransition = { ExitTransition.None }
+        navController = navController,
+        startDestination = LearningRoutes.SUBJECTS,
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None }
     ) {
         composable(LearningRoutes.HOME) {
             HomeScreen(
-                    onLessonClick = { conceptId ->
-                        navController.navigate("concept_detail/$conceptId")
-                    }
+                onLessonClick = { conceptId ->
+                    navController.navigate("concept_detail/$conceptId")
+                }
             )
         }
 
         composable(LearningRoutes.SUBJECTS) {
             SubjectScreen(
-                    onBackClick = onBackToHome,
-                    onSubjectClick = { subject ->
-                        navController.navigate("chapters/${subject.id}")
-                    },
-                    onGoHome = onGoHome,
-                    onGoSetting = onGoSetting
+                onBackClick = onBackToHome,
+                onSubjectClick = { subject ->
+                    navController.navigate("chapters/${subject.id}") },
+                onGoHome = onGoHome,
+                onGoSetting = onGoSetting
             )
         }
 
         composable(LearningRoutes.CHAPTERS) { backStackEntry ->
             val subjectId = backStackEntry.arguments?.getString("subjectId") ?: return@composable
             ChapterScreen(
-                    subjectId = subjectId,
-                    onBackClick = { navController.popBackStack() },
-                    onChapterClick = { chapterId -> navController.navigate("concepts/$chapterId") },
-                    onGoHome = onGoHome,
-                    onGoSetting = onGoSetting
+                subjectId = subjectId,
+                onBackClick = { navController.popBackStack() },
+                onChapterClick = { chapterId -> navController.navigate("concepts/$chapterId") },
+                onGoHome = onGoHome,
+                onGoSetting = onGoSetting
             )
         }
 
         composable(LearningRoutes.CONCEPTS) { backStackEntry ->
             val chapterId = backStackEntry.arguments?.getString("chapterId") ?: return@composable
             ConceptScreen(
-                    chapterId = chapterId,
-                    onBackClick = { navController.popBackStack() },
-                    onConceptClick = { conceptId ->
-                        navController.navigate("concept_detail/$conceptId")
-                    },
-                    onGoHome = onGoHome,
-                    onGoSetting = onGoSetting
+                chapterId = chapterId,
+                onBackClick = { navController.popBackStack() },
+                onConceptClick = { conceptId ->
+                    navController.navigate("concept_detail/$conceptId") },
+                onGoHome = onGoHome,
+                onGoSetting = onGoSetting
             )
         }
 
         composable(LearningRoutes.CONCEPT_DETAIL) { backStackEntry ->
             val conceptId = backStackEntry.arguments?.getString("conceptId") ?: return@composable
             ConceptDetailScreen(
-                    conceptId = conceptId,
-                    onBackClick = { navController.popBackStack() }
+                conceptId = conceptId,
+                onBackClick = { navController.popBackStack() },
+                onGoHome = onGoHome,
+                onGoSetting = onGoSetting
             )
         }
     }

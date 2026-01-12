@@ -186,8 +186,22 @@ fun BottomNavBar() {
                 val conceptId =
                         backStackEntry.arguments?.getString("conceptId") ?: return@composable
                 ConceptDetailScreen(
-                        conceptId = conceptId,
-                        onBackClick = { navController.popBackStack() }
+                    conceptId = conceptId,
+                    onBackClick = { navController.popBackStack() },
+                    onGoHome = {
+                        navController.navigate("home") {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    },
+                    onGoSetting = {
+                        navController.navigate("setting") {
+                            popUpTo(navController.graph.startDestinationId) {  inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
                 )
             }
             composable("subjects") {
