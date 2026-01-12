@@ -30,8 +30,7 @@ enum class ChapterStatus {
 data class Chapter(
     val id: String,
     val name: String,
-    val chapterCount: String,
-    val status: ChapterStatus = ChapterStatus.NOT_STARTED
+    val conceptCount: String,
 )
 
 /**
@@ -97,7 +96,7 @@ fun ChapterScreen(
                         chapter = Chapter(
                             id = chapter.orderIndex.toString(),
                             name = chapter.chapterName,
-                            chapterCount = "${chapter.totalConcepts} concepts"
+                            conceptCount = "${chapter.totalConcepts} concepts"
                         ),
                         onStudyClick = { onChapterClick(chapter.chapterId) }
                     )
