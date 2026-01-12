@@ -542,36 +542,44 @@ class ChatViewModel (): ViewModel() {
      * - TTS will play simultaneously with typing animation
      *
      */
+
     private fun startTypingAnimation(fullText: String, context: Context) {
         typingJob?.cancel()
         typingJob = viewModelScope.launch {
+            // Add full message to chat immediately
             _messages.update {
                 it + ChatMessageModel(sender = "ai", content = fullText)
             }
             updateUIState()
-            _fullTextForTTS.value = fullText
+
+            // Start typing animation
             _isTyping.value = true
             _typingText.value = ""
+            _fullTextForTTS.value = fullText
 
+            DebugLogger.debugLog("ChatViewModel", "AI RAW OUTPUT (preview): ${fullText.take(100)}")
+
+            // Small delay to ensure UI updates before TTS starts
             delay(50)
-            // Trigger TTS to start
+            // Now trigger TTS
             _shouldStartTTS.value = true
             delay(100)
             _shouldStartTTS.value = false
 
-            DebugLogger.debugLog("ChatViewModel", "AI RAW OUTPUT (preview): ${fullText.take(1000)}")
-
+            // Animate typing word by word
             val words = fullText.split(" ")
             words.forEachIndexed { index, word ->
                 _typingText.value += if (index == 0) word else " $word"
                 delay(120L + (word.length * 8L).coerceAtMost(200L))
             }
 
+            // Typing complete
             _isTyping.value = false
             _typingText.value = ""
+
+            DebugLogger.debugLog("ChatViewModel", "Typing animation complete, TTS triggered")
         }
-    }
-    /**
+    }    /**
      * Start fresh session - clears all history
      */
     fun startFreshSession(concept: String, context: Context) {

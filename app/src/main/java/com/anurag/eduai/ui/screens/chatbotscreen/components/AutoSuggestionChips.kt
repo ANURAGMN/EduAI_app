@@ -10,12 +10,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.ChipColors
 import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.anurag.eduai.ui.theme.ChipBackground
 import com.anurag.eduai.ui.theme.LocalDimensions
+import com.anurag.eduai.ui.theme.TextPrimary
+import com.anurag.eduai.ui.theme.White
 
 @Composable
 fun AutoSuggestionChips(
@@ -40,7 +44,11 @@ fun AutoSuggestionChips(
                 SuggestionChip(
                     onClick = { onSuggestionClick(suggestion) },
                     label = { Text(suggestion) },
-                    modifier = Modifier.background(ChipBackground)
+                    modifier = Modifier.background(White),
+                    colors = SuggestionChipDefaults.suggestionChipColors(
+                        containerColor = ChipBackground,
+                        labelColor = TextPrimary
+                    )
                 )
             }
         }

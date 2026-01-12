@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -15,12 +16,13 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.outlined.SmartToy
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,13 +34,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.R
+import com.anurag.eduai.ui.screens.chatbotscreen.components.text.TextWithHighlights
+import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.AiMessageBackground
 import com.anurag.eduai.ui.theme.HeaderGradientEnd
 import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.IconPrimary
-import com.anurag.eduai.ui.theme.LocalDimensions
-import com.anurag.eduai.ui.theme.TextPrimary
 
 
 /**
@@ -48,14 +51,20 @@ import com.anurag.eduai.ui.theme.TextPrimary
 @Composable
 fun MessageBubble(
     message: ChatMessageModel,
+    isTyping: Boolean = false,
+    typingText: String = "",
+    fullText: String = message.content,
+    isSpeaking: Boolean = false,
     onListenClick: (String) -> Unit = {}
 ) {
     // Check sender field - "ai" or "user"
     when (message.sender.lowercase()) {
         "ai" -> AgentMessageBubble(
-            text = message.content,
-            isError = message.isError,
-            onListenClick = { onListenClick(message.content) }
+        text = if (isTyping) typingText else message.content,
+        isTyping = isTyping,
+        fullText = fullText,
+        isError = message.isError,
+        onListenClick = { onListenClick(fullText) }
         )
         "user" -> UserMessageBubble(text = message.content)
         else -> UserMessageBubble(text = message.content)
@@ -66,43 +75,37 @@ fun MessageBubble(
 fun AgentMessageBubble(
     modifier: Modifier = Modifier,
     text : String,
+    isTyping: Boolean = false,
+    fullText: String = text,
     isError: Boolean = false,
+    isSpeaking: Boolean = false,
     onListenClick: () -> Unit = {},
+
 ) {
-    val dimens = LocalDimensions.current
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(
-                horizontal = dimens.messageHorizontalPadding,
-                vertical = dimens.messageVerticalPadding),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.Start
     ) {
         // Agent avatar
         Box(
             modifier = Modifier
-                .size(dimens.avatarSize)
-                .clip(RoundedCornerShape(dimens.cornerRadiusRound))
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            HeaderGradientStart,
-                            HeaderGradientEnd
-                        )
-                    )
-                ),
+                .size(40.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(AccentBlue),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Outlined.SmartToy,
                 contentDescription = stringResource(R.string.agent),
                 tint = Color.White,
-                modifier = Modifier.size(dimens.avatarIconSize)
+                modifier = Modifier.size(24.dp)
             )
         }
 
-        Spacer(modifier = Modifier.width(dimens.spaceMedium))
+        Spacer(modifier = Modifier.width(12.dp))
 
         // Message bubble
         Card(
@@ -115,14 +118,16 @@ fun AgentMessageBubble(
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
-                Text(
+                TextWithHighlights(
                     text = text,
-                    fontSize = typography.bodyMedium.fontSize,
-                    color = TextPrimary
+                    isTyping = isTyping,
+                    fullText = fullText
                 )
 
-                if (!isError) {
-                    Spacer(modifier = Modifier.width(dimens.spaceMedium))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (!isError && text.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     TextButton(
                         onClick = onListenClick,
@@ -131,11 +136,12 @@ fun AgentMessageBubble(
                         )
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                            contentDescription = null,
+                            imageVector = if (isSpeaking) Icons.Default.Stop else Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = if (isSpeaking) "Stop" else "Listen",
                             modifier = Modifier.size(18.dp)
                         )
-                        Spacer(modifier = Modifier.width(dimens.spaceExtraSmall))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(if (isSpeaking) "Stop" else "Listen")
                     }
                 }
             }
@@ -151,26 +157,21 @@ fun UserMessageBubble(
     text: String,
     modifier: Modifier = Modifier
 ) {
-    val dimens = LocalDimensions.current
-
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(
-                horizontal = dimens.spaceMedium,
-                vertical = dimens.messageVerticalPadding
-            ),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.End
     ) {
         Box(
             modifier = Modifier
-                .widthIn(max = dimens.userMessageMaxWidth)
+                .widthIn(max = 280.dp)
                 .clip(
                     RoundedCornerShape(
-                        topStart = dimens.cornerRadiusLarge,
-                        topEnd = dimens.cornerRadiusLarge,
-                        bottomEnd = dimens.cornerRadiusSmall,
-                        bottomStart = dimens.cornerRadiusLarge
+                        topStart = 16.dp,
+                        topEnd = 16.dp,
+                        bottomEnd = 4.dp,
+                        bottomStart = 16.dp
                     )
                 )
                 .background(
@@ -185,41 +186,23 @@ fun UserMessageBubble(
         ) {
             Text(
                 text = text,
-                fontSize = typography.bodyMedium.fontSize,
+                fontSize = androidx.compose.material3.MaterialTheme.typography.bodyMedium.fontSize,
                 color = Color.White
             )
         }
     }
 }
 
-@Preview(
-    name = "Phone",
-    widthDp = 360,
-    showBackground = true
-)
-@Preview(
-    name = "Tablet",
-    widthDp = 840,
-    showBackground = true
-)
+
+@Preview
 @Composable
 fun AgentMessageBubblePreview() {
     AgentMessageBubble(
         text = "Hello! How can I assist you today?",
     )
 }
-
-@Preview(
-    name = "Phone",
-    widthDp = 360,
-    showBackground = true
-)
-@Preview(
-    name = "Tablet",
-    widthDp = 840,
-    showBackground = true
-)
 @Composable
+@Preview
 fun UserMessageBubblePreview() {
     UserMessageBubble(
         text = "I need help with my homework."

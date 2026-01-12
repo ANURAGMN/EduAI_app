@@ -10,6 +10,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.lifecycle.ViewModel
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.ui.screens.chatbotscreen.components.text.ProcessedText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -62,7 +63,10 @@ class TextToSpeech : ViewModel(), TextToSpeech.OnInitListener {
     val currentWordIndex: StateFlow<Int> = _currentWordIndex.asStateFlow()
     private var currentSpeakingWords: List<String> = emptyList()
     private var currentWordRanges: List<IntRange> = emptyList()
-    private var currentSpeakingText: String = ""
+    var currentSpeakingText: String = ""
+        private set
+    var currentProcessedData: ProcessedText? = null
+        private set
 
     // Setup utterance progress listener
     private val utteranceListener = object : UtteranceProgressListener() {
@@ -94,8 +98,16 @@ class TextToSpeech : ViewModel(), TextToSpeech.OnInitListener {
 
         // onRangeStart is available API 26+
         override fun onRangeStart(utteranceId: String?, start: Int, end: Int, frame: Int) {
-            // map character offset to word index
-            val idx = currentWordRanges.indexOfFirst { range -> start in range }
+            // Use processedData word positions if available
+            val idx = if (currentProcessedData != null) {
+                currentProcessedData?.wordPositions?.indexOfFirst { word ->
+                    start >= word.start && start <= word.end
+                } ?: -1
+            } else {
+                // map character offset to word index
+                currentWordRanges.indexOfFirst { range -> start in range }
+            }
+
             if (idx >= 0) {
                 _currentWordIndex.value = idx
             }
@@ -244,19 +256,28 @@ class TextToSpeech : ViewModel(), TextToSpeech.OnInitListener {
     /**
      * Speak the given text with lip sync animation
      */
-    fun speak(text: String) {
+    fun speak(text: String, processedData: ProcessedText? = null) {
         if (!_state.value.isInitialized || text.isBlank()) {
             updateStatus("Error: Cannot speak - TTS not ready or empty text")
             return
         }
 
         currentSpeakingText = text
+        currentProcessedData = processedData
 
-        // build word list and ranges for mapping char offset -> word index
-        val matches = Regex("\\S+").findAll(text).toList()
-        currentSpeakingWords = matches.map { it.value }
-        currentWordRanges = matches.map { it.range.first..it.range.last }
-
+        // If processedData provided,use its word positions
+        if (processedData != null) {
+            currentSpeakingWords = processedData.wordPositions.map {
+                text.substring(it.start, it.end + 1)
+            }
+            currentWordRanges = processedData.wordPositions.map {
+                it.start..it.end
+            }
+        } else {
+            val matches = Regex("\\S+").findAll(text).toList()
+            currentSpeakingWords = matches.map { it.value }
+            currentWordRanges = matches.map { it.range.first..it.range.last }
+        }
         textToSpeech?.let { tts ->
             _state.value.selectedVoice?.let { preferredVoice ->
                 if (tts.voice != preferredVoice) {
