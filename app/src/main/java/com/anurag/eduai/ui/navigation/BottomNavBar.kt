@@ -36,48 +36,56 @@ fun BottomNavBar() {
     val items = listOf(BottomNavItem.Home, BottomNavItem.Progress, BottomNavItem.Setting)
     val navController = rememberNavController()
 
-    Scaffold(
-        modifier = Modifier.statusBarsPadding(),
-        bottomBar = {
-            NavigationBar(containerColor = BackgroundPrimary, tonalElevation = 8.dp) {
-                val currentRoute =
-                    navController.currentBackStackEntryAsState().value?.destination?.route
+    val currentBackStackEntry = navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry.value?.destination?.route
 
-                items.forEach { item ->
-                    val selected = currentRoute == item.route
-                    NavigationBarItem(
-                        selected = selected,
-                        icon = {
-                            Icon(
-                                item.icon,
-                                contentDescription = item.label,
-                                tint = if (selected) TextPrimary else TextSecondary
-                            )
-                        },
-                        label = {
-                            if (selected) {
-                                Text(
-                                    text = item.label,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TextPrimary
+    val showBottomBar =
+        currentRoute == BottomNavItem.Home.route ||
+                currentRoute == BottomNavItem.Progress.route ||
+                currentRoute == BottomNavItem.Setting.route
+
+    Scaffold(
+        bottomBar = {
+            if (showBottomBar) {
+                NavigationBar(
+                    containerColor = BackgroundPrimary,
+                    tonalElevation = 8.dp
+                ) {
+                    items.forEach { item ->
+                        val selected = currentRoute == item.route
+
+                        NavigationBarItem(
+                            selected = selected,
+                            icon = {
+                                Icon(
+                                    item.icon,
+                                    contentDescription = item.label,
+                                    tint = if (selected) TextPrimary else TextSecondary
                                 )
-                            }
-                        },
-                        onClick = {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
+                            },
+                            label = {
+                                if (selected) {
+                                    Text(
+                                        text = item.label,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = TextPrimary
+                                    )
                                 }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        colors =
-                            NavigationBarItemDefaults.colors(
-                                indicatorColor =
-                                    Color.Transparent // removes grey background
+                            },
+                            onClick = {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                indicatorColor = Color.Transparent
                             )
-                    )
+                        )
+                    }
                 }
             }
         }
