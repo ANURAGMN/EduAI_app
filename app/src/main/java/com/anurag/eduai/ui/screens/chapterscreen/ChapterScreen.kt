@@ -48,7 +48,9 @@ data class Chapter(
 fun ChapterScreen(
     subjectId: String,
     onBackClick: () -> Unit = {},
-    onChapterClick: (String) -> Unit = {}
+    onChapterClick: (String) -> Unit = {},
+    onGoHome:() -> Unit = {},
+    onGoSetting:() -> Unit = {}
 ) {
 
     // Analytics Tracking
@@ -68,7 +70,9 @@ fun ChapterScreen(
 
     ScreenWithHeader(
         title = state.subject?.subjectName ?: "Chapters",
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        onGoHome = onGoHome,
+        onGoSetting = onGoSetting
     ) {
         if (state.isLoading) {
             Box(
