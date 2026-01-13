@@ -24,7 +24,9 @@ object LearningRoutes {
 @Composable
 fun LearningNavigator(
     navController: NavHostController = rememberNavController(),
-    onBackToHome: () -> Unit
+    onBackToHome: () -> Unit,
+    onGoHome: () -> Unit = {},
+    onGoSetting: () -> Unit = {}
 ) {
     NavHost(
         navController = navController,
@@ -46,8 +48,9 @@ fun LearningNavigator(
             SubjectScreen(
                 onBackClick = onBackToHome,
                 onSubjectClick = { subject ->
-                    navController.navigate("chapters/${subject.id}")
-                }
+                    navController.navigate("chapters/${subject.id}") },
+                onGoHome = onGoHome,
+                onGoSetting = onGoSetting
             )
         }
 
@@ -56,9 +59,9 @@ fun LearningNavigator(
             ChapterScreen(
                 subjectId = subjectId,
                 onBackClick = { navController.popBackStack() },
-                onChapterClick = { chapterId ->
-                    navController.navigate("concepts/$chapterId")
-                }
+                onChapterClick = { chapterId -> navController.navigate("concepts/$chapterId") },
+                onGoHome = onGoHome,
+                onGoSetting = onGoSetting
             )
         }
 
@@ -68,8 +71,9 @@ fun LearningNavigator(
                 chapterId = chapterId,
                 onBackClick = { navController.popBackStack() },
                 onConceptClick = { conceptId ->
-                    navController.navigate("concept_detail/$conceptId")
-                }
+                    navController.navigate("concept_detail/$conceptId") },
+                onGoHome = onGoHome,
+                onGoSetting = onGoSetting
             )
         }
 
@@ -77,7 +81,9 @@ fun LearningNavigator(
             val conceptId = backStackEntry.arguments?.getString("conceptId") ?: return@composable
             ConceptDetailScreen(
                 conceptId = conceptId,
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onGoHome = onGoHome,
+                onGoSetting = onGoSetting
             )
         }
     }

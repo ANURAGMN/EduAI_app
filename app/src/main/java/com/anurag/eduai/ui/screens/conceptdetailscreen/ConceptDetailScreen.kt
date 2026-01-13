@@ -31,7 +31,9 @@ import com.anurag.eduai.ui.viewModel.ConceptDetailViewModel
 @Composable
 fun ConceptDetailScreen(
     conceptId: String,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onGoHome:() -> Unit = {},
+    onGoSetting:() -> Unit = {},
 ) {
     TrackScreenEvent(screenName = ScreenName.CONCEPT_DETAIL)
 
@@ -52,7 +54,9 @@ fun ConceptDetailScreen(
 
     ScreenWithHeader(
         title = state.concept?.conceptName ?: "Concept",
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        onGoHome = onGoHome,
+        onGoSetting = onGoSetting
     ) {
         if (state.isLoading) {
             Box(

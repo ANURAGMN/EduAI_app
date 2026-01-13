@@ -54,7 +54,9 @@ data class Concept(
 fun ConceptScreen(
     chapterId: String,
     onBackClick: () -> Unit = {},
-    onConceptClick: (String) -> Unit = {}
+    onConceptClick: (String) -> Unit = {},
+    onGoHome:() -> Unit = {},
+    onGoSetting:() -> Unit = {},
 ) {
     TrackScreenEvent(screenName = ScreenName.CONCEPT)
 
@@ -85,7 +87,9 @@ fun ConceptScreen(
 
     ScreenWithHeader(
         title = state.chapter?.chapterName ?: "Concepts",
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        onGoHome = onGoHome,
+        onGoSetting = onGoSetting
     ) {
         if (state.isLoading) {
             Box(

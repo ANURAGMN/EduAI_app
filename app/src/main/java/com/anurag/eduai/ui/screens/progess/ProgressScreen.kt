@@ -33,7 +33,10 @@ import com.anurag.eduai.utils.StreakManager
 import com.anurag.eduai.utils.WeeklyProgressUtils
 
 @Composable
-fun ProgressScreen()
+fun ProgressScreen(
+    onGoHome:() -> Unit = {},
+    onGoSetting:() -> Unit = {}
+)
 {
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.PROGRESS)
@@ -97,7 +100,10 @@ fun ProgressScreen()
             .background(BackgroundSecondary)
             .verticalScroll(rememberScrollState())
     ) {
-        ProgressScreenTopBar()
+        ProgressScreenTopBar(
+            onGoHome,
+            onGoSetting
+        )
 
         Spacer(modifier = Modifier.padding(15.dp))
         Column(
