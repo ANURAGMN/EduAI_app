@@ -254,6 +254,16 @@ class TextToSpeech : ViewModel(), TextToSpeech.OnInitListener {
     }
 
     /**
+     * Clean text for TTS by removing asterisks and markdown formatting
+     */
+    private fun cleanTextForTTS(text: String): String {
+        return text
+            .replace("**", "")  // Remove bold markers
+            .replace("*", "")   // Remove any remaining asterisks
+            .trim()
+    }
+
+    /**
      * Speak the given text with lip sync animation
      */
     fun speak(text: String, processedData: ProcessedText? = null) {
@@ -265,6 +275,9 @@ class TextToSpeech : ViewModel(), TextToSpeech.OnInitListener {
         currentSpeakingText = text
         currentProcessedData = processedData
 
+        // Clean text for TTS (remove asterisks)
+        val cleanedText = cleanTextForTTS(text)
+
         // If processedData provided,use its word positions
         if (processedData != null) {
             currentSpeakingWords = processedData.wordPositions.map {
@@ -274,7 +287,7 @@ class TextToSpeech : ViewModel(), TextToSpeech.OnInitListener {
                 it.start..it.end
             }
         } else {
-            val matches = Regex("\\S+").findAll(text).toList()
+            val matches = Regex("\\S+").findAll(cleanedText).toList()
             currentSpeakingWords = matches.map { it.value }
             currentWordRanges = matches.map { it.range.first..it.range.last }
         }
@@ -291,7 +304,7 @@ class TextToSpeech : ViewModel(), TextToSpeech.OnInitListener {
                 }
             }
 
-            val detectedLang = detectLanguage(text)
+            val detectedLang = detectLanguage(cleanedText)
             if (detectedLang != _state.value.selectedLanguage) {
                 setLanguageInternal(detectedLang)
             }
@@ -300,13 +313,13 @@ class TextToSpeech : ViewModel(), TextToSpeech.OnInitListener {
             tts.setPitch(_state.value.pitch)
 
             speechStartTime = System.currentTimeMillis()
-            totalEstimatedDuration = estimateDuration(text)
-            startLipSync(text)
+            totalEstimatedDuration = estimateDuration(cleanedText)
+            startLipSync(cleanedText)
 
             val utteranceId = "tts_${System.currentTimeMillis()}"
             val bundle = Bundle()
             bundle.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId)
-            tts.speak(text, TextToSpeech.QUEUE_FLUSH, bundle,utteranceId)
+            tts.speak(cleanedText, TextToSpeech.QUEUE_FLUSH, bundle,utteranceId)
         }
     }
 

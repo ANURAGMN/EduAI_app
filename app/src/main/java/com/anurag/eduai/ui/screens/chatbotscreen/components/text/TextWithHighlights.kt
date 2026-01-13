@@ -6,10 +6,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.TextPrimary
@@ -25,10 +28,12 @@ import com.anurag.eduai.ui.viewModel.TextToSpeech
  */
 @Composable
 fun TextWithHighlights(
+    modifier: Modifier = Modifier,
     text: String,
     isTyping: Boolean = false,
     fullText: String = text, // Complete text for processing
-    ttsController: TextToSpeech = viewModel()
+    ttsController: TextToSpeech = viewModel(),
+    onTextLayout: (TextLayoutResult) -> Unit = {}
 ) {
     val currentWordIndex by ttsController.currentWordIndex.collectAsState()
     val ttsState by ttsController.state.collectAsState()
@@ -114,6 +119,11 @@ fun TextWithHighlights(
 
     Text(
         text = styledText,
-        fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+        fontSize = 40.sp,
+        lineHeight = 60.sp,
+        color = TextPrimary,
+        style = MaterialTheme.typography.bodyLarge,
+        modifier = modifier,
+        onTextLayout = onTextLayout
     )
 }

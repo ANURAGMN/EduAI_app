@@ -47,6 +47,11 @@ class ChatViewModel (): ViewModel() {
     //student level
     private val _studentLevel = MutableStateFlow("medium")
     val studentLevel: StateFlow<String> = _studentLevel
+    
+    //Kannada language toggle
+    private val _isKannada = MutableStateFlow(false)
+    val isKannada: StateFlow<Boolean> = _isKannada
+    
     private val _currentLanguage = MutableStateFlow("en")
     val currentLanguage: StateFlow<String> = _currentLanguage
     // Selected concept state
@@ -199,6 +204,14 @@ class ChatViewModel (): ViewModel() {
                 _isLoading.value = false
             }
         }
+    }
+
+    /**
+     * Set Kannada language preference
+     */
+    fun setKannada(enabled: Boolean) {
+        _isKannada.value = enabled
+        DebugLogger.debugLog("ChatViewModel", "Kannada language: ${if (enabled) "enabled" else "disabled"}")
     }
 
     fun clearAllSessions(context: Context) {
@@ -418,7 +431,7 @@ class ChatViewModel (): ViewModel() {
                 val result = agenticAIClient.startSession(
                     conceptTitle = concept,
                     studentId = userId,
-                    isKannada = false,
+                    isKannada = _isKannada.value,
                     studentLevel = _studentLevel.value
                 )
 

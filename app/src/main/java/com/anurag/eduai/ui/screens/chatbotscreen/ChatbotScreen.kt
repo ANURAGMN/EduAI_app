@@ -8,8 +8,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -20,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -33,17 +32,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.ui.screens.chatbotscreen.components.AgentMessage
 import com.anurag.eduai.ui.screens.chatbotscreen.components.AppDialog
 import com.anurag.eduai.ui.screens.chatbotscreen.components.AutoSuggestionChips
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettings
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.InputSection
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ListeningOverlay
-import com.anurag.eduai.ui.screens.chatbotscreen.components.MessageBubble
 import com.anurag.eduai.ui.theme.BrandPrimary
+import com.anurag.eduai.ui.theme.IconPrimary
+import com.anurag.eduai.ui.theme.IconSecondary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.viewModel.ChatViewModel
+
 import com.anurag.eduai.ui.viewModel.SpeechToText
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 import kotlinx.coroutines.delay
@@ -65,6 +67,13 @@ fun ChatbotScreen(
 
     // Observe chat UI state
     val chatState by chatViewModel.uiState.collectAsState()
+
+    // Get the last AI message only
+    val lastAIMessage = remember(chatState.messages) {
+        chatState.messages.findLast { it.sender.lowercase() == "ai" }
+    }
+    //is kannada
+    val isKannada by chatViewModel.isKannada.collectAsState()
 
     // Check if conversation has started
     val isConversationStarted = chatState.messages.isNotEmpty()
@@ -102,8 +111,6 @@ fun ChatbotScreen(
     val voiceOptions = remember(ttsState.availableVoices, currentLanguage, settingsState.selectedAvatar) {
         ttsController.getFilteredVoiceOptions(currentLanguage, settingsState.selectedAvatar)
     }
-    //list state
-    val listState = rememberLazyListState()
     //input section height
     var inputSectionHeight by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
@@ -112,15 +119,6 @@ fun ChatbotScreen(
     val autosuggestions by chatViewModel.autosuggestions.collectAsState()
     val showAutosuggestions by chatViewModel.showAutosuggestions.collectAsState()
 
-
-    LaunchedEffect(chatState.messages.size, isTyping, isLoading) {
-        if (chatState.messages.isNotEmpty()) {
-            // Scroll to the last item (bottom of list)
-            listState.animateScrollToItem(
-                index = chatState.messages.size // This will scroll to the loading indicator too
-            )
-        }
-    }
     // Permission launcher for audio recording
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -142,7 +140,7 @@ fun ChatbotScreen(
     val aiMessageOutput = remember(isTyping, typingText) {
         when {
             isTyping -> typingText
-            else -> ""
+            else -> lastAIMessage?.content ?: ""
         }
     }
 
@@ -265,7 +263,7 @@ fun ChatbotScreen(
                         }
                     }
                 } else {
-                    // Conversation started
+                    // Conversation started - Show Avatar + Message Display
                     Column(modifier = Modifier.fillMaxSize()) {
                         // Avatar at top
                         Box(
@@ -294,63 +292,77 @@ fun ChatbotScreen(
                         }
                         Spacer(Modifier.height(dimens.spaceSmall))
 
-                        // Messages - with bottom padding for input section
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(bottom = inputSectionHeight+ 16.dp), // Space for floating input
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        // Agent Message Display - Single scrollable message
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .padding(bottom = inputSectionHeight + 16.dp)
                         ) {
-
-                            items(chatState.messages.size) { index ->
-                                val message = chatState.messages[index]
-                                val isLastMessage = index == chatState.messages.size - 1
-                                val isAIMessage = message.sender.lowercase() == "ai"
-
-                                val isCurrentlyTyping = isLastMessage && isTyping && isAIMessage
-
-                                MessageBubble(
-                                    message = message,
-                                    isTyping = isCurrentlyTyping,
+                            if (lastAIMessage != null) {
+                                AgentMessage(
+                                    text = if (isTyping) typingText else lastAIMessage.content,
+                                    isTyping = isTyping,
                                     typingText = typingText,
-                                    fullText = message.content,
-                                    isSpeaking = ttsState.isSpeaking,
-                                    onListenClick = { messageText ->
-                                        if (ttsState.isInitialized) {
-                                            if (!ttsState.isSpeaking) {
-                                                ttsController.speak(messageText)
-                                            } else {
-                                                ttsController.stop()
-                                            }
-                                        }
-                                    }
+                                    fullText = lastAIMessage.content,
+                                    isError = lastAIMessage.isError,
+                                    ttsController = ttsController
                                 )
                             }
+
+                            // Top fade overlay (below avatar)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(100.dp)
+                                    .align(Alignment.TopCenter)
+                                    .background(
+                                        brush = Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.White.copy(alpha = 0.95f),
+                                                Color.Transparent
+                                            )
+                                        )
+                                    )
+                            )
+
+                            // Bottom fade overlay (above input section)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(100.dp)
+                                    .align(Alignment.BottomCenter)
+                                    .background(
+                                        brush = Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                Color.White.copy(alpha = 0.95f)
+                                            )
+                                        )
+                                    )
+                            )
+
                             if (isLoading && !isTyping) {
-                                item {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 12.dp, horizontal = 8.dp),
-                                        horizontalArrangement = Arrangement.Start,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(16.dp),
-                                            strokeWidth = 2.dp,
-                                            color = BrandPrimary
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = stringResource(R.string.thinking),
-                                            color = TextSecondary,
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
-                                    }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 12.dp, horizontal = 8.dp)
+                                        .align(Alignment.BottomStart),
+                                    horizontalArrangement = Arrangement.Start,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                        color = BrandPrimary
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = stringResource(R.string.thinking),
+                                        color = TextSecondary,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
                                 }
-                            }
-                            item {
-                                Spacer(modifier = Modifier.height(16.dp))
                             }
                         }
                     }
@@ -364,18 +376,38 @@ fun ChatbotScreen(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = {
+                        chatViewModel.setKannada(!isKannada)
+                    }) {
                         Icon(
                             imageVector = Icons.Default.ClosedCaption,
-                            contentDescription = "Captions",
-                            tint = Color.Gray.copy(alpha = 0.6f)
+                            contentDescription = if (isKannada) "Kannada Enabled" else "Kannada Disabled",
+                            tint = if (isKannada)
+                                IconPrimary
+                            else
+                                IconSecondary
                         )
                     }
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = {
+                        if (ttsState.isSpeaking) {
+                            ttsController.stop()
+                        } else {
+                            // Replay the last AI message
+                            lastAIMessage?.let {
+                                ttsController.speak(it.content)
+                            }
+                        }
+                    }) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                            contentDescription = "Volume",
-                            tint = Color.Gray.copy(alpha = 0.6f)
+                            imageVector = if (ttsState.isSpeaking)
+                                Icons.Default.Stop
+                            else
+                                Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = if (ttsState.isSpeaking) "Stop" else "Play",
+                            tint = if (ttsState.isSpeaking)
+                                IconPrimary
+                            else
+                                IconSecondary
                         )
                     }
                     Box {
@@ -462,9 +494,9 @@ fun ChatbotScreen(
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
                 .imePadding(),
-            color =Color.White,
+            color = Color.White,
             shadowElevation = 8.dp,
-            shape=RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp)
+            shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp)
         ) {
             Column(
                 modifier = Modifier

@@ -89,12 +89,6 @@ class TextProcessor {
             cleanLength += remainingText.length
         }
 
-        // If no bold, add entire text
-        if (boldMatches.isEmpty()) {
-            cleanText.append(text)
-            cleanLength = text.length
-        }
-
         // Step 3: Extract word boundaries from clean text
         val cleanStr = cleanText.toString()
         val wordPositions = mutableListOf<WordPosition>()

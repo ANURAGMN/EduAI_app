@@ -1,0 +1,111 @@
+package com.anurag.eduai.ui.screens.chatbotscreen.components
+
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.anurag.eduai.ui.screens.chatbotscreen.components.text.TextProcessor
+import com.anurag.eduai.ui.screens.chatbotscreen.components.text.TextWithHighlights
+import com.anurag.eduai.ui.theme.White
+import com.anurag.eduai.ui.viewModel.TextToSpeech
+import kotlin.math.roundToInt
+
+/**
+ * Composable for displaying agent message with auto scrolling
+ * Shows a single message space that updates with new responses
+ * Auto-scrolls to CENTER the TTS highlighted word in the viewport
+ */
+@Composable
+fun AgentMessage(
+    text: String,
+    isTyping: Boolean = false,
+    typingText: String = "",
+    fullText: String = text,
+    isError: Boolean = false,
+    modifier: Modifier = Modifier,
+    ttsController: TextToSpeech = viewModel()
+) {
+    val scrollState = rememberScrollState()
+    val ttsState by ttsController.state.collectAsState()
+    val currentWordIndex by ttsController.currentWordIndex.collectAsState()
+
+    var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    var containerHeight by remember { mutableStateOf(0) }
+
+    val processor = remember { TextProcessor() }
+    val processed = remember(fullText) {
+        processor.process(fullText)
+    }
+
+    // Auto-scroll to CENTER current word using TextLayoutResult
+    LaunchedEffect(currentWordIndex, ttsState.isSpeaking, textLayout, containerHeight) {
+        if (!ttsState.isSpeaking || currentWordIndex < 0 || textLayout == null || containerHeight == 0) {
+            return@LaunchedEffect
+        }
+
+        val layout = textLayout!!
+        val words = processed.wordPositions
+
+        if (currentWordIndex !in words.indices) return@LaunchedEffect
+
+        val word = words[currentWordIndex]
+        val lineIndex = layout.getLineForOffset(word.start)
+
+        // Get the vertical position of the line
+        val lineTop = layout.getLineTop(lineIndex)
+        val lineBottom = layout.getLineBottom(lineIndex)
+        val lineCenter = (lineTop + lineBottom) / 2
+
+        // Calculate scroll position to center the line in the viewport
+        // containerHeight is in pixels, convert to same unit
+        val viewportCenter = containerHeight / 2f
+        val targetScroll = (lineCenter - viewportCenter).coerceAtLeast(0f)
+
+        scrollState.animateScrollTo(
+            targetScroll.roundToInt(),
+            animationSpec = tween(300)
+        )
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .background(
+                color = White,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(24.dp)
+            .onGloballyPositioned { coordinates ->
+                // Track container height for centering calculation
+                containerHeight = coordinates.size.height
+            }
+            .verticalScroll(scrollState)
+    ) {
+        // TextWithHighlights final display
+        TextWithHighlights(
+            text = if (isTyping) typingText else fullText,
+            isTyping = isTyping,
+            fullText = fullText,
+            ttsController = ttsController,
+            onTextLayout = { textLayout = it }
+        )
+    }
+}
