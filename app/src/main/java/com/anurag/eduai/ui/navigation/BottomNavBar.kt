@@ -35,7 +35,6 @@ fun BottomNavBar() {
     val navController = rememberNavController()
 
     Scaffold(
-            modifier = Modifier.statusBarsPadding(),
             bottomBar = {
                 NavigationBar(containerColor = BackgroundPrimary, tonalElevation = 8.dp) {
                     val currentRoute =
