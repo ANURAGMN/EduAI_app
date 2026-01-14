@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -21,11 +20,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.IconPrimary
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 
 /**
  * A composable overlay that indicates the app is listening for voice input
- * with voice-responsive animation similar to Google's AI mode.
+ * with voice-responsive animation with amplitude, transcribed text display,
  */
 @Composable
 fun ListeningOverlay(
@@ -34,8 +34,7 @@ fun ListeningOverlay(
     onStopClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
-    val density = LocalDensity.current
-
+    val dimens = LocalDimensions.current
     // Auto-scroll to bottom when new text arrives
     LaunchedEffect(text) {
         if (text.isNotEmpty()) {
@@ -53,6 +52,7 @@ fun ListeningOverlay(
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
+
         ) {
             // Smooth curved line animation at the very top (acts as the top edge)
             VoiceWaveAnimation(
@@ -69,7 +69,8 @@ fun ListeningOverlay(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 if(text.isEmpty()) {
                     Text(
@@ -78,6 +79,8 @@ fun ListeningOverlay(
                         fontWeight = FontWeight.Medium,
                         color = Color.Black
                     )
+                } else {
+                    Spacer(modifier = Modifier.width(1.dp))
                 }
 
                 IconButton(
@@ -100,7 +103,7 @@ fun ListeningOverlay(
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.95f)
-                    .heightIn(min = 80.dp, max = 200.dp)  // Better height range
+                    .heightIn(min = 60.dp, max = 200.dp)  // Better height range
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 Column(
@@ -111,10 +114,9 @@ fun ListeningOverlay(
                     if (text.isNotEmpty()) {
                         Text(
                             text = text,
-                            fontSize = 18.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Normal,
                             color = TextPrimary,
-                            lineHeight = 24.sp,  // Better line spacing
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

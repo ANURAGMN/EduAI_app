@@ -5,126 +5,170 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.ui.theme.HeaderGradientEnd
 import com.anurag.eduai.ui.theme.HeaderGradientStart
 
 /**
- * Simple smooth curved line animation like Google AI mode
- * - Gentle curve that animates up and down
- * - Responds to voice amplitude
+ * Google AI mode style waveform animation
+ * - Static horizontal line (always visible)
+ * - Gradient colors flow infinitely across the line
+ * - Spread glow effect below
  */
 @Composable
 fun VoiceWaveAnimation(
     amplitude: Float = 0f,
     isListening: Boolean = true,
     modifier: Modifier = Modifier,
-    colors: List<Color> = listOf(HeaderGradientStart, HeaderGradientEnd)
+    colors: List<Color> = listOf(HeaderGradientStart, HeaderGradientEnd),
+    segmentCount: Int = 150
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "line")
-
-    // Noticeable up/down breathing animation
-    val verticalOffset by infiniteTransition.animateFloat(
-        initialValue = -15f,
-        targetValue = 15f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "offset"
-    )
-
-    // Smooth amplitude transitions
-    val smoothAmplitude by animateFloatAsState(
+    // Smoothly animate the amplitude
+    val animatedAmplitude by animateFloatAsState(
         targetValue = if (isListening) amplitude else 0f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
+            stiffness = Spring.StiffnessMedium
         ),
-        label = "amplitude"
+        label = "amplitude_animation"
     )
 
-    // Idle pulse
+    // Idle pulse when not speaking
+    val infiniteTransition = rememberInfiniteTransition(label = "animations")
     val idlePulse by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.5f,
+        initialValue = 0.2f,
+        targetValue = 0.4f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = FastOutSlowInEasing),
+            animation = tween(1800, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "idle"
     )
 
+    // Gradient flows infinitely from left to right
+    val gradientOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3500, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "gradient_flow"
+    )
+
+    // Use active amplitude or idle pulse
+    val activeAmplitude = if (animatedAmplitude > 0.05f) animatedAmplitude else idlePulse
+
+    // Pre-calculate parabolic curve shape
+    val parabolicOffsets = remember(segmentCount) {
+        List(segmentCount) { index ->
+            val normalizedPosition = index.toFloat() / (segmentCount - 1)
+            val distanceFromCenter = normalizedPosition - 0.5f
+            // Parabolic: peaks at center, zero at edges (negative = upward)
+            -(1f - (4f * distanceFromCenter * distanceFromCenter))
+        }
+    }
+
     Canvas(
         modifier = modifier
             .fillMaxWidth()
-            .height(24.dp)  // Increased from 8.dp for more visible animation
+            .height(80.dp)
     ) {
-        val width = size.width
-        val height = size.height
-        val centerY = height / 2f
+        val canvasWidth = size.width
+        val canvasHeight = size.height
+        val centerY = canvasHeight / 2f
+        val maxVerticalOffset = canvasHeight * 0.35f
 
-        // Active amplitude or idle
-        val activeAmplitude = if (smoothAmplitude > 0.05f) smoothAmplitude else idlePulse
+        // Calculate static curve points (line stays in place)
+        val curvePoints = List(segmentCount) { index ->
+            val x = (index.toFloat() / (segmentCount - 1)) * canvasWidth
+            val offset = parabolicOffsets[index] * activeAmplitude * maxVerticalOffset
+            Offset(x, centerY + offset)
+        }
 
-        // More noticeable curve height based on voice
-        val curveHeight = 10.dp.toPx() * activeAmplitude + verticalOffset  // Increased from 3.dp
+        // Flowing gradient - moves infinitely left to right
+        val gradientWidth = canvasWidth * 2.5f
+        val gradientStartX = -gradientWidth + (gradientOffset * gradientWidth * 2.5f)
 
-        // Gradient for the line
-        val lineBrush = Brush.horizontalGradient(
+        // Gradient for main glow line (bright, thin) - only two colors flowing
+        val glowLineGradient = Brush.horizontalGradient(
             colors = listOf(
-                Color.Transparent,
-                colors[0].copy(alpha = 0.6f),
-                colors[1].copy(alpha = 0.9f),
-                colors[0].copy(alpha = 0.6f),
-                Color.Transparent
-            )
-        )
-
-        // Create smooth curved line path
-        val linePath = Path()
-        linePath.moveTo(0f, centerY)
-
-        // Simple gentle curve using quadratic bezier
-        val controlY = centerY + curveHeight
-        linePath.quadraticTo(
-            width * 0.5f, controlY,  // Control point in the middle
-            width, centerY            // End point
-        )
-
-        // Draw the smooth line
-        drawPath(
-            path = linePath,
-            brush = lineBrush,
-            style = Stroke(
-                width = 2.5.dp.toPx(),
-                cap = StrokeCap.Round
+                colors[0],
+                colors[1],
+                colors[0],
+                colors[1]
             ),
-            alpha = 0.8f
+            startX = gradientStartX,
+            endX = gradientStartX + gradientWidth
         )
 
-        // Add subtle glow under the line
-        drawPath(
-            path = linePath,
-            brush = Brush.verticalGradient(
+        // Multi-layer glow effect for depth - from widest/softest to thinnest/brightest
+        val glowLayers = listOf(
+            Triple((2f + (activeAmplitude * 1f)).dp.toPx(), 1f, glowLineGradient)
+        )
+
+        // Draw the main glow line with transparency at edges
+        glowLayers.forEach { (strokeWidth, alpha, brush) ->
+            for (i in 0 until segmentCount - 1) {
+                // Calculate edge fade: transparent at edges (0 and end), opaque in center
+                val normalizedPosition = i.toFloat() / (segmentCount - 1)
+                val distanceFromCenter = kotlin.math.abs(normalizedPosition - 0.5f) * 2f
+                val edgeFade = 1f - (distanceFromCenter * distanceFromCenter * 0.7f)
+
+                drawLine(
+                    brush = brush,
+                    start = curvePoints[i],
+                    end = curvePoints[i + 1],
+                    strokeWidth = strokeWidth,
+                    cap = StrokeCap.Round,
+                    alpha = alpha * edgeFade
+                )
+            }
+        }
+
+        // Draw gradient glow directly attached below each segment with animated colors
+        val glowHeight = canvasHeight * 0.4f
+        for (i in 0 until segmentCount - 1) {
+            val startPoint = curvePoints[i]
+            val endPoint = curvePoints[i + 1]
+
+            // Calculate which color to use based on gradient position
+            val segmentX = (startPoint.x + endPoint.x) / 2f
+            val relativePosition = ((segmentX - gradientStartX) / gradientWidth).coerceIn(0f, 1f)
+            val colorIndex = (relativePosition * 4f).toInt() % 2
+            val currentColor = colors[colorIndex]
+
+            // Create vertical gradient from the line point downward with bolder colors
+            val segmentGradient = Brush.verticalGradient(
                 colors = listOf(
-                    colors[1].copy(alpha = 0.2f * activeAmplitude),
+                    currentColor.copy(alpha = 0.6f),
+                    currentColor.copy(alpha = 0.35f),
+                    currentColor.copy(alpha = 0.1f),
                     Color.Transparent
                 ),
-                startY = centerY - 4.dp.toPx(),
-                endY = centerY + 8.dp.toPx()
-            ),
-            style = Stroke(
-                width = 6.dp.toPx(),
-                cap = StrokeCap.Round
-            ),
-            alpha = 0.4f
-        )
+                startY = minOf(startPoint.y, endPoint.y),
+                endY = minOf(startPoint.y, endPoint.y) + glowHeight
+            )
+
+            // Draw trapezoid shape attached to the line segment
+            val path = androidx.compose.ui.graphics.Path().apply {
+                moveTo(startPoint.x, startPoint.y)
+                lineTo(endPoint.x, endPoint.y)
+                lineTo(endPoint.x, endPoint.y + glowHeight)
+                lineTo(startPoint.x, startPoint.y + glowHeight)
+                close()
+            }
+
+            drawPath(
+                path = path,
+                brush = segmentGradient,
+                alpha = 0.7f + (activeAmplitude * 0.3f)
+            )
+        }
     }
 }
 
