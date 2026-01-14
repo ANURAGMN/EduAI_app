@@ -8,8 +8,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
@@ -39,6 +42,7 @@ import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettings
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.InputSection
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ListeningOverlay
+import com.anurag.eduai.ui.screens.chatbotscreen.components.ResourcesCard
 import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.IconPrimary
 import com.anurag.eduai.ui.theme.IconSecondary
@@ -72,6 +76,12 @@ fun ChatbotScreen(
     val lastAIMessage = remember(chatState.messages) {
         chatState.messages.findLast { it.sender.lowercase() == "ai" }
     }
+    // resource cards state collectors
+    val showResourceCard by chatViewModel.showResourceCard.collectAsState()
+    val currentResource by chatViewModel.currentResource.collectAsState()
+    val resourceDisplayMode by chatViewModel.resourceDisplayMode.collectAsState()
+    val ttsPausedForResource by chatViewModel.ttsPausedForResource.collectAsState()
+
     //is kannada
     val isKannada by chatViewModel.isKannada.collectAsState()
 
@@ -111,6 +121,8 @@ fun ChatbotScreen(
     val voiceOptions = remember(ttsState.availableVoices, currentLanguage, settingsState.selectedAvatar) {
         ttsController.getFilteredVoiceOptions(currentLanguage, settingsState.selectedAvatar)
     }
+    val conceptMapJSON by chatViewModel.conceptMapJSON.collectAsState()
+
     //input section height
     var inputSectionHeight by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
@@ -186,6 +198,16 @@ fun ChatbotScreen(
             DebugLogger.debugLog("ChatbotScreen", "TTS stopped due to concept change")
         }
     }
+
+    // Stop TTS when resource card is shown
+    LaunchedEffect(showResourceCard) {
+        if (showResourceCard && ttsState.isSpeaking) {
+            ttsController.stop()
+            chatViewModel.pauseTTSForResource()
+            DebugLogger.debugLog("ChatbotScreen", "TTS stopped because resource card is showing")
+        }
+    }
+
     // Transfer recognized speech to input field when listening stops
     LaunchedEffect(sttState.isListening) {
         if (!sttState.isListening && sttState.resultText.isNotEmpty()) {
@@ -231,7 +253,9 @@ fun ChatbotScreen(
             .background(Color.White)
     ) {
         // Main content (Avatar and Messages)
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier
+            .fillMaxSize()
+        ) {
             // Avatar and Messages Container
             Box(
                 modifier = Modifier
@@ -263,7 +287,7 @@ fun ChatbotScreen(
                         }
                     }
                 } else {
-                    // Conversation started - Show Avatar + Message Display
+                    // Conversation started - Show Avatar + Resource Card + Message Display
                     Column(modifier = Modifier.fillMaxSize()) {
                         // Avatar at top
                         Box(
@@ -289,79 +313,116 @@ fun ChatbotScreen(
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }
+
                         }
                         Spacer(Modifier.height(dimens.spaceSmall))
 
-                        // Agent Message Display - Single scrollable message
-                        Box(
+                        // Content Column - Resource Card THEN Agent Message
+                        Column(
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxWidth()
                                 .padding(bottom = inputSectionHeight + 16.dp)
                         ) {
-                            if (lastAIMessage != null) {
-                                AgentMessage(
-                                    text = if (isTyping) typingText else lastAIMessage.content,
-                                    isTyping = isTyping,
-                                    typingText = typingText,
-                                    fullText = lastAIMessage.content,
-                                    isError = lastAIMessage.isError,
-                                    ttsController = ttsController
-                                )
-                            }
-
-                            // Top fade overlay (below avatar)
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(100.dp)
-                                    .align(Alignment.TopCenter)
-                                    .background(
-                                        brush = Brush.verticalGradient(
-                                            colors = listOf(
-                                                Color.White.copy(alpha = 0.95f),
-                                                Color.Transparent
-                                            )
-                                        )
+                         when {
+                                // CASE 1: Resource Card is showing - ONLY show resource card
+                                showResourceCard && currentResource != null -> {
+                                    ResourcesCard(
+                                        content = currentResource,
+                                        displayMode = resourceDisplayMode,
+                                        onDismiss = {
+                                            chatViewModel.dismissResourceCard()
+                                        },
+                                        onTimerComplete = {
+                                            chatViewModel.onResourceTimerComplete()
+                                        },
+                                        timerDurationSeconds = 6,
+                                        modifier = Modifier.fillMaxWidth()
                                     )
-                            )
+                               }
 
-                            // Bottom fade overlay (above input section)
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(100.dp)
-                                    .align(Alignment.BottomCenter)
-                                    .background(
-                                        brush = Brush.verticalGradient(
-                                            colors = listOf(
-                                                Color.Transparent,
-                                                Color.White.copy(alpha = 0.95f)
+                                // CASE 2: Loading state - Show loading indicator (no agent message yet)
+                                isLoading -> {
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .fillMaxWidth(),
+                                        contentAlignment = Alignment.TopStart
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 12.dp, horizontal = 8.dp),
+                                            horizontalArrangement = Arrangement.Start,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(16.dp),
+                                                strokeWidth = 2.dp,
+                                                color = BrandPrimary
                                             )
-                                        )
-                                    )
-                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = stringResource(R.string.thinking),
+                                                color = TextSecondary,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                        }
+                                    }
+                                }
 
-                            if (isLoading && !isTyping) {
-                                Row(
+                                // CASE 3: Show agent message with typing animation
+                                else -> {
+                                Box(
                                     modifier = Modifier
+                                        .weight(1f)
                                         .fillMaxWidth()
-                                        .padding(vertical = 12.dp, horizontal = 8.dp)
-                                        .align(Alignment.BottomStart),
-                                    horizontalArrangement = Arrangement.Start,
-                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(16.dp),
-                                        strokeWidth = 2.dp,
-                                        color = BrandPrimary
+                                    // Agent Message (only shown when not loading and no resource card)
+                                    if (lastAIMessage != null) {
+                                        AgentMessage(
+                                            text = if (isTyping) typingText else lastAIMessage.content,
+                                            isTyping = isTyping,
+                                            typingText = typingText,
+                                            fullText = lastAIMessage.content,
+                                            isError = lastAIMessage.isError,
+                                            ttsController = ttsController,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
+
+                                    // Top fade overlay
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(100.dp)
+                                            .align(Alignment.TopCenter)
+                                            .background(
+                                                brush = Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        Color.White.copy(alpha = 0.95f),
+                                                        Color.Transparent
+                                                    )
+                                                )
+                                            )
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = stringResource(R.string.thinking),
-                                        color = TextSecondary,
-                                        style = MaterialTheme.typography.bodyMedium
+
+                                    // Bottom fade overlay
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(100.dp)
+                                            .align(Alignment.BottomCenter)
+                                            .background(
+                                                brush = Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        Color.Transparent,
+                                                        Color.White.copy(alpha = 0.95f)
+                                                    )
+                                                )
+                                            )
                                     )
+                                }
                                 }
                             }
                         }
@@ -389,10 +450,18 @@ fun ChatbotScreen(
                         )
                     }
                     IconButton(onClick = {
-                        if (ttsState.isSpeaking) {
+                        if (showResourceCard && ttsPausedForResource) {
+                            // Resource card is showing and TTS was paused - resume it
+                            chatViewModel.resumeTTSForResource()
+                            lastAIMessage?.let {
+                                ttsController.speak(it.content)
+                            }
+                            DebugLogger.debugLog("ChatbotScreen", "TTS resumed while resource card is showing")
+                        } else if (ttsState.isSpeaking) {
+                            // TTS is playing - stop it
                             ttsController.stop()
                         } else {
-                            // Replay the last AI message
+                            // TTS is not playing - replay the last AI message
                             lastAIMessage?.let {
                                 ttsController.speak(it.content)
                             }
@@ -406,6 +475,8 @@ fun ChatbotScreen(
                             contentDescription = if (ttsState.isSpeaking) "Stop" else "Play",
                             tint = if (ttsState.isSpeaking)
                                 IconPrimary
+                            else if (showResourceCard && ttsPausedForResource)
+                                IconSecondary.copy(alpha = 0.5f) // Dimmed when paused for resource
                             else
                                 IconSecondary
                         )
@@ -495,7 +566,7 @@ fun ChatbotScreen(
                 .align(Alignment.BottomCenter)
                 .imePadding(),
             color = Color.White,
-            shadowElevation = 8.dp,
+            shadowElevation = 0.dp,  // No elevation for seamless look
             shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp)
         ) {
             Column(
@@ -538,6 +609,7 @@ fun ChatbotScreen(
                 } else {
                     ListeningOverlay(
                         text = sttState.resultText,
+                        amplitude = sttState.audioAmplitude,  // Pass voice amplitude for animation
                         onStopClick = { sttController.stopListening() }
                     )
                 }
@@ -546,30 +618,30 @@ fun ChatbotScreen(
     }
 
 
-        AppDialog(
-            show = showSessionResumeDialog,
-            title = stringResource(R.string.existing_session_found),
-            message = stringResource(R.string.resume_or_start_fresh),
-            confirmText = stringResource(R.string.continue_session),
-            dismissText = stringResource(R.string.start_new),
+    AppDialog(
+        show = showSessionResumeDialog,
+        title = stringResource(R.string.existing_session_found),
+        message = stringResource(R.string.resume_or_start_fresh),
+        confirmText = stringResource(R.string.continue_session),
+        dismissText = stringResource(R.string.start_new),
 
-            onConfirm = {
-                pendingConceptSelection?.let { concept ->
-                    chatViewModel.selectConcept(concept, context)
-                }
-                showSessionResumeDialog = false
-                pendingConceptSelection = null
-                showSettingsMenu = false
-            },
-
-            onDismiss = {
-                pendingConceptSelection?.let { concept ->
-                    chatViewModel.startFreshSession(concept, context)
-                }
-                showSessionResumeDialog = false
-                pendingConceptSelection = null
-                showSettingsMenu = false
+        onConfirm = {
+            pendingConceptSelection?.let { concept ->
+                chatViewModel.selectConcept(concept, context)
             }
-        )
+            showSessionResumeDialog = false
+            pendingConceptSelection = null
+            showSettingsMenu = false
+        },
+
+        onDismiss = {
+            pendingConceptSelection?.let { concept ->
+                chatViewModel.startFreshSession(concept, context)
+            }
+            showSessionResumeDialog = false
+            pendingConceptSelection = null
+            showSettingsMenu = false
+        }
+    )
 
 }

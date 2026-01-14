@@ -3,6 +3,7 @@ package com.anurag.eduai.ui.screens.chatbotscreen.components
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -54,7 +55,7 @@ fun AgentMessage(
         processor.process(fullText)
     }
 
-    // Auto-scroll to CENTER current word using TextLayoutResult
+    // Auto-scroll to CENTER current word
     LaunchedEffect(currentWordIndex, ttsState.isSpeaking, textLayout, containerHeight) {
         if (!ttsState.isSpeaking || currentWordIndex < 0 || textLayout == null || containerHeight == 0) {
             return@LaunchedEffect
@@ -68,13 +69,10 @@ fun AgentMessage(
         val word = words[currentWordIndex]
         val lineIndex = layout.getLineForOffset(word.start)
 
-        // Get the vertical position of the line
         val lineTop = layout.getLineTop(lineIndex)
         val lineBottom = layout.getLineBottom(lineIndex)
         val lineCenter = (lineTop + lineBottom) / 2
 
-        // Calculate scroll position to center the line in the viewport
-        // containerHeight is in pixels, convert to same unit
         val viewportCenter = containerHeight / 2f
         val targetScroll = (lineCenter - viewportCenter).coerceAtLeast(0f)
 
@@ -86,13 +84,12 @@ fun AgentMessage(
 
     Box(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .padding(horizontal = 16.dp)
             .background(
                 color = White,
                 shape = RoundedCornerShape(12.dp)
             )
-            .padding(24.dp)
             .onGloballyPositioned { coordinates ->
                 // Track container height for centering calculation
                 containerHeight = coordinates.size.height

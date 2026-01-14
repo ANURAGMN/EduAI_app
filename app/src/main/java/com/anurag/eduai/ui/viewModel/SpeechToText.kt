@@ -33,7 +33,8 @@ class SpeechToText : ViewModel() {
         val selectedLanguage: String = "en-IN",
         val statusMessage: String = "",
         val resultText: String = "",
-        val hasPermission: Boolean = false
+        val hasPermission: Boolean = false,
+        val audioAmplitude: Float = 0f  // Voice amplitude for animation (0f to 1f)
     )
 
     private val _state = MutableStateFlow(STTState())
@@ -142,7 +143,8 @@ class SpeechToText : ViewModel() {
         }
         _state.value = _state.value.copy(
             isListening = false,
-            statusMessage = "Stopped"
+            statusMessage = "Stopped",
+            audioAmplitude = 0f  // Reset amplitude
         )
         DebugLogger.debugLog(TAG, "Stopped Listening...")
     }
@@ -265,7 +267,12 @@ class SpeechToText : ViewModel() {
             }
         }
 
-        override fun onRmsChanged(rmsdB: Float) {}
+        override fun onRmsChanged(rmsdB: Float) {
+            // Convert RMS dB to amplitude (0f to 1f range)
+            // RMS values typically range from 0 to ~10 dB
+            val normalizedAmplitude = (rmsdB / 10f).coerceIn(0f, 1f)
+            _state.value = _state.value.copy(audioAmplitude = normalizedAmplitude)
+        }
     }
 
     fun handlePermissionResult(requestCode: Int, grantResults: IntArray) {

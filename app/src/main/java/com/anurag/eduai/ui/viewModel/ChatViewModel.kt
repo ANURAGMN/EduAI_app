@@ -1,6 +1,6 @@
 package com.anurag.eduai.ui.viewModel
 
-import ChatMessageModel
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,17 +8,24 @@ import com.anurag.eduai.BuildConfig
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.ConceptSessionRepository
 import com.anurag.eduai.data.remote.AgenticAIClient
+import com.anurag.eduai.data.remote.GeminiLLMClient
+import com.anurag.eduai.data.remote.LLMClient
 import com.anurag.eduai.data.remote.SessionMetadata
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.ui.screens.chatbotscreen.components.ResourceContent
+import com.anurag.eduai.ui.screens.chatbotscreen.components.ResourceDisplayMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import org.json.JSONArray
+import org.json.JSONObject
 import kotlin.collections.set
 
 
@@ -28,6 +35,9 @@ import kotlin.collections.set
 class ChatViewModel (): ViewModel() {
 
     private val agenticAIClient = AgenticAIClient(BuildConfig.AGENTIC_AI_BASE_URL)
+    private val model="meta-llama/llama-4-scout-17b-16e-instruct"
+
+    private val llmClient = LLMClient(BuildConfig.GROQ_API_KEY, "6", "8", "250", model)
 
     // Chat messages
     private val _messages = MutableStateFlow<List<ChatMessageModel>>(emptyList())
@@ -114,6 +124,228 @@ class ChatViewModel (): ViewModel() {
     private val _uiState = MutableStateFlow(ChatUIState())
     val uiState: StateFlow<ChatUIState> = _uiState
     private var userId: String = ""
+    //resource card state
+    private val _showResourceCard = MutableStateFlow(false)
+    val showResourceCard: StateFlow<Boolean> = _showResourceCard
+
+    private val _currentResource = MutableStateFlow<ResourceContent?>(null)
+    val currentResource: StateFlow<ResourceContent?> = _currentResource
+
+    private val _resourceDisplayMode = MutableStateFlow(ResourceDisplayMode.IMAGE)
+    val resourceDisplayMode: StateFlow<ResourceDisplayMode> = _resourceDisplayMode
+
+    // Pending message to show after resource card is dismissed
+    private var pendingAgentMessage: String? = null
+    private var pendingContext: Context? = null
+
+    // Track if TTS was paused due to resource card
+    private val _ttsPausedForResource = MutableStateFlow(false)
+    val ttsPausedForResource: StateFlow<Boolean> = _ttsPausedForResource
+
+    //concept map json state
+    private val _conceptMapJSON = MutableStateFlow(
+        """{"visualization_type":"None","main_concept":"Chat for a Concept Map","nodes":[],"edges":[]}"""
+    )
+    val conceptMapJSON: StateFlow<String> = _conceptMapJSON
+    private var conceptMapJob: Job? = null
+
+    private fun resetConceptMap() {
+        _conceptMapJSON.value = """{"visualization_type":"None","main_concept":"Chat for a Concept Map","nodes":[],"edges":[]}"""
+        DebugLogger.debugLog("ChatViewModel", "Concept map reset to default")
+    }
+
+    private fun fetchConceptMapWithLLM(
+        aiResponse: String,
+    ) {
+
+        conceptMapJob?.cancel()
+
+        conceptMapJob = viewModelScope.launch {
+            try {
+
+                val response = llmClient.queryLLM(aiResponse, _currentLanguage.value)
+
+                val json =llmClient.extractConceptMapJSON(response)
+
+                if (!isActive) {
+                    DebugLogger.debugLog("ChatViewModel", "Concept map generation was cancelled")
+                    resetConceptMap()
+                    return@launch
+                }
+                // PROGRESSIVE RENDERING PHASE
+                val progressiveRenderStartTime = System.currentTimeMillis()
+
+                DebugLogger.debugLog(
+                    "ChatViewModel",
+                    "Full concept map JSON from LLM: $json"
+                )
+
+                // Show full concept map immediately (no progressive rendering)
+                _conceptMapJSON.value = json
+                _resourceDisplayMode.value = ResourceDisplayMode.CONCEPT_MAP
+                _currentResource.value = ResourceContent.ConceptMap(
+                    json = json,
+                    description = null,
+                    currentAudioTime = 0f,
+                    isAudioPlaying = false
+                )
+                _showResourceCard.value = true
+
+                DebugLogger.debugLog(
+                    "ChatViewModel",
+                    "Resource card shown with full concept map (all nodes/edges at once)"
+                )
+
+            } catch (e: Exception) {
+                DebugLogger.debugLog("ChatViewModel", "Concept map generation error: ${e.message}")
+                    resetConceptMap()
+            }
+        }
+    }
+
+
+    private fun startProgressiveConceptMap(
+        conceptMapJson: String,
+    ) {
+        conceptMapJob?.cancel()
+
+        conceptMapJob = viewModelScope.launch(Dispatchers.Main) {
+            try {
+                val progressiveRenderStartTime = System.currentTimeMillis()
+
+                DebugLogger.debugLog("ChatViewModel", "=== PROGRESSIVE RENDERING STARTED ===")
+                DebugLogger.debugLog("ChatViewModel", "Coroutine isActive: $isActive")
+
+                if (!isActive) {
+                    DebugLogger.debugLog("ChatViewModel", "Concept map rendering was cancelled before start")
+                    return@launch
+                }
+
+                val jsonObj = JSONObject(conceptMapJson)
+                val nodesArray = jsonObj.optJSONArray("nodes") ?: JSONArray()
+                val edgesArray = jsonObj.optJSONArray("edges") ?: JSONArray()
+
+                DebugLogger.debugLog("ChatViewModel", "├─ Nodes to render: ${nodesArray.length()}")
+                DebugLogger.debugLog("ChatViewModel", "├─ Edges to render: ${edgesArray.length()}")
+                DebugLogger.debugLog("ChatViewModel", "├─ Full JSON: $conceptMapJson")
+
+                if (nodesArray.length() == 0 && edgesArray.length() == 0) {
+                    _conceptMapJSON.value = conceptMapJson
+                    DebugLogger.debugLog("ChatViewModel", "├─ Empty concept map - showing as-is")
+                    return@launch
+                }
+
+                val progressiveNodes = JSONArray()
+                val progressiveEdges = JSONArray()
+                val audioSegments = jsonObj.optJSONArray("audioSegments") ?: JSONArray()
+
+                DebugLogger.debugLog("ChatViewModel", "├─ Starting progressive node rendering...")
+
+                // Add nodes one by one with delay for visible progressive rendering
+                var nodeCount = 0
+                for (i in 0 until nodesArray.length()) {
+                    if (!isActive) {
+                        DebugLogger.debugLog("ChatViewModel", "Concept map rendering cancelled at node $nodeCount")
+                        return@launch
+                    }
+                    try {
+                        progressiveNodes.put(nodesArray.getJSONObject(i))
+                        updateConceptMapState(jsonObj, progressiveNodes, JSONArray(), audioSegments)
+
+                        nodeCount++
+                        DebugLogger.debugLog(
+                            "ChatViewModel",
+                            "├─ Node $nodeCount/${nodesArray.length()} added (${nodesArray.getJSONObject(i).optString("label", "?")})"
+                        )
+
+                        // Add delay after each node (except the last one)
+                        if (i < nodesArray.length() - 1) {
+                            delay(300L)  // 300ms delay between nodes for visible animation
+                        }
+                    } catch (e: Exception) {
+                        DebugLogger.errorLog("ChatViewModel", "Error adding node $nodeCount: ${e.message}")
+                        e.printStackTrace()
+                        return@launch
+                    }
+                }
+
+                DebugLogger.debugLog("ChatViewModel", "├─ All nodes added, starting edge rendering...")
+
+                // Add edges one by one with delay
+                var edgeCount = 0
+                for (i in 0 until edgesArray.length()) {
+                    if (!isActive) {
+                        DebugLogger.debugLog("ChatViewModel", "Concept map rendering cancelled at edge $edgeCount")
+                        return@launch
+                    }
+                    try {
+                        progressiveEdges.put(edgesArray.getJSONObject(i))
+                        updateConceptMapState(jsonObj, progressiveNodes, progressiveEdges, audioSegments)
+
+                        edgeCount++
+                        val edgeObj = edgesArray.getJSONObject(i)
+                        DebugLogger.debugLog(
+                            "ChatViewModel",
+                            "├─ Edge $edgeCount/${edgesArray.length()} added (${edgeObj.optString("from", "?")} -> ${edgeObj.optString("to", "?")})"
+                        )
+
+                        // Add delay after each edge (except the last one)
+                        if (i < edgesArray.length() - 1) {
+                            delay(200L)  // 200ms delay between edges for visible animation
+                        }
+                    } catch (e: Exception) {
+                        DebugLogger.errorLog("ChatViewModel", "Error adding edge $edgeCount: ${e.message}")
+                        e.printStackTrace()
+                        return@launch
+                    }
+                }
+
+                val progressiveRenderEndTime = System.currentTimeMillis()
+                val progressiveRenderDuration = progressiveRenderEndTime - progressiveRenderStartTime
+
+                DebugLogger.debugLog("ChatViewModel", "=== Progressive Rendering Completed in ${progressiveRenderDuration}ms ===")
+                DebugLogger.debugLog("ChatViewModel", "Total nodes rendered: $nodeCount")
+                DebugLogger.debugLog("ChatViewModel", "Total edges rendered: $edgeCount")
+
+
+            } catch (e: Exception) {
+                DebugLogger.errorLog(
+                    "ChatViewModel",
+                    "Concept map animation error: ${e.message}"
+                )
+                _conceptMapJSON.value = conceptMapJson
+            }
+        }
+    }
+    private fun updateConceptMapState(
+        jsonObj: JSONObject,
+        nodes: JSONArray,
+        edges: JSONArray,
+        audioSegments: JSONArray
+    ) {
+        val progressMap = JSONObject().apply {
+            put("visualization_type", jsonObj.optString("visualization_type", "Concept Map"))
+            put("main_concept", jsonObj.optString("main_concept", ""))
+            put("nodes", nodes)
+            put("edges", edges)
+            put("audioSegments", audioSegments)
+        }
+        val jsonString = progressMap.toString()
+        _conceptMapJSON.value = jsonString
+
+        // Update the resource content with the progressive JSON
+        _currentResource.value = ResourceContent.ConceptMap(
+            json = jsonString,
+            description = null,
+            currentAudioTime = 0f,
+            isAudioPlaying = false
+        )
+
+        DebugLogger.debugLog(
+            "ChatViewModel",
+            "updateConceptMapState: nodes=${nodes.length()}, edges=${edges.length()}"
+        )
+    }
 
     /**
      * Update the input text field
@@ -161,6 +393,7 @@ class ChatViewModel (): ViewModel() {
         DebugLogger.debugLog("ChatViewModel", "Student level changed to: $level")
     }
     fun initialize(id : String) {
+
         viewModelScope.launch {
             DebugLogger.debugLog("ChatViewModel", "Starting full initialization")
             refreshAvailableConcepts()
@@ -170,6 +403,7 @@ class ChatViewModel (): ViewModel() {
             DebugLogger.debugLog("ChatViewModel", "Initialization complete")
         }
     }
+
 
     /**
      * Refresh the list of available concepts from the server
@@ -330,14 +564,36 @@ class ChatViewModel (): ViewModel() {
                     val resp = response.getOrNull()!!
                     val text = resp.agentResponse.orEmpty()
                     // Add agent message with typing animation
-                    resp.metadata.let { _agentMetadata.value = it }
+                    resp.metadata.let {metadata ->
+                        _agentMetadata.value = metadata
+                        DebugLogger.debugLog(
+                            "ChatViewModel",
+                            "Node transitions count: ${metadata.nodeTransitions.size}"
+                        )
+                        metadata.nodeTransitions.forEachIndexed { index, transition ->
+                            DebugLogger.debugLog(
+                                "ChatViewModel",
+                                "  [$index] ${transition["from_node"]} -> ${transition["to_node"]}"
+                            )
+                        }
+                        checkAndShowResourceCard(metadata)
+                    }
 
                     updateAutosuggestions(resp.autosuggestions)
                     DebugLogger.debugLog("ChatViewModel", "├─ Autosuggestions from continueSession: ${resp.autosuggestions.size}")
                     resp.autosuggestions.forEachIndexed { idx, suggestion ->
                         DebugLogger.debugLog("ChatViewModel", "  [$idx] $suggestion")
                     }
-                    startTypingAnimation(text, context)
+
+                    // If resource card is showing, store the message to be shown after card is dismissed
+                    // Otherwise, start typing animation immediately
+                    if (_showResourceCard.value) {
+                        pendingAgentMessage = text
+                        pendingContext = context
+                        DebugLogger.debugLog("ChatViewModel", "Resource card is showing - pending agent message stored for later")
+                    } else {
+                        startTypingAnimation(text, context)
+                    }
 
 
                 } else {
@@ -366,6 +622,45 @@ class ChatViewModel (): ViewModel() {
             }
         }
 
+    }
+
+   fun dismissResourceCard() {
+        _showResourceCard.value = false
+        _currentResource.value = null
+       _resourceDisplayMode.value = ResourceDisplayMode.IMAGE
+        _ttsPausedForResource.value = false  // Reset TTS pause flag
+        DebugLogger.debugLog("ChatViewModel", "Resource card dismissed")
+
+        // If there's a pending agent message, show it now with typing animation
+        if (pendingAgentMessage != null && pendingContext != null) {
+            DebugLogger.debugLog("ChatViewModel", "Starting typing animation for pending message after resource card dismissal")
+            startTypingAnimation(pendingAgentMessage!!, pendingContext!!)
+            pendingAgentMessage = null
+            pendingContext = null
+        }
+    }
+
+    /**
+     * Pause TTS when resource card is shown
+     */
+    fun pauseTTSForResource() {
+        _ttsPausedForResource.value = true
+        DebugLogger.debugLog("ChatViewModel", "TTS paused for resource card")
+    }
+
+    /**
+     * Resume TTS (used when volume button is clicked while resource card is showing)
+     */
+    fun resumeTTSForResource() {
+        _ttsPausedForResource.value = false
+        DebugLogger.debugLog("ChatViewModel", "TTS resume requested for resource card")
+    }
+
+    /**
+     * Handle resource card timer completion
+     */
+    fun onResourceTimerComplete() {
+        DebugLogger.debugLog("ChatViewModel", "Resource card timer completed")
     }
     /**
      * Update autosuggestions from API response
@@ -446,9 +741,35 @@ class ChatViewModel (): ViewModel() {
                         updateAutosuggestions(response.autosuggestions)
                         _isSessionStarted.value = true
 
+                        response.metadata.let { metadata ->
+                            _agentMetadata.value = metadata
+
+                            // Log initial transitions
+                            DebugLogger.debugLog(
+                                "ChatViewModel",
+                                "Initial node transitions count: ${metadata.nodeTransitions.size}"
+                            )
+                            metadata.nodeTransitions.forEachIndexed { index, transition ->
+                                DebugLogger.debugLog(
+                                    "ChatViewModel",
+                                    "  [$index] ${transition["from_node"]} -> ${transition["to_node"]}"
+                                )
+                            }
+
+                            checkAndShowResourceCard(metadata)
+                        }
+
                         // Show the initial agent response with typing animation if available
                         if (!text.isNullOrBlank()) {
-                            startTypingAnimation(text, context)
+                            // If resource card is showing, store the message to be shown after card is dismissed
+                            // Otherwise, start typing animation immediately
+                            if (_showResourceCard.value) {
+                                pendingAgentMessage = text
+                                pendingContext = context
+                                DebugLogger.debugLog("ChatViewModel", "Resource card is showing - pending agent message stored for later")
+                            } else {
+                                startTypingAnimation(text, context)
+                            }
                         }
 
                         DebugLogger.debugLog("ChatViewModel", "Session started for concept: $concept")
@@ -557,6 +878,11 @@ class ChatViewModel (): ViewModel() {
      */
 
     private fun startTypingAnimation(fullText: String, context: Context) {
+
+//
+//        viewModelScope.launch {
+//            fetchConceptMapWithLLM(fullText)
+//        }
         typingJob?.cancel()
         typingJob = viewModelScope.launch {
             // Add full message to chat immediately
@@ -662,8 +988,104 @@ class ChatViewModel (): ViewModel() {
         _typingText.value = ""
     }
     fun hasExistingSession(concept: String, context: Context): Boolean {
-        val stored = conceptThreadMap[concept]
-        return stored != null
-    }
-}
+        // Check in-memory cache first
+        val cachedThread = conceptThreadMap[concept]
+        if (cachedThread != null) {
+            DebugLogger.debugLog("ChatViewModel", "Found existing session in cache for: $concept")
+            return true
+        }
 
+        // Check SharedPreferences
+        val repository = ConceptSessionRepository(context.applicationContext)
+        val mapping = repository.loadMapping(concept)
+        val exists = mapping != null
+
+        if (exists) {
+            DebugLogger.debugLog("ChatViewModel", "Found existing session in SharedPreferences for: $concept")
+        } else {
+            DebugLogger.debugLog("ChatViewModel", "No existing session found for: $concept")
+        }
+
+        return exists
+    }
+
+    private fun checkAndShowResourceCard(metadata: SessionMetadata) {
+        viewModelScope.launch {
+            try {
+                DebugLogger.debugLog(
+                    "ChatViewModel",
+                    "=== CHECKING RESOURCE CARD TRANSITIONS ==="
+                )
+                DebugLogger.debugLog(
+                    "ChatViewModel",
+                    "Total transitions: ${metadata.nodeTransitions.size}"
+                )
+                metadata.nodeTransitions.forEach { transition ->
+                    val fromNode = transition["from_node"] as? String
+                    val toNode = transition["to_node"] as? String
+
+                    DebugLogger.debugLog(
+                        "ChatViewModel",
+                        "[\$index] Checking transition: $fromNode -> $toNode"
+                    )
+
+                    // APK -> CI = Show Image
+                    if (fromNode == "APK" && toNode == "CI") {
+                        if (!metadata.imageUrl.isNullOrBlank()) {
+                            _currentResource.value = ResourceContent.Image(
+                                url = metadata.imageUrl,
+                                description = metadata.imageDescription
+                            )
+                            _resourceDisplayMode.value = ResourceDisplayMode.IMAGE
+                            _showResourceCard.value = true
+
+                            DebugLogger.debugLog(
+                                "ChatViewModel",
+                                "current node transition from $fromNode to $toNode Showing IMAGE for APK->CI: ${metadata.imageUrl}"
+
+                            )
+                            return@launch
+                        } else {
+                            DebugLogger.debugLog(
+                                "ChatViewModel",
+                                " APK->CI found but imageUrl is null"
+                            )
+                        }
+                    }
+
+                    // CI -> SIM_CC = Fetch and show ConceptMap from LLM
+                    if (fromNode == "CI" && toNode == "SIM_CC") {
+                        val lastAIMessage = _messages.value.findLast { it.sender == "ai" }
+                        val aiResponseText = lastAIMessage?.content ?: ""
+
+                        if (aiResponseText.isNotBlank()) {
+                            DebugLogger.debugLog(
+                                "ChatViewModel",
+                                "current node transition from $fromNode to $toNode  transition - triggering concept map for resource card"
+                            )
+                            fetchConceptMapWithLLM(aiResponseText)
+                            return@launch
+                        }else{
+                            DebugLogger.debugLog(
+                                "ChatViewModel",
+                                "CI->SIM_CC found but last AI message is blank"
+                            )
+                        }
+                    }
+                }
+
+                DebugLogger.debugLog(
+                    "ChatViewModel",
+                    "No matching transitions found for resource display"
+                )
+
+            } catch (e: Exception) {
+                DebugLogger.errorLog(
+                    "ChatViewModel",
+                    "Error checking resource card: ${e.message}"
+                )
+            }
+        }
+    }
+
+}

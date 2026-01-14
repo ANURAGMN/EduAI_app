@@ -1,3 +1,5 @@
+package com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass
+
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
