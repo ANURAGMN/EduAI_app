@@ -61,16 +61,16 @@ fun ResourcesCard(
     // Timer countdown
     LaunchedEffect(Unit) {
         isVisible = true
-//        launch {
-//            while (timeRemaining > 0) {
-//                delay(1000)
-//                timeRemaining--
-//            }
-//            // Auto-close when timer reaches 0
-//            onTimerComplete()
-//            delay(300) // Allow exit animation
-//            onDismiss()
-//        }
+        launch {
+            while (timeRemaining > 0) {
+                delay(1000)
+                timeRemaining--
+            }
+            // Auto-close when timer reaches 0
+            onTimerComplete()
+            delay(300) // Allow exit animation
+            onDismiss()
+        }
     }
 
     val configuration = LocalConfiguration.current
@@ -115,15 +115,15 @@ fun ResourcesCard(
                         }
                     }
                 }
-//
-//                // Progress Timer Overlay
-//                ResourceCardCloseTimer(
-//                    timeRemaining = timeRemaining,
-//                    totalDuration = timerDurationSeconds,
-//                    modifier = Modifier
-//                        .align(Alignment.TopStart)
-//                        .padding(16.dp)
-//                )
+
+                // Progress Timer Overlay
+                ResourceCardCloseTimer(
+                    timeRemaining = timeRemaining,
+                    totalDuration = timerDurationSeconds,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(16.dp)
+                )
 
                 // Close Button
                 IconButton(
