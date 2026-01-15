@@ -16,6 +16,20 @@ import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.theme.White
 
+/**
+ * A reusable dialog component for the app.
+ * show : Whether to show the dialog.
+ * title : Optional title of the dialog.
+ * message : Optional message body of the dialog.
+ * confirmText : Text for the confirm button.
+ * dismissText : Optional text for the dismiss button.
+ * confirmColor : Background color for the confirm button.
+ * dismissColor : Text color for the dismiss button.
+ * onConfirm : Lambda to execute on confirm action.
+ * onDismiss : Lambda to execute on dismiss action.
+ * content : Optional composable content to include in the dialog body.
+ *
+ */
 @Composable
 fun AppDialog(
     show: Boolean,

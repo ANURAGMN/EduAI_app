@@ -199,6 +199,8 @@ class ChatViewModel (): ViewModel() {
                 _messages.value = emptyList()
                 _selectedConcept.value = null
                 _pendingFirstUserMessage.value = null
+
+                _shouldStartTTS.value = false
                 _fullTextForTTS.value = ""
                 _autosuggestions.value = emptyList()
 
@@ -259,7 +261,7 @@ class ChatViewModel (): ViewModel() {
         }
         sendMessageAfterSessionReady(userMessage, context)
 
-        }
+    }
 
     private fun sendMessageAfterSessionReady(userMessage: String, context: Context) {
         viewModelScope.launch {
@@ -268,7 +270,7 @@ class ChatViewModel (): ViewModel() {
 
                 // Get response from AI agent
                 val response =withTimeout(120_000L) {
-                        agenticAIClient.continueSession(
+                    agenticAIClient.continueSession(
                         userMessage = userMessage,
                         clickedAutosuggestion = clickedAutosuggestion,
                         studentLevel = _studentLevel.value
@@ -339,6 +341,9 @@ class ChatViewModel (): ViewModel() {
      */
     fun selectConcept( concept: String,context: Context) {
         viewModelScope.launch {
+            //stop any ongoing TTS
+            _shouldStartTTS.value = false
+            _fullTextForTTS.value = ""
 
             _isLoading.value = true
             _messages.value = emptyList()
@@ -497,6 +502,8 @@ class ChatViewModel (): ViewModel() {
      * - Adds message to chat IMMEDIATELY (before animation)
      * - Updates TTS and typing text state
      * - Animates typing word by word
+     * - TTS will play simultaneously with typing animation
+     *
      */
     private fun startTypingAnimation(fullText: String, context: Context) {
         typingJob?.cancel()
@@ -505,11 +512,11 @@ class ChatViewModel (): ViewModel() {
                 it + ChatMessageModel(sender = "ai", content = fullText)
             }
             updateUIState()
-
+            _fullTextForTTS.value = fullText
             _isTyping.value = true
             _typingText.value = ""
-            _fullTextForTTS.value = fullText
 
+            delay(50)
             // Trigger TTS to start
             _shouldStartTTS.value = true
             delay(100)
@@ -549,6 +556,10 @@ class ChatViewModel (): ViewModel() {
                 _pendingFirstUserMessage.value = null
                 _typingText.value = ""
                 _isTyping.value = false
+
+                _shouldStartTTS.value = false
+                _fullTextForTTS.value = ""
+
                 updateUIState()
                 cancelAnimations()
 
