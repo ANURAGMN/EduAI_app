@@ -42,7 +42,7 @@ class GraphAudioSyncLogic(
     @Composable
     fun getCurrentSegment(): GraphData.AudioSegment? {
         return remember(currentAudioTime.toInt(), graphData.audioSegments) {
-            if (isAudioPlaying && currentAudioTime > 0f) {
+            if (isAudioPlaying && currentAudioTime >= 0f) {
                 graphData.audioSegments.find { segment ->
                     currentAudioTime >= segment.startTime &&
                             currentAudioTime <= segment.endTime
@@ -74,7 +74,7 @@ class GraphAudioSyncLogic(
                     graphData.audioSegments.take(currentIndex + 1).forEach { segment ->
                         visible.addAll(segment.showNodeIds)
                     }
-                } else if (currentAudioTime > 0f) {
+                } else if (currentAudioTime >= 0f) {
                     // FIX: When between segments, show all nodes from completed segments
                     // Find the last completed segment
                     val lastCompletedSegment = graphData.audioSegments
@@ -146,7 +146,7 @@ class GraphAudioSyncLogic(
                     ═══════════════════════════════════════════════════════
                 """.trimIndent())
             } ?: run {
-                if (isAudioPlaying && currentAudioTime > 0f) {
+                if (isAudioPlaying && currentAudioTime >= 0f) {
                     DebugLogger.debugLog(TAG, """
                         Between segments at ${currentAudioTime}s
                         Visible nodes maintained: ${visibleNodeIds.size}

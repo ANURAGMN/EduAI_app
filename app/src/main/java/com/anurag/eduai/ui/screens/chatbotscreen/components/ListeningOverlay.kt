@@ -15,7 +15,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.anurag.eduai.R
@@ -126,14 +125,4 @@ fun ListeningOverlay(
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
-}
-
-@Preview
-@Composable
-fun ListeningOverlayPreview() {
-    ListeningOverlay(
-        text = "This is a sample transcribed text that the app is listening to. It can be quite long to demonstrate scrolling behavior.",
-        amplitude = 0.7f,  // Simulate voice amplitude
-        onStopClick = {}
-    )
 }

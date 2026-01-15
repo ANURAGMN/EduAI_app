@@ -3,7 +3,6 @@ package com.anurag.eduai.ui.screens.chatbotscreen.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
@@ -16,6 +15,7 @@ import com.anurag.eduai.R
 import com.anurag.eduai.ui.components.DropDownMenu
 import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.IconPrimary
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
 
@@ -41,23 +41,25 @@ fun ChatBotSettings(
     onLevelChange: (String) -> Unit,
     onSpeedChange: (String) -> Unit
 ) {
+    val dimens = LocalDimensions.current
+
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
         modifier = Modifier
             .background(White)
-            .border(1.dp, BrandPrimary, RoundedCornerShape(0.dp))
+            .border(dimens.inputBorderWidth, BrandPrimary)
     ) {
         Column(
             modifier = Modifier
-                .padding(12.dp)
-                .widthIn(min = 220.dp, max = 320.dp)
+                .padding(dimens.cardPadding)
+                .widthIn(max = dimens.dropdownMaxWidth)
         ) {
             // Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp),
+                    .padding(dimens.spaceSmall),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -67,7 +69,7 @@ fun ChatBotSettings(
                     style = MaterialTheme.typography.titleSmall,
                 )
 
-                IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
+                IconButton(onClick = onDismiss, modifier = Modifier.size(dimens.iconLarge)) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = stringResource(R.string.close_settings),
@@ -76,7 +78,7 @@ fun ChatBotSettings(
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(dimens.spaceMedium))
 
             // Avatar
             Text(
@@ -84,7 +86,7 @@ fun ChatBotSettings(
                 color = TextPrimary,
                 style = MaterialTheme.typography.titleSmall
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(dimens.spaceSmall))
             DropDownMenu(
                 label = stringResource(R.string.avatar),
                 options = listOf(
@@ -107,7 +109,7 @@ fun ChatBotSettings(
                 }
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(dimens.spaceMedium))
 
             // Voice
             Text(
@@ -115,7 +117,7 @@ fun ChatBotSettings(
                 color = TextPrimary,
                 style = MaterialTheme.typography.titleSmall
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(dimens.spaceSmall))
             DropDownMenu(
                 label = stringResource(R.string.voice),
                 options = state.voiceOptions,
@@ -123,7 +125,7 @@ fun ChatBotSettings(
                 onValueSelected = onVoiceChange
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(dimens.spaceMedium))
 
             // Concept
             if (state.isLoadingConcepts) {
@@ -142,7 +144,7 @@ fun ChatBotSettings(
                             color = BrandPrimary,
                             strokeWidth = 2.dp
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(Modifier.height(dimens.spaceSmall))
                         Text(
                             text = stringResource(R.string.loading_topics),
                             color = TextPrimary,
@@ -156,7 +158,7 @@ fun ChatBotSettings(
                     color = TextPrimary,
                     style = MaterialTheme.typography.titleSmall
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(dimens.spaceSmall))
                 DropDownMenu(
                     label = stringResource(R.string.select_concepts),
                     options = state.availableConcepts,
@@ -165,7 +167,7 @@ fun ChatBotSettings(
                 )
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(dimens.spaceMedium))
 
             // Student Level
             Text(
@@ -173,7 +175,7 @@ fun ChatBotSettings(
                 color = TextPrimary,
                 style = MaterialTheme.typography.titleSmall
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(dimens.spaceSmall))
             DropDownMenu(
                 label = stringResource(R.string.student_level),
                 options = listOf(
@@ -198,7 +200,7 @@ fun ChatBotSettings(
                 }
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(dimens.spaceMedium))
 
             // Speed
             Text(
@@ -206,7 +208,7 @@ fun ChatBotSettings(
                 color = TextPrimary,
                 style = MaterialTheme.typography.titleSmall
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(dimens.spaceSmall))
             DropDownMenu(
                 label = stringResource(R.string.speed),
                 options = listOf("0.75x", "1.0x", "1.25x", "1.5x"),

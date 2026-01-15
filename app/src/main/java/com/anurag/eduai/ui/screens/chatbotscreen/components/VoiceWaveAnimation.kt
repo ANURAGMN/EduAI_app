@@ -21,9 +21,9 @@ import com.anurag.eduai.ui.theme.HeaderGradientStart
  */
 @Composable
 fun VoiceWaveAnimation(
+    modifier: Modifier = Modifier,
     amplitude: Float = 0f,
     isListening: Boolean = true,
-    modifier: Modifier = Modifier,
     colors: List<Color> = listOf(HeaderGradientStart, HeaderGradientEnd),
     segmentCount: Int = 150
 ) {

@@ -8,41 +8,113 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.ui.theme.AccentBlue
-import com.anurag.eduai.ui.theme.HeaderGradientEnd
 import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.IconPrimary
 import com.anurag.eduai.ui.theme.TextPrimary
+import com.anurag.eduai.ui.viewModel.ChatUiState
+import com.anurag.eduai.ui.viewModel.SpeechToText
 
 /**
- * Input section
+ * Comprehensive input section that handles:
+ * - Auto-suggestions display
+ * - Text input field
+ * - Listening overlay for speech-to-text
  */
 @Composable
 fun InputSection(
+    chatState: ChatUiState,
+    sttState: SpeechToText.STTState,
+    onTextChange: (String) -> Unit,
+    onSendClick: () -> Unit,
+    onSpeakClick: () -> Unit,
+    onStopListening: () -> Unit,
+    onSuggestionClick: (String) -> Unit,
+    onSizeChanged: (IntSize) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .imePadding(),
+        color = Color.White,
+        shadowElevation = 0.dp,
+        shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onSizeChanged(onSizeChanged)
+        ) {
+            // Auto-suggestions
+            val shouldShowAutosuggestions = !sttState.isListening &&
+                    chatState.showAutosuggestions &&
+                    chatState.inputText.isEmpty() &&
+                    !chatState.isLoading
+
+            // Debug logging - only when state changes
+            LaunchedEffect(shouldShowAutosuggestions, chatState.autosuggestions.size) {
+                if (chatState.autosuggestions.isNotEmpty()) {
+                    com.anurag.eduai.debug.DebugLogger.debugLog("InputSection", """
+                        AUTO-SUGGESTION CHIPS: ${if (shouldShowAutosuggestions) "VISIBLE ✅" else "HIDDEN ❌"}
+                        - showAutosuggestions: ${chatState.showAutosuggestions}
+                        - suggestions.size: ${chatState.autosuggestions.size}
+                        - inputText.isEmpty: ${chatState.inputText.isEmpty()}
+                        - !isLoading: ${!chatState.isLoading}
+                        - !isListening: ${!sttState.isListening}
+                    """.trimIndent())
+                }
+            }
+
+            if (shouldShowAutosuggestions) {
+                AutoSuggestionChips(
+                    suggestions = chatState.autosuggestions,
+                    visible = true,
+                    onSuggestionClick = onSuggestionClick
+                )
+            }
+
+            // Input or listening overlay
+            if (!sttState.isListening) {
+                InputField(
+                    textValue = chatState.inputText,
+                    onTextChange = onTextChange,
+                    onSpeakClick = onSpeakClick,
+                    onSendClick = onSendClick
+                )
+            } else {
+                ListeningOverlay(
+                    text = sttState.resultText,
+                    amplitude = sttState.audioAmplitude,
+                    onStopClick = onStopListening
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Input field component (internal)
+ */
+@Composable
+private fun InputField(
     textValue: String,
     onTextChange: (String) -> Unit,
     onSpeakClick: () -> Unit,
@@ -113,7 +185,7 @@ fun InputSection(
                         modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Send,
+                            imageVector = Icons.AutoMirrored.Filled.Send,
                             contentDescription = "Send message",
                             tint = HeaderGradientStart,
                             modifier = Modifier.size(20.dp)
@@ -138,10 +210,11 @@ fun InputSection(
     }
 }
 
+
 @Preview
 @Composable
 fun InputSectionPreview() {
-    InputSection(
+    InputField(
         textValue = "",
         onTextChange = {},
         onSpeakClick = {},

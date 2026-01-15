@@ -2,57 +2,31 @@ package com.anurag.eduai.ui.screens.chatbotscreen
 
 import android.Manifest.permission.RECORD_AUDIO
 import android.content.pm.PackageManager
-import android.webkit.WebView
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.R
-import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.ui.screens.chatbotscreen.components.AgentMessage
-import com.anurag.eduai.ui.screens.chatbotscreen.components.AppDialog
-import com.anurag.eduai.ui.screens.chatbotscreen.components.AutoSuggestionChips
-import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettings
-import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettingsState
-import com.anurag.eduai.ui.screens.chatbotscreen.components.InputSection
-import com.anurag.eduai.ui.screens.chatbotscreen.components.ListeningOverlay
-import com.anurag.eduai.ui.screens.chatbotscreen.components.ResourcesCard
-import com.anurag.eduai.ui.theme.BrandPrimary
-import com.anurag.eduai.ui.theme.IconPrimary
-import com.anurag.eduai.ui.theme.IconSecondary
-import com.anurag.eduai.ui.theme.LocalDimensions
-import com.anurag.eduai.ui.theme.TextSecondary
+import com.anurag.eduai.ui.screens.chatbotscreen.components.*
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
+import com.anurag.eduai.ui.viewModel.ChatUiState
 import com.anurag.eduai.ui.viewModel.ChatViewModel
-
 import com.anurag.eduai.ui.viewModel.SpeechToText
 import com.anurag.eduai.ui.viewModel.TextToSpeech
-import kotlinx.coroutines.delay
+import com.anurag.eduai.ui.viewModel.lastAiMessage
+import com.anurag.eduai.ui.viewModel.isConversationStarted
 
 @Composable
 fun ChatbotScreen(
@@ -61,77 +35,55 @@ fun ChatbotScreen(
     sttController: SpeechToText = viewModel(),
 ) {
     val context = LocalContext.current
-    val dimens = LocalDimensions.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val density = LocalDensity.current
 
-    // Observe states
+    // State collectors - using consolidated UI state
+    val chatState by chatViewModel.uiState.collectAsState()
     val ttsState by ttsController.state.collectAsState()
     val sttState by sttController.state.collectAsState()
 
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    // Observe chat UI state
-    val chatState by chatViewModel.uiState.collectAsState()
-
-    // Get the last AI message only
-    val lastAIMessage = remember(chatState.messages) {
-        chatState.messages.findLast { it.sender.lowercase() == "ai" }
-    }
-    // resource cards state collectors
-    val showResourceCard by chatViewModel.showResourceCard.collectAsState()
-    val currentResource by chatViewModel.currentResource.collectAsState()
-    val resourceDisplayMode by chatViewModel.resourceDisplayMode.collectAsState()
-    val ttsPausedForResource by chatViewModel.ttsPausedForResource.collectAsState()
-
-    //is kannada
-    val isKannada by chatViewModel.isKannada.collectAsState()
-
-    // Check if conversation has started
-    val isConversationStarted = chatState.messages.isNotEmpty()
-
-    // Track permission state
+    // Local UI state
     var permissionGranted by remember { mutableStateOf(false) }
-
-    // Track last processed speech text to avoid duplicates
     var lastProcessedSpeechText by remember { mutableStateOf("") }
-
-    //showSessionResumeDialog
     var showSessionResumeDialog by remember { mutableStateOf(false) }
-
-    // Settings menu state
     var showSettingsMenu by remember { mutableStateOf(false) }
-
-    // Settings state
-    var settingsState by remember {
-        mutableStateOf(
-            ChatBotSettingsState()
-        )
-    }
-    //typing state
-    val typingText by chatViewModel.typingText.collectAsState()
-    val isTyping by chatViewModel.isTyping.collectAsState()
-    val isLoading by chatViewModel.isLoading.collectAsState()
-
-    // Collect available concepts and selected concept from ViewModel
-    val availableConcepts by chatViewModel.availableConcepts.collectAsState()
-    val selectedConcept by chatViewModel.selectedConcept.collectAsState()
     var pendingConceptSelection by remember { mutableStateOf<String?>(null) }
-
-    // Current language
-    val currentLanguage by chatViewModel.currentLanguage.collectAsState()
-    val voiceOptions = remember(ttsState.availableVoices, currentLanguage, settingsState.selectedAvatar) {
-        ttsController.getFilteredVoiceOptions(currentLanguage, settingsState.selectedAvatar)
-    }
-    val conceptMapJSON by chatViewModel.conceptMapJSON.collectAsState()
-
-    //input section height
     var inputSectionHeight by remember { mutableStateOf(0.dp) }
-    val density = LocalDensity.current
 
-    // Autosuggestions state
-    val autosuggestions by chatViewModel.autosuggestions.collectAsState()
-    val showAutosuggestions by chatViewModel.showAutosuggestions.collectAsState()
+    //settings state
+    var settingsState by remember { mutableStateOf(ChatBotSettingsState()) }
 
-    // Permission launcher for audio recording
+    val lastAIMessage = chatState.lastAiMessage
+    val isConversationStarted = chatState.isConversationStarted
+
+    val voiceOptions = remember(ttsState.availableVoices, chatState.currentLanguage, settingsState.selectedAvatar) {
+        ttsController.getFilteredVoiceOptions(chatState.currentLanguage, settingsState.selectedAvatar)
+    }
+
+    val displayedVoiceName = remember(ttsState.selectedVoice, chatState.currentLanguage, settingsState.selectedAvatar) {
+        ttsState.selectedVoice?.let { ttsController.formatVoiceName(it) }
+            ?: ttsController.getDefaultVoiceName(chatState.currentLanguage, settingsState.selectedAvatar)
+    }
+
+    val aiMessageOutput = remember(chatState.isTyping, chatState.typingText, lastAIMessage) {
+        when {
+            chatState.isTyping -> chatState.typingText
+            else -> lastAIMessage?.content ?: ""
+        }
+    }
+
+    // Animation values
+    val avatarSize by animateDpAsState(
+        targetValue = if (isConversationStarted) 100.dp else 180.dp,
+        label = "avatarSize"
+    )
+    val avatarPadding by animateDpAsState(
+        targetValue = if (isConversationStarted) 20.dp else 0.dp,
+        label = "avatarPadding"
+    )
+
+    // Permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -142,109 +94,19 @@ fun ChatbotScreen(
             else intArrayOf(PackageManager.PERMISSION_DENIED)
         )
     }
-    // voices
-    val displayedVoiceName = remember(ttsState.selectedVoice, currentLanguage, settingsState.selectedAvatar) {
-        ttsState.selectedVoice?.let { ttsController.formatVoiceName(it) }
-            ?: ttsController.getDefaultVoiceName(currentLanguage, settingsState.selectedAvatar)
-    }
 
-    // AI message output logic
-    val aiMessageOutput = remember(isTyping, typingText) {
-        when {
-            isTyping -> typingText
-            else -> lastAIMessage?.content ?: ""
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        // Initialize all controllers
-        val sharedPrefs = SharedPreferenceUtils(context)
-        val userId = sharedPrefs.getUserId().toString()
-        chatViewModel.initialize(userId)
-        sttController.initialize(context)
-        ttsController.initialize(context)
-
-        // Check and request audio permission
-        val hasPermission = ContextCompat.checkSelfPermission(
-            context,
-            RECORD_AUDIO
-        ) == PackageManager.PERMISSION_GRANTED
-        permissionGranted = hasPermission
-
-        if (!hasPermission) {
-            permissionLauncher.launch(RECORD_AUDIO)
-        }
-    }
-    LaunchedEffect(ttsState.isInitialized) {
-        chatViewModel.shouldStartTTS.collect { shouldStart ->
-            if (shouldStart && ttsState.isInitialized) {
-                val textToSpeak = chatViewModel.fullTextForTTS.value
-                if (textToSpeak.isNotEmpty()) {
-                    // Stop any ongoing TTS first
-                    if (ttsState.isSpeaking) {
-                        ttsController.stop()
-                        delay(50)
-                    }
-
-                    ttsController.speak(textToSpeak)
-                    DebugLogger.debugLog("ChatbotScreen", "TTS started immediately: ${textToSpeak.take(50)}...")
-                }
-            }
-        }
-    }
-    LaunchedEffect(selectedConcept) {
-        if (ttsState.isSpeaking) {
-            ttsController.stop()
-            DebugLogger.debugLog("ChatbotScreen", "TTS stopped due to concept change")
-        }
-    }
-
-    // Stop TTS when resource card is shown
-    LaunchedEffect(showResourceCard) {
-        if (showResourceCard && ttsState.isSpeaking) {
-            ttsController.stop()
-            chatViewModel.pauseTTSForResource()
-            DebugLogger.debugLog("ChatbotScreen", "TTS stopped because resource card is showing")
-        }
-    }
-
-    // Transfer recognized speech to input field when listening stops
-    LaunchedEffect(sttState.isListening) {
-        if (!sttState.isListening && sttState.resultText.isNotEmpty()) {
-            // Only update if this is a new speech result (different from last processed)
-            if (sttState.resultText != lastProcessedSpeechText) {
-                chatViewModel.updateInputText(sttState.resultText)
-                lastProcessedSpeechText = sttState.resultText
-            }
-        }
-    }
-
-
-    LaunchedEffect(ttsState.isSpeaking) {
-        if (ttsState.isSpeaking) {
-            while (ttsState.isSpeaking) {
-                delay(50)
-            }
-        }
-        if (!ttsState.isSpeaking && chatState.messages.isNotEmpty()) {
-            chatViewModel.startIdleTimer()
-        }
-    }
-
-    DisposableEffect(Unit) {
-        sttController.initialize(context)
-        onDispose {
-            sttController.destroy()
-        }
-    }
-
-    val avatarSize by animateDpAsState(
-        targetValue = if (isConversationStarted) 100.dp else 180.dp,
-        label = "avatarSize"
-    )
-    val avatarPadding by animateDpAsState(
-        targetValue = if (isConversationStarted) 20.dp else 0.dp,
-        label = "avatarPadding"
+    // Effects
+    ChatEffects(
+        chatViewModel = chatViewModel,
+        ttsController = ttsController,
+        sttController = sttController,
+        chatState = chatState,
+        ttsState = ttsState,
+        sttState = sttState,
+        permissionLauncher = permissionLauncher,
+        onPermissionGranted = { permissionGranted = it },
+        onSpeechTextProcessed =  {lastProcessedSpeechText = it} ,
+        lastProcessedSpeechText = lastProcessedSpeechText
     )
 
     Box(
@@ -252,396 +114,218 @@ fun ChatbotScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // Main content (Avatar and Messages)
-        Column(modifier = Modifier
-            .fillMaxSize()
-        ) {
-            // Avatar and Messages Container
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 if (!isConversationStarted) {
-                    // Initial state: Avatar centered
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Card(
-                            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
-                            shape = CircleShape,
-                            modifier = Modifier
-                                .size(avatarSize)
-                                .clip(CircleShape)
-                        ) {
-                            AndroidView(
-                                factory = {
-                                    WebView(it).apply {
-                                        setBackgroundColor(0)
-                                        ttsController.setupWebView(this)
-                                    }
-                                },
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                    }
+                    // Initial centered avatar
+                    InitialAvatarView(
+                        avatarSize = avatarSize,
+                        ttsController = ttsController
+                    )
                 } else {
-                    // Conversation started - Show Avatar + Resource Card + Message Display
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        // Avatar at top
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = avatarPadding),
-                            contentAlignment = Alignment.TopCenter
-                        ) {
-                            Card(
-                                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
-                                shape = CircleShape,
-                                modifier = Modifier
-                                    .size(avatarSize)
-                                    .clip(CircleShape)
-                            ) {
-                                AndroidView(
-                                    factory = {
-                                        WebView(it).apply {
-                                            setBackgroundColor(0)
-                                            ttsController.setupWebView(this)
-                                        }
-                                    },
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
-
+                    // Conversation view
+                    ConversationView(
+                        avatarSize = avatarSize,
+                        avatarPadding = avatarPadding,
+                        chatState = chatState,
+                        lastAIMessage = lastAIMessage,
+                        ttsController = ttsController,
+                        inputSectionHeight = inputSectionHeight,
+                        onDismissResource = { chatViewModel.dismissResourceCard() },
+                        onResourceTimerComplete = {
+                            DebugLogger.debugLog("ChatViewModel", "Resource card timer completed")
                         }
-                        Spacer(Modifier.height(dimens.spaceSmall))
-
-                        // Content Column - Resource Card THEN Agent Message
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                                .padding(bottom = inputSectionHeight + 16.dp)
-                        ) {
-                         when {
-                                // CASE 1: Resource Card is showing - ONLY show resource card
-                                showResourceCard && currentResource != null -> {
-                                    ResourcesCard(
-                                        content = currentResource,
-                                        displayMode = resourceDisplayMode,
-                                        onDismiss = {
-                                            chatViewModel.dismissResourceCard()
-                                        },
-                                        onTimerComplete = {
-                                            chatViewModel.onResourceTimerComplete()
-                                        },
-                                        timerDurationSeconds = 6,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                               }
-
-                                // CASE 2: Loading state - Show loading indicator (no agent message yet)
-                                isLoading -> {
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .fillMaxWidth(),
-                                        contentAlignment = Alignment.TopStart
-                                    ) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = 12.dp, horizontal = 8.dp),
-                                            horizontalArrangement = Arrangement.Start,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            CircularProgressIndicator(
-                                                modifier = Modifier.size(16.dp),
-                                                strokeWidth = 2.dp,
-                                                color = BrandPrimary
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = stringResource(R.string.thinking),
-                                                color = TextSecondary,
-                                                style = MaterialTheme.typography.bodyMedium
-                                            )
-                                        }
-                                    }
-                                }
-
-                                // CASE 3: Show agent message with typing animation
-                                else -> {
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .fillMaxWidth()
-                                ) {
-                                    // Agent Message (only shown when not loading and no resource card)
-                                    if (lastAIMessage != null) {
-                                        AgentMessage(
-                                            text = if (isTyping) typingText else lastAIMessage.content,
-                                            isTyping = isTyping,
-                                            typingText = typingText,
-                                            fullText = lastAIMessage.content,
-                                            isError = lastAIMessage.isError,
-                                            ttsController = ttsController,
-                                            modifier = Modifier.fillMaxSize()
-                                        )
-                                    }
-
-                                    // Top fade overlay
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(100.dp)
-                                            .align(Alignment.TopCenter)
-                                            .background(
-                                                brush = Brush.verticalGradient(
-                                                    colors = listOf(
-                                                        Color.White.copy(alpha = 0.95f),
-                                                        Color.Transparent
-                                                    )
-                                                )
-                                            )
-                                    )
-
-                                    // Bottom fade overlay
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(100.dp)
-                                            .align(Alignment.BottomCenter)
-                                            .background(
-                                                brush = Brush.verticalGradient(
-                                                    colors = listOf(
-                                                        Color.Transparent,
-                                                        Color.White.copy(alpha = 0.95f)
-                                                    )
-                                                )
-                                            )
-                                    )
-                                }
-                                }
-                            }
-                        }
-                    }
+                    )
                 }
 
-                // Icons Row (overlaid at top-right)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp, end = 12.dp),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = {
-                        chatViewModel.setKannada(!isKannada)
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.ClosedCaption,
-                            contentDescription = if (isKannada) "Kannada Enabled" else "Kannada Disabled",
-                            tint = if (isKannada)
-                                IconPrimary
-                            else
-                                IconSecondary
+                // Header icons (settings, tts icon, kannada toggle)
+                ChatHeaderIcons(
+                    isKannada = chatState.isKannada,
+                    isSpeaking = ttsState.isSpeaking,
+                    showResourceCard = chatState.showResourceCard,
+                    ttsPausedForResource = chatState.ttsPausedForResource,
+                    showSettingsMenu = showSettingsMenu,
+                    onKannadaToggle = { chatViewModel.setKannada(!chatState.isKannada) },
+                    onVolumeClick = {
+                        handleVolumeClick(
+                            chatState = chatState,
+                            ttsState = ttsState,
+                            lastAIMessage = lastAIMessage,
+                            chatViewModel = chatViewModel,
+                            ttsController = ttsController
                         )
-                    }
-                    IconButton(onClick = {
-                        if (showResourceCard && ttsPausedForResource) {
-                            // Resource card is showing and TTS was paused - resume it
-                            chatViewModel.resumeTTSForResource()
-                            lastAIMessage?.let {
-                                ttsController.speak(it.content)
-                            }
-                            DebugLogger.debugLog("ChatbotScreen", "TTS resumed while resource card is showing")
-                        } else if (ttsState.isSpeaking) {
-                            // TTS is playing - stop it
-                            ttsController.stop()
-                        } else {
-                            // TTS is not playing - replay the last AI message
-                            lastAIMessage?.let {
-                                ttsController.speak(it.content)
-                            }
-                        }
-                    }) {
-                        Icon(
-                            imageVector = if (ttsState.isSpeaking)
-                                Icons.Default.Stop
-                            else
-                                Icons.AutoMirrored.Filled.VolumeUp,
-                            contentDescription = if (ttsState.isSpeaking) "Stop" else "Play",
-                            tint = if (ttsState.isSpeaking)
-                                IconPrimary
-                            else if (showResourceCard && ttsPausedForResource)
-                                IconSecondary.copy(alpha = 0.5f) // Dimmed when paused for resource
-                            else
-                                IconSecondary
-                        )
-                    }
-                    Box {
-                        IconButton(onClick = { showSettingsMenu = !showSettingsMenu }) {
-                            Icon(
-                                imageVector = Icons.Default.Tune,
-                                contentDescription = stringResource(R.string.settings),
-                                tint = Color.Gray.copy(alpha = 0.6f)
-                            )
-                        }
-                        if (showSettingsMenu) {
-                            ChatBotSettings(
-                                expanded = true,
-                                onDismiss = { showSettingsMenu = false },
-                                state = settingsState.copy(
-                                    voiceOptions = voiceOptions,
-                                    displayedVoiceName = displayedVoiceName,
-                                    availableConcepts = availableConcepts,
-                                    selectedConcept = selectedConcept,
-                                    isLoadingConcepts = availableConcepts.isEmpty()
-                                ),
-                                onAvatarChange = { avatarCode ->
-                                    settingsState = settingsState.copy(selectedAvatar = avatarCode)
-                                    ttsController.switchCharacter(avatarCode)
-                                    if (avatarCode != "disable") {
-                                        ttsController.applyDefaultsForAvatarLanguage(avatarCode, currentLanguage)
-                                    } else {
-                                        if (ttsState.isSpeaking) ttsController.stop()
-                                    }
-                                },
-                                onVoiceChange = { selectedDisplayName ->
-                                    val selectedVoice = ttsState.availableVoices.find {
-                                        ttsController.formatVoiceName(it) == selectedDisplayName
-                                    }
-                                    selectedVoice?.let {
-                                        ttsController.setVoice(it)
-                                        if (ttsState.isSpeaking) {
-                                            ttsController.stop()
-                                            ttsController.speak(aiMessageOutput)
-                                        }
-                                    }
-                                },
-                                onConceptChange = { concept ->
-                                    pendingConceptSelection = concept
-                                    if (chatViewModel.hasExistingSession(concept, context)) {
-                                        showSessionResumeDialog = true
-                                    } else {
-                                        chatViewModel.selectConcept(concept, context)
-                                        showSettingsMenu = false
-                                    }
-                                },
-                                onLevelChange = { levelCode ->
-                                    settingsState = settingsState.copy(selectedStudentLevel = levelCode)
-                                    chatViewModel.setStudentLevel(levelCode)
-                                },
-                                onSpeedChange = { label ->
-                                    settingsState = settingsState.copy(selectedSpeed = label)
-                                    val speed = when (label) {
-                                        "0.75x" -> 0.75f
-                                        "1.0x" -> 1.0f
-                                        "1.25x" -> 1.25f
-                                        "1.5x" -> 1.5f
-                                        else -> 0.75f
-                                    }
-                                    ttsController.setSpeechRate(speed)
-                                    if (ttsState.isSpeaking) {
-                                        ttsController.stop()
-                                        ttsController.speak(aiMessageOutput)
-                                    }
+                    },
+                    onSettingsClick = { showSettingsMenu = !showSettingsMenu },
+                    settingsContent = {
+                        ChatBotSettings(
+                            expanded = true,
+                            onDismiss = { showSettingsMenu = false },
+                            state = settingsState.copy(
+                                voiceOptions = voiceOptions,
+                                displayedVoiceName = displayedVoiceName,
+                                availableConcepts = chatState.availableConcepts,
+                                selectedConcept = chatState.selectedConcept,
+                                isLoadingConcepts = chatState.availableConcepts.isEmpty()
+                            ),
+                            onAvatarChange = { avatarCode ->
+                                settingsState = settingsState.copy(selectedAvatar = avatarCode)
+                                ttsController.switchCharacter(avatarCode)
+                                if (avatarCode != "disable") {
+                                    ttsController.applyDefaultsForAvatarLanguage(avatarCode, chatState.currentLanguage)
+                                } else if (ttsState.isSpeaking) {
+                                    ttsController.stop()
                                 }
-                            )
-                        }
+                            },
+                            onVoiceChange = { selectedDisplayName ->
+                                handleVoiceChange(selectedDisplayName, ttsState, ttsController, aiMessageOutput)
+                            },
+                            onConceptChange = { concept ->
+                                pendingConceptSelection = concept
+                                if (chatViewModel.hasExistingSession(concept, context)) {
+                                    showSessionResumeDialog = true
+                                } else {
+                                    chatViewModel.selectConcept(concept, context)
+                                    showSettingsMenu = false
+                                }
+                            },
+                            onLevelChange = { levelCode ->
+                                settingsState = settingsState.copy(selectedStudentLevel = levelCode)
+                                chatViewModel.setStudentLevel(levelCode)
+                            },
+                            onSpeedChange = { label ->
+                                settingsState = settingsState.copy(selectedSpeed = label)
+                                handleSpeedChange(label, ttsController, ttsState, aiMessageOutput)
+                            }
+                        )
                     }
-                }
+                )
             }
         }
 
-        // Floating Input Section (overlaid at bottom)
-        Surface(
-            modifier = Modifier
-                .onSizeChanged { size ->
-                    inputSectionHeight = with(density) { size.height.toDp() }
+        // Input section
+        InputSection(
+            chatState = chatState,
+            sttState = sttState,
+            onTextChange = { chatViewModel.updateInputText(it) },
+            onSendClick = {
+                if (chatState.inputText.isNotBlank()) {
+                    chatViewModel.hideAutosuggestions()
+                    chatViewModel.sendMessage(chatState.inputText, context)
+                    chatViewModel.updateInputText("")
+                    keyboardController?.hide()
                 }
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .imePadding(),
-            color = Color.White,
-            shadowElevation = 0.dp,  // No elevation for seamless look
-            shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                // Show autosuggestions when NOT listening
-                if (!sttState.isListening && showAutosuggestions) {
-                    AutoSuggestionChips(
-                        suggestions = autosuggestions,
-                        visible = true,
-                        onSuggestionClick = {
-                            chatViewModel.tapAutosuggestion(it, context)
-                            chatViewModel.hideAutosuggestions()
-                        }
-                    )
-
+            },
+            onSpeakClick = {
+                chatViewModel.hideAutosuggestions()
+                chatViewModel.markUserActive()
+                if (permissionGranted && sttState.isInitialized) {
+                    sttController.startListening("en-IN")
+                } else if (!permissionGranted) {
+                    permissionLauncher.launch(RECORD_AUDIO)
                 }
-                // Input Section or Listening Overlay
-                if (!sttState.isListening) {
-                    InputSection(
-                        textValue = chatState.inputText,
-                        onTextChange = { chatViewModel.updateInputText(it) },
-                        onSpeakClick = {
-                            if (permissionGranted && sttState.isInitialized) {
-                                sttController.startListening("en-IN")
-                            } else if (!permissionGranted) {
-                                permissionLauncher.launch(RECORD_AUDIO)
-                            }
-                        },
-                        onSendClick = {
-                            if (chatState.inputText.isNotBlank()) {
-                                chatViewModel.sendMessage(chatState.inputText, context)
-                                chatViewModel.updateInputText("")
-                                keyboardController?.hide()
-                            }
-                        }
-                    )
-
-                } else {
-                    ListeningOverlay(
-                        text = sttState.resultText,
-                        amplitude = sttState.audioAmplitude,  // Pass voice amplitude for animation
-                        onStopClick = { sttController.stopListening() }
-                    )
-                }
-            }
-        }
+            },
+            onStopListening = { sttController.stopListening() },
+            onSuggestionClick = { suggestion ->
+                chatViewModel.tapAutosuggestion(suggestion, context)
+                chatViewModel.hideAutosuggestions()
+            },
+            onSizeChanged = { size ->
+                inputSectionHeight = with(density) { size.height.toDp() }
+            },
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 
-
+    // Session resume dialog
     AppDialog(
         show = showSessionResumeDialog,
         title = stringResource(R.string.existing_session_found),
         message = stringResource(R.string.resume_or_start_fresh),
         confirmText = stringResource(R.string.continue_session),
         dismissText = stringResource(R.string.start_new),
-
         onConfirm = {
-            pendingConceptSelection?.let { concept ->
-                chatViewModel.selectConcept(concept, context)
-            }
+            pendingConceptSelection?.let { chatViewModel.selectConcept(it, context) }
             showSessionResumeDialog = false
             pendingConceptSelection = null
             showSettingsMenu = false
         },
-
         onDismiss = {
-            pendingConceptSelection?.let { concept ->
-                chatViewModel.startFreshSession(concept, context)
-            }
+            pendingConceptSelection?.let { chatViewModel.startFreshSession(it, context) }
             showSessionResumeDialog = false
             pendingConceptSelection = null
             showSettingsMenu = false
         }
     )
+}
 
+// Helper functions
+
+/**
+ * volume Click function check
+ * 1. If resource card is showing and TTS was paused for resource, resume TTS for resource
+ * 2. If TTS is currently speaking, stop it
+ * 3. Else, speak the last AI message
+ */
+private fun handleVolumeClick(
+    chatState: ChatUiState,
+    ttsState: TextToSpeech.TTSState,
+    lastAIMessage: ChatMessageModel?,
+    chatViewModel: ChatViewModel,
+    ttsController: TextToSpeech
+) {
+    when {
+        chatState.showResourceCard && chatState.ttsPausedForResource -> {
+            chatViewModel.resumeTTSForResource()
+            lastAIMessage?.let { ttsController.speak(it.content) }
+        }
+        ttsState.isSpeaking -> ttsController.stop()
+        else -> lastAIMessage?.let { ttsController.speak(it.content) }
+    }
+}
+
+/**
+ * Handle voice change from settings
+ * 1. it do the voice change
+ * 2. if TTS is speaking, stop and restart with new voice
+ * 3. if no voice found, do nothing
+ */
+private fun handleVoiceChange(
+    selectedDisplayName: String,
+    ttsState: TextToSpeech.TTSState,
+    ttsController: TextToSpeech,
+    aiMessageOutput: String
+) {
+    ttsState.availableVoices.find { ttsController.formatVoiceName(it) == selectedDisplayName }?.let { voice ->
+        ttsController.setVoice(voice)
+        if (ttsState.isSpeaking) {
+            ttsController.stop()
+            ttsController.speak(aiMessageOutput)
+        }
+    }
+}
+
+/**
+ * this function handle speed change from settings
+ * 1. it do the speed change
+ * 2. if TTS is speaking, stop and restart with new speed
+ * 3. if no speed found, set to default 0.75x
+ */
+private fun handleSpeedChange(
+    label: String,
+    ttsController: TextToSpeech,
+    ttsState: TextToSpeech.TTSState,
+    aiMessageOutput: String
+) {
+    val speed = when (label) {
+        "0.75x" -> 0.75f
+        "1.0x" -> 1.0f
+        "1.25x" -> 1.25f
+        "1.5x" -> 1.5f
+        else -> 0.75f
+    }
+    ttsController.setSpeechRate(speed)
+    if (ttsState.isSpeaking) {
+        ttsController.stop()
+        ttsController.speak(aiMessageOutput)
+    }
 }
