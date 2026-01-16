@@ -1,24 +1,27 @@
 package com.anurag.eduai.ui.screens.home.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.anurag.eduai.R
+import com.anurag.eduai.ui.theme.Dimensions
 import com.anurag.eduai.ui.theme.White
 
 @Composable
-fun StreakCard(days: Int) {
+fun StreakCard(days: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -30,39 +33,35 @@ fun StreakCard(days: Int) {
                         Color(0xFFB03BFE)
                     )
                 ),
-                shape = RoundedCornerShape(18.dp)
+                shape = RoundedCornerShape(Dimensions.Compact.cornerRadiusRound)
             )
-            .padding(16.dp),
+            .padding(Dimensions.Compact.screenPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
 
-        Icon(
-            imageVector = Icons.Default.LocalFireDepartment,
-            contentDescription = null,
-            tint = Color(0xFFFFC400),
-            modifier = Modifier.size(32.dp)
+        Text(
+            text = "\uD83D\uDD25", // fire emoji instead of icon
+            style = MaterialTheme.typography.headlineMedium,
         )
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(Dimensions.Compact.spaceSmall))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "$days",
-                fontSize = 22.sp,
+                text = days,
+                style = MaterialTheme.typography.titleLarge,
                 color = White
             )
             Text(
-                text = "Day Streak",
-                fontSize = 14.sp,
+                text = stringResource(R.string.day_streak),
+                style = MaterialTheme.typography.titleSmall,
                 color = White.copy(alpha = 0.7f)
             )
         }
-
-        Icon(
-            imageVector = Icons.Default.EmojiEvents,
-            contentDescription = null,
-            tint = Color(0xFFFFC400),
-            modifier = Modifier.size(28.dp)
+        
+        Text(
+            text = "\uD83C\uDFC6", // Trophy emoji instead of icon
+            style = MaterialTheme.typography.headlineMedium
         )
     }
 }

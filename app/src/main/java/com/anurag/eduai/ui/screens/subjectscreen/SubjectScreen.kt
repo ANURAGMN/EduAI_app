@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.EduAiDatabase
+import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.components.ScreenWithHeader
@@ -37,7 +38,9 @@ data class Subject(
 @Composable
 fun SubjectScreen(
     onBackClick: () -> Unit = {},
-    onSubjectClick: (Subject) -> Unit = {}
+    onSubjectClick: (Subject) -> Unit = {},
+    onGoHome:() -> Unit = {},
+    onGoSetting:() -> Unit = {},
 ) {
     TrackScreenEvent(screenName = ScreenName.SUBJECT)
     val dimens = LocalDimensions.current
@@ -46,6 +49,7 @@ fun SubjectScreen(
     val db = remember { EduAiDatabase.getInstance(context) }
     val subjectDao = db.subjectDao()
 
+    val sharedPref = SharedPreferenceUtils(context)
     val viewModel = remember { SubjectViewModel(subjectDao) }
     val state by viewModel.state.collectAsState()
 
@@ -53,6 +57,8 @@ fun SubjectScreen(
         title = "Class ${state.classLevel}",
         subtitle = stringResource(R.string.ncert_curriculum),
         onBackClick = onBackClick,
+        onGoHome = onGoHome,
+        onGoSetting = onGoSetting,
         extraContent = {
             Text(
                 text = stringResource(R.string.choose_subjects_to_continue),
@@ -90,7 +96,17 @@ fun SubjectScreen(
                             color = BrandPrimary,
                             chapterCount = subject.totalChapters.toString()
                         ),
-                        onClick = onSubjectClick
+                        onClick = {
+                            val selectedSubject = Subject(
+                                id = subject.subjectId,
+                                name = subject.subjectName,
+                                color = BrandPrimary,
+                                chapterCount = subject.totalChapters.toString()
+                            )
+
+                            onSubjectClick(selectedSubject)
+                            sharedPref.setSubjectSelection(subject.subjectId)
+                        }
                     )
                 }
             }

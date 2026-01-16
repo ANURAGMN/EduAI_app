@@ -15,6 +15,10 @@
     <string name="continue_with_google">Continue with Gmail</string>
     <string name="full_name">Full Name</string>
     <string name="confirm_password">Confirm Password</string>
+    <string name="day_streak">Day Streak</string>
+    <string name="current_subject">Current Subject</string>
+    <string name="change">Change</string>
+    <string name="view_ll_chapter">View All Chapters</string>
 <!--    login screen footer-->
     <string name="complete_ncert">Complete NCERT</string>
     <string name="language_number">2 Languages</string>

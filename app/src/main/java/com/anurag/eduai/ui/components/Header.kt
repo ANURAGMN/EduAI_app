@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.anurag.eduai.R
+import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.theme.HeaderGradientEnd
 import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.LocalDimensions
@@ -36,11 +37,13 @@ internal fun Header(
     title: String = "Class 7",
     subtitle: String? = null,
     onBackClick: () -> Unit = {},
+    onGoHome: () -> Unit = {},
+    onGoSetting: () -> Unit = {},
     scrollBehavior: TopAppBarScrollBehavior,
     extraContent: @Composable (ColumnScope.() -> Unit)? = null
 ) {
     val dimens = LocalDimensions.current
-   LargeTopAppBar(
+    LargeTopAppBar(
         title = {
             Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)) {
 
@@ -87,7 +90,13 @@ internal fun Header(
             )
         ),
        actions = {
-           IconButton(onClick = {}) {
+           IconButton(
+               onClick = {
+                   DebugLogger.debugLog("TopBar", "Home button Clicked - Before callback")
+                   onGoHome()
+                   DebugLogger.debugLog("TopBar", "Home button Clicked - After callback")
+               }
+           ) {
                Icon(
                    imageVector = Icons.Default.Home,
                    contentDescription = stringResource(R.string.home),
@@ -95,7 +104,19 @@ internal fun Header(
                    modifier = Modifier.size(dimens.iconMedium)
                )
            }
-           IconButton(onClick = {}) {
+           IconButton(
+               onClick = {
+                   DebugLogger.debugLog(
+                       "TopBar",
+                       "Setting button Clicked - Before callback"
+                   )
+                   onGoSetting()
+                   DebugLogger.debugLog(
+                       "TopBar",
+                       "Setting button Clicked - After callback"
+                   )
+               }
+           ) {
                Icon(
                    imageVector = Icons.Default.Settings,
                    contentDescription = stringResource(R.string.settings),

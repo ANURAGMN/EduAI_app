@@ -1,6 +1,7 @@
 package com.anurag.eduai.ui.screens.progess.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,7 +31,10 @@ import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.White
 
 @Composable
-fun ProgressScreenTopBar() {
+fun ProgressScreenTopBar(
+    onGoHome:() -> Unit = {},
+    onGoSetting:() -> Unit = {}
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -54,33 +58,27 @@ fun ProgressScreenTopBar() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                // TODO: make it button with icon
-                Icon(
-                    imageVector = Icons.Default.ArrowBackIosNew,
-                    contentDescription = "Back arrow icon",
-                    modifier = Modifier.size(15.dp),
-                    tint = White
-                )
-                Spacer(modifier = Modifier.width(10.dp))
                 Text(
                     text = stringResource(R.string.your_progress),
                     color = White,
                     style = MaterialTheme.typography.headlineMedium
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                // TODO: make it button with icon
+                // Navigate to home
                 Icon(
                     imageVector = Icons.Outlined.Home,
                     contentDescription = "Home Icon",
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(20.dp)
+                        .clickable(enabled = true, onClick = onGoHome),
                     tint = White,
                 )
                 Spacer(modifier = Modifier.width(10.dp))
-                // TODO: make it button with icon
+                // navigate to stting
                 Icon(
                     imageVector = Icons.Outlined.Settings,
                     contentDescription = "Setting Icon",
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(20.dp)
+                        .clickable(enabled = true, onClick = onGoSetting),
                     tint = White
                 )
             }

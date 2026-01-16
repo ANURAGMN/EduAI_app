@@ -49,7 +49,7 @@ object SessionManager {
                     sessionId = sessionId,
                     sessionDate = getCurrentDate(),
                     sessionStartTime = System.currentTimeMillis(),
-                    createdAt = System.currentTimeMillis()
+                    syncAt = System.currentTimeMillis()
                 )
 
                 database?.sessionDao()?.insertSession(session)

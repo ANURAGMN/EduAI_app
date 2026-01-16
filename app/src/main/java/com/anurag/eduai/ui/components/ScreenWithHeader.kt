@@ -21,9 +21,11 @@ fun ScreenWithHeader(
     title: String,
     subtitle: String,
     onBackClick: () -> Unit = {},
+    onGoHome:() -> Unit = {},
+    onGoSetting:() -> Unit = {},
     extraContent: @Composable (ColumnScope.() -> Unit)? = null,
     content: @Composable () -> Unit, // mostly a lazy list of the subjects, chapters, etc.
-    ) {
+) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val dimens =LocalDimensions.current
     Scaffold(
@@ -35,6 +37,8 @@ fun ScreenWithHeader(
                 title = title,
                 subtitle= subtitle,
                 onBackClick = onBackClick,
+                onGoHome = onGoHome,
+                onGoSetting = onGoSetting,
                 scrollBehavior = scrollBehavior,
                 extraContent = extraContent,
                 )

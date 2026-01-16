@@ -13,8 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import com.anurag.eduai.R
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
@@ -50,7 +48,9 @@ data class Chapter(
 fun ChapterScreen(
     subjectId: String,
     onBackClick: () -> Unit = {},
-    onChapterClick: (String) -> Unit = {}
+    onChapterClick: (String) -> Unit = {},
+    onGoHome:() -> Unit = {},
+    onGoSetting:() -> Unit = {}
 ) {
 
     // Analytics Tracking
@@ -71,8 +71,8 @@ fun ChapterScreen(
     ScreenWithHeader(
         title = state.subject?.subjectName ?: "Chapters",
         onBackClick = onBackClick,
-        subtitle = stringResource(R.string.ncert_curriculum),
-        extraContent = {}
+        onGoHome = onGoHome,
+        onGoSetting = onGoSetting
     ) {
         if (state.isLoading) {
             Box(

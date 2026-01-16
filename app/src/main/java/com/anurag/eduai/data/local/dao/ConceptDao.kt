@@ -46,4 +46,21 @@ interface ConceptDao {
 
     @Query("DELETE FROM concepts WHERE conceptId = :conceptId")
     suspend fun deleteConcept(conceptId: String)
+
+    /**
+     * Progress for home screen today progress section
+     */
+    @Query(
+        """
+    SELECT * FROM concepts
+    WHERE chapterId = :chapterId
+    ORDER BY orderIndex ASC
+    LIMIT :limit
+    """
+    )
+    suspend fun getFirstConceptsOfChapter(
+        chapterId: String,
+        limit: Int
+    ): List<ConceptEntity>
+
 }

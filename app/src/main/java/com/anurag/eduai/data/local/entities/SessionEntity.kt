@@ -21,6 +21,6 @@ data class SessionEntity(
     val sessionStartTime: Long,
     val sessionEndTime: Long? = null,
     val durationMillis: Long = 0,
-    val createdAt: Long = System.currentTimeMillis(),
+    val syncAt: Long = System.currentTimeMillis(),
     val isSynced: Boolean = false
 )
