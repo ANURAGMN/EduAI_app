@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.anurag.eduai.data.local.EduAiDatabase
+import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.components.ScreenWithHeader
@@ -33,7 +34,9 @@ data class Subject(
 @Composable
 fun SubjectScreen(
     onBackClick: () -> Unit = {},
-    onSubjectClick: (Subject) -> Unit = {}
+    onSubjectClick: (Subject) -> Unit = {},
+    onGoHome:() -> Unit = {},
+    onGoSetting:() -> Unit = {},
 ) {
     TrackScreenEvent(screenName = ScreenName.SUBJECT)
     val dimens = LocalDimensions.current
@@ -42,12 +45,15 @@ fun SubjectScreen(
     val db = remember { EduAiDatabase.getInstance(context) }
     val subjectDao = db.subjectDao()
 
+    val sharedPref = SharedPreferenceUtils(context)
     val viewModel = remember { SubjectViewModel(subjectDao) }
     val state by viewModel.state.collectAsState()
 
     ScreenWithHeader(
         title = "Class ${state.classLevel}",
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        onGoHome = onGoHome,
+        onGoSetting = onGoSetting
     ) {
         if (state.isLoading) {
             Box(
@@ -78,7 +84,17 @@ fun SubjectScreen(
                             color = BrandPrimary,
                             chapterCount = subject.totalChapters.toString()
                         ),
-                        onClick = onSubjectClick
+                        onClick = {
+                            val selectedSubject = Subject(
+                                id = subject.subjectId,
+                                name = subject.subjectName,
+                                color = BrandPrimary,
+                                chapterCount = subject.totalChapters.toString()
+                            )
+
+                            onSubjectClick(selectedSubject)
+                            sharedPref.setSubjectSelection(subject.subjectId)
+                        }
                     )
                 }
             }

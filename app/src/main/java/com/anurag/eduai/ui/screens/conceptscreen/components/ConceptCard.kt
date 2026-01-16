@@ -68,38 +68,38 @@ fun ConceptCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
         ) {
-                // Status badge (Circle with icon/order)
-                ConceptStatusBadge(
-                    conceptOrder = concept.order.toString(),
-                    status = concept.status
+            // Status badge (Circle with icon/order)
+            ConceptStatusBadge(
+                conceptOrder = concept.order.toString(),
+                status = concept.status
+            )
+
+            // Content (Title + Status)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal =dimens.inputHorizontalPadding),
+                verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
+            ) {
+                // Title
+                Text(
+                    text = concept.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isEnabled) TextPrimary else TextSecondary
                 )
 
-                // Content (Title + Status)
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal =dimens.inputHorizontalPadding),
-                    verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
-                ) {
-                    // Title
-                    Text(
-                        text = concept.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isEnabled) TextPrimary else TextSecondary
-                    )
-
-                    // Concept Completion status
-                    Text(
-                        text = getStatus(
-                            concept.status,
-                            context = LocalContext.current
-                        ),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = getStatusColor(concept.status)
-                    )
-                }
+                // Concept Completion status
+                Text(
+                    text = getStatus(
+                        concept.status,
+                        context = LocalContext.current
+                    ),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = getStatusColor(concept.status)
+                )
+            }
 
 
             // Right side: Chevron or Lock icon

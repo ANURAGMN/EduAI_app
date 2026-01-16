@@ -26,6 +26,7 @@ import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptCard
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.viewModel.ConceptViewModel
+import com.anurag.eduai.utils.StreakManager
 
 enum class ConceptStatus {
     COMPLETED,
@@ -53,7 +54,9 @@ data class Concept(
 fun ConceptScreen(
     chapterId: String,
     onBackClick: () -> Unit = {},
-    onConceptClick: (String) -> Unit = {}
+    onConceptClick: (String) -> Unit = {},
+    onGoHome:() -> Unit = {},
+    onGoSetting:() -> Unit = {},
 ) {
     TrackScreenEvent(screenName = ScreenName.CONCEPT)
 
@@ -65,18 +68,28 @@ fun ConceptScreen(
     val progressDao = db.progressDao()
     val sharedPrefs = remember { SharedPreferenceUtils(context) }
 
+
+    // streak update
+    val streakManager = StreakManager(context)
+
     val viewModel = remember {
         ConceptViewModel(conceptDao, chapterDao, progressDao, sharedPrefs)
     }
     val state by viewModel.state.collectAsState()
 
+    // updating streak on concept opening
+    LaunchedEffect(Unit) {
+        streakManager.onConceptOpened()
+    }
     LaunchedEffect(chapterId) {
         viewModel.loadConcepts(chapterId)
     }
 
     ScreenWithHeader(
         title = state.chapter?.chapterName ?: "Concepts",
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        onGoHome = onGoHome,
+        onGoSetting = onGoSetting
     ) {
         if (state.isLoading) {
             Box(

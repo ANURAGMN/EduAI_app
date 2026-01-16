@@ -30,8 +30,7 @@ enum class ChapterStatus {
 data class Chapter(
     val id: String,
     val name: String,
-    val chapterCount: String,
-    val status: ChapterStatus = ChapterStatus.NOT_STARTED
+    val conceptCount: String,
 )
 
 /**
@@ -49,7 +48,9 @@ data class Chapter(
 fun ChapterScreen(
     subjectId: String,
     onBackClick: () -> Unit = {},
-    onChapterClick: (String) -> Unit = {}
+    onChapterClick: (String) -> Unit = {},
+    onGoHome:() -> Unit = {},
+    onGoSetting:() -> Unit = {}
 ) {
 
     // Analytics Tracking
@@ -69,7 +70,9 @@ fun ChapterScreen(
 
     ScreenWithHeader(
         title = state.subject?.subjectName ?: "Chapters",
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        onGoHome = onGoHome,
+        onGoSetting = onGoSetting
     ) {
         if (state.isLoading) {
             Box(
@@ -97,7 +100,7 @@ fun ChapterScreen(
                         chapter = Chapter(
                             id = chapter.orderIndex.toString(),
                             name = chapter.chapterName,
-                            chapterCount = "${chapter.totalConcepts} concepts"
+                            conceptCount = "${chapter.totalConcepts} concepts"
                         ),
                         onStudyClick = { onChapterClick(chapter.chapterId) }
                     )

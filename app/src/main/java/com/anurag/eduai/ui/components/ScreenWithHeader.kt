@@ -19,7 +19,9 @@ import com.anurag.eduai.ui.theme.LocalDimensions
 fun ScreenWithHeader(
     title: String,
     onBackClick: () -> Unit = {},
-    content: @Composable () -> Unit
+    onGoHome:() -> Unit = {},
+    onGoSetting:() -> Unit = {},
+    content: @Composable () -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val dimens =LocalDimensions.current
@@ -31,6 +33,8 @@ fun ScreenWithHeader(
             Header(
                 title = title,
                 onBackClick = onBackClick,
+                onGoHome = onGoHome,
+                onGoSetting = onGoSetting,
                 scrollBehavior = scrollBehavior
             )
         }

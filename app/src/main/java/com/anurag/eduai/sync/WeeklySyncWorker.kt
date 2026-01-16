@@ -2,15 +2,12 @@ package com.anurag.eduai.sync
 
 import android.content.Context
 import android.os.Build
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.anurag.eduai.data.local.EduAiDatabase
-import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.repository.ConceptRepository
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
 /**

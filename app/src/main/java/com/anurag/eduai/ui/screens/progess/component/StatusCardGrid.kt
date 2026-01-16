@@ -12,7 +12,12 @@ import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 
 @Composable
-fun StatusCardGrid() {
+fun StatusCardGrid(
+    streakCount: String,
+    completedConceptCount: String,
+    completedSimulationCount: String,
+    score: String
+) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -20,15 +25,15 @@ fun StatusCardGrid() {
             modifier = Modifier.fillMaxWidth()
         ) {
             StatusCardItem(
-                icon = "\uD83D\uDD25", // fire icon value "🔥"
-                value = "7",
+                icon = "\uD83D\uDD25", // icon value "🔥"
+                value = streakCount,
                 title = "Day Streak",
                 modifier = Modifier.weight(0.5f)
             )
             Spacer(modifier = Modifier.padding(10.dp))
             StatusCardItem(
-                icon = "\uD83D\uDCDA", // fire icon value "📚"
-                value = "1",
+                icon = "\uD83D\uDCDA", // icon value "📚"
+                value = completedConceptCount,
                 title = stringResource(R.string.concept),
                 modifier = Modifier.weight(0.5f)
             )
@@ -38,15 +43,15 @@ fun StatusCardGrid() {
             modifier = Modifier.fillMaxWidth()
         ) {
             StatusCardItem(
-                icon = "▶\uFE0F", // fire icon value "▶️
-                value = "0",
+                icon = "▶\uFE0F", // icon value "▶️
+                value = completedSimulationCount,
                 title = "Simulation",
                 modifier = Modifier.weight(0.5f)
             )
             Spacer(modifier = Modifier.padding(15.dp))
             StatusCardItem(
-                icon = "\uD83D\uDCC8", // fire icon value "📈"
-                value = "78%",
+                icon = "\uD83D\uDCC8", // icon value "📈"
+                value = score,
                 title = "Average Score",
                 modifier = Modifier.weight(0.5f)
             )
