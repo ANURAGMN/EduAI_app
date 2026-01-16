@@ -4,6 +4,10 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.ui.Modifier
 import com.anurag.eduai.ui.screens.chatbotscreen.ChatbotScreen
 import com.anurag.eduai.ui.theme.AdaptiveTheme
 import com.anurag.eduai.ui.theme.AppTheme
@@ -15,9 +19,16 @@ class MainActivity : AppCompatActivity() {
         val chatViewModel: ChatViewModel by viewModels()
 
         setContent {
-            AppTheme {
-                AdaptiveTheme {
-                    ChatbotScreen(chatViewModel = chatViewModel)
+            AdaptiveTheme{
+                AppTheme {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .statusBarsPadding()
+                    ) {
+                        ChatbotScreen(chatViewModel = chatViewModel)
+                    }
+
                 }
             }
         }
