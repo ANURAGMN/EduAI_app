@@ -19,6 +19,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
+import com.anurag.eduai.ui.screens.setting.components.BottomPopupCard
+import com.anurag.eduai.ui.screens.setting.components.EditProfileScreen
+
+sealed class PopupScreen {
+    object EditProfile : PopupScreen()
+//    object Settings : PopupScreen()
+//    object Help : PopupScreen()
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +35,9 @@ fun SettingScreen() {
     TrackScreenEvent(screenName = ScreenName.SETTINGS)
 
     var selectedLanguage by remember { mutableStateOf("English") }
+
+    var activeScreen by remember { mutableStateOf<PopupScreen?>(null) }
+
 
     Scaffold(
         topBar = {
@@ -80,7 +91,9 @@ fun SettingScreen() {
                     icon = Icons.Default.Person,
                     iconTint = Color(0xFF2196F3),
                     title = "Edit Profile",
-                    onClick = { /* Navigate to Edit Profile */ }
+                    onClick = {
+                        activeScreen = PopupScreen.EditProfile
+                    }
                 )
                 SettingsItem(
                     icon = Icons.Default.Notifications,
@@ -131,6 +144,15 @@ fun SettingScreen() {
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp
                 )
+            }
+            BottomPopupCard(
+                visible = activeScreen != null,
+                onDismiss = { activeScreen = null }
+            ) {
+                when (activeScreen) {
+                    PopupScreen.EditProfile -> EditProfileScreen() { activeScreen = null }
+                    null -> {}
+                }
             }
         }
     }
