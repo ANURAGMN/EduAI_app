@@ -28,7 +28,6 @@ import kotlinx.coroutines.withTimeout
 
 /**
  * ViewModel for managing chat interactions with an AI agent.
- * Optimized to use consolidated UI state instead of 20+ individual StateFlows.
  */
 class ChatViewModel : ViewModel() {
 
@@ -228,6 +227,7 @@ class ChatViewModel : ViewModel() {
     fun selectConcept(concept: String, context: Context) {
         viewModelScope.launch {
             hideAutosuggestions()//hide autosuggestions on concept change
+
             // Reset UI state for new concept
             _uiState.update {
                 it.copy(
@@ -586,7 +586,6 @@ class ChatViewModel : ViewModel() {
      * continues the session with the given user message
      * - shows loading state during the process
      * - updates UI state with agent response and metadata
-     * - handles errors gracefully
      */
     private fun sendMessageAfterSessionReady(userMessage: String, context: Context) {
         viewModelScope.launch {
@@ -611,7 +610,7 @@ class ChatViewModel : ViewModel() {
                             agentMetadata = resp.metadata
                         )
                     }
-
+                DebugLogger.debugLog("ChatViewModel","${resp.metadata.nodeTransitions}")
                     resp.metadata?.let { checkAndShowResourceCard(it) }
                     resp.agentResponse?.let { text ->
                         handleAgentResponse(text, context)
@@ -730,38 +729,54 @@ class ChatViewModel : ViewModel() {
     private fun checkAndShowResourceCard(metadata: SessionMetadata) {
         viewModelScope.launch {
             try {
-                metadata.nodeTransitions.forEach { transition ->
-                    val fromNode = transition["from_node"] as? String
-                    val toNode = transition["to_node"] as? String
-                    DebugLogger.debugLog("ChatViewModel", " Current Node transition: $fromNode -> $toNode")
-                    when {
-                        fromNode == "APK" && toNode == "CI" && !metadata.imageUrl.isNullOrBlank() -> {
-                            _uiState.update {
-                                it.copy(
-                                    currentResource = ResourceContent.Image(
-                                        url = metadata.imageUrl,
-                                        description = metadata.imageDescription
-                                    ),
-                                    resourceDisplayMode = ResourceDisplayMode.IMAGE,
-                                    showResourceCard = true
-                                )
-                            }
-                            DebugLogger.debugLog("ChatViewModel", "Showing IMAGE: ${metadata.imageUrl}")
-                            return@launch
-                        }
 
-                        fromNode == "CI" && toNode == "SIM_CC" -> {
-                            // Show concept map using LLM use last AI message to generate concept map
-                            val lastAiMsg = _uiState.value.lastAiMessage?.content
-                            if (!lastAiMsg.isNullOrBlank()) {
-                                fetchConceptMapWithLLM(lastAiMsg)
-                                return@launch
-                            }
+                // Check if we have any transitions
+                if (metadata.nodeTransitions.isEmpty()) {
+                    DebugLogger.debugLog("ChatViewModel", "No transitions")
+                    return@launch
+                }
+
+                // Get current (last) transition
+                val currentTransition = metadata.nodeTransitions.lastOrNull() ?: return@launch
+
+                val fromNode = currentTransition["from_node"] as? String
+                val toNode = currentTransition["to_node"] as? String
+
+                DebugLogger.debugLog("ChatViewModel", "Current transition: $fromNode → $toNode")
+                DebugLogger.debugLog("ChatViewModel", "imageUrl: ${metadata.imageUrl}")
+                // Check conditions and show resource if valid
+                when {
+                    fromNode == "APK" && toNode == "CI" && !metadata.imageUrl.isNullOrBlank() -> {
+                        DebugLogger.debugLog("ChatViewModel", " image is showing")
+                        _uiState.update {
+                            it.copy(
+                                currentResource = ResourceContent.Image(
+                                    url = metadata.imageUrl,
+                                    description = metadata.imageDescription
+                                ),
+                                resourceDisplayMode = ResourceDisplayMode.IMAGE,
+                                showResourceCard = true
+                            )
                         }
+                    }
+
+                    fromNode == "CI" && toNode == "SIM_CC" -> {
+                        DebugLogger.debugLog("ChatViewModel", " generating concept map")
+                        val lastAiMsg = _uiState.value.lastAiMessage?.content
+                        if (!lastAiMsg.isNullOrBlank()) {
+                            fetchConceptMapWithLLM(lastAiMsg)
+                        } else {
+                            DebugLogger.debugLog("ChatViewModel", " No Agent message for concept map")
+                        }
+                    }
+                    // No matching condition - don't show
+                    else -> {
+                        DebugLogger.debugLog("ChatViewModel", " No resource Card for $fromNode → $toNode")
                     }
                 }
             } catch (e: Exception) {
-                DebugLogger.errorLog("ChatViewModel", "checkAndShowResourceCard: ${e.message}")
+                DebugLogger.errorLog("ChatViewModel", "checkAndShowResourceCard error: ${e.message}")
+                e.printStackTrace()
             }
         }
     }

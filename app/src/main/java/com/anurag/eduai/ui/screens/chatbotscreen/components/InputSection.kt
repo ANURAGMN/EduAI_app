@@ -25,6 +25,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.IconPrimary
@@ -72,8 +73,8 @@ fun InputSection(
             // Debug logging - only when state changes
             LaunchedEffect(shouldShowAutosuggestions, chatState.autosuggestions.size) {
                 if (chatState.autosuggestions.isNotEmpty()) {
-                    com.anurag.eduai.debug.DebugLogger.debugLog("InputSection", """
-                        AUTO-SUGGESTION CHIPS: ${if (shouldShowAutosuggestions) "VISIBLE ✅" else "HIDDEN ❌"}
+                    DebugLogger.debugLog("InputSection", """
+                        AUTO-SUGGESTION CHIPS: ${if (shouldShowAutosuggestions) "VISIBLE " else "HIDDEN "}
                         - showAutosuggestions: ${chatState.showAutosuggestions}
                         - suggestions.size: ${chatState.autosuggestions.size}
                         - inputText.isEmpty: ${chatState.inputText.isEmpty()}
