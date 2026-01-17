@@ -359,6 +359,7 @@ fun UserDetailEntryScreen(
                                                 studentName = userViewModel.user.value.displayName.toString(),
                                                 email = userViewModel.user.value.email,
                                                 phoneNumber = userViewModel.user.value.phoneNumber,
+                                                studentSchool = userViewModel.user.value.schoolName,
                                                 language = userViewModel.user.value.language,
                                                 classLevel = userViewModel.user.value.studentClass,
                                                 profilePhotoUrl = userViewModel.user.value.profilePictureUri,

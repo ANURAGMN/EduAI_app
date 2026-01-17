@@ -60,6 +60,18 @@
     <string name="back">Back</string>
     <string name="home">Home</string>
     <string name="settings">Settings</string>
+<!--    Setting Screen-->
+    <string name="profile_photo">Profile Photo</string>
+    <string name="change_photo">Change Photo</string>
+    <string name="name">Name</string>
+    <string name="enter_your_name">Enter your name</string>
+    <string name="class_label">Class</string>
+    <string name="class_placeholder">e.g., Class 7</string>
+    <string name="school">School</string>
+    <string name="enter_school_name">Enter school name</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="enter_phone_number">Enter phone number</string>
+    <string name="save_changes">Save Changes</string>
     <string name="ncert_curriculum">NCERT Curriculum</string>
     <string name="choose_subjects_to_continue">Choose subjects to continue</string>
     <string name="choose_a_subject_to_continue">Choose a subject to continue</string>

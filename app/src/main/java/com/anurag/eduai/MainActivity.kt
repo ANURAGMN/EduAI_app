@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.ui.navigation.LoginNavigator
+import com.anurag.eduai.ui.screens.setting.components.EditProfileScreen
 import com.anurag.eduai.ui.theme.AdaptiveTheme
 import com.anurag.eduai.ui.theme.AppTheme
 

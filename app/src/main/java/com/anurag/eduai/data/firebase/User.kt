@@ -23,6 +23,7 @@ data class User(
             studentName = displayName ?: "",
             email = email,
             phoneNumber = phoneNumber,
+            studentSchool = schoolName,
             language = language,
             classLevel = studentClass,
             profilePhotoUrl = profilePictureUri,

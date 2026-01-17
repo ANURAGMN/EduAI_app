@@ -17,6 +17,7 @@ data class StudentEntity(
     val studentName: String,
     val email: String,
     val phoneNumber: String,
+    val studentSchool: String,
     val language: String, // "English" or "Kannada"
     val classLevel: Int = 7, // Default class 7
     val profilePhotoUrl: String? = null,
