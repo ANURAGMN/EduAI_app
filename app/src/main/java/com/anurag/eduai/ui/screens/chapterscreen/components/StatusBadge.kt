@@ -13,6 +13,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.screens.chapterscreen.ChapterStatus
 import com.anurag.eduai.ui.theme.ColorError
+import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.ColorSuccess
 import com.anurag.eduai.ui.theme.ColorWarning
 import com.anurag.eduai.ui.theme.LocalDimensions
@@ -49,7 +50,7 @@ fun StatusBadge(status: ChapterStatus) {
             Icon(
                 imageVector = Icons.Default.Lock,
                 contentDescription = stringResource(R.string.not_started),
-                tint = ColorError,
+                tint = ColorHint,
                 modifier = Modifier.size(dimens.iconLarge)
             )
         }

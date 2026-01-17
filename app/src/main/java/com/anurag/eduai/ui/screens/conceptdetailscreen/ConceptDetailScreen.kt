@@ -22,11 +22,13 @@ import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
-import com.anurag.eduai.ui.components.ScreenWithHeader
+import com.anurag.eduai.ui.screens.conceptdetailscreen.components.ConceptDetailScreenHeader
 import com.anurag.eduai.ui.theme.AccentGreen
+import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.viewModel.ConceptDetailViewModel
+import androidx.compose.foundation.background
 
 @Composable
 fun ConceptDetailScreen(
@@ -52,12 +54,18 @@ fun ConceptDetailScreen(
         viewModel.loadConcept(conceptId)
     }
 
-    ScreenWithHeader(
-        title = state.concept?.conceptName ?: "Concept",
-        onBackClick = onBackClick,
-        onGoHome = onGoHome,
-        onGoSetting = onGoSetting
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundPrimary)
     ) {
+        ConceptDetailScreenHeader(
+            title = state.concept?.conceptName ?: "Concept",
+            subtitle = "Concepts",
+            onBackClick = onBackClick,
+            onGoHome = onGoHome,
+            onGoSetting = onGoSetting
+        )
         if (state.isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),

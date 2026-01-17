@@ -69,8 +69,10 @@ interface ProgressDao {
                     completedAt =
                         if (newStatus == "COMPLETED") timestamp
                         else existing.completedAt,
-                    startedAt = existing.startedAt ?: timestamp,
-                    openedAt = existing.openedAt,
+                    startedAt = existing.startedAt ?:
+                        if (newStatus == "IN_PROGRESS") timestamp else null,
+                    openedAt = existing.openedAt ?:
+                        if (newStatus in listOf("STARTED", "IN_PROGRESS")) timestamp else null,
                     lastAccessedAt = timestamp,
                     updatedAt = timestamp,
                     isSynced = false
@@ -83,8 +85,8 @@ interface ProgressDao {
                     itemType = itemType,
                     itemId = itemId,
                     status = newStatus,
-                    startedAt = timestamp,
-                    openedAt = if (newStatus == "IN_PROGRESS") timestamp else null,
+                    startedAt = if (newStatus == "IN_PROGRESS") timestamp else null,
+                    openedAt = if (newStatus in listOf("STARTED", "IN_PROGRESS")) timestamp else null,
                     completedAt = if (newStatus == "COMPLETED") timestamp else null,
                     lastAccessedAt = timestamp,
                     updatedAt = timestamp

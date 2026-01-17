@@ -1,10 +1,12 @@
 package com.anurag.eduai.ui.screens.subjectscreen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -14,14 +16,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.anurag.eduai.R
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
-import com.anurag.eduai.ui.components.ScreenWithHeader
+import com.anurag.eduai.ui.screens.subjectscreen.components.SubjectScreenHeader
 import com.anurag.eduai.ui.screens.subjectscreen.components.SubjectCard
+import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
+import com.anurag.eduai.ui.theme.TextOnPrimary
 import com.anurag.eduai.ui.viewModel.SubjectViewModel
 
 data class Subject(
@@ -49,12 +55,19 @@ fun SubjectScreen(
     val viewModel = remember { SubjectViewModel(subjectDao) }
     val state by viewModel.state.collectAsState()
 
-    ScreenWithHeader(
-        title = "Class ${state.classLevel}",
-        onBackClick = onBackClick,
-        onGoHome = onGoHome,
-        onGoSetting = onGoSetting
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundPrimary)
     ) {
+        SubjectScreenHeader(
+            title = "Class ${state.classLevel}",
+            subtitle = stringResource(R.string.ncert_curriculum),
+            onBackClick = onBackClick,
+            onGoHome = onGoHome,
+            onGoSetting = onGoSetting
+        )
+
         if (state.isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),

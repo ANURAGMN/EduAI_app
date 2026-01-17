@@ -2,6 +2,7 @@ package com.anurag.eduai.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,10 +19,12 @@ import com.anurag.eduai.ui.theme.LocalDimensions
 @Composable
 fun ScreenWithHeader(
     title: String,
+    subtitle: String,
     onBackClick: () -> Unit = {},
     onGoHome:() -> Unit = {},
     onGoSetting:() -> Unit = {},
-    content: @Composable () -> Unit,
+    extraContent: @Composable (ColumnScope.() -> Unit)? = null,
+    content: @Composable () -> Unit, // mostly a lazy list of the subjects, chapters, etc.
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val dimens =LocalDimensions.current
@@ -32,11 +35,13 @@ fun ScreenWithHeader(
         topBar = {
             Header(
                 title = title,
+                subtitle= subtitle,
                 onBackClick = onBackClick,
                 onGoHome = onGoHome,
                 onGoSetting = onGoSetting,
-                scrollBehavior = scrollBehavior
-            )
+                scrollBehavior = scrollBehavior,
+                extraContent = extraContent,
+                )
         }
     ) { paddingValues ->
         Box(
