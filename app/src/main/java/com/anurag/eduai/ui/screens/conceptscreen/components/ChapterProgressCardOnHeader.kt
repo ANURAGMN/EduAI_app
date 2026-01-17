@@ -17,102 +17,82 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.ui.theme.CardBackground
-import com.anurag.eduai.ui.theme.HeaderGradientEnd
+import com.anurag.eduai.ui.theme.ColorSuccess
+import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextOnPrimary
+import com.anurag.eduai.ui.theme.TextSecondary
 
+/**
+ * Progress card displayed in the header of ConceptScreen
+ * Shows chapter completion progress
+ *
+ * @param completed Number of completed concepts
+ * @param total Total number of concepts in the chapter
+ */
 @Composable
 fun ChapterProgressCardOnHeader(
-    completed: Int = 1,
-    total: Int = 4
+    completed: Int = 0,
+    total: Int = 0
 ) {
     val dimens = LocalDimensions.current
-    val progress = if (total > 0) (completed * 100) / total else 0
 
-    Column(
+    val progress = if (total > 0) completed.toFloat() / total.toFloat() else 0f
+    val progressPercentage = (progress * 100).toInt()
+
+// Main Card Container
+ Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = dimens.spaceMedium, vertical = dimens.spaceSmall)
+            .clip(RoundedCornerShape(dimens.cornerRadiusMedium))
+            .background(    color = TextOnPrimary.copy(alpha = 0.12f))
+            .padding(dimens.cardPadding)
     ) {
-        // Main Card Container
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(dimens.cornerRadiusMedium))
-                .background(CardBackground)
-                .padding(dimens.cardPadding)
-        ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                // Title and Percentage Row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = dimens.spaceSmall),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Chapter Progress",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextOnPrimary
-                    )
-                    Text(
-                        text = "$progress%",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextOnPrimary
-                    )
-                }
-
-                // Card Around Progress Bar
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(dimens.cornerRadiusMedium))
-                        .background(Color.White.copy(alpha = 0.2f))
-                        .padding(dimens.cardPadding)
-                ) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        // Progress Bar
-                        LinearProgressIndicator(
-                            progress = { progress / 100f },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(dimens.spaceExtraSmall)
-                                .clip(RoundedCornerShape(dimens.cornerRadiusMedium)),
-                            color = Color.White,
-                            trackColor = HeaderGradientEnd
-                        )
-
-                        Spacer(modifier = Modifier.height(dimens.spaceSmall))
-
-                        // Stats Row
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "$completed of $total concepts completed",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Normal,
-                                color = TextOnPrimary
-                            )
-                            Text(
-                                text = "${total - completed} steps",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Normal,
-                                color = TextOnPrimary
-                            )
-                        }
-                    }
-                }
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Title and Percentage Row - compact
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Chapter Progress",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextOnPrimary
+                )
+                Text(
+                    text = "$progressPercentage%",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = TextOnPrimary
+                )
             }
+
+            Spacer(modifier = Modifier.height(dimens.spaceSmall))
+
+            // Thinner Progress Bar
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(dimens.cornerRadiusSmall)),
+                color = TextOnPrimary,
+                trackColor = TextOnPrimary.copy(alpha = 0.15f)
+            )
+
+            Spacer(modifier = Modifier.height(dimens.spaceSmall))
+
+            Text(
+                text = "$completed of $total • ${total - completed} left",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Normal,
+                color = TextOnPrimary.copy(alpha = 0.9f)
+            )
         }
     }
 }

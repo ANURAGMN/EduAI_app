@@ -6,6 +6,8 @@ import com.anurag.eduai.data.local.dao.ChapterDao
 import com.anurag.eduai.data.local.dao.ConceptDao
 import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.data.local.SharedPreferenceUtils
+import com.anurag.eduai.data.local.dao.StudentDao
+import com.anurag.eduai.data.local.dao.SubjectDao
 import com.anurag.eduai.data.local.entities.ChapterEntity
 import com.anurag.eduai.debug.DebugLogger
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +19,9 @@ data class ConceptScreenState(
     val concepts: List<ConceptWithProgress> = emptyList(),
     val chapter: ChapterEntity? = null,
     val chapterId: String = "",
+    val completedConceptsCount: Int = 0,
+    val subjectName: String = "",
+    val classLevel: String = "",
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -25,6 +30,8 @@ class ConceptViewModel(
     private val conceptDao: ConceptDao,
     private val chapterDao: ChapterDao,
     private val progressDao: ProgressDao,
+    private val subjectDao: SubjectDao,
+    private val studentDao: StudentDao,
     private val sharedPrefs: SharedPreferenceUtils
 ) : ViewModel() {
 
@@ -38,6 +45,11 @@ class ConceptViewModel(
                 val concepts = conceptDao.getConceptsForChapterSync(chapterId)
                 val chapter = chapterDao.getChapter(chapterId)
                 val studentId = sharedPrefs.getUserId() ?: ""
+
+                // Get subject and class level information
+                val subject = chapter?.let { subjectDao.getSubject(it.subjectId) }
+                val student = studentDao.getStudentSync(studentId)
+                val classLevel = student?.classLevel ?: 7
 
                 // Get progress for all concepts
                 val conceptsWithProgress = concepts.mapIndexed { index, concept ->
@@ -73,10 +85,16 @@ class ConceptViewModel(
                     unlockFirstConcept(studentId, conceptsWithProgress[0].concept.conceptId)
                 }
 
+                // Count completed concepts
+                val completedCount = conceptsWithProgress.count { it.status == "COMPLETED" }
+
                 _state.value = _state.value.copy(
                     concepts = conceptsWithProgress,
                     chapter = chapter,
                     chapterId = chapterId,
+                    completedConceptsCount = completedCount,
+                    subjectName = subject?.subjectName ?: "",
+                    classLevel = "Class $classLevel",
                     isLoading = false,
                     error = null
                 )
