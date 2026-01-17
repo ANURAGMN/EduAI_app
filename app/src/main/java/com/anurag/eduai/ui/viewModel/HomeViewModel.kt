@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.data.local.entities.ProgressEntity
 import com.anurag.eduai.data.local.dao.ConceptDao
+import com.anurag.eduai.data.local.dao.StudentDao
 import com.anurag.eduai.data.local.entities.ConceptEntity
+import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.utils.StreakManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +19,7 @@ import java.time.ZoneId
 class HomeViewModel(
     private val conceptDao: ConceptDao,
     private val progressDao: ProgressDao,
+    private val studentDao: StudentDao,
     private val userId: String,
     private val streakManager: StreakManager
 ) : ViewModel(){
@@ -33,6 +36,8 @@ class HomeViewModel(
     private val _todaySimulationCount = MutableStateFlow("0")
     val todaySimulationCount: StateFlow<String> = _todaySimulationCount
 
+    private val _student = MutableStateFlow<StudentEntity?>(null)
+    val student: StateFlow<StudentEntity?> = _student
 
     val startOfDay = LocalDate.now()
         .atStartOfDay(ZoneId.systemDefault())
@@ -47,6 +52,10 @@ class HomeViewModel(
 
     init {
         viewModelScope.launch {
+
+            getStreak()
+            getTodayCompletedConcept()
+            getTodayCompletedSimulation()
 
             progressDao.getHomeScreenConcepts(userId, "CONCEPT")
                 .collect { progressList ->
@@ -131,6 +140,12 @@ class HomeViewModel(
         viewModelScope.launch {
             val result = progressDao.getTodayCompletedSimulationCount(userId, startOfDay, endOfDay)
             _todaySimulationCount.value = result.toString() ?: "0"
+        }
+    }
+    fun getStudent(){
+        viewModelScope.launch {
+            val result = studentDao.getStudentSync(userId)
+            _student.value = result
         }
     }
 }

@@ -18,6 +18,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.local.entities.StudentEntity
@@ -30,6 +32,7 @@ import com.anurag.eduai.ui.screens.home.components.TodayProgressCard
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.theme.Dimensions
 import com.anurag.eduai.ui.viewModel.HomeViewModel
+import com.anurag.eduai.ui.viewmodel_factory.HomeViewModelFactory
 import com.anurag.eduai.utils.StreakManager
 
 @Composable
@@ -42,6 +45,8 @@ fun HomeScreen(
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.HOME)
 
+    val scrollState = rememberScrollState()
+
     val context = LocalContext.current
 
     val db = remember { EduAiDatabase.getInstance(context) }
@@ -51,23 +56,22 @@ fun HomeScreen(
     val sharedPreferenceUtils = SharedPreferenceUtils(context)
     val streakManager = StreakManager(context)
 
-    val userId = sharedPreferenceUtils.getUserId().toString()
-    val selectedSubject = sharedPreferenceUtils.getSubjectSelection()
-    var student by remember { mutableStateOf<StudentEntity?>(null) }
+    val userId = sharedPreferenceUtils.getUserId().toString() ?: error("Userid missing in home screen")
 
-    val viewModel = remember { HomeViewModel(conceptDao, progressDao, userId, streakManager) }
+    val selectedSubject = sharedPreferenceUtils.getSubjectSelection()
+
+    val factory = HomeViewModelFactory(conceptDao,progressDao, studentDao, userId, streakManager)
+    val viewModel: HomeViewModel = viewModel(factory = factory)
 
     val progressConcepts by viewModel.progressConcepts.collectAsState()
     val streakCount by viewModel.streakCount.collectAsState()
     val todayCompletedConceptCount by viewModel.todayConceptCount.collectAsState()
     val todayCompletedSimulationCount by viewModel.todaySimulationCount.collectAsState()
+    val student by viewModel.student.collectAsState()
+
 
     // Testing if user is added to LocalDB or not
     LaunchedEffect(Unit) {
-        student = studentDao.getStudentSync(userId)
-        viewModel.getStreak()
-        viewModel.getTodayCompletedConcept()
-        viewModel.getTodayCompletedSimulation()
         DebugLogger.debugLog("HomeScreen", "CurrentUser:\n $student")
     }
 
@@ -80,8 +84,16 @@ fun HomeScreen(
                 modifier =
                         Modifier.fillMaxSize()
                                 .background(BackgroundSecondary)
-                                .verticalScroll(rememberScrollState())
+                                .verticalScroll(scrollState)
         ) {
+            //TODO: if student is null then load defult values
+            /**
+             * if (student == null) {
+             *     LoadingHomeHeader()
+             * } else {
+             *     HomeScreenTopBar(...)
+             * }
+             */
             HomeScreenTopBar(
                     userName = student?.studentName ?: "John Doe",
                     subject = selectedSubject ?: "Science",

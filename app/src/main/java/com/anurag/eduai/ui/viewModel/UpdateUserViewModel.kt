@@ -74,4 +74,21 @@ class UpdateUserViewModel(
     fun resetState() {
         _updateState.value = UpdateProfileState.Idle
     }
+
+    // update local DB with newly picked profile picture
+    fun updateProfilePhoto(localPath: String) {
+        viewModelScope.launch {
+            val existing = studentDao.getStudentSync(userId) ?: return@launch
+
+            val updated =
+                existing.copy(
+                    localProfilePhotoUri = localPath,
+                    updatedAt = System.currentTimeMillis(),
+                    isSynced = false
+                )
+
+            studentDao.updateStudent(updated)
+        }
+    }
+
 }
