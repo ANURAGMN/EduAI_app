@@ -60,15 +60,17 @@ import com.anurag.eduai.repository.FirebaseRepository
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.setting.components.CenterPopupCard
+import com.anurag.eduai.ui.screens.setting.components.ContactSupportCard
 import com.anurag.eduai.ui.screens.setting.components.EditProfileScreen
 import com.anurag.eduai.ui.screens.setting.components.ProfileCard
 import com.anurag.eduai.ui.theme.*
 import com.anurag.eduai.ui.viewModel.SettingViewModel
 import com.anurag.eduai.ui.viewmodel_factory.SettingViewModelFactory
+import kotlin.String
 
 sealed class PopupScreen {
     object EditProfile : PopupScreen()
-//    object Settings : PopupScreen()
+    object ContactUs : PopupScreen()
 //    object Help : PopupScreen()
 }
 
@@ -124,7 +126,7 @@ fun SettingScreen() {
             )
         }
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -201,22 +203,10 @@ fun SettingScreen() {
                 // Support Section
                 SettingsSection(title = "Support") {
                     SettingsItem(
-                        icon = Icons.Default.Info,
-                        iconTint = BrandPrimary,
-                        title = "Help",
-                        onClick = { /* Navigate to Help */ }
-                    )
-                    SettingsItem(
                         icon = Icons.Default.Email,
                         iconTint = AccentBlue,
                         title = "Contact Us",
-                        onClick = { /* Navigate to Contact */ }
-                    )
-                    SettingsItem(
-                        icon = Icons.Default.Description,
-                        iconTint = IconPrimary,
-                        title = "Terms & Conditions",
-                        onClick = { /* Navigate to Terms */ }
+                        onClick = { activeScreen = PopupScreen.ContactUs }
                     )
                 }
 
@@ -254,6 +244,16 @@ fun SettingScreen() {
                     userId = userId,
                     student = student,
                     userViewModel = viewModel
+                ) { activeScreen = null }
+
+                PopupScreen.ContactUs -> ContactSupportCard(
+                    emailAddress = stringResource(R.string.contact_email),
+                    whatsappNumber = stringResource(R.string.contact_number),
+                    websiteUrl = stringResource(R.string.contact_website),
+                    modifier = Modifier.fillMaxWidth(),
+                    title = stringResource(R.string.send_us_mail_msg),
+                    subtitle = stringResource(R.string.we_would_love_msg),
+                    emailButtonText = stringResource(R.string.open_email_app_msg)
                 ) { activeScreen = null }
                 null -> {}
             }

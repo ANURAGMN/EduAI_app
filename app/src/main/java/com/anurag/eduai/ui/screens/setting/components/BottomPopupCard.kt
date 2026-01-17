@@ -33,7 +33,7 @@ fun CenterPopupCard(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Black.copy(alpha = 0.4f))
+            .background(Black.copy(alpha = 0.8f))
             .clickable { onDismiss() },   // tap outside to dismiss
         contentAlignment = Alignment.Center
     ) {
@@ -44,7 +44,7 @@ fun CenterPopupCard(
         ) {
             Card(
                 modifier = modifier
-                    .fillMaxWidth(0.9f)
+                    .fillMaxWidth(0.95f)
                     .wrapContentHeight()
                     .clickable(enabled = false) {}, // prevents dismiss when tapping card
                 shape = RoundedCornerShape(dimensions.cornerRadiusRound),

@@ -76,4 +76,12 @@
     <string name="ncert_curriculum">NCERT Curriculum</string>
     <string name="choose_subjects_to_continue">Choose subjects to continue</string>
     <string name="choose_a_subject_to_continue">Choose a subject to continue</string>
+
+<!--    Contact Details-->
+    <string name="contact_email">anurag@gmail.com</string>
+    <string name="contact_number">+91 94495 31117</string>
+    <string name="contact_website">paadams.in</string>
+    <string name="send_us_mail_msg">Send us an email</string>
+    <string name="we_would_love_msg">We\'d love to hear from you</string>
+    <string name="open_email_app_msg">Open Email App</string>
 </resources>
