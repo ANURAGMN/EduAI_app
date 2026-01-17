@@ -1,5 +1,6 @@
 package com.anurag.eduai.ui.screens.conceptscreen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,8 +22,10 @@ import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
-import com.anurag.eduai.ui.components.ScreenWithHeader
+import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptScreenHeader
+import com.anurag.eduai.ui.screens.conceptscreen.components.ChapterProgressCardOnHeader
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptCard
+import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.viewModel.ConceptViewModel
@@ -66,6 +69,8 @@ fun ConceptScreen(
     val conceptDao = db.conceptDao()
     val chapterDao = db.chapterDao()
     val progressDao = db.progressDao()
+    val subjectDao = db.subjectDao()
+    val studentDao = db.studentDao()
     val sharedPrefs = remember { SharedPreferenceUtils(context) }
 
 
@@ -73,7 +78,7 @@ fun ConceptScreen(
     val streakManager = StreakManager(context)
 
     val viewModel = remember {
-        ConceptViewModel(conceptDao, chapterDao, progressDao, sharedPrefs)
+        ConceptViewModel(conceptDao, chapterDao, progressDao, subjectDao, studentDao, sharedPrefs)
     }
     val state by viewModel.state.collectAsState()
 
@@ -85,12 +90,22 @@ fun ConceptScreen(
         viewModel.loadConcepts(chapterId)
     }
 
-    ScreenWithHeader(
-        title = state.chapter?.chapterName ?: "Concepts",
-        onBackClick = onBackClick,
-        onGoHome = onGoHome,
-        onGoSetting = onGoSetting
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundPrimary)
     ) {
+        ConceptScreenHeader(
+            classId = state.classLevel,
+            subjectName = state.subjectName,
+            chapterName = state.chapter?.chapterName ?: "Concepts",
+            completed = state.completedConceptsCount,
+            total = state.chapter?.totalConcepts ?: 0,
+            onBackClick = onBackClick,
+            onGoHome = onGoHome,
+            onGoSetting = onGoSetting
+        )
+
         if (state.isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
