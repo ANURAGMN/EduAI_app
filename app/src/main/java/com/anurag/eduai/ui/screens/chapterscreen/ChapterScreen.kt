@@ -1,5 +1,6 @@
 package com.anurag.eduai.ui.screens.chapterscreen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,10 +15,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.anurag.eduai.data.local.EduAiDatabase
+import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
-import com.anurag.eduai.ui.components.ScreenWithHeader
+import com.anurag.eduai.ui.screens.chapterscreen.components.ChapterScreenHeader
 import com.anurag.eduai.ui.screens.chapterscreen.components.ChapterCard
+import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.ChapterViewModel
 
@@ -60,20 +63,29 @@ fun ChapterScreen(
     val db = remember { EduAiDatabase.getInstance(context) }
     val chapterDao = db.chapterDao()
     val subjectDao = db.subjectDao()
+    val progressDao = db.progressDao()
+    val studentDao  = db.studentDao()
+    val sharedPrefs = remember { SharedPreferenceUtils(context) }
 
-    val viewModel = remember { ChapterViewModel(chapterDao, subjectDao) }
+    val viewModel = remember { ChapterViewModel(chapterDao, subjectDao, progressDao,studentDao,sharedPrefs) }
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(subjectId) {
         viewModel.loadChapters(subjectId)
     }
 
-    ScreenWithHeader(
-        title = state.subject?.subjectName ?: "Chapters",
-        onBackClick = onBackClick,
-        onGoHome = onGoHome,
-        onGoSetting = onGoSetting
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundPrimary)
     ) {
+        ChapterScreenHeader(
+            title = state.subject?.subjectName ?: "Chapters",
+            subtitle = "${state.chapters.size} chapters",
+            onBackClick = onBackClick,
+            onGoHome = onGoHome,
+            onGoSetting = onGoSetting
+        )
         if (state.isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -92,16 +104,30 @@ fun ChapterScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(dimens.screenPadding),
+                    .padding(dimens.cardPadding),
                 verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
             ) {
                 items(state.chapters) { chapter ->
+                    val progress = state.chapterProgress[chapter.chapterId]
+                    val completedConcepts = progress?.completedConcepts ?: 0
+                    val totalConcepts = chapter.totalConcepts
+
+                    // Determine status based on completion
+                    val status = when {
+                        completedConcepts == 0 -> ChapterStatus.NOT_STARTED
+                        completedConcepts >= totalConcepts -> ChapterStatus.COMPLETED
+                        else -> ChapterStatus.IN_PROGRESS
+                    }
+
                     ChapterCard(
                         chapter = Chapter(
                             id = chapter.orderIndex.toString(),
                             name = chapter.chapterName,
                             conceptCount = "${chapter.totalConcepts} concepts"
                         ),
+                        completedConcepts = completedConcepts,
+                        totalConcepts = totalConcepts,
+                        status = status,
                         onStudyClick = { onChapterClick(chapter.chapterId) }
                     )
                 }
