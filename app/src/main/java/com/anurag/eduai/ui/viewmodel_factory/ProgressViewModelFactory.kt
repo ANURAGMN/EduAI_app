@@ -18,7 +18,7 @@ class ProgressViewModelFactory(
     private val userId: String
 ): ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(ProgressScreenVIewModel::class.java)) {
             return ProgressScreenVIewModel(progressDao,subjectDao,streakManager, studentDao, userId) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

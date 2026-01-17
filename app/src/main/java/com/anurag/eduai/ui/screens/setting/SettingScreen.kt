@@ -39,16 +39,19 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
@@ -60,6 +63,8 @@ import com.anurag.eduai.ui.screens.setting.components.CenterPopupCard
 import com.anurag.eduai.ui.screens.setting.components.EditProfileScreen
 import com.anurag.eduai.ui.screens.setting.components.ProfileCard
 import com.anurag.eduai.ui.theme.*
+import com.anurag.eduai.ui.viewModel.SettingViewModel
+import com.anurag.eduai.ui.viewmodel_factory.SettingViewModelFactory
 
 sealed class PopupScreen {
     object EditProfile : PopupScreen()
@@ -87,12 +92,12 @@ fun SettingScreen() {
     val db = remember { EduAiDatabase.getInstance(context) }
     val studentDao = db.studentDao()
 
-    var student by remember { mutableStateOf<StudentEntity?>(null) }
+    val factory = remember { SettingViewModelFactory(firebaseRepository, studentDao, userId) }
+    val viewModel: SettingViewModel = viewModel(factory = factory)
 
-    LaunchedEffect(userId) {
-        student = studentDao.getStudentSync(userId)
-    }
+    val student by viewModel.student.collectAsState()
 
+    val scrollState = rememberScrollState()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -125,7 +130,7 @@ fun SettingScreen() {
                     .fillMaxSize()
                     .background(BackgroundSecondary)
                     .padding(paddingValues)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(dimens.screenPadding),
                 verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)
             ) {
@@ -247,7 +252,8 @@ fun SettingScreen() {
                     firebaseRepository = firebaseRepository,
                     studentDao = studentDao,
                     userId = userId,
-                    student = student
+                    student = student,
+                    userViewModel = viewModel
                 ) { activeScreen = null }
                 null -> {}
             }
@@ -318,7 +324,7 @@ fun LanguageButton(
 @Composable
 fun SettingsItem(
     icon: ImageVector,
-    iconTint: androidx.compose.ui.graphics.Color,
+    iconTint: Color,
     title: String,
     onClick: () -> Unit
 ) {

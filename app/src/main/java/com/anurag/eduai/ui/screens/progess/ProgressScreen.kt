@@ -95,11 +95,12 @@ fun ProgressScreen(
         }
     }
 
+    val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundSecondary)
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
     ) {
         ProgressScreenTopBar(
             onGoHome,

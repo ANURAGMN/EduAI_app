@@ -59,8 +59,8 @@ import com.anurag.eduai.ui.theme.HeaderGradientEnd
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
+import com.anurag.eduai.ui.viewModel.SettingViewModel
 import com.anurag.eduai.ui.viewModel.UpdateProfileState
-import com.anurag.eduai.ui.viewModel.UpdateUserViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -69,6 +69,7 @@ fun EditProfileScreen(
     studentDao: StudentDao,
     userId: String,
     student: StudentEntity?,
+    userViewModel: SettingViewModel,
     onClose:() -> Unit
 ) {
     val dimensions = LocalDimensions.current
@@ -89,7 +90,6 @@ fun EditProfileScreen(
     var schoolError by remember { mutableStateOf<String?>(null) }
 
     // object of UpdateUserViewModel
-    val userViewModel = remember { UpdateUserViewModel(firebaseRepository, studentDao, userId) }
     val updateState by userViewModel.updateState.collectAsState()
 
     LaunchedEffect(updateState) {
