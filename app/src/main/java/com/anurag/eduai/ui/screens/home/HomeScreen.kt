@@ -56,8 +56,9 @@ fun HomeScreen(
 
     val selectedSubject = sharedPreferenceUtils.getSubjectSelection()
 
-    val factory = remember { HomeViewModelFactory(conceptDao,progressDao, studentDao, userId, streakManager) }
-    val viewModel: HomeViewModel = viewModel(factory = factory)
+    val viewModel: HomeViewModel = viewModel(factory =
+        HomeViewModelFactory(conceptDao,progressDao, studentDao, userId, streakManager)
+    )
 
     val progressConcepts by viewModel.progressConcepts.collectAsState()
     val streakCount by viewModel.streakCount.collectAsState()

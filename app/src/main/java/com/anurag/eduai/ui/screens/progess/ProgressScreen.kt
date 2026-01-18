@@ -59,8 +59,9 @@ fun ProgressScreen(
     val subjectDao = db.subjectDao()
 
 
-    val factory = remember { ProgressViewModelFactory(progressDao, subjectDao, streakManager, studentDao, userId) }
-    val viewModel: ProgressScreenVIewModel = viewModel(factory = factory)
+    val viewModel: ProgressScreenVIewModel = viewModel(factory =
+        ProgressViewModelFactory(progressDao, subjectDao, streakManager, studentDao, userId)
+    )
 
     // collecting all the values as state
     val totalCompletedConcept by viewModel.totalCompletedConcept.collectAsState()

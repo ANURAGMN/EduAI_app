@@ -94,8 +94,9 @@ fun SettingScreen() {
     val db = remember { EduAiDatabase.getInstance(context) }
     val studentDao = db.studentDao()
 
-    val factory = remember { SettingViewModelFactory(firebaseRepository, studentDao, userId) }
-    val viewModel: SettingViewModel = viewModel(factory = factory)
+    val viewModel: SettingViewModel = viewModel(factory =
+        SettingViewModelFactory(firebaseRepository, studentDao, userId)
+    )
 
     val student by viewModel.student.collectAsState()
 
