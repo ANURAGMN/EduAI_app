@@ -47,4 +47,31 @@ class FirebaseRepository(
         }
     }
 
+    suspend fun updateUserProfile(
+        userId: String,
+        name: String,
+        phone: String,
+        school: String,
+        studentClass: Int,
+        updatedAt: Long
+    ): Boolean {
+        return try {
+            usersCollection.document(userId)
+                .update(
+                    mapOf(
+                        "displayName" to name,
+                        "phoneNumber" to phone,
+                        "schoolName" to school,
+                        "studentClass" to studentClass,
+                        "updatedAt" to updatedAt
+                    )
+                )
+                .await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+
 }

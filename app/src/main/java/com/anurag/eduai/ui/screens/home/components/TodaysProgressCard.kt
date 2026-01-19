@@ -146,61 +146,53 @@ fun TodayProgressCard(
 
             Spacer(modifier = Modifier.padding(Dimensions.Compact.spaceSmall))
 
-            // DO NOT FILTER COMPLETED — render all curated items
             progressConcepts.forEach { (progress, concept) ->
 
                 val status = progress?.status ?: "NOT_STARTED"
-                val isLocked = status == "NOT_STARTED"
                 val isCompleted = status == "COMPLETED"
+                val isInProgress = status == "IN_PROGRESS"
+                val isLocked = status == "NOT_STARTED"
 
-
-                when {
-                    isLocked -> {
-                        LockedLessons(
-                            title = concept?.conceptName ?: "Unknown Concept"
-                        )
-                    }
-
-                    else -> {
-                        LessonStatusCard(
-                            title = concept?.conceptName ?: "Unknown Concept",
-                            subtitle = "Status: $status",
-                            iconColor = if (isCompleted) AccentGreen else AccentBlue,
-                            backgroundColor =
-                                if (isCompleted)
-                                    AccentGreen.copy(alpha = 0.1f)
-                                else
-                                    AccentBlue.copy(alpha = 0.1f),
-                            icon = {
-                                Icon(
-                                    imageVector =
-                                        if (isCompleted)
-                                            Icons.Outlined.CheckCircle
-                                        else
-                                            Icons.AutoMirrored.Outlined.LibraryBooks,
-                                    contentDescription = null,
-                                    tint = White
-                                )
+                LessonStatusCard(
+                    title = concept?.conceptName ?: "Unknown Concept",
+                    subtitle = "Status: $status",
+                    iconColor = when {
+                        isCompleted -> AccentGreen
+                        isInProgress -> AccentBlue
+                        else -> AccentBlue
+                    },
+                    backgroundColor = when {
+                        isCompleted -> AccentGreen.copy(alpha = 0.1f)
+                        isInProgress -> AccentBlue.copy(alpha = 0.1f)
+                        else -> AccentBlue.copy(alpha = 0.1f)
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = when {
+                                isCompleted -> Icons.Outlined.CheckCircle
+                                else -> Icons.AutoMirrored.Outlined.LibraryBooks
                             },
-                            status =
-                                when (status) {
-                                    "IN_PROGRESS" -> "pending"
-                                    "COMPLETED" -> "completed"
-                                    else -> "locked"
-                                },
-                            onClick = {
-                                DebugLogger.debugLog(
-                                    "TodayProgressCard",
-                                    "Concept Clicked id ${concept?.conceptId}"
-                                )
-                                concept?.let { onLessonClick(it.conceptId) }
-                            }
+                            contentDescription = null,
+                            tint = White
                         )
+                    },
+                    status = when (status) {
+                        "IN_PROGRESS" -> "pending"
+                        "COMPLETED" -> "completed"
+                        else -> "locked"
+                    },
+                    onClick = {
+                        DebugLogger.debugLog(
+                            "TodayProgressCard",
+                            "Concept Clicked id ${concept?.conceptId}"
+                        )
+                        concept?.let { onLessonClick(it.conceptId) }
                     }
-                }
+                )
 
                 Spacer(modifier = Modifier.padding(5.dp))
             }
+
         }
     }
 }
