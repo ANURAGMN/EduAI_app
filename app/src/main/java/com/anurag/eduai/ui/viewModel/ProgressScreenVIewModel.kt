@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.anurag.eduai.data.local.dao.ChapterProgressSummary
 import com.anurag.eduai.data.local.dao.DailyConceptCount
 import com.anurag.eduai.data.local.dao.ProgressDao
+import com.anurag.eduai.data.local.dao.StudentDao
 import com.anurag.eduai.data.local.dao.SubjectDao
+import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.data.local.entities.SubjectEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.utils.StreakManager
@@ -16,7 +18,9 @@ import kotlinx.coroutines.launch
 class ProgressScreenVIewModel(
     private val progressDao: ProgressDao,
     private val subjectDao: SubjectDao,
-    private val streakManager: StreakManager
+    private val streakManager: StreakManager,
+    private val studentDao: StudentDao,
+    private val userId: String
 ) : ViewModel() {
 
     // --- State holders ---
@@ -39,8 +43,16 @@ class ProgressScreenVIewModel(
     private val _selectedSubject = MutableStateFlow<SubjectEntity?>(null)
     val selectedSubject: StateFlow<SubjectEntity?> = _selectedSubject
 
+    private val _student = MutableStateFlow<StudentEntity?>(null)
+    val student: StateFlow<StudentEntity?> = _student
 
-    fun getTotalCompletedConcept(userId: String) {
+    init {
+        getStudent()
+        getStreak()
+        getTotalCompletedConcept()
+    }
+
+    fun getTotalCompletedConcept() {
         viewModelScope.launch {
             val result = progressDao.getTotalCompletedConcepts(userId).toString()
             _totalCompletedConcept.value = result
@@ -94,5 +106,11 @@ class ProgressScreenVIewModel(
             "ProgressScreenViewModel",
             "Selected subject: ${subject.subjectName}"
         )
+    }
+    fun getStudent(){
+        viewModelScope.launch {
+            val result = studentDao.getStudentSync(userId)
+            _student.value = result
+        }
     }
 }

@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.local.entities.StudentEntity
@@ -29,6 +30,7 @@ import com.anurag.eduai.ui.screens.progess.component.StatusCardGrid
 import com.anurag.eduai.ui.screens.progess.component.WeeklyActivitySection
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.viewModel.ProgressScreenVIewModel
+import com.anurag.eduai.ui.viewmodel_factory.ProgressViewModelFactory
 import com.anurag.eduai.utils.StreakManager
 import com.anurag.eduai.utils.WeeklyProgressUtils
 
@@ -55,9 +57,10 @@ fun ProgressScreen(
     val progressDao = db.progressDao()
     val studentDao = db.studentDao()
     val subjectDao = db.subjectDao()
-    var student by remember { mutableStateOf<StudentEntity?>(null) }
 
-    val viewModel = remember { ProgressScreenVIewModel(progressDao, subjectDao, streakManager) }
+
+    val factory = remember { ProgressViewModelFactory(progressDao, subjectDao, streakManager, studentDao, userId) }
+    val viewModel: ProgressScreenVIewModel = viewModel(factory = factory)
 
     // collecting all the values as state
     val totalCompletedConcept by viewModel.totalCompletedConcept.collectAsState()
@@ -67,15 +70,13 @@ fun ProgressScreen(
     val chapterProgress by viewModel.chapterProgressSummary.collectAsState()
     val subjects by viewModel.subjects.collectAsState()
     val selectedSubject by viewModel.selectedSubject.collectAsState()
+    val student by viewModel.student.collectAsState()
 
     LaunchedEffect(userId) {
-        student = studentDao.getStudentSync(userId)
         classLevel = student?.classLevel ?: 7 // default value as class 7
     }
     // loading all the value to their state through method call of viewmodel
     LaunchedEffect(Unit) {
-        viewModel.getTotalCompletedConcept(userId)
-        viewModel.getStreak()
         viewModel.getSevenDayProgress(userId, weeklyProgressUtil.getSevenDaysAgoInMillis())
     }
 
@@ -94,11 +95,12 @@ fun ProgressScreen(
         }
     }
 
+    val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundSecondary)
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
     ) {
         ProgressScreenTopBar(
             onGoHome,
