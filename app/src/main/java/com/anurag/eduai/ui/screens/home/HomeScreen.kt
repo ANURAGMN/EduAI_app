@@ -23,7 +23,7 @@ import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.home.components.HomeScreenTopBar
-import com.anurag.eduai.ui.screens.home.components.SimulationCard
+import com.anurag.eduai.ui.screens.home.components.PracticeSimulationCard
 import com.anurag.eduai.ui.screens.home.components.TodayProgressCard
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.theme.Dimensions
@@ -112,7 +112,7 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(Dimensions.Compact.spaceSmall))
 
-                SimulationCard()
+                PracticeSimulationCard()
             }
         }
     }

@@ -51,11 +51,13 @@ class HomeViewModel(
         .toEpochMilli() - 1
 
     init {
+        getTodayCompletedConcept()
+        getTodayCompletedSimulation()
+        getStudent()
         viewModelScope.launch {
 
             getStreak()
-            getTodayCompletedConcept()
-            getTodayCompletedSimulation()
+
 
             progressDao.getHomeScreenConcepts(userId, "CONCEPT")
                 .collect { progressList ->

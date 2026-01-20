@@ -92,6 +92,9 @@ data class Dimensions(
     // spacing around screen edges
     val screenPadding: Dp,
     val sectionSpacing: Dp,
+
+    // status card height
+    val statusCardHeight: Dp,
 ) {
     companion object {
         val Compact = Dimensions(
@@ -166,7 +169,9 @@ data class Dimensions(
 
             //box
             boxSizeSmall= 60.dp,
-            boxSizeMedium = 80.dp
+            boxSizeMedium = 80.dp,
+
+            statusCardHeight = 100.dp
         )
 
         val Medium = Dimensions(
@@ -241,7 +246,9 @@ data class Dimensions(
 
             //box
             boxSizeSmall = 80.dp,
-            boxSizeMedium = 100.dp
+            boxSizeMedium = 100.dp,
+
+            statusCardHeight = 120.dp
         )
 
         val Expanded = Dimensions(
@@ -318,7 +325,9 @@ data class Dimensions(
 
             //box
             boxSizeSmall = 100.dp,
-            boxSizeMedium = 120.dp
+            boxSizeMedium = 120.dp,
+
+            statusCardHeight = 140.dp
         )
     }
 }

@@ -36,6 +36,7 @@ import com.anurag.eduai.ui.theme.AccentGreen
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.Dimensions
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.theme.White
@@ -48,6 +49,8 @@ fun TodayProgressCard(
     onLessonClick: (String) -> Unit,
     onShowAllChapters: () -> Unit = {}
 ) {
+
+    val dimes = LocalDimensions.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = BackgroundPrimary),
@@ -56,7 +59,7 @@ fun TodayProgressCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Dimensions.Compact.screenPadding),
+                .padding(dimes.screenPadding),
             verticalArrangement = Arrangement.Center
         ) {
 
@@ -190,7 +193,7 @@ fun TodayProgressCard(
                     }
                 )
 
-                Spacer(modifier = Modifier.padding(5.dp))
+                Spacer(modifier = Modifier.padding(dimes.spaceSmall))
             }
 
         }

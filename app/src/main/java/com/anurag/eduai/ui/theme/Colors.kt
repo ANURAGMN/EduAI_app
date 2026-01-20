@@ -54,3 +54,6 @@ val ColorSuccess = Color(0xFF22C55E)
 val ColorWarning = Color(0xFFF59E0B)
 
 val CardBackground = Color(0xFFFFFFFF)
+
+// Home screen top bar Gradient
+val LightPurpleBleu = Color(0xFF7F63FF)

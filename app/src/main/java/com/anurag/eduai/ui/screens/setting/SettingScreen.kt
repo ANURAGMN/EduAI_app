@@ -2,7 +2,6 @@ package com.anurag.eduai.ui.screens.setting
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,9 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
@@ -38,7 +35,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,7 +51,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
-import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.repository.FirebaseRepository
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
@@ -63,15 +58,24 @@ import com.anurag.eduai.ui.screens.setting.components.CenterPopupCard
 import com.anurag.eduai.ui.screens.setting.components.ContactSupportCard
 import com.anurag.eduai.ui.screens.setting.components.EditProfileScreen
 import com.anurag.eduai.ui.screens.setting.components.ProfileCard
-import com.anurag.eduai.ui.theme.*
+import com.anurag.eduai.ui.theme.AccentBlue
+import com.anurag.eduai.ui.theme.BackgroundSecondary
+import com.anurag.eduai.ui.theme.BrandPrimary
+import com.anurag.eduai.ui.theme.CardBackground
+import com.anurag.eduai.ui.theme.ColorError
+import com.anurag.eduai.ui.theme.ColorWarning
+import com.anurag.eduai.ui.theme.IconSecondary
+import com.anurag.eduai.ui.theme.LocalDimensions
+import com.anurag.eduai.ui.theme.TextOnPrimary
+import com.anurag.eduai.ui.theme.TextPrimary
+import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.viewModel.SettingViewModel
 import com.anurag.eduai.ui.viewmodel_factory.SettingViewModelFactory
-import kotlin.String
 
 sealed class PopupScreen {
     object EditProfile : PopupScreen()
     object ContactUs : PopupScreen()
-//    object Help : PopupScreen()
+//    object Notification : PopupScreen()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -95,7 +99,7 @@ fun SettingScreen() {
     val studentDao = db.studentDao()
 
     val viewModel: SettingViewModel = viewModel(factory =
-        SettingViewModelFactory(firebaseRepository, studentDao, userId)
+        SettingViewModelFactory(firebaseRepository, studentDao, userId, context)
     )
 
     val student by viewModel.student.collectAsState()

@@ -25,8 +25,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.AccentBlue
+import com.anurag.eduai.ui.theme.Black
+import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.ColorSuccess
 import com.anurag.eduai.ui.theme.HeaderGradientEnd
+import com.anurag.eduai.ui.theme.LocalDimensions
 
 @Composable
 fun LessonStatusCard(
@@ -39,27 +42,28 @@ fun LessonStatusCard(
     icon: @Composable () -> Unit,
     onClick: () -> Unit = {},
 ) {
+    val dimes = LocalDimensions.current
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(dimes.cornerRadiusRound))
             .background(backgroundColor)
             .clickable(onClick = onClick)
-            .padding(16.dp),
+            .padding(dimes.screenPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
 
         Box(
             modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .size(dimes.iconExtraLarge)
+                .clip(RoundedCornerShape(dimes.cornerRadiusRound))
                 .background(iconColor),
             contentAlignment = Alignment.Center,
         ) {
             icon()
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(dimes.spaceMedium))
 
         Column(
             modifier = Modifier.weight(1f)
@@ -67,7 +71,7 @@ fun LessonStatusCard(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.Black
+                color = Black
             )
             Text(
                 text = if (status == "completed") subtitle else stringResource(R.string.pending),
@@ -80,8 +84,13 @@ fun LessonStatusCard(
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
-                tint = Color.Gray
+                tint = ColorHint
             )
         }
     }
+}
+// TODO: implement this
+enum class LessonStatus {
+    COMPLETED,
+    PENDING
 }

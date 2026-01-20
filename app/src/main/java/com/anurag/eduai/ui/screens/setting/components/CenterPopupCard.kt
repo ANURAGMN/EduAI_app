@@ -38,7 +38,7 @@ fun CenterPopupCard(
         contentAlignment = Alignment.Center
     ) {
         AnimatedVisibility(
-            visible = visible,
+            visible = true,
             enter = slideInVertically { it / 2 } + fadeIn(),
             exit = slideOutVertically { it / 2 } + fadeOut()
         ) {

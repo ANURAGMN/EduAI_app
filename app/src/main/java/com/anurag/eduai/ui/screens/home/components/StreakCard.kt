@@ -18,10 +18,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.Dimensions
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.White
 
 @Composable
-fun StreakCard(days: String) {
+fun StreakCard(
+    days: String,
+    modifier: Modifier = Modifier
+) {
+    val dimes = LocalDimensions.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -35,7 +40,7 @@ fun StreakCard(days: String) {
                 ),
                 shape = RoundedCornerShape(Dimensions.Compact.cornerRadiusRound)
             )
-            .padding(Dimensions.Compact.screenPadding),
+            .padding(dimes.screenPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
 

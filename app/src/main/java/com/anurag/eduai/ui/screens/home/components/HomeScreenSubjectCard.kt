@@ -20,11 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.capitalize
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.Dimensions
 import com.anurag.eduai.ui.theme.White
-import java.util.Locale
 import java.util.Locale.getDefault
 
 @Composable
@@ -38,8 +36,8 @@ fun HomeScreenSubjectCard(
             .background(
                 brush = Brush.horizontalGradient(
                     listOf(
-                        Color(0xFF7F63FF),
-                        Color(0xFF9B4DFF),
+                        Color(0xFF7F63FF), // TODO: don't hard code the color
+                        Color(0xFF9B4DFF),// TODO: Move then to colors.kt
                         Color(0xFFB03BFE)
                     )
                 ),
@@ -52,6 +50,7 @@ fun HomeScreenSubjectCard(
 
         Text(
             text = "\uD83D\uDCD6", // 📖 icon
+            //TODO: use icon not emoji -> use drawable instead
             style = MaterialTheme.typography.headlineMedium
         )
 
@@ -65,6 +64,8 @@ fun HomeScreenSubjectCard(
             )
             Text(
                 text = subject.replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() },
+                //TODO: don't use UI to format data
+                //TODO: in sync logic format it
                 style = MaterialTheme.typography.titleLarge,
                 color = White
             )
