@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import com.anurag.eduai.data.model.LessonStatus
 import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.LocalDimensions
@@ -27,10 +28,11 @@ import com.anurag.eduai.ui.theme.White
 fun SimulationItem(
     title: String,
     modifier: Modifier = Modifier,
-    status: String = "locked" // default all simulation are locked
-
+    status: String = LessonStatus.LOCKED.value
 ) {
     val dimes = LocalDimensions.current
+    val isLocked = status == LessonStatus.LOCKED.value || status == "locked"
+
     Row(
         modifier =
             modifier.fillMaxWidth()
@@ -43,12 +45,11 @@ fun SimulationItem(
             modifier =
                 Modifier.size(dimes.dropdownItemHeight)
                     .clip(RoundedCornerShape(dimes.spaceSmall))
-                    .background(if (status == "locked") ColorHint else BrandPrimary),
+                    .background(if (isLocked) ColorHint else BrandPrimary),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector =
-                    if (status != "locked") Icons.Outlined.PlayArrow else Icons.Filled.Lock,
+                imageVector = if (isLocked) Icons.Filled.Lock else Icons.Outlined.PlayArrow,
                 contentDescription = "Simulation Icon",
                 tint = White
             )

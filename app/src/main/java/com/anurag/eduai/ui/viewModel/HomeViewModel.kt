@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 
 class HomeViewModel(
@@ -38,6 +39,9 @@ class HomeViewModel(
 
     private val _student = MutableStateFlow<StudentEntity?>(null)
     val student: StateFlow<StudentEntity?> = _student
+
+    private val _greeting = MutableStateFlow("")
+    val greeting: StateFlow<String> = _greeting
 
     val startOfDay = LocalDate.now()
         .atStartOfDay(ZoneId.systemDefault())
@@ -135,6 +139,24 @@ class HomeViewModel(
         viewModelScope.launch {
             val result = progressDao.getTodayCompletedConceptCount(userId, startOfDay, endOfDay)
             _todayConceptCount.value = result
+        }
+    }
+
+    /**
+     * Returns appropriate greeting based on current time
+     * 5-11: Good Morning
+     * 12-16: Good Afternoon
+     * 17-21: Good Evening
+     * 22-4: Good Night
+     */
+    fun getGreeting() {
+        val hour = LocalTime.now().hour
+
+        _greeting.value = when (hour) {
+            in 5..11 -> "Good Morning"
+            in 12..16 -> "Good Afternoon"
+            in 17..21 -> "Good Evening"
+            else -> "Good Night"
         }
     }
 

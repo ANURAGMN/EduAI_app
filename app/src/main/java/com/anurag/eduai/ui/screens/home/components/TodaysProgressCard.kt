@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.data.local.entities.ProgressEntity
+import com.anurag.eduai.data.model.LessonStatus
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.AccentGreen
@@ -140,51 +141,39 @@ fun TodayProgressCard(
             Spacer(modifier = Modifier.padding(dimes.spaceSmall))
 
             progressConcepts.forEach { (progress, concept) ->
-                val status = progress?.status ?: "NOT_STARTED"
-                val isCompleted = status == "COMPLETED"
-                val isInProgress = status == "IN_PROGRESS"
+                val lessonStatus = LessonStatus.fromString(progress?.status ?: "NOT_STARTED")
+                val isCompleted = lessonStatus == LessonStatus.COMPLETED
+                val isInProgress = lessonStatus == LessonStatus.IN_PROGRESS
 
                 LessonStatusCard(
-                    title = concept?.conceptName ?: "Unknown Concept",
-                    subtitle = "Status: $status",
-                    iconColor =
-                        when {
-                            isCompleted -> AccentGreen
-                            isInProgress -> AccentBlue
-                            else -> AccentBlue
-                             },
-                    backgroundColor =
-                        when {
-                            isCompleted -> AccentGreen.copy(alpha = 0.1f)
-                            isInProgress -> AccentBlue.copy(alpha = 0.1f)
-                            else -> AccentBlue.copy(alpha = 0.1f)
-                             },
-                        icon = {
-                            Icon(
-                                imageVector =
-                                    when {
-                                        isCompleted -> Icons.Outlined.CheckCircle
-                                        else -> Icons.AutoMirrored.Outlined.LibraryBooks
-                                         },
-                                contentDescription = null,
-                                tint = White
-                            )
-                        },
-                    status =
-                        when (status) {
-//                            TODO : use emunurator or data class instead of hard coded string
-                            "IN_PROGRESS" -> "pending"
-                            "COMPLETED" -> "completed"
-                            else -> "locked"
-                        },
-                    onClick = {
-                        DebugLogger.debugLog(
-                            "TodayProgressCard",
-                            "Concept Clicked id ${concept?.conceptId}"
+                    title = concept?.conceptName
+                        ?: stringResource(R.string.unknown_concept),
+                    subtitle = stringResource(R.string.status_label, lessonStatus.value),
+                    iconColor = when (lessonStatus) {
+                        LessonStatus.COMPLETED -> AccentGreen
+                        LessonStatus.IN_PROGRESS -> AccentBlue
+                        else -> AccentBlue
+                    },
+                    backgroundColor = when (lessonStatus) {
+                        LessonStatus.COMPLETED -> AccentGreen.copy(alpha = 0.1f)
+                        LessonStatus.IN_PROGRESS -> AccentBlue.copy(alpha = 0.1f)
+                        else -> AccentBlue.copy(alpha = 0.1f)
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = when (lessonStatus) {
+                                LessonStatus.COMPLETED -> Icons.Outlined.CheckCircle
+                                else -> Icons.AutoMirrored.Outlined.LibraryBooks
+                            },
+                            contentDescription = null,
+                            tint = White
                         )
+                    },
+                    lessonStatus = lessonStatus,
+                    onClick = {
+                        DebugLogger.debugLog("TodayProgressCard", "Concept Clicked id ${concept?.conceptId}")
                         concept?.let { onLessonClick(it.conceptId) }
-                    }
-                )
+                    })
                 Spacer(modifier = Modifier.padding(dimes.spaceSmall))
             }
         }

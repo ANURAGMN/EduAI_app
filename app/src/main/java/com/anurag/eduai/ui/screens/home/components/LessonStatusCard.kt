@@ -22,13 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
+import com.anurag.eduai.data.model.LessonStatus
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.Black
 import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.ColorSuccess
-import com.anurag.eduai.ui.theme.HeaderGradientEnd
 import com.anurag.eduai.ui.theme.LocalDimensions
 
 @Composable
@@ -38,11 +37,13 @@ fun LessonStatusCard(
     subtitle: String,
     iconColor: Color,
     backgroundColor: Color,
-    status: String,
+    lessonStatus: LessonStatus,
     icon: @Composable () -> Unit,
     onClick: () -> Unit = {},
 ) {
     val dimes = LocalDimensions.current
+    val isCompleted = lessonStatus == LessonStatus.COMPLETED
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -74,13 +75,13 @@ fun LessonStatusCard(
                 color = Black
             )
             Text(
-                text = if (status == "completed") subtitle else stringResource(R.string.pending),
+                text = if (isCompleted) subtitle else stringResource(R.string.pending),
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (status == "completed") ColorSuccess else AccentBlue
+                color = if (isCompleted) ColorSuccess else AccentBlue
             )
         }
 
-        if (status== "completed") {
+        if (isCompleted) {
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
@@ -88,9 +89,4 @@ fun LessonStatusCard(
             )
         }
     }
-}
-// TODO: implement this
-enum class LessonStatus {
-    COMPLETED,
-    PENDING
 }

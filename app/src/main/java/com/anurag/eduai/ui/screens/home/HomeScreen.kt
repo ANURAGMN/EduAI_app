@@ -23,6 +23,7 @@ import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.home.components.HomeScreenTopBar
+import com.anurag.eduai.ui.screens.home.components.LoadingHomeHeader
 import com.anurag.eduai.ui.screens.home.components.PracticeSimulationCard
 import com.anurag.eduai.ui.screens.home.components.TodayProgressCard
 import com.anurag.eduai.ui.theme.BackgroundSecondary
@@ -53,7 +54,7 @@ fun HomeScreen(
     val streakManager = StreakManager(context)
 
     val userId =
-            sharedPreferenceUtils.getUserId().toString() ?: error("Userid missing in home screen")
+        sharedPreferenceUtils.getUserId().toString() ?: error("Userid missing in home screen")
 
     val selectedSubject = sharedPreferenceUtils.getSubjectSelection()
 
@@ -74,6 +75,7 @@ fun HomeScreen(
     val todayCompletedConceptCount by viewModel.todayConceptCount.collectAsState()
     val todayCompletedSimulationCount by viewModel.todaySimulationCount.collectAsState()
     val student by viewModel.student.collectAsState()
+    val greeting by viewModel.greeting.collectAsState()
 
     // Testing if user is added to LocalDB or not
     LaunchedEffect(Unit) { DebugLogger.debugLog("HomeScreen", "CurrentUser:\n $student") }
@@ -89,24 +91,21 @@ fun HomeScreen(
                     .background(BackgroundSecondary)
                     .verticalScroll(scrollState)
         ) {
-            // TODO: if student is null then load defult values
-            /**
-             * if (student == null) {
-             * ```
-             *     LoadingHomeHeader()
-             * ```
-             * } else {
-             * ```
-             *     HomeScreenTopBar(...)
-             * ```
-             * }
-             */
-            HomeScreenTopBar(
-                userName = student?.studentName ?: "John Doe",
-                subject = selectedSubject ?: "Science",
-                streakDays = streakCount,
+            // Show loading state if student is null
+            if (student == null) {
+                LoadingHomeHeader(
+                    subject = selectedSubject ?: "Science",
                     onChangeSubject = { onNavigateToLearning() }
-            )
+                )
+            } else {
+                HomeScreenTopBar(
+                    userName = student?.studentName ?: "John Doe",
+                    subject = selectedSubject ?: "Science",
+                    streakDays = streakCount,
+                    greeting = greeting,
+                    onChangeSubject = { onNavigateToLearning() }
+                )
+            }
 
             Column(modifier = Modifier.padding(dimes.screenPadding)) {
                 TodayProgressCard(

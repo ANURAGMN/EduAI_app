@@ -43,7 +43,7 @@ fun StatusCardGrid(
                 title = "Simulation",
                 modifier = Modifier.weight(0.5f)
             )
-            Spacer(modifier = Modifier.padding(dimes.spaceMedium))
+            Spacer(modifier = Modifier.padding(dimes.spaceSmall))
             StatusCardItem(
                 icon = "\uD83D\uDCC8", // icon value "📈"
                 value = score,
