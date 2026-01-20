@@ -24,10 +24,10 @@ class HomeViewModel(
     private val userId: String,
     private val streakManager: StreakManager
 ) : ViewModel(){
-    
+
     // Pair of ProgressEntity and its corresponding ConceptEntity
-    // Using a simple Map or List of Pairs for UI to consume
     var progressConcepts = MutableStateFlow<List<Pair<ProgressEntity?, ConceptEntity?>>>(emptyList())
+
     private val _streakCount = MutableStateFlow(0)
     val streakCount: StateFlow<Int> = _streakCount
 
@@ -58,50 +58,43 @@ class HomeViewModel(
         getTodayCompletedConcept()
         getTodayCompletedSimulation()
         getStudent()
+        getGreeting()
+
         viewModelScope.launch {
-
             getStreak()
-
 
             progressDao.getHomeScreenConcepts(userId, "CONCEPT")
                 .collect { progressList ->
 
-                    // all completed (latest first)
-                    val completedList =
-                        progressDao.getAllProgressSync(userId, "CONCEPT")
-                            .filter { it.status == "COMPLETED" }
-                            .sortedByDescending { it.completedAt ?: 0L }
+                    // Get all progress for the user
+                    val allProgress = progressDao.getAllProgressSync(userId, "CONCEPT")
 
-                    // all in-progress (most recent first)
-                    val inProgressList =
-                        progressList
-                            .filter { it.status == "IN_PROGRESS" }
-                            .sortedByDescending { it.lastAccessedAt }
+                    // Separate by status
+                    val completedList = allProgress
+                        .filter { it.status == "COMPLETED" }
+                        .sortedByDescending { it.completedAt ?: 0L }
 
-                    // build final list: 1 completed + up to 3 in-progress
+                    val inProgressList = allProgress
+                        .filter { it.status == "IN_PROGRESS" }
+                        .sortedByDescending { it.lastAccessedAt }
+
+                    // Build curated list for display
                     val curatedProgress = mutableListOf<ProgressEntity>()
 
-                    completedList.firstOrNull()?.let { curatedProgress.add(it) }
+                    // Strategy: Show ALL in-progress concepts first (these need attention)
+                    curatedProgress.addAll(inProgressList)
 
-                    curatedProgress.addAll(
-                        inProgressList.take(3)
-                    )
-
-                    // if less than 4, fill remaining with more COMPLETED
-                    if (curatedProgress.size < 4) {
-                        val remaining =
-                            completedList
-                                .drop(1) // skip the first completed already added
-                                .take(4 - curatedProgress.size)
-
-                        curatedProgress.addAll(remaining)
+                    // Then add most recent completed concepts to fill up to 4 items
+                    val remainingSlots = (4 - curatedProgress.size).coerceAtLeast(0)
+                    if (remainingSlots > 0) {
+                        curatedProgress.addAll(
+                            completedList.take(remainingSlots)
+                        )
                     }
 
                     // FIRST LOGIN FALLBACK: No progress at all
                     if (curatedProgress.isEmpty()) {
-
-                        val firstUnitConcepts =
-                            conceptDao.getFirstConceptsOfChapter("1", 4)
+                        val firstUnitConcepts = conceptDao.getFirstConceptsOfChapter("1", 4)
 
                         // Show concepts without progress entries
                         val combined = firstUnitConcepts.map { concept ->
@@ -109,6 +102,7 @@ class HomeViewModel(
                         }
 
                         progressConcepts.value = combined
+                        DebugLogger.debugLog("HomeViewModel", "First login - showing ${combined.size} default concepts")
                         return@collect
                     }
 
@@ -117,28 +111,32 @@ class HomeViewModel(
 
                     conceptDao.getConceptsByIds(conceptIds)
                         .collect { concepts ->
-
                             val combined = curatedProgress.map { progress ->
                                 val concept = concepts.find { it.conceptId == progress.itemId }
                                 progress to concept
                             }
 
                             progressConcepts.value = combined
+                            DebugLogger.debugLog(
+                                "HomeViewModel",
+                                "Loaded ${combined.size} concepts: ${inProgressList.size} in-progress, ${completedList.size} completed"
+                            )
                         }
                 }
         }
     }
 
-
     fun getStreak() {
         val result = streakManager.getCurrentStreak()
         _streakCount.value = result
+        DebugLogger.debugLog("HomeViewModel", "Current streak: $result days")
     }
 
-    fun getTodayCompletedConcept(){
+    fun getTodayCompletedConcept() {
         viewModelScope.launch {
             val result = progressDao.getTodayCompletedConceptCount(userId, startOfDay, endOfDay)
             _todayConceptCount.value = result
+            DebugLogger.debugLog("HomeViewModel", "Today's completed concepts: $result")
         }
     }
 
@@ -160,16 +158,19 @@ class HomeViewModel(
         }
     }
 
-    fun getTodayCompletedSimulation(){
+    fun getTodayCompletedSimulation() {
         viewModelScope.launch {
             val result = progressDao.getTodayCompletedSimulationCount(userId, startOfDay, endOfDay)
             _todaySimulationCount.value = result
+            DebugLogger.debugLog("HomeViewModel", "Today's completed simulations: $result")
         }
     }
-    fun getStudent(){
+
+    fun getStudent() {
         viewModelScope.launch {
             val result = studentDao.getStudentSync(userId)
             _student.value = result
+            DebugLogger.debugLog("HomeViewModel", "Student loaded: ${result?.studentName}")
         }
     }
 }
