@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.BackgroundPrimary
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 
 data class Simulation(
@@ -37,16 +38,17 @@ fun SimulationCard() {
         Simulation("Restaurant Visit", "locked")
     )
 
+    val dimes = LocalDimensions.current
     Card(
         modifier = Modifier
             .fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = BackgroundPrimary),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 15.dp)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = dimes.cardElevation)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp)
+                .padding(dimes.screenPadding)
         ) {
             Text(
                 text = stringResource(R.string.practice_simulation),
@@ -55,9 +57,9 @@ fun SimulationCard() {
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(0.dp, 6.dp)
+                    .padding(0.dp, dimes.spaceExtraSmall)
             )
-            Spacer(modifier = Modifier.height(15.dp))
+            Spacer(modifier = Modifier.height(dimes.screenPadding))
 
             simulationList.forEach { sims ->
                 SimulationItem(sims.title, status = sims.status)
