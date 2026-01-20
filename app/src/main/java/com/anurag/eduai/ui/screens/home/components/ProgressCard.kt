@@ -26,7 +26,7 @@ import com.anurag.eduai.ui.theme.TextPrimary
 fun ProgressCard(
     cardColors: Color,
     title: String,
-    score: String,
+    score: Int,
     scoreColor: Color,
     modifier: Modifier = Modifier
 ) {
@@ -48,7 +48,7 @@ fun ProgressCard(
             )
             Spacer(modifier = Modifier.height(dimensions.spaceExtraSmall))
             Text(
-                text = score,
+                text = "$score",
                 style = MaterialTheme.typography.headlineMedium,
                 color = scoreColor,
                 fontWeight = FontWeight.Bold

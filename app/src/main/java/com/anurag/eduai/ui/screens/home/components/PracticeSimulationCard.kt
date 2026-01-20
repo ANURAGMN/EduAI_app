@@ -19,45 +19,36 @@ import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 
-data class Simulation(
-    val title: String,
-    val status: String
-)
+data class Simulation(val title: String, val status: String)
 
 @Composable
 fun PracticeSimulationCard() {
-    val simulationList = listOf(
-        Simulation("Classroom Conversation", "unlocked"),
-        Simulation("Shopping Scene", "locked"),
-        Simulation("Restaurant Visit", "locked")
-    )
+    val simulationList =
+        listOf(
+            Simulation("Classroom Conversation", "unlocked"),
+            Simulation("Shopping Scene", "locked"),
+            Simulation("Restaurant Visit", "locked")
+        )
 
     val dimes = LocalDimensions.current
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = BackgroundPrimary),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = dimes.cardElevation)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(dimes.screenPadding)
-        ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(dimes.screenPadding)) {
             Text(
                 text = stringResource(R.string.practice_simulation),
                 style = MaterialTheme.typography.titleLarge,
                 color = TextPrimary,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(0.dp, dimes.spaceExtraSmall)
+                modifier = Modifier.fillMaxWidth().padding(0.dp, dimes.spaceExtraSmall)
             )
             Spacer(modifier = Modifier.height(dimes.screenPadding))
 
             simulationList.forEach { sims ->
                 SimulationItem(sims.title, status = sims.status)
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(modifier = Modifier.height(dimes.spaceMedium))
             }
         }
     }

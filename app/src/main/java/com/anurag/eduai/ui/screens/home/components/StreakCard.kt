@@ -19,11 +19,14 @@ import androidx.compose.ui.res.stringResource
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.Dimensions
 import com.anurag.eduai.ui.theme.LocalDimensions
+import com.anurag.eduai.ui.theme.SubjectCardGradientCenter
+import com.anurag.eduai.ui.theme.SubjectCardGradientEnd
+import com.anurag.eduai.ui.theme.SubjectCardGradientStart
 import com.anurag.eduai.ui.theme.White
 
 @Composable
 fun StreakCard(
-    days: String,
+    days: Int,
     modifier: Modifier = Modifier
 ) {
     val dimes = LocalDimensions.current
@@ -33,12 +36,12 @@ fun StreakCard(
             .background(
                 brush = Brush.horizontalGradient(
                     listOf(
-                        Color(0xFF7F63FF),
-                        Color(0xFF9B4DFF),
-                        Color(0xFFB03BFE)
+                        SubjectCardGradientStart,
+                        SubjectCardGradientCenter,
+                        SubjectCardGradientEnd
                     )
                 ),
-                shape = RoundedCornerShape(Dimensions.Compact.cornerRadiusRound)
+                shape = RoundedCornerShape(dimes.cornerRadiusRound)
             )
             .padding(dimes.screenPadding),
         verticalAlignment = Alignment.CenterVertically
@@ -49,11 +52,11 @@ fun StreakCard(
             style = MaterialTheme.typography.headlineMedium,
         )
 
-        Spacer(modifier = Modifier.width(Dimensions.Compact.spaceSmall))
+        Spacer(modifier = Modifier.width(dimes.spaceSmall))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = days,
+                text = "$days",
                 style = MaterialTheme.typography.titleLarge,
                 color = White
             )

@@ -22,6 +22,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.Dimensions
+import com.anurag.eduai.ui.theme.LocalDimensions
+import com.anurag.eduai.ui.theme.SubjectCardGradientCenter
+import com.anurag.eduai.ui.theme.SubjectCardGradientEnd
+import com.anurag.eduai.ui.theme.SubjectCardGradientStart
 import com.anurag.eduai.ui.theme.White
 import java.util.Locale.getDefault
 
@@ -30,21 +34,22 @@ fun HomeScreenSubjectCard(
     subject: String,
     onChangeClick: () -> Unit = {}
 ) {
+    val dimes = LocalDimensions.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(
                 brush = Brush.horizontalGradient(
                     listOf(
-                        Color(0xFF7F63FF), // TODO: don't hard code the color
-                        Color(0xFF9B4DFF),// TODO: Move then to colors.kt
-                        Color(0xFFB03BFE)
+                        SubjectCardGradientStart,
+                        SubjectCardGradientCenter,
+                        SubjectCardGradientEnd
                     )
                 ),
-                shape = RoundedCornerShape(Dimensions.Compact.cornerRadiusRound)
+                shape = RoundedCornerShape(dimes.cornerRadiusRound)
             )
             .clickable(onClick = onChangeClick)
-            .padding(Dimensions.Compact.screenPadding),
+            .padding(dimes.screenPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
 
@@ -54,7 +59,7 @@ fun HomeScreenSubjectCard(
             style = MaterialTheme.typography.headlineMedium
         )
 
-        Spacer(modifier = Modifier.width(Dimensions.Compact.spaceSmall))
+        Spacer(modifier = Modifier.width(dimes.spaceSmall))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(

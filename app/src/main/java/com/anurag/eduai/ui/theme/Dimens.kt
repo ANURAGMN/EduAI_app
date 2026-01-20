@@ -95,6 +95,8 @@ data class Dimensions(
 
     // status card height
     val statusCardHeight: Dp,
+
+    val weeklyActivityCardHeight: Dp
 ) {
     companion object {
         val Compact = Dimensions(
@@ -171,7 +173,9 @@ data class Dimensions(
             boxSizeSmall= 60.dp,
             boxSizeMedium = 80.dp,
 
-            statusCardHeight = 100.dp
+            statusCardHeight = 100.dp,
+
+            weeklyActivityCardHeight = 120.dp,
         )
 
         val Medium = Dimensions(
@@ -248,7 +252,8 @@ data class Dimensions(
             boxSizeSmall = 80.dp,
             boxSizeMedium = 100.dp,
 
-            statusCardHeight = 120.dp
+            statusCardHeight = 120.dp,
+            weeklyActivityCardHeight = 140.dp
         )
 
         val Expanded = Dimensions(
@@ -327,7 +332,9 @@ data class Dimensions(
             boxSizeSmall = 100.dp,
             boxSizeMedium = 120.dp,
 
-            statusCardHeight = 140.dp
+            statusCardHeight = 140.dp,
+
+            weeklyActivityCardHeight = 160.dp,
         )
     }
 }

@@ -27,14 +27,14 @@ class HomeViewModel(
     // Pair of ProgressEntity and its corresponding ConceptEntity
     // Using a simple Map or List of Pairs for UI to consume
     var progressConcepts = MutableStateFlow<List<Pair<ProgressEntity?, ConceptEntity?>>>(emptyList())
-    private val _streakCount = MutableStateFlow("0")
-    val streakCount: StateFlow<String> = _streakCount
+    private val _streakCount = MutableStateFlow(0)
+    val streakCount: StateFlow<Int> = _streakCount
 
-    private val _todayConceptCount = MutableStateFlow("0")
-    val todayConceptCount: StateFlow<String> = _todayConceptCount
+    private val _todayConceptCount = MutableStateFlow(0)
+    val todayConceptCount: StateFlow<Int> = _todayConceptCount
 
-    private val _todaySimulationCount = MutableStateFlow("0")
-    val todaySimulationCount: StateFlow<String> = _todaySimulationCount
+    private val _todaySimulationCount = MutableStateFlow(0)
+    val todaySimulationCount: StateFlow<Int> = _todaySimulationCount
 
     private val _student = MutableStateFlow<StudentEntity?>(null)
     val student: StateFlow<StudentEntity?> = _student
@@ -128,20 +128,20 @@ class HomeViewModel(
 
     fun getStreak() {
         val result = streakManager.getCurrentStreak()
-        _streakCount.value = result.toString() ?: "0"
+        _streakCount.value = result
     }
 
     fun getTodayCompletedConcept(){
         viewModelScope.launch {
             val result = progressDao.getTodayCompletedConceptCount(userId, startOfDay, endOfDay)
-            _todayConceptCount.value = result.toString() ?: "0"
+            _todayConceptCount.value = result
         }
     }
 
     fun getTodayCompletedSimulation(){
         viewModelScope.launch {
             val result = progressDao.getTodayCompletedSimulationCount(userId, startOfDay, endOfDay)
-            _todaySimulationCount.value = result.toString() ?: "0"
+            _todaySimulationCount.value = result
         }
     }
     fun getStudent(){

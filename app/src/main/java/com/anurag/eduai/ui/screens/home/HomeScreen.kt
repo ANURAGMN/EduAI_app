@@ -26,21 +26,21 @@ import com.anurag.eduai.ui.screens.home.components.HomeScreenTopBar
 import com.anurag.eduai.ui.screens.home.components.PracticeSimulationCard
 import com.anurag.eduai.ui.screens.home.components.TodayProgressCard
 import com.anurag.eduai.ui.theme.BackgroundSecondary
-import com.anurag.eduai.ui.theme.Dimensions
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.HomeViewModel
 import com.anurag.eduai.ui.viewmodel_factory.HomeViewModelFactory
 import com.anurag.eduai.utils.StreakManager
 
 @Composable
 fun HomeScreen(
-        onNavigateToLearning: () -> Unit = {},
-        onNavigateToChapters: (String) -> Unit = {},
-        onLessonClick: (String) -> Unit = {}
+    onNavigateToLearning: () -> Unit = {},
+    onNavigateToChapters: (String) -> Unit = {},
+    onLessonClick: (String) -> Unit = {}
 ) {
-
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.HOME)
 
+    val dimes = LocalDimensions.current
     val scrollState = rememberScrollState()
 
     val context = LocalContext.current
@@ -52,13 +52,22 @@ fun HomeScreen(
     val sharedPreferenceUtils = SharedPreferenceUtils(context)
     val streakManager = StreakManager(context)
 
-    val userId = sharedPreferenceUtils.getUserId().toString() ?: error("Userid missing in home screen")
+    val userId =
+            sharedPreferenceUtils.getUserId().toString() ?: error("Userid missing in home screen")
 
     val selectedSubject = sharedPreferenceUtils.getSubjectSelection()
 
-    val viewModel: HomeViewModel = viewModel(factory =
-        HomeViewModelFactory(conceptDao,progressDao, studentDao, userId, streakManager)
-    )
+    val viewModel: HomeViewModel =
+        viewModel(
+            factory =
+                HomeViewModelFactory(
+                    conceptDao,
+                    progressDao,
+                    studentDao,
+                    userId,
+                    streakManager
+                )
+        )
 
     val progressConcepts by viewModel.progressConcepts.collectAsState()
     val streakCount by viewModel.streakCount.collectAsState()
@@ -66,11 +75,8 @@ fun HomeScreen(
     val todayCompletedSimulationCount by viewModel.todaySimulationCount.collectAsState()
     val student by viewModel.student.collectAsState()
 
-
     // Testing if user is added to LocalDB or not
-    LaunchedEffect(Unit) {
-        DebugLogger.debugLog("HomeScreen", "CurrentUser:\n $student")
-    }
+    LaunchedEffect(Unit) { DebugLogger.debugLog("HomeScreen", "CurrentUser:\n $student") }
 
     LaunchedEffect(progressConcepts) {
         DebugLogger.debugLog("HomeScreen", "Concept:\n $progressConcepts")
@@ -78,40 +84,42 @@ fun HomeScreen(
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
-                modifier =
-                        Modifier.fillMaxSize()
-                                .background(BackgroundSecondary)
-                                .verticalScroll(scrollState)
+            modifier =
+                Modifier.fillMaxSize()
+                    .background(BackgroundSecondary)
+                    .verticalScroll(scrollState)
         ) {
-            //TODO: if student is null then load defult values
+            // TODO: if student is null then load defult values
             /**
              * if (student == null) {
+             * ```
              *     LoadingHomeHeader()
+             * ```
              * } else {
+             * ```
              *     HomeScreenTopBar(...)
+             * ```
              * }
              */
             HomeScreenTopBar(
-                    userName = student?.studentName ?: "John Doe",
-                    subject = selectedSubject ?: "Science",
-                    streakDays = streakCount,
+                userName = student?.studentName ?: "John Doe",
+                subject = selectedSubject ?: "Science",
+                streakDays = streakCount,
                     onChangeSubject = { onNavigateToLearning() }
             )
 
-            Column(modifier = Modifier.padding(Dimensions.Compact.screenPadding)) {
+            Column(modifier = Modifier.padding(dimes.screenPadding)) {
                 TodayProgressCard(
-                        progressConcepts = progressConcepts,
-                        onLessonClick = onLessonClick,
-                        todayCompletedConcept = todayCompletedConceptCount,
-                        todayCompletedSimulation = todayCompletedSimulationCount,
-                        onShowAllChapters = {
-                            val subjectId = sharedPreferenceUtils.getSubjectSelection() ?: "science"
-                            onNavigateToChapters(subjectId)
-                        }
+                    progressConcepts = progressConcepts,
+                    onLessonClick = onLessonClick,
+                    todayCompletedConcept = todayCompletedConceptCount,
+                    todayCompletedSimulation = todayCompletedSimulationCount,
+                    onShowAllChapters = {
+                        val subjectId = sharedPreferenceUtils.getSubjectSelection() ?: "science"
+                        onNavigateToChapters(subjectId)
+                    }
                 )
-
-                Spacer(modifier = Modifier.height(Dimensions.Compact.spaceSmall))
-
+                Spacer(modifier = Modifier.height(dimes.spaceSmall))
                 PracticeSimulationCard()
             }
         }

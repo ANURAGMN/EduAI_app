@@ -14,17 +14,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
-import com.anurag.eduai.ui.theme.Dimensions
 import com.anurag.eduai.ui.theme.HeaderGradientEnd
 import com.anurag.eduai.ui.theme.HeaderGradientStart
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import java.time.LocalTime
 
-/**
- * A method to say greeting based on time of day
- * TODO: Move this method to viewmodel
- *
- */
+/** A method to say greeting based on time of day TODO: Move this method to viewmodel */
 @Composable
 fun getGreeting(): String {
     val hour = remember { LocalTime.now().hour }
@@ -34,7 +30,7 @@ fun getGreeting(): String {
         in 12..16 -> "Good Afternoon"
         in 17..21 -> "Good Evening"
         else -> "Good Night"
-        //TODO: remove hard coded string
+    // TODO: remove hard coded string
     }
 }
 
@@ -42,29 +38,31 @@ fun getGreeting(): String {
 fun HomeScreenTopBar(
     userName: String,
     subject: String,
-    streakDays: String,
+    streakDays: Int,
     onChangeSubject: () -> Unit = {}
 ) {
+    val dimes = LocalDimensions.current
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        HeaderGradientStart,
-                        HeaderGradientEnd
-                    )
-                ),
-                shape = RoundedCornerShape(
-                    bottomStart = Dimensions.Compact.cornerRadiusRound,
-                    bottomEnd = Dimensions.Compact.cornerRadiusRound
+        modifier =
+            Modifier.fillMaxWidth()
+                .background(
+                    brush =
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    HeaderGradientStart,
+                                    HeaderGradientEnd
+                                )
+                        ),
+                    shape =
+                        RoundedCornerShape(
+                            bottomStart = dimes.cornerRadiusRound,
+                            bottomEnd = dimes.cornerRadiusRound
+                        )
                 )
-            )
-            .padding(Dimensions.Compact.screenPadding)
+                .padding(dimes.screenPadding)
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(Dimensions.Compact.spaceSmall)
-        ) {
+        Column(verticalArrangement = Arrangement.spacedBy(dimes.spaceSmall)) {
             Text(
                 text = getGreeting(),
                 color = TextPrimary,
@@ -77,10 +75,7 @@ fun HomeScreenTopBar(
                 fontWeight = FontWeight.Bold
             )
 
-            HomeScreenSubjectCard(
-                subject,
-                onChangeClick = onChangeSubject
-            )
+            HomeScreenSubjectCard(subject, onChangeClick = onChangeSubject)
             StreakCard(streakDays, modifier = Modifier.fillMaxWidth())
         }
     }
