@@ -1,7 +1,9 @@
 package com.anurag.eduai.ui.viewModel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.dao.StudentDao
 import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.repository.FirebaseRepository
@@ -20,8 +22,12 @@ sealed class UpdateProfileState {
 class SettingViewModel(
     private val repository: FirebaseRepository,
     private val studentDao: StudentDao,
-    private val userId: String
+    private val userId: String,
+    context: Context
 ) : ViewModel() {
+
+    val db = EduAiDatabase.getInstance(context)
+
 
     private val _student = MutableStateFlow<StudentEntity?>(null)
     val student: StateFlow<StudentEntity?> = _student

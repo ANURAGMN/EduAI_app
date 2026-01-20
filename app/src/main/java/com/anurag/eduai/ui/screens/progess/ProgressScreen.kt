@@ -12,16 +12,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
-import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.progess.component.ProgressScreenTopBar
@@ -29,20 +26,18 @@ import com.anurag.eduai.ui.screens.progess.component.SkillsProgressSection
 import com.anurag.eduai.ui.screens.progess.component.StatusCardGrid
 import com.anurag.eduai.ui.screens.progess.component.WeeklyActivitySection
 import com.anurag.eduai.ui.theme.BackgroundSecondary
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.ProgressScreenVIewModel
 import com.anurag.eduai.ui.viewmodel_factory.ProgressViewModelFactory
 import com.anurag.eduai.utils.StreakManager
 import com.anurag.eduai.utils.WeeklyProgressUtils
 
 @Composable
-fun ProgressScreen(
-    onGoHome:() -> Unit = {},
-    onGoSetting:() -> Unit = {}
-)
-{
+fun ProgressScreen(onGoHome: () -> Unit = {}, onGoSetting: () -> Unit = {}) {
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.PROGRESS)
 
+    val dimes = LocalDimensions.current
     val context = LocalContext.current
     // Object of util class
     val weeklyProgressUtil = WeeklyProgressUtils()
@@ -58,9 +53,17 @@ fun ProgressScreen(
     val studentDao = db.studentDao()
     val subjectDao = db.subjectDao()
 
-
-    val factory = remember { ProgressViewModelFactory(progressDao, subjectDao, streakManager, studentDao, userId) }
-    val viewModel: ProgressScreenVIewModel = viewModel(factory = factory)
+    val viewModel: ProgressScreenVIewModel =
+        viewModel(
+            factory =
+                ProgressViewModelFactory(
+                    progressDao,
+                    subjectDao,
+                    streakManager,
+                    studentDao,
+                    userId
+                )
+        )
 
     // collecting all the values as state
     val totalCompletedConcept by viewModel.totalCompletedConcept.collectAsState()
@@ -81,9 +84,7 @@ fun ProgressScreen(
     }
 
     // Load subjects when screen launches
-    LaunchedEffect(classLevel) {
-        viewModel.loadSubjects(classLevel)
-    }
+    LaunchedEffect(classLevel) { viewModel.loadSubjects(classLevel) }
     // Load chapter progress when subject is selected
     LaunchedEffect(selectedSubject) {
         selectedSubject?.let { subject ->
@@ -102,44 +103,29 @@ fun ProgressScreen(
             .background(BackgroundSecondary)
             .verticalScroll(scrollState)
     ) {
-        ProgressScreenTopBar(
-            onGoHome,
-            onGoSetting
-        )
+        ProgressScreenTopBar(onGoHome, onGoSetting)
 
-        Spacer(modifier = Modifier.padding(15.dp))
-        Column(
-            modifier = Modifier
-                .background(BackgroundSecondary)
-                .padding(15.dp)
-        ) {
+        Spacer(modifier = Modifier.padding(dimes.screenPadding))
+        Column(modifier = Modifier.background(BackgroundSecondary).padding(dimes.screenPadding)) {
             StatusCardGrid(
                 streakCount = streakCount,
                 completedConceptCount = totalCompletedConcept,
-                completedSimulationCount = "0",
-                score = "78%"
+                completedSimulationCount = 0,
+                score = 78
             )
-            Spacer(modifier = Modifier.height(25.dp))
-            WeeklyActivitySection(
-                weeklyProgressList = sevenDayProgress
-            )
+            Spacer(modifier = Modifier.height(dimes.sectionSpacing))
+            WeeklyActivitySection(weeklyProgressList = sevenDayProgress)
 
-            Spacer(modifier = Modifier.height(25.dp))
+            Spacer(modifier = Modifier.height(dimes.sectionSpacing))
 
             SkillsProgressSection(
                 subjects = subjects,
                 selectedSubject = selectedSubject,
                 chapterProgress = chapterProgress,
-                onSubjectSelected = { subject ->
-                    viewModel.selectSubject(subject)
-                }
+                onSubjectSelected = { subject -> viewModel.selectSubject(subject) }
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-//            ShareButton()
-//            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(dimes.spaceMedium))
         }
     }
-
 }

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 
 class HomeViewModel(
@@ -27,17 +28,20 @@ class HomeViewModel(
     // Pair of ProgressEntity and its corresponding ConceptEntity
     // Using a simple Map or List of Pairs for UI to consume
     var progressConcepts = MutableStateFlow<List<Pair<ProgressEntity?, ConceptEntity?>>>(emptyList())
-    private val _streakCount = MutableStateFlow("0")
-    val streakCount: StateFlow<String> = _streakCount
+    private val _streakCount = MutableStateFlow(0)
+    val streakCount: StateFlow<Int> = _streakCount
 
-    private val _todayConceptCount = MutableStateFlow("0")
-    val todayConceptCount: StateFlow<String> = _todayConceptCount
+    private val _todayConceptCount = MutableStateFlow(0)
+    val todayConceptCount: StateFlow<Int> = _todayConceptCount
 
-    private val _todaySimulationCount = MutableStateFlow("0")
-    val todaySimulationCount: StateFlow<String> = _todaySimulationCount
+    private val _todaySimulationCount = MutableStateFlow(0)
+    val todaySimulationCount: StateFlow<Int> = _todaySimulationCount
 
     private val _student = MutableStateFlow<StudentEntity?>(null)
     val student: StateFlow<StudentEntity?> = _student
+
+    private val _greeting = MutableStateFlow("")
+    val greeting: StateFlow<String> = _greeting
 
     val startOfDay = LocalDate.now()
         .atStartOfDay(ZoneId.systemDefault())
@@ -51,11 +55,13 @@ class HomeViewModel(
         .toEpochMilli() - 1
 
     init {
+        getTodayCompletedConcept()
+        getTodayCompletedSimulation()
+        getStudent()
         viewModelScope.launch {
 
             getStreak()
-            getTodayCompletedConcept()
-            getTodayCompletedSimulation()
+
 
             progressDao.getHomeScreenConcepts(userId, "CONCEPT")
                 .collect { progressList ->
@@ -126,20 +132,38 @@ class HomeViewModel(
 
     fun getStreak() {
         val result = streakManager.getCurrentStreak()
-        _streakCount.value = result.toString() ?: "0"
+        _streakCount.value = result
     }
 
     fun getTodayCompletedConcept(){
         viewModelScope.launch {
             val result = progressDao.getTodayCompletedConceptCount(userId, startOfDay, endOfDay)
-            _todayConceptCount.value = result.toString() ?: "0"
+            _todayConceptCount.value = result
+        }
+    }
+
+    /**
+     * Returns appropriate greeting based on current time
+     * 5-11: Good Morning
+     * 12-16: Good Afternoon
+     * 17-21: Good Evening
+     * 22-4: Good Night
+     */
+    fun getGreeting() {
+        val hour = LocalTime.now().hour
+
+        _greeting.value = when (hour) {
+            in 5..11 -> "Good Morning"
+            in 12..16 -> "Good Afternoon"
+            in 17..21 -> "Good Evening"
+            else -> "Good Night"
         }
     }
 
     fun getTodayCompletedSimulation(){
         viewModelScope.launch {
             val result = progressDao.getTodayCompletedSimulationCount(userId, startOfDay, endOfDay)
-            _todaySimulationCount.value = result.toString() ?: "0"
+            _todaySimulationCount.value = result
         }
     }
     fun getStudent(){

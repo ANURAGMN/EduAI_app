@@ -2,7 +2,6 @@ package com.anurag.eduai.ui.screens.setting
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,9 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
@@ -38,7 +35,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,21 +51,31 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
-import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.repository.FirebaseRepository
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.setting.components.CenterPopupCard
+import com.anurag.eduai.ui.screens.setting.components.ContactSupportCard
 import com.anurag.eduai.ui.screens.setting.components.EditProfileScreen
 import com.anurag.eduai.ui.screens.setting.components.ProfileCard
-import com.anurag.eduai.ui.theme.*
+import com.anurag.eduai.ui.theme.AccentBlue
+import com.anurag.eduai.ui.theme.BackgroundSecondary
+import com.anurag.eduai.ui.theme.BrandPrimary
+import com.anurag.eduai.ui.theme.CardBackground
+import com.anurag.eduai.ui.theme.ColorError
+import com.anurag.eduai.ui.theme.ColorWarning
+import com.anurag.eduai.ui.theme.IconSecondary
+import com.anurag.eduai.ui.theme.LocalDimensions
+import com.anurag.eduai.ui.theme.TextOnPrimary
+import com.anurag.eduai.ui.theme.TextPrimary
+import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.viewModel.SettingViewModel
 import com.anurag.eduai.ui.viewmodel_factory.SettingViewModelFactory
 
 sealed class PopupScreen {
     object EditProfile : PopupScreen()
-//    object Settings : PopupScreen()
-//    object Help : PopupScreen()
+    object ContactUs : PopupScreen()
+    //    object Notification : PopupScreen()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,8 +98,11 @@ fun SettingScreen() {
     val db = remember { EduAiDatabase.getInstance(context) }
     val studentDao = db.studentDao()
 
-    val factory = remember { SettingViewModelFactory(firebaseRepository, studentDao, userId) }
-    val viewModel: SettingViewModel = viewModel(factory = factory)
+    val viewModel: SettingViewModel =
+        viewModel(
+            factory =
+                SettingViewModelFactory(firebaseRepository, studentDao, userId, context)
+        )
 
     val student by viewModel.student.collectAsState()
 
@@ -106,40 +115,35 @@ fun SettingScreen() {
                         "Settings",
                         fontWeight = FontWeight.SemiBold,
                         color = TextOnPrimary
-                    )
-                },
+                    ) },
                 navigationIcon = {
-                    IconButton(onClick = { /* Navigate back */ }) {
+                    IconButton(onClick = { /* Navigate back */}) {
                         Icon(
                             Icons.Default.ArrowBack,
                             contentDescription = "Back",
                             modifier = Modifier.size(dimens.iconMedium),
                             tint = TextOnPrimary
                         )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BrandPrimary
-                )
+                    } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandPrimary)
             )
         }
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Box(modifier = Modifier.fillMaxSize()) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(BackgroundSecondary)
-                    .padding(paddingValues)
-                    .verticalScroll(scrollState)
-                    .padding(dimens.screenPadding),
-                verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)
+                modifier =
+                    Modifier.fillMaxSize()
+                        .background(BackgroundSecondary)
+                        .padding(paddingValues)
+                        .verticalScroll(scrollState)
+                        .padding(dimens.screenPadding),
+                    verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)
             ) {
                 // Learning Language Section
                 SettingsSection(title = "Learning Language") {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = dimens.spaceSmall),
+                        modifier =
+                            Modifier.fillMaxWidth().padding(vertical = dimens.spaceSmall),
                         horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
                     ) {
                         LanguageButton(
@@ -172,7 +176,8 @@ fun SettingScreen() {
                     )
                 } else {
                     ProfileCard(
-                        profileImageUri = student!!.localProfilePhotoUri ?: student!!.profilePhotoUrl,
+                        profileImageUri = student!!.localProfilePhotoUri
+                            ?: student!!.profilePhotoUrl,
                         name = student!!.studentName,
                         email = student!!.email,
                         phone = student!!.phoneNumber,
@@ -186,37 +191,23 @@ fun SettingScreen() {
                         icon = Icons.Default.Person,
                         iconTint = AccentBlue,
                         title = "Edit Profile",
-                        onClick = {
-                            activeScreen = PopupScreen.EditProfile
-                        }
+                        onClick = { activeScreen = PopupScreen.EditProfile }
                     )
                     SettingsItem(
                         icon = Icons.Default.Notifications,
                         iconTint = ColorWarning,
                         title = "Notifications",
-                        onClick = { /* Navigate to Notifications */ }
+                        onClick = { /* Navigate to Notifications */}
                     )
                 }
 
                 // Support Section
                 SettingsSection(title = "Support") {
                     SettingsItem(
-                        icon = Icons.Default.Info,
-                        iconTint = BrandPrimary,
-                        title = "Help",
-                        onClick = { /* Navigate to Help */ }
-                    )
-                    SettingsItem(
                         icon = Icons.Default.Email,
                         iconTint = AccentBlue,
                         title = "Contact Us",
-                        onClick = { /* Navigate to Contact */ }
-                    )
-                    SettingsItem(
-                        icon = Icons.Default.Description,
-                        iconTint = IconPrimary,
-                        title = "Terms & Conditions",
-                        onClick = { /* Navigate to Terms */ }
+                        onClick = { activeScreen = PopupScreen.ContactUs }
                     )
                 }
 
@@ -224,13 +215,12 @@ fun SettingScreen() {
 
                 // Logout Button
                 Button(
-                    onClick = { /* Handle Logout */ },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(dimens.buttonHeightLarge),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = ColorError.copy(alpha = 0.1f)
-                    ),
+                    onClick = { /* Handle Logout */},
+                    modifier = Modifier.fillMaxWidth().height(dimens.buttonHeightLarge),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = ColorError.copy(alpha = 0.1f)
+                        ),
                     shape = RoundedCornerShape(dimens.cornerRadiusMedium)
                 ) {
                     Text(
@@ -243,18 +233,24 @@ fun SettingScreen() {
             }
         }
 
-        CenterPopupCard(
-            visible = activeScreen != null,
-            onDismiss = { activeScreen = null }
-        ) {
+        CenterPopupCard(visible = activeScreen != null, onDismiss = { activeScreen = null }) {
             when (activeScreen) {
-                PopupScreen.EditProfile -> EditProfileScreen(
-                    firebaseRepository = firebaseRepository,
-                    studentDao = studentDao,
-                    userId = userId,
-                    student = student,
-                    userViewModel = viewModel
-                ) { activeScreen = null }
+                PopupScreen.EditProfile ->
+                    EditProfileScreen(
+                        userId = userId,
+                        student = student,
+                        userViewModel = viewModel
+                    ) { activeScreen = null }
+                PopupScreen.ContactUs ->
+                    ContactSupportCard(
+                        emailAddress = stringResource(R.string.contact_email),
+                        whatsappNumber = stringResource(R.string.contact_number),
+                        websiteUrl = stringResource(R.string.contact_website),
+                        modifier = Modifier.fillMaxWidth(),
+                        title = stringResource(R.string.send_us_mail_msg),
+                        subtitle = stringResource(R.string.we_would_love_msg),
+                        emailButtonText = stringResource(R.string.open_email_app_msg)
+                    ) { activeScreen = null }
                 null -> {}
             }
         }
@@ -262,10 +258,7 @@ fun SettingScreen() {
 }
 
 @Composable
-fun SettingsSection(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit
-) {
+fun SettingsSection(title: String, content: @Composable ColumnScope.() -> Unit) {
     val dimens = LocalDimensions.current
 
     Column {
@@ -285,9 +278,7 @@ fun SettingsSection(
             Column(
                 modifier = Modifier.padding(dimens.cardPadding),
                 verticalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall)
-            ) {
-                content()
-            }
+            ) { content() }
         }
     }
 }
@@ -304,14 +295,18 @@ fun LanguageButton(
     Button(
         onClick = onClick,
         modifier = modifier.height(dimens.buttonHeight),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) BrandPrimary else CardBackground,
-            contentColor = if (isSelected) TextOnPrimary else TextPrimary
-        ),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = if (isSelected) BrandPrimary else CardBackground,
+                contentColor = if (isSelected) TextOnPrimary else TextPrimary
+            ),
         shape = RoundedCornerShape(dimens.cornerRadiusMedium),
-        elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = if (isSelected) dimens.cardElevation else dimens.cardElevation / 2
-        )
+        elevation =
+            ButtonDefaults.buttonElevation(
+                defaultElevation =
+                    if (isSelected) dimens.cardElevation
+                    else dimens.cardElevation / 2
+            )
     ) {
         Text(
             text = text,
@@ -322,19 +317,14 @@ fun LanguageButton(
 }
 
 @Composable
-fun SettingsItem(
-    icon: ImageVector,
-    iconTint: Color,
-    title: String,
-    onClick: () -> Unit
-) {
+fun SettingsItem(icon: ImageVector, iconTint: Color, title: String, onClick: () -> Unit) {
     val dimens = LocalDimensions.current
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = dimens.spaceSmall),
+        modifier =
+            Modifier.fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(vertical = dimens.spaceSmall),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -348,11 +338,7 @@ fun SettingsItem(
                 tint = iconTint,
                 modifier = Modifier.size(dimens.iconMedium)
             )
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = TextPrimary
-            )
+            Text(text = title, style = MaterialTheme.typography.bodyLarge, color = TextPrimary)
         }
         Icon(
             imageVector = Icons.Default.ChevronRight,

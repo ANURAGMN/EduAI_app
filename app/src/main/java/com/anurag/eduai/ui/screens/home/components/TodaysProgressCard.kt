@@ -30,12 +30,13 @@ import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.data.local.entities.ProgressEntity
+import com.anurag.eduai.data.model.LessonStatus
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.AccentGreen
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.ColorHint
-import com.anurag.eduai.ui.theme.Dimensions
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.theme.White
@@ -43,33 +44,32 @@ import com.anurag.eduai.ui.theme.White
 @Composable
 fun TodayProgressCard(
     progressConcepts: List<Pair<ProgressEntity?, ConceptEntity?>>,
-    todayCompletedConcept: String,
-    todayCompletedSimulation: String,
+    todayCompletedConcept: Int,
+    todayCompletedSimulation: Int,
     onLessonClick: (String) -> Unit,
     onShowAllChapters: () -> Unit = {}
 ) {
+
+    val dimes = LocalDimensions.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = BackgroundPrimary),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = Dimensions.Compact.cardElevation)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = dimes.cardElevation)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.Compact.screenPadding),
+            modifier = Modifier.fillMaxWidth().padding(dimes.screenPadding),
             verticalArrangement = Arrangement.Center
         ) {
-
             if (progressConcepts.isEmpty()) {
                 Text(
                     text = stringResource(R.string.no_progress_msg),
                     style = MaterialTheme.typography.titleMedium,
                     color = TextPrimary,
                     fontStyle = FontStyle.Italic,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp)
-                        .padding(0.dp, 6.dp),
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .height(dimes.containerMinHeight)
+                            .padding(0.dp, dimes.spaceExtraSmall),
                     textAlign = TextAlign.Center,
                 )
                 return@Column
@@ -80,15 +80,11 @@ fun TodayProgressCard(
                 style = MaterialTheme.typography.titleLarge,
                 color = TextPrimary,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(0.dp, 6.dp)
+                modifier = Modifier.fillMaxWidth().padding(0.dp, dimes.spaceExtraSmall)
             )
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(0.dp, Dimensions.Compact.screenPadding),
+                modifier = Modifier.fillMaxWidth().padding(0.dp, dimes.screenPadding),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 // Completed Concepts today
@@ -100,7 +96,7 @@ fun TodayProgressCard(
                     modifier = Modifier.weight(0.5f)
                 )
 
-                Spacer(modifier = Modifier.padding(Dimensions.Compact.spaceSmall))
+                Spacer(modifier = Modifier.padding(dimes.spaceSmall))
 
                 ProgressCard(
                     cardColors = AccentGreen.copy(alpha = 0.3f),
@@ -111,14 +107,12 @@ fun TodayProgressCard(
                 )
             }
 
-            /**
-             * Button to view all chapter
-             */
+            /** Button to view all chapter */
             OutlinedButton(
                 onClick = onShowAllChapters,
-                shape = RoundedCornerShape(Dimensions.Compact.cornerRadiusMedium),
+                shape = RoundedCornerShape(dimes.cornerRadiusMedium),
                 modifier = Modifier.fillMaxWidth(),
-                border = BorderStroke(Dimensions.Compact.dividerThickness, ColorHint),
+                border = BorderStroke(dimes.dividerThickness, ColorHint),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -129,7 +123,7 @@ fun TodayProgressCard(
                         text = "\uD83D\uDCD6", // 📖 icon
                         style = MaterialTheme.typography.headlineMedium
                     )
-                    Spacer(modifier = Modifier.padding(2.dp))
+                    Spacer(modifier = Modifier.padding(dimes.spaceExtraSmall))
                     Text(
                         text = stringResource(R.string.view_ll_chapter),
                         style = MaterialTheme.typography.titleMedium,
@@ -144,55 +138,44 @@ fun TodayProgressCard(
                 }
             }
 
-            Spacer(modifier = Modifier.padding(Dimensions.Compact.spaceSmall))
+            Spacer(modifier = Modifier.padding(dimes.spaceSmall))
 
             progressConcepts.forEach { (progress, concept) ->
-
-                val status = progress?.status ?: "NOT_STARTED"
-                val isCompleted = status == "COMPLETED"
-                val isInProgress = status == "IN_PROGRESS"
-                val isLocked = status == "NOT_STARTED"
+                val lessonStatus = LessonStatus.fromString(progress?.status ?: "NOT_STARTED")
+                val isCompleted = lessonStatus == LessonStatus.COMPLETED
+                val isInProgress = lessonStatus == LessonStatus.IN_PROGRESS
 
                 LessonStatusCard(
-                    title = concept?.conceptName ?: "Unknown Concept",
-                    subtitle = "Status: $status",
-                    iconColor = when {
-                        isCompleted -> AccentGreen
-                        isInProgress -> AccentBlue
+                    title = concept?.conceptName
+                        ?: stringResource(R.string.unknown_concept),
+                    subtitle = stringResource(R.string.status_label, lessonStatus.value),
+                    iconColor = when (lessonStatus) {
+                        LessonStatus.COMPLETED -> AccentGreen
+                        LessonStatus.IN_PROGRESS -> AccentBlue
                         else -> AccentBlue
                     },
-                    backgroundColor = when {
-                        isCompleted -> AccentGreen.copy(alpha = 0.1f)
-                        isInProgress -> AccentBlue.copy(alpha = 0.1f)
+                    backgroundColor = when (lessonStatus) {
+                        LessonStatus.COMPLETED -> AccentGreen.copy(alpha = 0.1f)
+                        LessonStatus.IN_PROGRESS -> AccentBlue.copy(alpha = 0.1f)
                         else -> AccentBlue.copy(alpha = 0.1f)
                     },
                     icon = {
                         Icon(
-                            imageVector = when {
-                                isCompleted -> Icons.Outlined.CheckCircle
+                            imageVector = when (lessonStatus) {
+                                LessonStatus.COMPLETED -> Icons.Outlined.CheckCircle
                                 else -> Icons.AutoMirrored.Outlined.LibraryBooks
                             },
                             contentDescription = null,
                             tint = White
                         )
                     },
-                    status = when (status) {
-                        "IN_PROGRESS" -> "pending"
-                        "COMPLETED" -> "completed"
-                        else -> "locked"
-                    },
+                    lessonStatus = lessonStatus,
                     onClick = {
-                        DebugLogger.debugLog(
-                            "TodayProgressCard",
-                            "Concept Clicked id ${concept?.conceptId}"
-                        )
+                        DebugLogger.debugLog("TodayProgressCard", "Concept Clicked id ${concept?.conceptId}")
                         concept?.let { onLessonClick(it.conceptId) }
-                    }
-                )
-
-                Spacer(modifier = Modifier.padding(5.dp))
+                    })
+                Spacer(modifier = Modifier.padding(dimes.spaceSmall))
             }
-
         }
     }
 }

@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
@@ -24,36 +23,38 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
+import com.anurag.eduai.ui.theme.LocalDimensions
+import com.anurag.eduai.ui.theme.ProgressGradientEnd
+import com.anurag.eduai.ui.theme.ProgressGradientStart
 import com.anurag.eduai.ui.theme.White
 
 @Composable
-fun ProgressScreenTopBar(
-    onGoHome:() -> Unit = {},
-    onGoSetting:() -> Unit = {}
-) {
+fun ProgressScreenTopBar(onGoHome: () -> Unit = {}, onGoSetting: () -> Unit = {}) {
+    val dimes = LocalDimensions.current
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                brush = Brush.horizontalGradient(
-                    colors = listOf(
-                        Color(0xFF11C416),
-                        Color(0xFF009358)
-                    )
-                ),
-                shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
-            )
-            .padding(20.dp)
+        modifier =
+            Modifier.fillMaxWidth()
+                .background(
+                    brush =
+                        Brush.horizontalGradient(
+                            colors =
+                                listOf(
+                                    ProgressGradientStart,
+                                    ProgressGradientEnd
+                                )
+                        ),
+                    shape =
+                        RoundedCornerShape(
+                            bottomStart = dimes.cornerRadiusRound,
+                            bottomEnd = dimes.cornerRadiusRound
+                        )
+                )
+                .padding(dimes.screenPadding)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(0.dp, 10.dp)
-        ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(0.dp, dimes.spaceSmall)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
@@ -68,24 +69,26 @@ fun ProgressScreenTopBar(
                 Icon(
                     imageVector = Icons.Outlined.Home,
                     contentDescription = "Home Icon",
-                    modifier = Modifier.size(20.dp)
-                        .clickable(enabled = true, onClick = onGoHome),
+                    modifier =
+                        Modifier.size(dimes.iconMedium)
+                            .clickable(enabled = true, onClick = onGoHome),
                     tint = White,
                 )
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(dimes.spaceSmall))
                 // navigate to stting
                 Icon(
                     imageVector = Icons.Outlined.Settings,
                     contentDescription = "Setting Icon",
-                    modifier = Modifier.size(20.dp)
-                        .clickable(enabled = true, onClick = onGoSetting),
+                    modifier =
+                        Modifier.size(dimes.iconMedium)
+                            .clickable(enabled = true, onClick = onGoSetting),
                     tint = White
                 )
             }
-            Spacer(modifier = Modifier.height(15.dp))
+            Spacer(modifier = Modifier.height(dimes.spaceMedium))
             Text(
                 text = stringResource(R.string.last_seven_days),
-                color = Color(0xFFD0D0D0),
+                color = White.copy(alpha = 0.8f),
                 style = MaterialTheme.typography.titleSmall
             )
         }

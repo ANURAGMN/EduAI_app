@@ -24,11 +24,11 @@ class ProgressScreenVIewModel(
 ) : ViewModel() {
 
     // --- State holders ---
-    private val _totalCompletedConcept = MutableStateFlow("0")
-    val totalCompletedConcept: StateFlow<String> = _totalCompletedConcept
+    private val _totalCompletedConcept = MutableStateFlow(0)
+    val totalCompletedConcept: StateFlow<Int> = _totalCompletedConcept
 
-    private val _streakCount = MutableStateFlow("0")
-    val streakCount: StateFlow<String> = _streakCount
+    private val _streakCount = MutableStateFlow(0)
+    val streakCount: StateFlow<Int> = _streakCount
 
     private val _sevenDayProgress = MutableStateFlow<List<DailyConceptCount>>(emptyList())
     val sevenDayProgress: StateFlow<List<DailyConceptCount>> = _sevenDayProgress
@@ -54,7 +54,7 @@ class ProgressScreenVIewModel(
 
     fun getTotalCompletedConcept() {
         viewModelScope.launch {
-            val result = progressDao.getTotalCompletedConcepts(userId).toString()
+            val result = progressDao.getTotalCompletedConcepts(userId)
             _totalCompletedConcept.value = result
         }
     }
@@ -68,7 +68,7 @@ class ProgressScreenVIewModel(
 
     fun getStreak() {
         val result = streakManager.getCurrentStreak()
-        _streakCount.value = result.toString() ?: "0"
+        _streakCount.value = result
     }
 
     fun getChapterProgressSummary(userId: String, classLevel: Int, subject: String){

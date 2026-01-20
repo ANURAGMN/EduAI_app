@@ -5,29 +5,32 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.anurag.eduai.R
+import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.HeaderGradientEnd
 import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 
 @Composable
-fun HomeScreenTopBar(
-    userName: String,
+fun LoadingHomeHeader(
     subject: String,
-    streakDays: Int,
-    greeting: String,
     onChangeSubject: () -> Unit = {}
 ) {
     val dimes = LocalDimensions.current
-
     Box(
         modifier =
             Modifier.fillMaxWidth()
@@ -50,19 +53,37 @@ fun HomeScreenTopBar(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(dimes.spaceSmall)) {
             Text(
-                text = greeting,
+                text = stringResource(R.string.good_morning),
                 color = TextPrimary,
                 style = MaterialTheme.typography.titleSmall,
             )
             Text(
-                text = userName,
+                text = stringResource(R.string.loading),
                 color = TextPrimary,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
 
             HomeScreenSubjectCard(subject, onChangeClick = onChangeSubject)
-            StreakCard(streakDays, modifier = Modifier.fillMaxWidth())
+
+            // Loading placeholder for streak card
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            listOf(
+                                HeaderGradientStart.copy(alpha = 0.5f),
+                                HeaderGradientEnd.copy(alpha = 0.5f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(dimes.cornerRadiusRound)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = BrandPrimary)
+            }
         }
     }
 }
