@@ -82,7 +82,8 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.3.1")
 
 // Image Loading
-    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
 
 // JSON Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")

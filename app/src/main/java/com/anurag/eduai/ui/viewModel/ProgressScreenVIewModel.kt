@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.anurag.eduai.data.local.dao.ChapterProgressSummary
 import com.anurag.eduai.data.local.dao.DailyConceptCount
 import com.anurag.eduai.data.local.dao.ProgressDao
+import com.anurag.eduai.data.local.dao.StudentDao
 import com.anurag.eduai.data.local.dao.SubjectDao
+import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.data.local.entities.SubjectEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.utils.StreakManager
@@ -16,15 +18,17 @@ import kotlinx.coroutines.launch
 class ProgressScreenVIewModel(
     private val progressDao: ProgressDao,
     private val subjectDao: SubjectDao,
-    private val streakManager: StreakManager
+    private val streakManager: StreakManager,
+    private val studentDao: StudentDao,
+    private val userId: String
 ) : ViewModel() {
 
     // --- State holders ---
-    private val _totalCompletedConcept = MutableStateFlow("0")
-    val totalCompletedConcept: StateFlow<String> = _totalCompletedConcept
+    private val _totalCompletedConcept = MutableStateFlow(0)
+    val totalCompletedConcept: StateFlow<Int> = _totalCompletedConcept
 
-    private val _streakCount = MutableStateFlow("0")
-    val streakCount: StateFlow<String> = _streakCount
+    private val _streakCount = MutableStateFlow(0)
+    val streakCount: StateFlow<Int> = _streakCount
 
     private val _sevenDayProgress = MutableStateFlow<List<DailyConceptCount>>(emptyList())
     val sevenDayProgress: StateFlow<List<DailyConceptCount>> = _sevenDayProgress
@@ -39,10 +43,18 @@ class ProgressScreenVIewModel(
     private val _selectedSubject = MutableStateFlow<SubjectEntity?>(null)
     val selectedSubject: StateFlow<SubjectEntity?> = _selectedSubject
 
+    private val _student = MutableStateFlow<StudentEntity?>(null)
+    val student: StateFlow<StudentEntity?> = _student
 
-    fun getTotalCompletedConcept(userId: String) {
+    init {
+        getStudent()
+        getStreak()
+        getTotalCompletedConcept()
+    }
+
+    fun getTotalCompletedConcept() {
         viewModelScope.launch {
-            val result = progressDao.getTotalCompletedConcepts(userId).toString()
+            val result = progressDao.getTotalCompletedConcepts(userId)
             _totalCompletedConcept.value = result
         }
     }
@@ -56,7 +68,7 @@ class ProgressScreenVIewModel(
 
     fun getStreak() {
         val result = streakManager.getCurrentStreak()
-        _streakCount.value = result.toString() ?: "0"
+        _streakCount.value = result
     }
 
     fun getChapterProgressSummary(userId: String, classLevel: Int, subject: String){
@@ -94,5 +106,11 @@ class ProgressScreenVIewModel(
             "ProgressScreenViewModel",
             "Selected subject: ${subject.subjectName}"
         )
+    }
+    fun getStudent(){
+        viewModelScope.launch {
+            val result = studentDao.getStudentSync(userId)
+            _student.value = result
+        }
     }
 }

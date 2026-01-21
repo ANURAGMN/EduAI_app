@@ -2,6 +2,7 @@ package com.anurag.eduai.sync
 
 import com.anurag.eduai.data.local.entities.SubjectEntity
 import com.google.firebase.firestore.DocumentSnapshot
+import java.util.Locale
 
 /**
  * Maps Firestore subject documents to local Room SubjectEntity objects.
@@ -15,8 +16,10 @@ object FirebaseSubjectMapper {
         val totalChapters = document.getLong("subjectCount")?.toInt() ?: 0
 
         return SubjectEntity(
-            subjectId = document.getString("subject_id") ?: "",
-            subjectName = document.getString("subject_id") ?: "",
+            subjectId = document.getString("subject_id") ?: error("Unable to extract subject from document id ${document.id}"),
+            subjectName = document.getString("subject_id").toString()
+                .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
+                ?: error("Unable to extract subject from document id ${document.id}"),
             subjectNameKannada = "",
             classLevel = classLevel,
             iconUrl = null,

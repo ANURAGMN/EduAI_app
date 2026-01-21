@@ -44,6 +44,13 @@
     <string name="pending">Pending</string>
     <string name="practice_simulation">Practice Simulations</string>
     <string name="no_progress_msg">No Progress\nPlease start learning by selecting subject</string>
+    <string name="good_morning">Good Morning</string>
+    <string name="good_afternoon">Good Afternoon</string>
+    <string name="good_evening">Good Evening</string>
+    <string name="good_night">Good Night</string>
+    <string name="unknown_concept">Unknown Concept</string>
+    <string name="status_label">Status: %1$s</string>
+    <string name="loading">Loading.....</string>
 
 <!--    Progress Screen-->
     <string name="your_progress">Your Progress</string>
@@ -119,7 +126,16 @@
     <string name="phone_number">Phone Number</string>
     <string name="enter_phone_number">Enter phone number</string>
     <string name="save_changes">Save Changes</string>
+    <string name="profile">Profile</string>
     <string name="ncert_curriculum">NCERT Curriculum</string>
     <string name="choose_subjects_to_continue">Choose subjects to continue</string>
     <string name="choose_a_subject_to_continue">Choose a subject to continue</string>
+
+<!--    Contact Details-->
+    <string name="contact_email">anurag@gmail.com</string>
+    <string name="contact_number">+91 94495 31117</string>
+    <string name="contact_website">paadams.in</string>
+    <string name="send_us_mail_msg">Send us an email</string>
+    <string name="we_would_love_msg">We\'d love to hear from you</string>
+    <string name="open_email_app_msg">Open Email App</string>
 </resources>

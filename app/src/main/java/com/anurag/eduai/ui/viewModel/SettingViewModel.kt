@@ -1,10 +1,14 @@
 package com.anurag.eduai.ui.viewModel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.dao.StudentDao
+import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.repository.FirebaseRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
@@ -15,16 +19,28 @@ sealed class UpdateProfileState {
     data class Error(val message: String) : UpdateProfileState()
 }
 
-class UpdateUserViewModel(
+class SettingViewModel(
     private val repository: FirebaseRepository,
     private val studentDao: StudentDao,
-    private val userId: String
+    private val userId: String,
+    context: Context
 ) : ViewModel() {
+
+    val db = EduAiDatabase.getInstance(context)
+
+
+    private val _student = MutableStateFlow<StudentEntity?>(null)
+    val student: StateFlow<StudentEntity?> = _student
 
     private val _updateState =
         MutableStateFlow<UpdateProfileState>(UpdateProfileState.Idle)
     val updateState = _updateState.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            getStudent()
+        }
+    }
     fun updateProfile(
         updatedName: String,
         updatedPhone: String,
@@ -74,4 +90,27 @@ class UpdateUserViewModel(
     fun resetState() {
         _updateState.value = UpdateProfileState.Idle
     }
+
+    // update local DB with newly picked profile picture
+    fun updateProfilePhoto(localPath: String) {
+        viewModelScope.launch {
+            val existing = studentDao.getStudentSync(userId) ?: return@launch
+
+            val updated =
+                existing.copy(
+                    localProfilePhotoUri = localPath,
+                    updatedAt = System.currentTimeMillis(),
+                    isSynced = false
+                )
+
+            studentDao.updateStudent(updated)
+        }
+    }
+    fun getStudent(){
+        viewModelScope.launch {
+            val result = studentDao.getStudentSync(userId)
+            _student.value = result
+        }
+    }
+
 }
