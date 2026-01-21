@@ -44,15 +44,39 @@ object SessionManager {
      * If an old session exists in SharedPrefs, it ends it first before creating new one
      */
     fun startSession() {
-        // Check if there's an old session that wasn't properly ended
-        val existingSessionId = sharedPrefs?.getCurrentSession()
-        if (existingSessionId != null) {
-            DebugLogger.debugLog("SessionManager", "Found old session: $existingSessionId, ending it before starting new one")
-            // End the old session asynchronously
-            scope.launch {
-                try {
+        // Check if we already have an active session
+        val existingActiveSessionId = currentSessionId
+        if (existingActiveSessionId != null) {
+            DebugLogger.debugLog("SessionManager", "Session already active: $existingActiveSessionId, skipping duplicate creation")
+            return
+        }
+
+        // Use runBlocking to ensure old session is properly closed before starting new one
+        runBlocking {
+            try {
+                // Check if there's an old session that wasn't properly ended
+                val existingSessionId = sharedPrefs?.getCurrentSession()
+                if (existingSessionId != null) {
+                    DebugLogger.debugLog("SessionManager", "Found old session: $existingSessionId, ending it before starting new one")
+
                     val oldSession = database?.sessionDao()?.getSession(existingSessionId)
                     if (oldSession != null && oldSession.sessionEndTime == null) {
+                        // Close all active analytics for the old session
+                        val activeAnalytics = database?.appAnalyticsDao()?.getAnalyticsForSession(existingSessionId)
+                            ?.filter { it.exitTime == null }
+
+                        activeAnalytics?.forEach { analytics ->
+                            val exitTime = System.currentTimeMillis()
+                            val duration = exitTime - analytics.entryTime
+                            database?.appAnalyticsDao()?.updateAnalyticsExit(
+                                analyticsId = analytics.analyticsId,
+                                eventType = EventType.EXIT.type,
+                                exitTime = exitTime,
+                                durationMillis = duration
+                            )
+                            DebugLogger.debugLog("SessionManager", "Auto-closed old session screen: ${analytics.screenName}")
+                        }
+
                         // Session wasn't properly ended, close it now
                         val endTime = System.currentTimeMillis()
                         val updatedSession = oldSession.copy(
@@ -60,20 +84,21 @@ object SessionManager {
                             durationMillis = endTime - oldSession.sessionStartTime
                         )
                         database?.sessionDao()?.updateSession(updatedSession)
-                        DebugLogger.debugLog("SessionManager", "Old session ended: $existingSessionId")
+                        DebugLogger.debugLog("SessionManager", "Old session ended: $existingSessionId, Duration: ${updatedSession.durationMillis}ms")
                     }
-                } catch (e: Exception) {
-                    DebugLogger.debugLog("SessionManager", "Error ending old session: ${e.message}")
                 }
+            } catch (e: Exception) {
+                DebugLogger.debugLog("SessionManager", "Error ending old session: ${e.message}")
             }
         }
 
         // Generate NEW session ID (synchronously) to avoid race conditions
         val sessionId = UUID.randomUUID().toString()
+        val startTime = System.currentTimeMillis()
         currentSessionId = sessionId
         sharedPrefs?.setCurrentSession(sessionId)
 
-        DebugLogger.debugLog("SessionManager", "New session started: $sessionId")
+        DebugLogger.debugLog("SessionManager", "New session started: $sessionId at $startTime")
 
         // Save to database asynchronously
         scope.launch {
@@ -81,7 +106,7 @@ object SessionManager {
                 val session = SessionEntity(
                     sessionId = sessionId,
                     sessionDate = getCurrentDate(),
-                    sessionStartTime = System.currentTimeMillis(),
+                    sessionStartTime = startTime,
                     syncAt = System.currentTimeMillis()
                 )
 
@@ -100,41 +125,59 @@ object SessionManager {
     fun endSession() {
         runBlocking {
             try {
-                val sessionId = currentSessionId ?: return@runBlocking
+                val sessionId = currentSessionId ?: sharedPrefs?.getCurrentSession()
+
+                if (sessionId == null) {
+                    DebugLogger.debugLog("SessionManager", "No active session to end")
+                    return@runBlocking
+                }
+
+                DebugLogger.debugLog("SessionManager", "Ending session: $sessionId")
 
                 // First, close all active (non-exited) screen analytics
                 val activeAnalytics = database?.appAnalyticsDao()?.getAnalyticsForSession(sessionId)
                     ?.filter { it.exitTime == null }
 
-                activeAnalytics?.forEach { analytics ->
+                if (!activeAnalytics.isNullOrEmpty()) {
                     val exitTime = System.currentTimeMillis()
-                    val duration = exitTime - analytics.entryTime
-                    database?.appAnalyticsDao()?.updateAnalyticsExit(
-                        analyticsId = analytics.analyticsId,
-                        eventType = EventType.EXIT.type,
-                        exitTime = exitTime,
-                        durationMillis = duration
-                    )
-                    DebugLogger.debugLog("SessionManager", "Auto-closed screen: ${analytics.screenName}, Duration: ${duration}ms")
+                    activeAnalytics.forEach { analytics ->
+                        val duration = exitTime - analytics.entryTime
+                        database?.appAnalyticsDao()?.updateAnalyticsExit(
+                            analyticsId = analytics.analyticsId,
+                            eventType = EventType.EXIT.type,
+                            exitTime = exitTime,
+                            durationMillis = duration
+                        )
+                        DebugLogger.debugLog("SessionManager", "Auto-closed screen: ${analytics.screenName}, Duration: ${duration}ms")
+                    }
+                    DebugLogger.debugLog("SessionManager", "Closed ${activeAnalytics.size} active screen(s)")
                 }
 
                 // Then end the session
-                val session = database?.sessionDao()?.getSession(sessionId) ?: return@runBlocking
+                val session = database?.sessionDao()?.getSession(sessionId)
 
-                val endTime = System.currentTimeMillis()
-                val updatedSession = session.copy(
-                    sessionEndTime = endTime,
-                    durationMillis = endTime - session.sessionStartTime
-                )
+                if (session != null) {
+                    val endTime = System.currentTimeMillis()
+                    val duration = endTime - session.sessionStartTime
+                    val updatedSession = session.copy(
+                        sessionEndTime = endTime,
+                        durationMillis = duration
+                    )
 
-                database?.sessionDao()?.updateSession(updatedSession)
-                DebugLogger.debugLog("SessionManager", "Session ended: $sessionId, Duration: ${updatedSession.durationMillis}ms")
+                    database?.sessionDao()?.updateSession(updatedSession)
+                    DebugLogger.debugLog("SessionManager", "Session ended: $sessionId, Duration: ${duration}ms (${duration/1000}s)")
+                } else {
+                    DebugLogger.debugLog("SessionManager", "Session not found in database: $sessionId")
+                }
 
+                // Clear session references
                 currentSessionId = null
-                // Clear session id from SharedPreferences
                 sharedPrefs?.clearCurrentSession()
+
+                DebugLogger.debugLog("SessionManager", "Session cleanup completed")
             } catch (e: Exception) {
                 DebugLogger.debugLog("SessionManager", "Error ending session: ${e.message}")
+                e.printStackTrace()
             }
         }
     }

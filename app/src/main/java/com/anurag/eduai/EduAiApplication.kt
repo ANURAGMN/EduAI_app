@@ -27,14 +27,14 @@ class EduAiApplication : Application(), Configuration.Provider{
         // Initialize SessionManager (handles both sessions and analytics)
         SessionManager.initialize(this)
 
-        // Start initial session (before any screen renders)
-        SessionManager.startSession()
-
-        // Register app lifecycle observer
+        // Register app lifecycle observer (this will handle session start/end)
         appLifecycleObserver = AppLifecycleObserver()
         appLifecycleObserver.register()
 
-        DebugLogger.debugLog("EduAiApplication", "AppLifecycleObserver registered")
+        // Start initial session (app is already in foreground when Application.onCreate is called)
+        SessionManager.startSession()
+
+        DebugLogger.debugLog("EduAiApplication", "AppLifecycleObserver registered and initial session started")
         scheduleWeeklySync()
     }
 
