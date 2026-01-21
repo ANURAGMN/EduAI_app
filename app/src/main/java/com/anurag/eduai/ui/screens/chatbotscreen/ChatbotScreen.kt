@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.R
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.service.analytics.ScreenName
+import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.chatbotscreen.components.*
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
 import com.anurag.eduai.ui.viewModel.ChatUiState
@@ -34,6 +36,9 @@ fun ChatbotScreen(
     ttsController: TextToSpeech = viewModel(),
     sttController: SpeechToText = viewModel(),
 ) {
+    // Track screen analytics
+    TrackScreenEvent(ScreenName.CHATBOT)
+
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val density = LocalDensity.current

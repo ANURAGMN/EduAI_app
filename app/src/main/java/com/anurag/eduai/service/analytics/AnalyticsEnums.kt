@@ -10,7 +10,8 @@ enum class ScreenName(val displayName: String) {
     CONCEPT("CONCEPT"),
     CONCEPT_DETAIL("CONCEPT_DETAIL"),
     PROGRESS("PROGRESS"),
-    SETTINGS("SETTINGS")
+    SETTINGS("SETTINGS"),
+    CHATBOT("CHATBOT")
 }
 
 enum class EventType(val type: String) {
