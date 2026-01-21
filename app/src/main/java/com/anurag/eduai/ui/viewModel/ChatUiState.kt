@@ -40,13 +40,21 @@ data class ChatUiState(
     val fullTextForTTS: String = "",
     val ttsPausedForResource: Boolean = false,
 
+    // Typing Animation State
+    val isTypingComplete: Boolean = false,
+    val waitingForTTSToComplete: Boolean = false,
+
     // Settings
     val studentLevel: String = "medium",
     val isKannada: Boolean = false,
     val currentLanguage: String = "en",
 
     // Metadata
-    val agentMetadata: SessionMetadata? = null
+    val agentMetadata: SessionMetadata? = null,
+
+    // Pending Message Queue (for messages received while resource card is showing)
+    val pendingAgentResponse: String? = null,
+    val waitingForResourceCardDismiss: Boolean = false
 )
 
 /**

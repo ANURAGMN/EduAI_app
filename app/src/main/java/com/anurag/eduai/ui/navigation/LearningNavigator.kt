@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.anurag.eduai.ui.screens.chapterscreen.ChapterScreen
+import com.anurag.eduai.ui.screens.chatbotscreen.ChatbotScreen
 import com.anurag.eduai.ui.screens.conceptdetailscreen.ConceptDetailScreen
 import com.anurag.eduai.ui.screens.conceptscreen.ConceptScreen
 import com.anurag.eduai.ui.screens.home.HomeScreen
@@ -19,6 +20,7 @@ object LearningRoutes {
     const val CHAPTERS = "chapters/{subjectId}"
     const val CONCEPTS = "concepts/{chapterId}"
     const val CONCEPT_DETAIL = "concept_detail/{conceptId}"
+    const val CHATBOT = "chatbot"
 }
 
 @Composable
@@ -70,8 +72,9 @@ fun LearningNavigator(
             ConceptScreen(
                 chapterId = chapterId,
                 onBackClick = { navController.popBackStack() },
-                onConceptClick = { conceptId ->
-                    navController.navigate("concept_detail/$conceptId") },
+                onConceptClick = {
+                    navController.navigate(LearningRoutes.CHATBOT)
+                },
                 onGoHome = onGoHome,
                 onGoSetting = onGoSetting
             )
@@ -85,6 +88,10 @@ fun LearningNavigator(
                 onGoHome = onGoHome,
                 onGoSetting = onGoSetting
             )
+        }
+
+        composable(LearningRoutes.CHATBOT) {
+            ChatbotScreen()
         }
     }
 }

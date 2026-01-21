@@ -14,6 +14,7 @@ import com.anurag.eduai.ui.theme.TextSecondary
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Brush
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
+import com.anurag.eduai.ui.viewModel.TextToSpeech
 
 /**
  * Main content area showing either resource card, loading, or agent message
@@ -27,7 +28,7 @@ fun ChatContentArea(
     lastAIMessage: ChatMessageModel?,
     isTyping: Boolean,
     typingText: String,
-    ttsController: com.anurag.eduai.ui.viewModel.TextToSpeech,
+    ttsController: TextToSpeech,
     onDismissResource: () -> Unit,
     onResourceTimerComplete: () -> Unit,
     inputSectionHeight: androidx.compose.ui.unit.Dp,

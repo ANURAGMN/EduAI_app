@@ -176,7 +176,7 @@ fun ChatEffects(
                     delay(50)
                 }
                 ttsController.speak(textToSpeak)
-                DebugLogger.debugLog("ChatbotScreen", "TTS started: ${textToSpeak.take(50)}...")
+                DebugLogger.debugLog("ChatScreenHelpers", "TTS started: ${textToSpeak.take(50)}...")
             }
         }
     }
@@ -195,6 +195,15 @@ fun ChatEffects(
         }
     }
 
+    // Trigger resource card display when TTS completes (after typing is also complete)
+    LaunchedEffect(ttsState.isSpeaking, chatState.waitingForTTSToComplete) {
+        // When TTS stops AND we're waiting for it to complete, trigger resource card check
+        if (!ttsState.isSpeaking && chatState.waitingForTTSToComplete) {
+            DebugLogger.debugLog("ChatScreenHelpers", "TTS finished, triggering resource card check")
+            chatViewModel.onTTSComplete()
+        }
+    }
+
     // Handle speech recognition
     LaunchedEffect(sttState.isListening) {
         if (sttState.isListening) {
@@ -209,32 +218,40 @@ fun ChatEffects(
         }
     }
 
-    // Start idle timer 5 seconds AFTER TTS completes
-    LaunchedEffect(ttsState.isSpeaking) {
-        if (!ttsState.isSpeaking && chatState.messages.isNotEmpty()) {
-            // TTS just stopped (or never started), wait 5 seconds then check conditions
-            DebugLogger.debugLog("ChatbotScreen", " TTS stopped! Waiting 5 seconds before checking conditions...")
-            delay(5000L)
+    // Start idle timer AFTER everything completes (typing, TTS, and resource card if exists)
+    LaunchedEffect(ttsState.isSpeaking, chatState.isLoading, chatState.isTyping, chatState.waitingForTTSToComplete, chatState.isUserActive, chatState.showResourceCard) {
+        // Only trigger if all agent message components are complete AND user is idle
+        if (!ttsState.isSpeaking &&
+            !chatState.isLoading &&
+            !chatState.isTyping &&
+            !chatState.waitingForTTSToComplete &&
+            !chatState.isUserActive &&
+            !chatState.showResourceCard &&  //  Wait for resource card to be dismissed
+            chatState.messages.isNotEmpty()) {
 
-            // Only start timer if conditions are still met
-            DebugLogger.debugLog("ChatbotScreen", """
+            // All agent message components complete, check if we should start idle timer
+            DebugLogger.debugLog("ChatScreenHelpers", """
                 ═══════════════════════════════════════════════════════
-                IDLE TIMER CHECK (after 5s delay post-TTS)
+                IDLE TIMER TRIGGER CONDITIONS MET
                 ═══════════════════════════════════════════════════════
                 !ttsState.isSpeaking: ${!ttsState.isSpeaking}
+                !isLoading: ${!chatState.isLoading}
+                !isTyping: ${!chatState.isTyping}
+                !waitingForTTSToComplete: ${!chatState.waitingForTTSToComplete}
+                !isUserActive: ${!chatState.isUserActive}
+                !showResourceCard: ${!chatState.showResourceCard}
                 messages.isNotEmpty(): ${chatState.messages.isNotEmpty()}
                 inputText.isEmpty(): ${chatState.inputText.isEmpty()}
-                !isUserActive: ${!chatState.isUserActive}
                 autosuggestions.size: ${chatState.autosuggestions.size}
                 ═══════════════════════════════════════════════════════
             """.trimIndent())
 
-            if (!ttsState.isSpeaking && chatState.messages.isNotEmpty() &&
-                chatState.inputText.isEmpty() && !chatState.isUserActive) {
-                DebugLogger.debugLog("ChatbotScreen", " Calling startIdleTimer()")
+            // Start the idle timer which will show autosuggestions after 5s delay
+            if (chatState.inputText.isEmpty() && chatState.autosuggestions.isNotEmpty()) {
+                DebugLogger.debugLog("ChatScreenHelpers", " Starting idle timer (5s countdown)")
                 chatViewModel.startIdleTimer()
             } else {
-                DebugLogger.debugLog("ChatbotScreen", " NOT calling startIdleTimer() - conditions not met")
+                DebugLogger.debugLog("ChatScreenHelpers", " NOT starting timer - inputText: '${chatState.inputText}', suggestions: ${chatState.autosuggestions.size}")
             }
         }
     }

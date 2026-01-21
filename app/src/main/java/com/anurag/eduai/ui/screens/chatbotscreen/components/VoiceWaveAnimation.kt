@@ -8,10 +8,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.ui.theme.HeaderGradientEnd
 import com.anurag.eduai.ui.theme.HeaderGradientStart
+import kotlin.math.abs
 
 /**
  * Google AI mode style waveform animation
@@ -116,7 +118,7 @@ fun VoiceWaveAnimation(
             for (i in 0 until segmentCount - 1) {
                 // Calculate edge fade: transparent at edges (0 and end), opaque in center
                 val normalizedPosition = i.toFloat() / (segmentCount - 1)
-                val distanceFromCenter = kotlin.math.abs(normalizedPosition - 0.5f) * 2f
+                val distanceFromCenter = abs(normalizedPosition - 0.5f) * 2f
                 val edgeFade = 1f - (distanceFromCenter * distanceFromCenter * 0.7f)
 
                 drawLine(
@@ -155,7 +157,7 @@ fun VoiceWaveAnimation(
             )
 
             // Draw trapezoid shape attached to the line segment
-            val path = androidx.compose.ui.graphics.Path().apply {
+            val path = Path().apply {
                 moveTo(startPoint.x, startPoint.y)
                 lineTo(endPoint.x, endPoint.y)
                 lineTo(endPoint.x, endPoint.y + glowHeight)

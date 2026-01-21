@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.anurag.eduai.ui.navigation.LoginNavigator
 import com.anurag.eduai.ui.screens.chatbotscreen.ChatbotScreen
 import com.anurag.eduai.ui.theme.AdaptiveTheme
 import com.anurag.eduai.ui.theme.AppTheme
@@ -26,7 +28,7 @@ class MainActivity : AppCompatActivity() {
                             .fillMaxSize()
                             .statusBarsPadding()
                     ) {
-                        ChatbotScreen(chatViewModel = chatViewModel)
+                        LoginNavigator(userViewModel = viewModel())
                     }
 
                 }

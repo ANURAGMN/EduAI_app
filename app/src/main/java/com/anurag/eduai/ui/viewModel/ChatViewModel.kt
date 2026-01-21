@@ -44,8 +44,6 @@ class ChatViewModel : ViewModel() {
     // Internal state
     private var userId: String = ""
     private var clickedAutosuggestion = false
-    private var pendingAgentMessage: String? = null
-    private var pendingContext: Context? = null
 
     // Jobs
     private var typingJob: Job? = null
@@ -127,14 +125,21 @@ class ChatViewModel : ViewModel() {
                 !isUserActive: ${!state.isUserActive}
                 inputText.isEmpty(): ${state.inputText.isEmpty()}
                 !isLoading: ${!state.isLoading}
+                !isTyping: ${!state.isTyping}
+                !waitingForTTSToComplete: ${!state.waitingForTTSToComplete}
                 -------------------------------------------------------
                 Suggestions: ${state.autosuggestions}
                 showAutosuggestions: ${state.showAutosuggestions}
                 =======================================================
             """.trimIndent())
 
-            if (state.autosuggestions.isNotEmpty() && !state.isUserActive &&
-                state.inputText.isEmpty() && !state.isLoading) {
+            // Only show auto-suggestions if user is truly idle
+            if (state.autosuggestions.isNotEmpty() &&
+                !state.isUserActive &&
+                state.inputText.isEmpty() &&
+                !state.isLoading &&
+                !state.isTyping &&
+                !state.waitingForTTSToComplete) {
                 _uiState.update { it.copy(showAutosuggestions = true) }
                 DebugLogger.debugLog("ChatViewModel", " Auto-suggestions SHOWN!")
             } else {
@@ -443,21 +448,25 @@ class ChatViewModel : ViewModel() {
                     saveThreadMapping(context, concept, response.threadId, response.sessionId)
                     agenticAIClient.setCurrentThreadAndSession(response.threadId, response.sessionId)
 
+                    // Cancel any pending idle timer
+                    idleJob?.cancel()
+
                     _uiState.update {
                         it.copy(
                             isSessionStarted = true,
                             autosuggestions = response.autosuggestions,
-                            agentMetadata = response.metadata
+                            agentMetadata = response.metadata,
+                            showAutosuggestions = false,
+                            isUserActive = false  // Ensure user is not marked as active after session start
                         )
                     }
-                    //check and show resource card if any
-                    checkAndShowResourceCard(response.metadata)
-                    //if agent response is present do typing animation or queue it if resource card is shown
+
+                    // Handle agent response - resource card will be shown AFTER typing completes
                     response.agentResponse?.takeIf { it.isNotBlank() }?.let { text ->
-                        handleAgentResponse(text, context)
+                        handleAgentResponse(text)
                     }
 
-                    DebugLogger.debugLog("ChatViewModel", "Session started for: $concept")
+                    DebugLogger.debugLog("ChatViewModel", "Session started for: $concept with ${response.autosuggestions.size} autosuggestions")
                 }
             } catch (e: Exception) {
                 DebugLogger.errorLog("ChatViewModel", "sessionStart error: ${e.message}")
@@ -604,16 +613,20 @@ class ChatViewModel : ViewModel() {
                 if (response.isSuccess) {
                     val resp = response.getOrNull() ?: return@launch
 
+                    // Cancel any pending idle timer to prevent showing old auto-suggestions
+                    idleJob?.cancel()
+
                     _uiState.update {
                         it.copy(
                             autosuggestions = resp.autosuggestions,
-                            agentMetadata = resp.metadata
+                            agentMetadata = resp.metadata,
+                            showAutosuggestions = false
                         )
                     }
-                DebugLogger.debugLog("ChatViewModel","${resp.metadata.nodeTransitions}")
-                    resp.metadata?.let { checkAndShowResourceCard(it) }
+                    DebugLogger.debugLog("ChatViewModel","Node transitions: ${resp.metadata.nodeTransitions}")
+
                     resp.agentResponse?.let { text ->
-                        handleAgentResponse(text, context)
+                        handleAgentResponse(text)
                     }
                 } else {
                     addErrorMessage(context)
@@ -629,15 +642,15 @@ class ChatViewModel : ViewModel() {
 
     /**
      * handles the AI agent's response
-     * - if a resource card is being shown, queues the message
+     * - if a resource card is being shown, queues the message in UI state
      * - otherwise, starts the typing animation immediately
      */
-    private fun handleAgentResponse(text: String, context: Context) {
+    private fun handleAgentResponse(text: String) {
         if (_uiState.value.showResourceCard) {
-            pendingAgentMessage = text
-            pendingContext = context
+            DebugLogger.debugLog("ChatViewModel", "Resource card is showing, queuing agent response")
+            _uiState.update { it.copy(pendingAgentResponse = text) }
         } else {
-            startTypingAnimation(text, context)
+            startTypingAnimation(text)
         }
     }
 
@@ -660,9 +673,12 @@ class ChatViewModel : ViewModel() {
      * - adds the full message immediately to the chat
      * - animates the typing effect word by word
      * - triggers TTS start after a brief delay
+     * - calls onTypingAnimationComplete after animation finishes
      */
-    private fun startTypingAnimation(fullText: String, context: Context) {
+    private fun startTypingAnimation(fullText: String) {
         typingJob?.cancel()
+        idleJob?.cancel()  // Cancel any pending idle timer
+
         typingJob = viewModelScope.launch {
             // Add full message immediately
             _uiState.update {
@@ -670,7 +686,9 @@ class ChatViewModel : ViewModel() {
                     messages = it.messages + ChatMessageModel(sender = "ai", content = fullText),
                     isTyping = true,
                     typingText = "",
-                    fullTextForTTS = fullText
+                    fullTextForTTS = fullText,
+                    isTypingComplete = false,
+                    showAutosuggestions = false  // Hide auto-suggestions during typing
                 )
             }
 
@@ -688,30 +706,69 @@ class ChatViewModel : ViewModel() {
                 delay(120L + (word.length * 8L).coerceAtMost(200L))
             }
 
-            _uiState.update { it.copy(isTyping = false, typingText = "") }
+            _uiState.update { it.copy(isTyping = false, typingText = "", isTypingComplete = true) }
+
+            // After typing animation completes, check if we should show resource card
+            onTypingAnimationComplete()
+        }
+    }
+
+    /**
+     * Called after typing animation completes
+     * - Sets a flag to wait for TTS to complete before showing resource card
+     * - This ensures resource card appears AFTER both typing AND TTS finish
+     */
+    private fun onTypingAnimationComplete() {
+        DebugLogger.debugLog("ChatViewModel", "Typing animation complete, waiting for TTS to finish...")
+        _uiState.update { it.copy(waitingForTTSToComplete = true) }
+    }
+
+    /**
+     * Called after TTS completes (when typing is also complete)
+     * - Checks if there's a resource card to show based on the current metadata
+     * - This ensures resource card appears AFTER both typing animation AND TTS
+     */
+    fun onTTSComplete() {
+        viewModelScope.launch {
+            // Only check for resources if we were waiting for TTS to complete
+            if (_uiState.value.waitingForTTSToComplete) {
+                DebugLogger.debugLog("ChatViewModel", "TTS complete, now checking for resources...")
+
+                _uiState.update { it.copy(waitingForTTSToComplete = false) }
+
+                // Get the current metadata
+                val metadata = _uiState.value.agentMetadata
+                if (metadata != null) {
+                    checkAndShowResourceCard(metadata)
+                } else {
+                    DebugLogger.debugLog("ChatViewModel", "No metadata available for resource card")
+                }
+            }
         }
     }
 
     // ===== Resource Management =====
 
-    /// dismisses the currently shown resource card
+    /// dismisses the currently shown resource card and processes any pending messages
     fun dismissResourceCard() {
+        val pendingMsg = _uiState.value.pendingAgentResponse
+
         _uiState.update {
             it.copy(
                 showResourceCard = false,
                 currentResource = null,
                 resourceDisplayMode = ResourceDisplayMode.IMAGE,
-                ttsPausedForResource = false
+                ttsPausedForResource = false,
+                pendingAgentResponse = null  // Clear pending message
             )
         }
 
-        pendingAgentMessage?.let { msg ->
-            pendingContext?.let { ctx ->
-                startTypingAnimation(msg, ctx)
-                pendingAgentMessage = null
-                pendingContext = null
-            }
+        // Process pending message if exists
+        pendingMsg?.let { msg ->
+            DebugLogger.debugLog("ChatViewModel", "Processing pending agent response after resource card dismissed")
+            startTypingAnimation(msg)
         }
+        DebugLogger.debugLog("ChatViewModel", "Resource card dismissed - idle timer will auto-start if conditions are met")
     }
 
     /// resumes TTS when resource card is dismissed
