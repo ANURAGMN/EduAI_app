@@ -27,6 +27,9 @@ class EduAiApplication : Application(), Configuration.Provider{
         // Initialize SessionManager (handles both sessions and analytics)
         SessionManager.initialize(this)
 
+        // Start initial session (before any screen renders)
+        SessionManager.startSession()
+
         // Register app lifecycle observer
         appLifecycleObserver = AppLifecycleObserver()
         appLifecycleObserver.register()

@@ -21,7 +21,8 @@ import androidx.room.PrimaryKey
     indices = [
         Index(value = ["sessionId"]),
         Index(value = ["screenName"]),
-        Index(value = ["eventType"])
+        Index(value = ["eventType"]),
+        Index(value = ["sessionId", "screenName", "exitTime"])
     ]
 )
 data class AppAnalyticsEntity(
@@ -29,7 +30,9 @@ data class AppAnalyticsEntity(
     val analyticsId: Long = 0,
     val sessionId: String,
     val screenName: String, // "LOGIN", "HOME", "SUBJECT", "CONCEPT", "SIMULATION","PROGRESS", "SETTINGS","PROFILE"
-    val eventType: String, // "ENTRY", "EXIT",
-    val timestamp: Long = System.currentTimeMillis(),
+    val eventType: String?, // "ENTRY" when entered, updates to "EXIT" when exited
+    val entryTime: Long, // Timestamp when screen was entered
+    val exitTime: Long? = null, // Timestamp when screen was exited (null if still active)
+    val durationMillis: Long = 0, // Time spent on screen (exitTime - entryTime)
     val isSynced: Boolean = false
 )
