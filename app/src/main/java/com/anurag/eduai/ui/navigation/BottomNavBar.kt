@@ -21,6 +21,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.screens.chapterscreen.ChapterScreen
+import com.anurag.eduai.ui.screens.chatbotscreen.ChatbotScreen
 import com.anurag.eduai.ui.screens.conceptdetailscreen.ConceptDetailScreen
 import com.anurag.eduai.ui.screens.conceptscreen.ConceptScreen
 import com.anurag.eduai.ui.screens.home.HomeScreen
@@ -173,8 +174,8 @@ fun BottomNavBar() {
                 ConceptScreen(
                     chapterId = chapterId,
                     onBackClick = { navController.popBackStack() },
-                    onConceptClick = { conceptId ->
-                        navController.navigate("concept_detail/$conceptId")
+                    onConceptClick = {
+                        navController.navigate("chatbot")
                     },
                     onGoHome = {
                         navController.navigate("home") {
@@ -240,6 +241,9 @@ fun BottomNavBar() {
                         }
                     }
                 )
+            }
+            composable("chatbot") {
+                ChatbotScreen()
             }
         }
     }
