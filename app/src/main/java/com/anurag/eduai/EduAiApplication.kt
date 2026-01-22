@@ -9,11 +9,16 @@ import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.SessionManager
 import com.anurag.eduai.sync.WeeklySyncWorker
 import com.anurag.eduai.utils.AppLifecycleObserver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 class EduAiApplication : Application(), Configuration.Provider{
 
     private lateinit var appLifecycleObserver: AppLifecycleObserver
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -31,10 +36,12 @@ class EduAiApplication : Application(), Configuration.Provider{
         appLifecycleObserver = AppLifecycleObserver()
         appLifecycleObserver.register()
 
-        // Start initial session (app is already in foreground when Application.onCreate is called)
-        SessionManager.startSession()
+        // Start initial session
+        applicationScope.launch {
+            SessionManager.startSession()
+            DebugLogger.debugLog("EduAiApplication", "AppLifecycleObserver registered and initial session started")
+        }
 
-        DebugLogger.debugLog("EduAiApplication", "AppLifecycleObserver registered and initial session started")
         scheduleWeeklySync()
     }
 
