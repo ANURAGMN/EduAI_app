@@ -3,11 +3,12 @@ package com.anurag.eduai.utils
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.SessionManager
+import kotlinx.coroutines.launch
 
-class AppLifecycleObserver(
-) : DefaultLifecycleObserver {
+class AppLifecycleObserver : DefaultLifecycleObserver {
 
     fun register() {
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
@@ -17,12 +18,20 @@ class AppLifecycleObserver(
     override fun onStart(owner: LifecycleOwner) {
         super.onStart(owner)
         DebugLogger.debugLog("AppLifecycleObserver", "App → Foreground")
-        SessionManager.startSession()
+
+        // For subsequent app returns from background, start new session
+        owner.lifecycleScope.launch {
+            SessionManager.startSession()
+            DebugLogger.debugLog("AppLifecycleObserver", "Session started on app return")
+        }
     }
 
     override fun onStop(owner: LifecycleOwner) {
         super.onStop(owner)
         DebugLogger.debugLog("AppLifecycleObserver", "App → Background")
-        SessionManager.endSession()
+        owner.lifecycleScope.launch {
+            SessionManager.endSession()
+            DebugLogger.debugLog("AppLifecycleObserver", "Session ended")
+        }
     }
 }
