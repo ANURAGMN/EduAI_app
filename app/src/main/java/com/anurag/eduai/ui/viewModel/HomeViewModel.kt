@@ -59,9 +59,9 @@ class HomeViewModel(
         getTodayCompletedSimulation()
         getStudent()
         getGreeting()
+        getStreak()
 
         viewModelScope.launch {
-            getStreak()
 
             progressDao.getHomeScreenConcepts(userId, "CONCEPT")
                 .collect { progressList ->
