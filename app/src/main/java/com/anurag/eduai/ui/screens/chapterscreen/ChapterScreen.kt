@@ -53,7 +53,8 @@ fun ChapterScreen(
     onBackClick: () -> Unit = {},
     onChapterClick: (String) -> Unit = {},
     onGoHome:() -> Unit = {},
-    onGoSetting:() -> Unit = {}
+    onGoSetting:() -> Unit = {},
+    onProgressClick: () -> Unit = {}
 ) {
 
     // Analytics Tracking
@@ -80,11 +81,12 @@ fun ChapterScreen(
             .background(BackgroundPrimary)
     ) {
         ChapterScreenHeader(
-            title = state.subject?.subjectName ?: "Chapters",
-            subtitle = "${state.chapters.size} chapters",
+            classLevel = state.classLevel,
+            subjectName = state.subject?.subjectName ?: "Chapters",
             onBackClick = onBackClick,
             onGoHome = onGoHome,
-            onGoSetting = onGoSetting
+            onGoSetting = onGoSetting,
+            onProgressClick = onProgressClick
         )
         if (state.isLoading) {
             Box(
