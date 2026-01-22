@@ -20,6 +20,7 @@ data class ChapterScreenState(
     val chapterProgress: Map<String, ChapterProgressSummary> = emptyMap(),
     val subject: SubjectEntity? = null,
     val subjectId: String = "",
+    val classLevel: Int = 7,
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -62,6 +63,7 @@ class ChapterViewModel(
                     chapterProgress = progressMap,
                     subject = subject,
                     subjectId = subjectId,
+                    classLevel = classLevel,
                     isLoading = false,
                     error = null
                 )

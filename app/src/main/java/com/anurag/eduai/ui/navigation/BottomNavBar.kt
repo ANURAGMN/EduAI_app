@@ -3,7 +3,6 @@ package com.anurag.eduai.ui.navigation
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -19,7 +18,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.screens.chapterscreen.ChapterScreen
 import com.anurag.eduai.ui.screens.chatbotscreen.ChatbotScreen
 import com.anurag.eduai.ui.screens.conceptdetailscreen.ConceptDetailScreen
