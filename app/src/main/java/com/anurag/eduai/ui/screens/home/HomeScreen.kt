@@ -29,6 +29,7 @@ import com.anurag.eduai.ui.screens.home.components.TodayProgressCard
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.HomeViewModel
+import com.anurag.eduai.ui.viewModel.SimulationInfo
 import com.anurag.eduai.ui.viewmodel_factory.HomeViewModelFactory
 import com.anurag.eduai.utils.StreakManager
 
@@ -36,7 +37,8 @@ import com.anurag.eduai.utils.StreakManager
 fun HomeScreen(
     onNavigateToLearning: () -> Unit = {},
     onNavigateToChapters: (String) -> Unit = {},
-    onLessonClick: (String) -> Unit = {}
+    onLessonClick: (String) -> Unit = {},
+    onSimulationClick: (String) -> Unit = {}
 ) {
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.HOME)
@@ -119,7 +121,11 @@ fun HomeScreen(
                     }
                 )
                 Spacer(modifier = Modifier.height(dimes.spaceSmall))
-                PracticeSimulationCard()
+                PracticeSimulationCard(
+                    onSimulationClick = { simulationInfo ->
+                        onSimulationClick(simulationInfo.id)
+                    }
+                )
             }
         }
     }

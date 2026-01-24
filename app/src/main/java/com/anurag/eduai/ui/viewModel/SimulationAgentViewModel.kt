@@ -1,6 +1,5 @@
 package com.anurag.eduai.ui.viewModel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.anurag.eduai.data.model.SimQuizAnswerRequest
@@ -35,7 +34,7 @@ class SimulationAgentViewModel(
     val simulationsLoading: StateFlow<Boolean> = _simulationsLoading.asStateFlow()
 
     companion object {
-        private const val TAG = "TeachingAgentVM"
+        private const val TAG = "SimulationAgentVM"
     }
 
     /**

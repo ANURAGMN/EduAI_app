@@ -25,6 +25,7 @@ import com.anurag.eduai.ui.screens.conceptscreen.ConceptScreen
 import com.anurag.eduai.ui.screens.home.HomeScreen
 import com.anurag.eduai.ui.screens.progess.ProgressScreen
 import com.anurag.eduai.ui.screens.setting.SettingScreen
+import com.anurag.eduai.ui.screens.simlation.SimulationAgentScreen
 import com.anurag.eduai.ui.screens.subjectscreen.SubjectScreen
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.TextPrimary
@@ -100,12 +101,19 @@ fun BottomNavBar() {
         ) {
             composable(BottomNavItem.Home.route) {
                 HomeScreen(
-                    onNavigateToLearning = { navController.navigate("learning") },
+                    onNavigateToLearning = {
+                        navController.navigate("learning")
+                    },
                     onNavigateToChapters = { subjectId ->
-                        navController.navigate("chapters/$subjectId") },
-                        onLessonClick = { conceptId ->
-                            navController.navigate("concept_detail/$conceptId")
-                        }
+                        navController.navigate("chapters/$subjectId")
+                    },
+                    onLessonClick = { conceptId ->
+                        navController.navigate("concept_detail/$conceptId")
+                    },
+                    onSimulationClick = { simulationId ->
+                        navController.navigate("simulation_agent/$simulationId")
+
+                    }
                 )
             }
             composable(BottomNavItem.Progress.route) {
@@ -242,6 +250,17 @@ fun BottomNavBar() {
             }
             composable("chatbot") {
                 ChatbotScreen()
+            }
+            composable(
+                route = "simulation_agent/{simulationId}"
+            ) { backStackEntry ->
+                val simulationId = backStackEntry.arguments?.getString("simulationId")!!
+                SimulationAgentScreen(
+                    simulationId = simulationId,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
             }
         }
     }

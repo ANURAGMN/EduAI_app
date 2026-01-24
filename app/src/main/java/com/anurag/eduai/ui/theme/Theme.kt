@@ -12,14 +12,12 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val LightColors = lightColorScheme()
-private val DarkColors = darkColorScheme()
 
 @Composable
 fun AppTheme(
-    darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColors else LightColors
+    val colorScheme = LightColors
 
     MaterialTheme(
         colorScheme = colorScheme,

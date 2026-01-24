@@ -6,10 +6,10 @@ import com.anurag.eduai.data.model.SimSessionResponse
 import com.anurag.eduai.data.model.SimSimulationsListResponse
 import com.anurag.eduai.data.model.SimStartSessionRequest
 import com.anurag.eduai.data.model.SimStudentResponseRequest
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -25,9 +25,11 @@ class SimulationAgentAPI {
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
     }
 
-    private val moshi = Moshi.Builder()
-        .add(KotlinJsonAdapterFactory())
-        .build()
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        encodeDefaults = true
+    }
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -47,7 +49,9 @@ class SimulationAgentAPI {
             .get()
             .build()
 
-        executeRequest(request, SimHealthResponse::class.java)
+        executeRequest(request) { body ->
+            json.decodeFromString<SimHealthResponse>(body)
+        }
     }
 
     /** Get all available simulations GET /simulation/simulations */
@@ -57,48 +61,56 @@ class SimulationAgentAPI {
             .get()
             .build()
 
-        executeRequest(request, SimSimulationsListResponse::class.java)
+        executeRequest(request) { body ->
+            json.decodeFromString<SimSimulationsListResponse>(body)
+        }
     }
 
     /** Start a new teaching session POST /simulation/session/start */
     suspend fun startSession(request: SimStartSessionRequest): SimSessionResponse = withContext(Dispatchers.IO) {
-        val json = moshi.adapter(SimStartSessionRequest::class.java).toJson(request)
-        val requestBody = json.toRequestBody(JSON_MEDIA_TYPE)
+        val jsonString = json.encodeToString(request)
+        val requestBody = jsonString.toRequestBody(JSON_MEDIA_TYPE)
 
         val httpRequest = Request.Builder()
             .url("$BASE_URL/simulation/session/start")
             .post(requestBody)
             .build()
 
-        executeRequest(httpRequest, SimSessionResponse::class.java)
+        executeRequest(httpRequest) { body ->
+            json.decodeFromString<SimSessionResponse>(body)
+        }
     }
 
     /** Send student response to session POST /simulation/session/{session_id}/respond */
     suspend fun sendResponse(sessionId: String, request: SimStudentResponseRequest): SimSessionResponse =
         withContext(Dispatchers.IO) {
-            val json = moshi.adapter(SimStudentResponseRequest::class.java).toJson(request)
-            val requestBody = json.toRequestBody(JSON_MEDIA_TYPE)
+            val jsonString = json.encodeToString(request)
+            val requestBody = jsonString.toRequestBody(JSON_MEDIA_TYPE)
 
             val httpRequest = Request.Builder()
                 .url("$BASE_URL/simulation/session/$sessionId/respond")
                 .post(requestBody)
                 .build()
 
-            executeRequest(httpRequest, SimSessionResponse::class.java)
+            executeRequest(httpRequest) { body ->
+                json.decodeFromString<SimSessionResponse>(body)
+            }
         }
 
     /** Submit quiz answer POST /simulation/session/{session_id}/submit-quiz */
     suspend fun submitQuizAnswer(sessionId: String, request: SimQuizAnswerRequest): SimSessionResponse =
         withContext(Dispatchers.IO) {
-            val json = moshi.adapter(SimQuizAnswerRequest::class.java).toJson(request)
-            val requestBody = json.toRequestBody(JSON_MEDIA_TYPE)
+            val jsonString = json.encodeToString(request)
+            val requestBody = jsonString.toRequestBody(JSON_MEDIA_TYPE)
 
             val httpRequest = Request.Builder()
                 .url("$BASE_URL/simulation/session/$sessionId/submit-quiz")
                 .post(requestBody)
                 .build()
 
-            executeRequest(httpRequest, SimSessionResponse::class.java)
+            executeRequest(httpRequest) { body ->
+                json.decodeFromString<SimSessionResponse>(body)
+            }
         }
 
     /** Get current session state GET /simulation/session/{session_id} */
@@ -108,10 +120,12 @@ class SimulationAgentAPI {
             .get()
             .build()
 
-        executeRequest(request, SimSessionResponse::class.java)
+        executeRequest(request) { body ->
+            json.decodeFromString<SimSessionResponse>(body)
+        }
     }
 
-    private fun <T> executeRequest(request: Request, responseClass: Class<T>): T {
+    private fun <T> executeRequest(request: Request, decoder: (String) -> T): T {
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
                 throw IOException("Unexpected response code: ${response.code}")
@@ -120,8 +134,7 @@ class SimulationAgentAPI {
             val body = response.body?.string()
                 ?: throw IOException("Empty response body")
 
-            return moshi.adapter(responseClass).fromJson(body)
-                ?: throw IOException("Failed to parse response")
+            return decoder(body)
         }
     }
 

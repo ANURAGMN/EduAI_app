@@ -1,6 +1,7 @@
 package com.anurag.eduai.ui.screens.home.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,21 +24,22 @@ import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
+import com.anurag.eduai.ui.viewModel.SimulationInfo
 
 @Composable
 fun SimulationItem(
-    title: String,
+    simulation: SimulationInfo,
     modifier: Modifier = Modifier,
-    status: String = LessonStatus.LOCKED.value
+    onClick: (SimulationInfo) -> Unit
 ) {
     val dimes = LocalDimensions.current
-    val isLocked = status == LessonStatus.LOCKED.value || status == "locked"
 
     Row(
         modifier =
             modifier.fillMaxWidth()
                 .clip(RoundedCornerShape(dimes.cornerRadiusMedium))
                 .background(ColorHint.copy(alpha = 0.2f))
+                .clickable { onClick(simulation) }
                 .padding(dimes.cardPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -45,16 +47,16 @@ fun SimulationItem(
             modifier =
                 Modifier.size(dimes.dropdownItemHeight)
                     .clip(RoundedCornerShape(dimes.spaceSmall))
-                    .background(if (isLocked) ColorHint else BrandPrimary),
+                    .background(BrandPrimary),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = if (isLocked) Icons.Filled.Lock else Icons.Outlined.PlayArrow,
+                imageVector = Icons.Outlined.PlayArrow,
                 contentDescription = "Simulation Icon",
                 tint = White
             )
         }
         Spacer(modifier = Modifier.padding(dimes.spaceExtraSmall))
-        Text(text = title, color = TextPrimary)
+        Text(text = simulation.title, color = TextPrimary)
     }
 }

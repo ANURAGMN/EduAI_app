@@ -2,6 +2,7 @@ package com.anurag.eduai.data.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 // ==================== REQUEST MODELS ====================
 
@@ -56,15 +57,15 @@ data class SimSimulationState(
     val id: String,
     val title: String,
     @SerialName("html_url") val htmlUrl: String,
-    @SerialName("current_params") val currentParams: Map<String, Int>,
+    @SerialName("current_params") val currentParams: Map<String, JsonElement>,
     @SerialName("param_change") val paramChange: SimParameterChange? = null
 )
 
 @Serializable
 data class SimParameterChange(
     val parameter: String,
-    val before: Int,
-    val after: Int,
+    val before: Double,
+    val after: Double,
     val reason: String,
     @SerialName("before_url") val beforeUrl: String,
     @SerialName("after_url") val afterUrl: String
@@ -75,7 +76,9 @@ data class SimConceptsInfo(
     val total: Int,
     @SerialName("current_index") val currentIndex: Int,
     @SerialName("current_concept") val currentConcept: SimConcept? = null,
-    @SerialName("all_concepts") val allConcepts: List<SimConcept> = emptyList()
+    @SerialName("all_concepts") val allConcepts: List<SimConcept> = emptyList(),
+    @SerialName("all_completed") val allCompleted: Boolean? = false,
+    @SerialName("previous_concept") val previousConcept: SimPreviousConcept? = null
 )
 
 @Serializable
@@ -85,6 +88,13 @@ data class SimConcept(
     val description: String,
     @SerialName("key_insight") val keyInsight: String,
     @SerialName("related_params") val relatedParams: List<String>
+)
+
+@Serializable
+data class SimPreviousConcept(
+    val id: Int,
+    val title: String,
+    val completed: Boolean
 )
 
 @Serializable

@@ -1,18 +1,53 @@
 package com.anurag.eduai.ui.screens.simlation
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.layout.*
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,22 +61,22 @@ import com.anurag.eduai.ui.screens.simlation.component.SimChatMessage
 import com.anurag.eduai.ui.screens.simlation.component.SimulationWebView
 import com.anurag.eduai.ui.viewModel.SimAgentUiState
 import com.anurag.eduai.ui.viewModel.SimulationAgentViewModel
-import com.anurag.eduai.ui.viewModel.SimulationInfo
 import com.anurag.eduai.ui.viewmodel_factory.SimulationAgentViewmodelFactory
 import kotlinx.coroutines.launch
 
 /** Main chat screen with WebView and chat interface */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen() {
+fun SimulationAgentScreen(
+    simulationId: String,
+    onNavigateBack: () -> Unit
+) {
 
     val viewModel: SimulationAgentViewModel = viewModel(
         factory = SimulationAgentViewmodelFactory()
     )
     val uiState by viewModel.uiState.collectAsState()
     val sessionData by viewModel.sessionData.collectAsState()
-    val availableSimulations by viewModel.availableSimulations.collectAsState()
-    val simulationsLoading by viewModel.simulationsLoading.collectAsState()
 
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -51,24 +86,19 @@ fun ChatScreen() {
     var userInput by remember { mutableStateOf("") }
     var messages by remember { mutableStateOf<List<SimChatMessage>>(emptyList()) }
     var showWebViewPopup by remember { mutableStateOf(false) }
-    var isDropdownExpanded by remember { mutableStateOf(false) }
-    var selectedSimulation by remember { mutableStateOf<SimulationInfo?>(null) }
     var simulationUrls by remember { mutableStateOf<List<String>>(emptyList()) }
     var currentConceptTitle by remember { mutableStateOf("") }
     var isSessionComplete by remember { mutableStateOf(false) }
 
-    // Load available simulations on first composition
-    LaunchedEffect(Unit) {
-        viewModel.loadAvailableSimulations()
+    // Handle back press - clear data and navigate back
+    BackHandler {
+        viewModel.resetSession()
+        onNavigateBack()
     }
 
-    // Start session when simulations are loaded and selected simulation is set
-    LaunchedEffect(availableSimulations) {
-        if (availableSimulations.isNotEmpty() && selectedSimulation == null) {
-            val firstSim = availableSimulations.first()
-            selectedSimulation = firstSim
-            viewModel.startNewSession(firstSim.id)
-        }
+    // Initialize session with the provided simulationId
+    LaunchedEffect(simulationId) {
+        viewModel.startNewSession(simulationId)
     }
 
     // Handle UI state changes
@@ -126,19 +156,6 @@ fun ChatScreen() {
         }
     }
 
-    // Function to reset and start new simulation
-    fun switchSimulation(newSimulation: SimulationInfo) {
-        selectedSimulation = newSimulation
-        messages = emptyList()
-        simulationUrls = emptyList()
-        currentConceptTitle = ""
-        isSessionComplete = false
-        userInput = ""
-        showWebViewPopup = false
-        viewModel.resetSession()
-        viewModel.startNewSession(newSimulation.id)
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -156,83 +173,6 @@ fun ChatScreen() {
                                 color = Color.Gray
                             )
                         }
-                    }
-                },
-                actions = {
-                    // Simulation selection dropdown
-                    Box {
-                        IconButton(
-                            onClick = { isDropdownExpanded = true },
-                            enabled = !simulationsLoading
-                        ) {
-                            if (simulationsLoading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.ArrowDropDown,
-                                    contentDescription = "Select Simulation"
-                                )
-                            }
-                        }
-
-                        DropdownMenu(
-                            expanded = isDropdownExpanded,
-                            onDismissRequest = { isDropdownExpanded = false }
-                        ) {
-                            if (availableSimulations.isEmpty()) {
-                                DropdownMenuItem(
-                                    text = { Text("Loading...") },
-                                    onClick = {},
-                                    enabled = false
-                                )
-                            } else {
-                                availableSimulations.forEach { simulation ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Column {
-                                                Text(
-                                                    simulation.title,
-                                                    fontWeight = if (simulation == selectedSimulation)
-                                                        FontWeight.Bold else FontWeight.Normal
-                                                )
-                                                if (simulation.description.isNotEmpty()) {
-                                                    Text(
-                                                        simulation.description,
-                                                        fontSize = 11.sp,
-                                                        color = Color.Gray,
-                                                        maxLines = 2
-                                                    )
-                                                }
-                                            }
-                                        },
-                                        onClick = {
-                                            switchSimulation(simulation)
-                                            isDropdownExpanded = false
-                                        },
-                                        leadingIcon = {
-                                            if (simulation == selectedSimulation) {
-                                                Text("✓", fontWeight = FontWeight.Bold)
-                                            }
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    IconButton(
-                        onClick = {
-                            selectedSimulation?.let { switchSimulation(it) }
-                        },
-                        enabled = selectedSimulation != null
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Reset Session"
-                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -284,7 +224,7 @@ fun ChatScreen() {
                             else MaterialTheme.colorScheme.primary
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Send,
+                            imageVector = Icons.AutoMirrored.Filled.Send,
                             contentDescription = "Send"
                         )
                     }
@@ -338,14 +278,6 @@ fun ChatScreen() {
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Button(
-                                    onClick = {
-                                        selectedSimulation?.let { switchSimulation(it) }
-                                    }
-                                ) {
-                                    Text("Start New Session")
-                                }
                             }
                         }
                     }

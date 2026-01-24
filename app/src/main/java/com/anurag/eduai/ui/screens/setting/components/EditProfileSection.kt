@@ -1,4 +1,3 @@
-// EditProfileScreen.kt
 package com.anurag.eduai.ui.screens.setting.components
 
 import androidx.compose.foundation.BorderStroke
@@ -7,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -74,9 +74,11 @@ fun EditProfileScreen(
     userId: String,
     student: StudentEntity?,
     userViewModel: SettingViewModel,
+    modifier: Modifier = Modifier,
     onClose: () -> Unit
 ) {
     val dimensions = LocalDimensions.current
+    val scrollState = rememberScrollState()
 
     var userName by remember {
         mutableStateOf(
@@ -131,9 +133,9 @@ fun EditProfileScreen(
     }
     Column(
         modifier =
-            Modifier.fillMaxWidth()
+            modifier.fillMaxWidth()
                 .background(EditProfileBackground)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(dimensions.spaceMedium),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
