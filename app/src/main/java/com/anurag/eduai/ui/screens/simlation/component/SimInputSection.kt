@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.zIndex
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.HeaderGradientStart
@@ -49,7 +50,7 @@ fun SimInputSection(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .imePadding(),
+            .zIndex(0f), // Keep input at normal z-index
         color = Color.White,
         shadowElevation = dimens.cardElevation,
         tonalElevation = dimens.cardElevation,
@@ -129,7 +130,7 @@ private fun InputField(
                 placeholder = {
                     Text(
                         text = stringResource(R.string.sim_type_or_speak),
-                        color = TextPrimary,
+                        color = TextPrimary.copy(alpha = 0.6f),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 },
