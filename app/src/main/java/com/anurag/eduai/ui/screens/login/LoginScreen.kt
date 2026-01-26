@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,16 +13,12 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,19 +29,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.internal.NavContext
 import com.anurag.eduai.R
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.BackgroundSecondary
-import com.anurag.eduai.ui.theme.BrandPrimary
-import com.anurag.eduai.ui.theme.ColorHint
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.viewModel.UserViewModel
@@ -57,6 +47,7 @@ fun LoginScreen(
     navController: NavController,
     userViewModel: UserViewModel
 ) {
+    val dimens = LocalDimensions.current
 
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.LOGIN)
@@ -73,49 +64,51 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(BackgroundSecondary)
-                .padding(15.dp)
+                .padding(dimens.screenPadding)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Logo Section
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.Transparent)
-                    .padding(24.dp),
+                    .padding(dimens.spaceLarge),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "Logo",
-                    modifier = Modifier.height(150.dp)
+                    contentDescription = stringResource(R.string.app_logo_desc),
+                    modifier = Modifier.height(dimens.containerMinHeight - dimens.buttonHeight)
                 )
             }
+
             // Language Selector Card
             LanguageSelector(
                 selectedLanguage = selectedLanguage,
                 onLanguageSelected = { selectedLanguage = it }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dimens.spaceMedium))
 
             // Main Login/SignUp Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.cardElevation(6.dp),
+                shape = RoundedCornerShape(dimens.cornerRadiusLarge),
+                elevation = CardDefaults.cardElevation(dimens.cardElevation + dimens.spaceExtraSmall),
                 colors = CardDefaults.cardColors(containerColor = BackgroundPrimary)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
+                        .padding(dimens.spaceLarge - dimens.spaceExtraSmall),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Welcome Header
                     Text(
-                        text = "👋",
+                        text = stringResource(R.string.welcome_emoji),
                         style = MaterialTheme.typography.headlineLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = dimens.spaceSmall)
                     )
                     Text(
                         text = stringResource(R.string.welcome_message),
@@ -128,7 +121,7 @@ fun LoginScreen(
                         color = TextSecondary
                     )
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(dimens.spaceLarge - dimens.spaceExtraSmall))
 
                     // Google Sign in
                     GoogleLoginButton(
@@ -137,14 +130,14 @@ fun LoginScreen(
                         navController = navController
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(dimens.spaceMedium))
 
                     // Terms and Privacy
                     Text(
                         text = stringResource(R.string.policy_msg),
                         fontSize = 11.sp,
                         color = TextSecondary,
-                        modifier = Modifier.padding(top = 12.dp),
+                        modifier = Modifier.padding(top = dimens.spaceSmall + dimens.spaceExtraSmall),
                         lineHeight = 16.sp
                     )
                 }
@@ -154,13 +147,13 @@ fun LoginScreen(
 
             // Footer Card
             Card(
-                elevation = CardDefaults.cardElevation(10.dp),
-                shape = RoundedCornerShape(16.dp)
+                elevation = CardDefaults.cardElevation(dimens.cardElevation + dimens.cardElevation),
+                shape = RoundedCornerShape(dimens.spaceMedium)
             ) {
                 FooterCard()
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dimens.spaceMedium))
         }
     }
 }

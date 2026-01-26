@@ -10,10 +10,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.theme.BrandPrimary
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
 
@@ -24,18 +24,20 @@ fun LanguageChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimens = LocalDimensions.current
+
     Card(
         onClick = onClick,
         modifier = modifier,
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) BrandPrimary else BackgroundSecondary
         ),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(dimens.cornerRadiusMedium)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 10.dp),
+                .padding(vertical = dimens.spaceSmall + dimens.spaceExtraSmall),
             contentAlignment = Alignment.Center
         ) {
             Text(

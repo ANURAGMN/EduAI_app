@@ -19,6 +19,38 @@
     <string name="current_subject">Current Subject</string>
     <string name="change">Change</string>
     <string name="view_ll_chapter">View All Chapters</string>
+    <string name="welcome_emoji">👋</string>
+    <string name="app_logo_desc">App Logo</string>
+
+    <!-- Language Selector -->
+    <string name="language_english">English</string>
+    <string name="language_kannada">ಕನ್ನಡ</string>
+    <string name="language_icon_desc">Language Selection Icon</string>
+
+    <!-- Google Sign In -->
+    <string name="google_icon_desc">Google Icon</string>
+
+    <!-- User Detail Entry -->
+    <string name="person_icon_desc">Person Icon</string>
+    <string name="phone_icon_desc">Phone Icon</string>
+    <string name="school_icon_desc">School Icon</string>
+    <string name="class_icon_desc">Class Icon</string>
+
+    <!-- Class Selection -->
+    <string name="class_format">Class %d</string>
+    <string name="class_prefix">Class </string>
+
+    <!-- Error Messages -->
+    <string name="error_phone_empty">Phone number cannot be empty</string>
+    <string name="error_phone_start_digit">Phone number should start from 6 to 9</string>
+    <string name="error_phone_invalid">Enter a valid 10-digit number</string>
+
+    <string name="error_school_empty">School name cannot be empty</string>
+    <string name="error_school_min_length">School name must be at least 3 characters</string>
+    <string name="error_school_invalid_chars">School name should only contain letters, numbers, and basic punctuation</string>
+
+    <!-- Success Messages -->
+    <string name="login_successful">Login Successful</string>
 <!--    login screen footer-->
     <string name="complete_ncert">Complete NCERT</string>
     <string name="language_number">2 Languages</string>
