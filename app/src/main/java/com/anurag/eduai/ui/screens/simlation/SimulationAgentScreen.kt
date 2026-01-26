@@ -1,6 +1,10 @@
 package com.anurag.eduai.ui.screens.simlation
 
+import android.Manifest.permission.RECORD_AUDIO
+import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -24,17 +28,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,77 +51,109 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.anurag.eduai.R
 import com.anurag.eduai.ui.screens.simlation.component.SimChatBubble
 import com.anurag.eduai.ui.screens.simlation.component.SimChatMessage
+import com.anurag.eduai.ui.screens.simlation.component.SimInputSection
 import com.anurag.eduai.ui.screens.simlation.component.SimulationWebView
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.SimAgentUiState
 import com.anurag.eduai.ui.viewModel.SimulationAgentViewModel
+import com.anurag.eduai.ui.viewModel.SpeechToText
+import com.anurag.eduai.ui.viewModel.TextToSpeech
 import com.anurag.eduai.ui.viewmodel_factory.SimulationAgentViewmodelFactory
 import kotlinx.coroutines.launch
 
-/** Main chat screen with WebView and chat interface */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SimulationAgentScreen(
     simulationId: String,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    ttsController: TextToSpeech = viewModel(),
+    sttController: SpeechToText = viewModel()
 ) {
-
-    val viewModel: SimulationAgentViewModel = viewModel(
-        factory = SimulationAgentViewmodelFactory()
-    )
+    val dimens = LocalDimensions.current
+    val viewModel: SimulationAgentViewModel = viewModel(factory = SimulationAgentViewmodelFactory())
     val uiState by viewModel.uiState.collectAsState()
     val sessionData by viewModel.sessionData.collectAsState()
+    val ttsState by ttsController.state.collectAsState()
+    val sttState by sttController.state.collectAsState()
 
+    val context = LocalContext.current
+    val density = LocalDensity.current
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
 
-    // Local state
     var userInput by remember { mutableStateOf("") }
     var messages by remember { mutableStateOf<List<SimChatMessage>>(emptyList()) }
     var showWebViewPopup by remember { mutableStateOf(false) }
     var simulationUrls by remember { mutableStateOf<List<String>>(emptyList()) }
     var currentConceptTitle by remember { mutableStateOf("") }
     var isSessionComplete by remember { mutableStateOf(false) }
+    var permissionGranted by remember { mutableStateOf(false) }
+    var lastProcessedSpeechText by remember { mutableStateOf("") }
 
-    // Handle back press - clear data and navigate back
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        permissionGranted = isGranted
+        sttController.handlePermissionResult(
+            SpeechToText.RECORD_AUDIO_PERMISSION_REQUEST,
+            if (isGranted) intArrayOf(PackageManager.PERMISSION_GRANTED)
+            else intArrayOf(PackageManager.PERMISSION_DENIED)
+        )
+    }
+
+    LaunchedEffect(Unit) {
+        sttController.initialize(context)
+        ttsController.initialize(context)
+    }
+
     BackHandler {
         viewModel.resetSession()
         onNavigateBack()
     }
 
-    // Initialize session with the provided simulationId
     LaunchedEffect(simulationId) {
         viewModel.startNewSession(simulationId)
     }
 
-    // Handle UI state changes
+    LaunchedEffect(sttState.resultText) {
+        if (sttState.resultText.isNotEmpty() &&
+            sttState.resultText != lastProcessedSpeechText &&
+            !sttState.isListening
+        ) {
+            lastProcessedSpeechText = sttState.resultText
+            userInput = sttState.resultText
+        }
+    }
+
     LaunchedEffect(uiState, sessionData) {
         when (val state = uiState) {
             is SimAgentUiState.Success -> {
                 sessionData?.let { session ->
-                    // Add teacher message to chat
-                    val teacherMessage =
-                        SimChatMessage(
-                            text = session.teacherMessage.text,
-                            isFromTeacher = true,
-                            timestamp = System.currentTimeMillis()
-                        )
+                    val teacherMessage = SimChatMessage(
+                        text = session.teacherMessage.text,
+                        isFromTeacher = true,
+                        timestamp = System.currentTimeMillis()
+                    )
                     messages = messages + teacherMessage
 
-                    // Update simulation URLs
+                    if (!ttsState.isSpeaking) {
+                        ttsController.speak(session.teacherMessage.text)
+                    }
+
                     val urls = mutableListOf<String>()
                     urls.add(session.simulation.htmlUrl)
 
                     session.simulation.paramChange?.let { change ->
-                        // If there's a param change, show before and after
                         urls.clear()
                         urls.add(change.beforeUrl)
                         urls.add(change.afterUrl)
@@ -128,13 +161,12 @@ fun SimulationAgentScreen(
                     simulationUrls = urls
                     showWebViewPopup = urls.isNotEmpty()
 
-                    // Update concept title
-                    session.concepts.currentConcept?.let { currentConceptTitle = it.title }
+                    session.concepts.currentConcept?.let {
+                        currentConceptTitle = it.title
+                    }
 
-                    // Check if session is complete
                     isSessionComplete = session.learningState.sessionComplete
 
-                    // Auto-scroll to bottom
                     if (messages.isNotEmpty()) {
                         coroutineScope.launch {
                             listState.animateScrollToItem(messages.size - 1)
@@ -143,13 +175,11 @@ fun SimulationAgentScreen(
                 }
             }
             is SimAgentUiState.Error -> {
-                // Show error message
-                val errorMessage =
-                    SimChatMessage(
-                        text = "Error: ${state.message}",
-                        isFromTeacher = true,
-                        timestamp = System.currentTimeMillis()
-                    )
+                val errorMessage = SimChatMessage(
+                    text = "Error: ${state.message}",
+                    isFromTeacher = true,
+                    timestamp = System.currentTimeMillis()
+                )
                 messages = messages + errorMessage
             }
             else -> {}
@@ -162,15 +192,15 @@ fun SimulationAgentScreen(
                 title = {
                     Column {
                         Text(
-                            text = "Simulation AI",
-                            fontSize = 20.sp,
+                            text = stringResource(R.string.sim_title),
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
                         if (currentConceptTitle.isNotEmpty()) {
                             Text(
                                 text = currentConceptTitle,
-                                fontSize = 12.sp,
-                                color = Color.Gray
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -182,58 +212,46 @@ fun SimulationAgentScreen(
             )
         },
         bottomBar = {
-            // Input field at bottom
-            Surface(shadowElevation = 8.dp, tonalElevation = 3.dp) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedTextField(
-                        value = userInput,
-                        onValueChange = { userInput = it },
-                        modifier = Modifier.weight(1f).padding(end = 8.dp),
-                        placeholder = { Text("Type your message...") },
-                        maxLines = 3,
-                        enabled = !isSessionComplete && uiState !is SimAgentUiState.Loading
-                    )
+            SimInputSection(
+                inputText = userInput,
+                sttState = sttState,
+                isSessionComplete = isSessionComplete,
+                isLoading = uiState is SimAgentUiState.Loading,
+                onTextChange = { userInput = it },
+                onSendClick = {
+                    if (userInput.isNotBlank()) {
+                        if (ttsState.isSpeaking) {
+                            ttsController.stop()
+                        }
 
-                    FloatingActionButton(
-                        onClick = {
-                            if (userInput.isNotBlank()) {
-                                // Add user message to chat
-                                val userMessage =
-                                    SimChatMessage(
-                                        text = userInput,
-                                        isFromTeacher = false,
-                                        timestamp = System.currentTimeMillis()
-                                    )
-                                messages = messages + userMessage
-
-                                // Send to API
-                                viewModel.sendStudentResponse(userInput)
-
-                                // Clear input
-                                userInput = ""
-                                focusManager.clearFocus()
-                            }
-                        },
-                        modifier = Modifier.size(56.dp),
-                        containerColor =
-                            if (userInput.isBlank() || isSessionComplete)
-                                MaterialTheme.colorScheme.surfaceVariant
-                            else MaterialTheme.colorScheme.primary
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "Send"
+                        val userMessage = SimChatMessage(
+                            text = userInput,
+                            isFromTeacher = false,
+                            timestamp = System.currentTimeMillis()
                         )
+                        messages = messages + userMessage
+                        viewModel.sendStudentResponse(userInput)
+                        userInput = ""
+                        focusManager.clearFocus()
                     }
-                }
-            }
+                },
+                onSpeakClick = {
+                    if (ttsState.isSpeaking) {
+                        ttsController.stop()
+                    }
+
+                    if (permissionGranted && sttState.isInitialized) {
+                        sttController.startListening("en-IN")
+                    } else if (!permissionGranted) {
+                        permissionLauncher.launch(RECORD_AUDIO)
+                    }
+                },
+                onStopListening = { sttController.stopListening() },
+                onSizeChanged = { /* No longer needed */ }
+            )
         }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            // Chat messages - only visible in top 35%
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -245,36 +263,43 @@ fun SimulationAgentScreen(
                     SimChatBubble(message = message)
                 }
 
-                // Loading indicator
                 if (uiState is SimAgentUiState.Loading) {
                     item {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(dimens.spaceMedium),
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Teacher is thinking...")
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(dimens.iconLarge)
+                            )
+                            Spacer(modifier = Modifier.width(dimens.spaceSmall))
+                            Text(
+                                text = stringResource(R.string.sim_teacher_thinking),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         }
                     }
                 }
 
-                // Session complete message
                 if (isSessionComplete) {
                     item {
                         Card(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(dimens.spaceMedium),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer
                             )
                         ) {
                             Column(
-                                modifier = Modifier.padding(16.dp),
+                                modifier = Modifier.padding(dimens.spaceMedium),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    text = "🎉 Session Complete! 🎉",
-                                    fontSize = 18.sp,
+                                    text = stringResource(R.string.sim_session_complete),
+                                    style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
@@ -284,9 +309,8 @@ fun SimulationAgentScreen(
                 }
             }
 
-            // WebView Popup with slide-up animation
             AnimatedVisibility(
-                visible = showWebViewPopup,
+                visible = !ttsState.isSpeaking && simulationUrls.isNotEmpty(),
                 enter = slideInVertically(
                     initialOffsetY = { it },
                     animationSpec = spring(
@@ -304,34 +328,32 @@ fun SimulationAgentScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .fillMaxHeight(0.65f)
-                        .padding(horizontal = 16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                        .padding(horizontal = dimens.spaceMedium),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = dimens.cardElevation
+                    ),
                     shape = MaterialTheme.shapes.extraLarge
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
-                        // WebView content
                         when (simulationUrls.size) {
                             1 -> {
-                                // Single WebView
                                 SimulationWebView(
                                     url = simulationUrls[0],
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }
                             2 -> {
-                                // Two WebViews stacked vertically (Before/After comparison)
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
                                 ) {
-                                    // Before WebView
                                     Card(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .weight(1f)
-                                            .padding(8.dp),
+                                            .padding(dimens.spaceSmall),
                                         elevation = CardDefaults.cardElevation(
-                                            defaultElevation = 4.dp
+                                            defaultElevation = dimens.cardElevation
                                         )
                                     ) {
                                         Column {
@@ -340,9 +362,9 @@ fun SimulationAgentScreen(
                                                 modifier = Modifier.fillMaxWidth()
                                             ) {
                                                 Text(
-                                                    text = "Before",
-                                                    modifier = Modifier.padding(6.dp),
-                                                    fontSize = 13.sp,
+                                                    text = stringResource(R.string.sim_before_label),
+                                                    modifier = Modifier.padding(dimens.spaceSmall),
+                                                    style = MaterialTheme.typography.labelMedium,
                                                     fontWeight = FontWeight.Bold,
                                                     color = MaterialTheme.colorScheme.onTertiaryContainer
                                                 )
@@ -354,14 +376,13 @@ fun SimulationAgentScreen(
                                         }
                                     }
 
-                                    // After WebView
                                     Card(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .weight(1f)
-                                            .padding(8.dp),
+                                            .padding(dimens.spaceSmall),
                                         elevation = CardDefaults.cardElevation(
-                                            defaultElevation = 4.dp
+                                            defaultElevation = dimens.cardElevation
                                         )
                                     ) {
                                         Column {
@@ -370,9 +391,9 @@ fun SimulationAgentScreen(
                                                 modifier = Modifier.fillMaxWidth()
                                             ) {
                                                 Text(
-                                                    text = "After",
-                                                    modifier = Modifier.padding(6.dp),
-                                                    fontSize = 13.sp,
+                                                    text = stringResource(R.string.sim_after_label),
+                                                    modifier = Modifier.padding(dimens.spaceSmall),
+                                                    style = MaterialTheme.typography.labelMedium,
                                                     fontWeight = FontWeight.Bold,
                                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                                 )
@@ -386,13 +407,15 @@ fun SimulationAgentScreen(
                                 }
                             }
                             else -> {
-                                // Fallback or empty state
                                 if (simulationUrls.isEmpty()) {
                                     Box(
                                         modifier = Modifier.fillMaxSize(),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Text("No simulation to display")
+                                        Text(
+                                            text = stringResource(R.string.sim_no_simulation),
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
                                     }
                                 } else {
                                     SimulationWebView(
@@ -403,21 +426,22 @@ fun SimulationAgentScreen(
                             }
                         }
 
-                        // Close button overlay
                         IconButton(
                             onClick = { showWebViewPopup = false },
-                            modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(dimens.spaceSmall)
                         ) {
                             Surface(
                                 shape = MaterialTheme.shapes.small,
                                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                                tonalElevation = 6.dp
+                                tonalElevation = dimens.cardElevation
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Close",
+                                    contentDescription = stringResource(R.string.sim_close_simulation),
                                     tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(8.dp)
+                                    modifier = Modifier.padding(dimens.spaceSmall)
                                 )
                             }
                         }
