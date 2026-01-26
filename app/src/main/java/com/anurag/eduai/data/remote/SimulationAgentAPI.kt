@@ -1,5 +1,6 @@
 package com.anurag.eduai.data.remote
 
+import com.anurag.eduai.BuildConfig
 import com.anurag.eduai.data.model.SimHealthResponse
 import com.anurag.eduai.data.model.SimQuizAnswerRequest
 import com.anurag.eduai.data.model.SimSessionResponse
@@ -21,7 +22,7 @@ import java.util.concurrent.TimeUnit
 class SimulationAgentAPI {
     companion object {
         // Remote server URL
-        private const val BASE_URL = "http://13.48.59.144:8000"
+        private const val BASE_URL = BuildConfig.AGENTIC_AI_BASE_URL
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
     }
 
