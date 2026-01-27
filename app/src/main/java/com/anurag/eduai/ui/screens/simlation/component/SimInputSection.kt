@@ -30,6 +30,7 @@ import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.IconPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
+import com.anurag.eduai.ui.theme.White
 import com.anurag.eduai.ui.viewModel.SpeechToText
 
 @Composable
@@ -49,9 +50,8 @@ fun SimInputSection(
 
     Surface(
         modifier = modifier
-            .fillMaxWidth()
-            .zIndex(0f), // Keep input at normal z-index
-        color = Color.White,
+            .fillMaxWidth(),
+        color = White,
         shadowElevation = dimens.cardElevation,
         tonalElevation = dimens.cardElevation,
         shape = RoundedCornerShape(
