@@ -200,6 +200,10 @@ fun ChatEffects(
         if (sttState.isListening) {
             chatViewModel.markUserActive()
             chatViewModel.hideAutosuggestions()
+            // Stop TTS when user starts listening
+            if (ttsState.isSpeaking) {
+                ttsController.stop()
+            }
         } else {
             if (sttState.resultText.isNotEmpty() && sttState.resultText != lastProcessedSpeechText) {
                 chatViewModel.updateInputText(sttState.resultText)
