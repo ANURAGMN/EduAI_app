@@ -108,7 +108,7 @@ private fun InputField(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(dimens.cornerRadiusLarge))
-                .background(Color.White)
+                .background(White)
                 .border(
                     shape = RoundedCornerShape(dimens.cornerRadiusLarge),
                     width = dimens.inputBorderWidth,

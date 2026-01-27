@@ -203,7 +203,6 @@ fun SimulationAgentScreen(
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
-                .systemBarsPadding()
                 .blur(if (showWebView) 4.dp else 0.dp),
             topBar = {
                 TopAppBar(
