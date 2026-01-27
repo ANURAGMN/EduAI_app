@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 class SimulationAgentAPI {
     companion object {
         // Remote server URL
-        private const val BASE_URL = BuildConfig.AGENTIC_AI_BASE_URL
+        private const val BASE_URL = BuildConfig.SIMULATION_BASE_URL
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
     }
 
