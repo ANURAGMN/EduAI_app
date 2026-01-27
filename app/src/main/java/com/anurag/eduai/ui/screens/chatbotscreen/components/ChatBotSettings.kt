@@ -132,7 +132,7 @@ fun ChatBotSettings(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 16.dp),
+                        .padding(vertical = dimens.spaceSmall),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -140,9 +140,9 @@ fun ChatBotSettings(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(dimens.iconMedium),
                             color = BrandPrimary,
-                            strokeWidth = 2.dp
+                            strokeWidth = dimens.inputBorderWidth
                         )
                         Spacer(Modifier.height(dimens.spaceSmall))
                         Text(

@@ -1,6 +1,7 @@
 package com.anurag.eduai.ui.screens.chatbotscreen.components
 
 import android.Manifest
+import android.content.pm.PackageManager
 import android.webkit.WebView
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.compose.foundation.layout.Box
@@ -9,12 +10,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,7 +25,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import android.content.pm.PackageManager
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
@@ -73,22 +74,19 @@ fun InitialAvatarView(
 @Composable
 fun ConversationView(
     avatarSize: Dp,
-    avatarPadding: Dp,
     chatState: ChatUiState,
     lastAIMessage: ChatMessageModel?,
     ttsController: TextToSpeech,
-    inputSectionHeight: Dp,
     onDismissResource: () -> Unit,
     onResourceTimerComplete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dimens=LocalDimensions.current
+    val dimens = LocalDimensions.current
     Column(modifier = modifier.fillMaxSize()) {
-        // Avatar at top
+        // Avatar at top -
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = avatarPadding + dimens.spaceMedium),
+                .fillMaxWidth(),
             contentAlignment = Alignment.TopCenter
         ) {
             Card(
@@ -110,22 +108,24 @@ fun ConversationView(
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(dimens.spaceMedium))
 
-        // Content area
+        // Content area - This scrolls
         ChatContentArea(
             showResourceCard = chatState.showResourceCard,
             currentResource = chatState.currentResource,
             resourceDisplayMode = chatState.resourceDisplayMode,
             isLoading = chatState.isLoading,
+            loadingResourceMessage = chatState.loadingResourceMessage,
             lastAIMessage = lastAIMessage,
             isTyping = chatState.isTyping,
             typingText = chatState.typingText,
             ttsController = ttsController,
             onDismissResource = onDismissResource,
             onResourceTimerComplete = onResourceTimerComplete,
-            inputSectionHeight = inputSectionHeight,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
         )
     }
 }
@@ -176,7 +176,6 @@ fun ChatEffects(
                     delay(50)
                 }
                 ttsController.speak(textToSpeak)
-                DebugLogger.debugLog("ChatScreenHelpers", "TTS started: ${textToSpeak.take(50)}...")
             }
         }
     }
@@ -195,14 +194,6 @@ fun ChatEffects(
         }
     }
 
-    // Trigger resource card display when TTS completes (after typing is also complete)
-    LaunchedEffect(ttsState.isSpeaking, chatState.waitingForTTSToComplete) {
-        // When TTS stops AND we're waiting for it to complete, trigger resource card check
-        if (!ttsState.isSpeaking && chatState.waitingForTTSToComplete) {
-            DebugLogger.debugLog("ChatScreenHelpers", "TTS finished, triggering resource card check")
-            chatViewModel.onTTSComplete()
-        }
-    }
 
     // Handle speech recognition
     LaunchedEffect(sttState.isListening) {

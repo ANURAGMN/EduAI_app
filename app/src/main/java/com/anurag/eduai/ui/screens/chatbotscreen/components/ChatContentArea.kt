@@ -14,6 +14,7 @@ import com.anurag.eduai.ui.theme.TextSecondary
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Brush
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 
 /**
@@ -25,19 +26,20 @@ fun ChatContentArea(
     currentResource: ResourceContent?,
     resourceDisplayMode: ResourceDisplayMode,
     isLoading: Boolean,
+    loadingResourceMessage: String?,
     lastAIMessage: ChatMessageModel?,
     isTyping: Boolean,
     typingText: String,
     ttsController: TextToSpeech,
     onDismissResource: () -> Unit,
     onResourceTimerComplete: () -> Unit,
-    inputSectionHeight: androidx.compose.ui.unit.Dp,
     modifier: Modifier = Modifier
 ) {
+    val dimens= LocalDimensions.current
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(bottom = inputSectionHeight + 16.dp)
+            .padding(bottom = 16.dp)
     ) {
         when {
             // Resource Card
@@ -47,7 +49,7 @@ fun ChatContentArea(
                     displayMode = resourceDisplayMode,
                     onDismiss = onDismissResource,
                     onTimerComplete = onResourceTimerComplete,
-                    timerDurationSeconds = 6,
+                    timerDurationSeconds = 150,//timeout for resource card
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -63,18 +65,18 @@ fun ChatContentArea(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 12.dp, horizontal = 8.dp),
+                            .padding(dimens.spaceMedium),
                         horizontalArrangement = Arrangement.Start,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(dimens.iconLarge),
+                            strokeWidth =dimens.inputBorderWidth,
                             color = BrandPrimary
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(dimens.spaceMedium))
                         Text(
-                            text = stringResource(R.string.thinking),
+                            text = loadingResourceMessage ?: stringResource(R.string.thinking),
                             color = TextSecondary,
                             style = MaterialTheme.typography.bodyMedium
                         )
@@ -95,7 +97,6 @@ fun ChatContentArea(
                             isTyping = isTyping,
                             typingText = typingText,
                             fullText = lastAIMessage.content,
-                            isError = lastAIMessage.isError,
                             ttsController = ttsController,
                             modifier = Modifier.fillMaxSize()
                         )

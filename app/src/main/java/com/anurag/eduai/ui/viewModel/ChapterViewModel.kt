@@ -3,33 +3,29 @@ package com.anurag.eduai.ui.viewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.anurag.eduai.data.local.SharedPreferenceUtils
-import com.anurag.eduai.data.local.dao.ChapterDao
-import com.anurag.eduai.data.local.dao.ChapterProgressSummary
-import com.anurag.eduai.data.local.dao.ProgressDao
-import com.anurag.eduai.data.local.dao.StudentDao
-import com.anurag.eduai.data.local.dao.SubjectDao
-import com.anurag.eduai.data.local.entities.ChapterEntity
-import com.anurag.eduai.data.local.entities.SubjectEntity
+import com.anurag.eduai.repository.ChapterRepository
+import com.anurag.eduai.repository.StudentLocalRepository
+import com.anurag.eduai.repository.SubjectRepository
+import com.anurag.eduai.ui.models.ChapterStatus
+import com.anurag.eduai.ui.models.ChapterUiModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 data class ChapterScreenState(
-    val chapters: List<ChapterEntity> = emptyList(),
-    val chapterProgress: Map<String, ChapterProgressSummary> = emptyMap(),
-    val subject: SubjectEntity? = null,
-    val subjectId: String = "",
-    val classLevel: Int = 7,
     val isLoading: Boolean = false,
+    val classLevel: Int = 7,
+    val subjectName: String = "",
+    val chapters: List<ChapterUiModel> = emptyList(),
     val error: String? = null
 )
 
+
 class ChapterViewModel(
-    private val chapterDao: ChapterDao,
-    private val subjectDao: SubjectDao,
-    private val progressDao: ProgressDao,
-    private val studentDao: StudentDao,
+    private val chapterRepository: ChapterRepository,
+    private val subjectRepository: SubjectRepository,
+    private val studentRepository: StudentLocalRepository,
     private val sharedPrefs: SharedPreferenceUtils
 ) : ViewModel() {
 
@@ -38,18 +34,17 @@ class ChapterViewModel(
 
     fun loadChapters(subjectId: String) {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true)
+            _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                val chapters = chapterDao.getChaptersForSubjectSync(subjectId)
-                val subject = subjectDao.getSubject(subjectId)
-
                 // Get student ID and class level
                 val userId = sharedPrefs.getUserId() ?: ""
-                val student = studentDao.getStudentSync(userId)
+                val student = studentRepository.getStudentSync(userId)
                 val classLevel = student?.classLevel ?: 7
 
-                // Get chapter-wise progress
-                val progressList = progressDao.getChapterWiseProgress(
+                // Fetch data from repositories
+                val chapters = chapterRepository.getChaptersForSubject(subjectId)
+                val subject = subjectRepository.getSubject(subjectId)
+                val progressList = chapterRepository.getChapterWiseProgress(
                     studentId = userId,
                     classLevel = classLevel,
                     subjectId = subjectId
@@ -58,11 +53,30 @@ class ChapterViewModel(
                 // Convert to map for easy lookup
                 val progressMap = progressList.associateBy { it.chapterId }
 
+                val chapterUiModels = chapters.map { chapter ->
+                    val progress = progressMap[chapter.chapterId]
+                    val completedConcepts = progress?.completedConcepts ?: 0
+                    val totalConcepts = chapter.totalConcepts
+
+                    // Determine status based on completion
+                    val status = when {
+                        completedConcepts == 0 -> ChapterStatus.NOT_STARTED
+                        completedConcepts >= totalConcepts -> ChapterStatus.COMPLETED
+                        else -> ChapterStatus.IN_PROGRESS
+                    }
+
+                    ChapterUiModel(
+                        id = chapter.chapterId,
+                        name = chapter.chapterName,
+                        totalConcepts = totalConcepts,
+                        completedConcepts = completedConcepts,
+                        status = status
+                    )
+                }
+
                 _state.value = _state.value.copy(
-                    chapters = chapters,
-                    chapterProgress = progressMap,
-                    subject = subject,
-                    subjectId = subjectId,
+                    chapters = chapterUiModels,
+                    subjectName = subject?.subjectName ?: "",
                     classLevel = classLevel,
                     isLoading = false,
                     error = null

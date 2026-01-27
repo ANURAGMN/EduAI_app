@@ -16,34 +16,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.repository.ChapterRepository
+import com.anurag.eduai.repository.ConceptRepository
+import com.anurag.eduai.repository.StudentLocalRepository
+import com.anurag.eduai.repository.SubjectRepository
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptScreenHeader
-import com.anurag.eduai.ui.screens.conceptscreen.components.ChapterProgressCardOnHeader
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptCard
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.viewModel.ConceptViewModel
+import com.anurag.eduai.ui.viewmodel_factory.ConceptViewModelFactory
 import com.anurag.eduai.utils.StreakManager
-
-enum class ConceptStatus {
-    COMPLETED,
-    IN_PROGRESS,
-    NOT_STARTED
-
-}
-
-data class Concept(
-    val id: String,
-    val name: String,
-    val order: Int,
-    val status: ConceptStatus = ConceptStatus.NOT_STARTED
-)
 
 /**
  * Composable screen to display concepts of a chapter.
@@ -66,21 +57,24 @@ fun ConceptScreen(
     val dimens = LocalDimensions.current
     val context = LocalContext.current
     val db = remember { EduAiDatabase.getInstance(context) }
-    val conceptDao = db.conceptDao()
-    val chapterDao = db.chapterDao()
-    val progressDao = db.progressDao()
-    val subjectDao = db.subjectDao()
-    val studentDao = db.studentDao()
     val sharedPrefs = remember { SharedPreferenceUtils(context) }
 
+    // Create repositories
+    val conceptRepository = remember { ConceptRepository(db.conceptDao(), db.progressDao()) }
+    val chapterRepository = remember { ChapterRepository(db.chapterDao(), db.progressDao()) }
+    val subjectRepository = remember { SubjectRepository(db.subjectDao()) }
+    val studentRepository = remember { StudentLocalRepository(db.studentDao()) }
+
+    // Create factory and ViewModel
+    val factory = remember {
+        ConceptViewModelFactory(conceptRepository, chapterRepository, subjectRepository, studentRepository, sharedPrefs)
+    }
+    val viewModel: ConceptViewModel = viewModel(factory = factory)
+    val state by viewModel.state.collectAsState()
 
     // streak update
     val streakManager = StreakManager(context)
 
-    val viewModel = remember {
-        ConceptViewModel(conceptDao, chapterDao, progressDao, subjectDao, studentDao, sharedPrefs)
-    }
-    val state by viewModel.state.collectAsState()
 
     // updating streak on concept opening
     LaunchedEffect(Unit) {
@@ -98,9 +92,9 @@ fun ConceptScreen(
         ConceptScreenHeader(
             classId = state.classLevel,
             subjectName = state.subjectName,
-            chapterName = state.chapter?.chapterName ?: "Concepts",
+            chapterName = state.chapterName,
             completed = state.completedConceptsCount,
-            total = state.chapter?.totalConcepts ?: 0,
+            total = state.totalConcepts,
             onBackClick = onBackClick,
             onGoHome = onGoHome,
             onGoSetting = onGoSetting
@@ -114,11 +108,12 @@ fun ConceptScreen(
                 CircularProgressIndicator()
             }
         } else if (state.error != null) {
+            DebugLogger.errorLog("ConceptScreen", "Error loading concepts: ${state.error}")
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "Error: ${state.error}", color = TextPrimary)
+                Text(text = stringResource(R.string.unable_to_load_concepts), color = TextPrimary)
             }
         } else {
             Column(
@@ -135,21 +130,12 @@ fun ConceptScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
                 ) {
-                    items(state.concepts) { conceptProgress ->
+                    items(state.concepts, key = { it.id }) { conceptUiModel ->
                         ConceptCard(
-                            concept = Concept(
-                                id = conceptProgress.concept.conceptId,
-                                order = conceptProgress.concept.orderIndex,
-                                name = conceptProgress.concept.conceptName,
-                                status = when (conceptProgress.status) {
-                                    "COMPLETED" -> ConceptStatus.COMPLETED
-                                    "IN_PROGRESS", "STARTED" -> ConceptStatus.IN_PROGRESS
-                                    else -> ConceptStatus.NOT_STARTED
-                                }
-                            ),
+                            concept = conceptUiModel,
                             onClick = {
-                                DebugLogger.debugLog("ConceptScreen", "Concept clicked: ${conceptProgress.concept.conceptId}")
-                                onConceptClick(conceptProgress.concept.conceptId)
+                                DebugLogger.debugLog("ConceptScreen", "Concept clicked: ${conceptUiModel.id}")
+                                onConceptClick(conceptUiModel.id)
                             }
                         )
                     }

@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.anurag.eduai.R
-import com.anurag.eduai.ui.screens.conceptscreen.ConceptStatus
+import com.anurag.eduai.ui.models.ConceptStatus
 import com.anurag.eduai.ui.theme.AccentGreen
 import com.anurag.eduai.ui.theme.CompleteIconBackground
 import com.anurag.eduai.ui.theme.InProgressIconBackground

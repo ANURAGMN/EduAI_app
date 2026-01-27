@@ -82,7 +82,7 @@ fun ConceptMapResourceContent(
             DebugLogger.debugLog(TAG, "Final time: ${simulatedAudioTime}s")
             DebugLogger.debugLog(TAG, "═══════════════════════════════════════════════════════")
         } else {
-            DebugLogger.debugLog(TAG, "⚠️ Progressive rendering disabled (isAudioPlaying=$isAudioPlaying, totalDuration=${totalDuration}s)")
+            DebugLogger.debugLog(TAG, "Progressive rendering disabled (isAudioPlaying=$isAudioPlaying, totalDuration=${totalDuration}s)")
         }
     }
 

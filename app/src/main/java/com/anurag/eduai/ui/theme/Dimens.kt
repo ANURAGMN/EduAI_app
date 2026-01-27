@@ -66,6 +66,7 @@ data class Dimensions(
     val inputPadding: Dp,
     val inputHorizontalPadding: Dp,
     val inputBorderWidth: Dp,
+    val inputRadius: Dp,
 
     // Cards
     val cardPadding: Dp,
@@ -145,6 +146,7 @@ data class Dimensions(
             inputPadding = 12.dp,
             inputHorizontalPadding = 12.dp,
             inputBorderWidth = 1.dp,
+            inputRadius = 24.dp,
 
             // Cards & containers
             cardPadding = 12.dp,
@@ -224,6 +226,7 @@ data class Dimensions(
             inputPadding = 14.dp,
             inputHorizontalPadding = 14.dp,
             inputBorderWidth = 1.dp,
+            inputRadius = 24.dp,
 
             // Cards & containers
             cardPadding = 14.dp,
@@ -302,6 +305,7 @@ data class Dimensions(
             inputPadding = 16.dp,
             inputHorizontalPadding = 16.dp,
             inputBorderWidth = 1.5.dp,
+            inputRadius = 24.dp,
 
             // Cards & containers
             cardPadding = 16.dp,

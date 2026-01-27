@@ -87,7 +87,7 @@ fun ImageResourceContent(
         // Zoom controls
         Row(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
+                .align(Alignment.BottomStart)
                 .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {

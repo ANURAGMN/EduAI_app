@@ -23,8 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.anurag.eduai.R
-import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextOnPrimary
@@ -36,6 +34,7 @@ import com.anurag.eduai.ui.theme.TextOnPrimary
  */
 @Composable
 fun ConceptScreenHeader(
+    modifier: Modifier = Modifier,
     classId: String,
     subjectName: String,
     chapterName: String,
@@ -48,7 +47,7 @@ fun ConceptScreenHeader(
     val dimens = LocalDimensions.current
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(
                 color= HeaderGradientStart,
@@ -101,12 +100,7 @@ fun ConceptScreenHeader(
 
             // Action buttons (Home & Settings)
             Row {
-                IconButton(
-                    onClick = {
-                        DebugLogger.debugLog("ConceptScreenHeader", "Home button clicked")
-                        onGoHome()
-                    }
-                ) {
+                IconButton(onClick = onGoHome) {
                     Icon(
                         imageVector = Icons.Default.Home,
                         contentDescription = stringResource(R.string.home),
@@ -114,12 +108,7 @@ fun ConceptScreenHeader(
                         modifier = Modifier.size(dimens.iconMedium)
                     )
                 }
-                IconButton(
-                    onClick = {
-                        DebugLogger.debugLog("ConceptScreenHeader", "Settings button clicked")
-                        onGoSetting()
-                    }
-                ) {
+                IconButton(onClick = onGoSetting) {
                     Icon(
                         imageVector = Icons.Default.Settings,
                         contentDescription = stringResource(R.string.settings),

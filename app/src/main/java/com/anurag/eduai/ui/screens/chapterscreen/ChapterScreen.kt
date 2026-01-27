@@ -14,8 +14,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.anurag.eduai.R
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
+import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.repository.ChapterRepository
+import com.anurag.eduai.repository.StudentLocalRepository
+import com.anurag.eduai.repository.SubjectRepository
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.chapterscreen.components.ChapterScreenHeader
@@ -23,54 +30,53 @@ import com.anurag.eduai.ui.screens.chapterscreen.components.ChapterCard
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.ChapterViewModel
+import com.anurag.eduai.ui.viewmodel_factory.ChapterViewModelFactory
 
-enum class ChapterStatus {
-    COMPLETED,
-    IN_PROGRESS,
-    NOT_STARTED
-}
-
-data class Chapter(
-    val id: String,
-    val name: String,
-    val conceptCount: String,
-)
 
 /**
  * ChapterScreen displays a list of chapters for a given subject.
  * 1. It shows a loading indicator while data is being fetched.
  * 2. It displays the list of chapters using ChapterCard components.
- * 2. It includes a header with the subject name and a back button.
- *
+ * 3. It includes a header with the subject name and a back button.
  *
  * @param subjectId The ID of the subject whose chapters are to be displayed.
  * @param onBackClick Callback function to be invoked when the back button is clicked.
  * @param onChapterClick Callback function to be invoked when a chapter is clicked, passing the chapter ID.
+ * @param onGoHome Callback function to navigate to the home screen.
+ * @param onGoSetting Callback function to navigate to the settings screen.
+ * @param onProgressClick Callback function to navigate to the progress screen.
  */
 @Composable
 fun ChapterScreen(
     subjectId: String,
     onBackClick: () -> Unit = {},
     onChapterClick: (String) -> Unit = {},
-    onGoHome:() -> Unit = {},
-    onGoSetting:() -> Unit = {},
+    onGoHome: () -> Unit = {},
+    onGoSetting: () -> Unit = {},
     onProgressClick: () -> Unit = {}
 ) {
-
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.CHAPTER)
+
     val dimens = LocalDimensions.current
     val context = LocalContext.current
+
     val db = remember { EduAiDatabase.getInstance(context) }
-    val chapterDao = db.chapterDao()
-    val subjectDao = db.subjectDao()
-    val progressDao = db.progressDao()
-    val studentDao  = db.studentDao()
     val sharedPrefs = remember { SharedPreferenceUtils(context) }
 
-    val viewModel = remember { ChapterViewModel(chapterDao, subjectDao, progressDao,studentDao,sharedPrefs) }
+    // Create repositories
+    val chapterRepository = remember { ChapterRepository(db.chapterDao(), db.progressDao()) }
+    val subjectRepository = remember { SubjectRepository(db.subjectDao()) }
+    val studentRepository = remember { StudentLocalRepository(db.studentDao()) }
+
+    // Create factory and ViewModel
+    val factory = remember {
+        ChapterViewModelFactory(chapterRepository, subjectRepository, studentRepository, sharedPrefs)
+    }
+    val viewModel: ChapterViewModel = viewModel(factory = factory)
     val state by viewModel.state.collectAsState()
 
+    // Load chapters when subjectId changes
     LaunchedEffect(subjectId) {
         viewModel.loadChapters(subjectId)
     }
@@ -82,12 +88,13 @@ fun ChapterScreen(
     ) {
         ChapterScreenHeader(
             classLevel = state.classLevel,
-            subjectName = state.subject?.subjectName ?: "Chapters",
+            subjectName = state.subjectName,
             onBackClick = onBackClick,
             onGoHome = onGoHome,
             onGoSetting = onGoSetting,
             onProgressClick = onProgressClick
         )
+
         if (state.isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -96,11 +103,12 @@ fun ChapterScreen(
                 CircularProgressIndicator()
             }
         } else if (state.error != null) {
+            DebugLogger.errorLog("ChapterScreen", "Error loading chapters: ${state.error}")
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "Error: ${state.error}")
+                Text(text = stringResource(R.string.unable_to_load_chapters))
             }
         } else {
             LazyColumn(
@@ -109,28 +117,10 @@ fun ChapterScreen(
                     .padding(dimens.cardPadding),
                 verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
             ) {
-                items(state.chapters) { chapter ->
-                    val progress = state.chapterProgress[chapter.chapterId]
-                    val completedConcepts = progress?.completedConcepts ?: 0
-                    val totalConcepts = chapter.totalConcepts
-
-                    // Determine status based on completion
-                    val status = when {
-                        completedConcepts == 0 -> ChapterStatus.NOT_STARTED
-                        completedConcepts >= totalConcepts -> ChapterStatus.COMPLETED
-                        else -> ChapterStatus.IN_PROGRESS
-                    }
-
+                items(state.chapters,{it.id}) { chapterUiModel ->
                     ChapterCard(
-                        chapter = Chapter(
-                            id = chapter.orderIndex.toString(),
-                            name = chapter.chapterName,
-                            conceptCount = "${chapter.totalConcepts} concepts"
-                        ),
-                        completedConcepts = completedConcepts,
-                        totalConcepts = totalConcepts,
-                        status = status,
-                        onStudyClick = { onChapterClick(chapter.chapterId) }
+                        chapter = chapterUiModel,
+                        onStudyClick = { onChapterClick(chapterUiModel.id) }
                     )
                 }
             }

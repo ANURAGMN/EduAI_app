@@ -8,6 +8,7 @@ import com.anurag.eduai.BuildConfig
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.ConceptSessionRepository
 import com.anurag.eduai.data.remote.AgenticAIClient
+import com.anurag.eduai.data.remote.GeminiLLMClient
 import com.anurag.eduai.data.remote.LLMClient
 import com.anurag.eduai.data.remote.SessionMetadata
 import com.anurag.eduai.debug.DebugLogger
@@ -32,11 +33,14 @@ import kotlinx.coroutines.withTimeout
 class ChatViewModel : ViewModel() {
 
     private val agenticAIClient = AgenticAIClient(BuildConfig.AGENTIC_AI_BASE_URL)
-    private val llmClient = LLMClient(
-        BuildConfig.GROQ_API_KEY, "6", "8", "250",
-        "meta-llama/llama-4-scout-17b-16e-instruct"
+//    private val  llmClient= LLMClient(
+//        BuildConfig.GROQ_API_KEY, "7", "8", "250",
+//        "meta-llama/llama-4-scout-17b-16e-instruct"
+//    )
+    private val llmClient= GeminiLLMClient(
+        BuildConfig.GEMINI_API_KEY,
+        "7","8", "250","gemma-3-27b-it"
     )
-
     // Consolidated UI State for chat screen
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
@@ -286,6 +290,31 @@ class ChatViewModel : ViewModel() {
      * @param generationTimeMs Time taken to generate the concept map JSON
      */
     private fun showConceptMap(jsonString: String, generationTimeMs: Long) {
+        // Check if this is the default/error concept map
+        if (llmClient.isDefaultConceptMap(jsonString)) {
+            DebugLogger.debugLog("ChatViewModel", "Default concept map detected - not showing resource card")
+
+            val pendingMsg = _uiState.value.pendingAgentResponse
+
+            _uiState.update {
+                it.copy(
+                    conceptMapStatus = "default - error in generation",
+                    pendingAgentResponse = null,
+                    showResourceCard = false,
+                    currentResource = null,
+                    loadingResourceMessage = null,
+                    isLoading = false
+                )
+            }
+
+            // Process pending message since we're not showing the resource card
+            pendingMsg?.let { msg ->
+                DebugLogger.debugLog("ChatViewModel", "Processing pending message since concept map is default")
+                startTypingAnimation(msg)
+            }
+            return
+        }
+
         val renderStartTime = System.currentTimeMillis()
 
         _uiState.update {
@@ -298,7 +327,8 @@ class ChatViewModel : ViewModel() {
                     currentAudioTime = 0f,
                     isAudioPlaying = true  // Auto-start progressive rendering
                 ),
-                showResourceCard = true
+                showResourceCard = true,
+                loadingResourceMessage = null
             )
         }
 
@@ -620,21 +650,33 @@ class ChatViewModel : ViewModel() {
                         it.copy(
                             autosuggestions = resp.autosuggestions,
                             agentMetadata = resp.metadata,
-                            showAutosuggestions = false
+                            showAutosuggestions = false,
+                            conceptMapStatus = null  // Reset concept map status
                         )
                     }
                     DebugLogger.debugLog("ChatViewModel","Node transitions: ${resp.metadata.nodeTransitions}")
+                    DebugLogger.debugLog("ChatViewModel","Image URL: ${resp.metadata.imageUrl}")
+                    // Check and show resource card FIRST (before typing animation)
+                    val shouldShowResource = checkAndShowResourceCard(resp.metadata)
 
+                    // Then handle agent response (typing animation)
                     resp.agentResponse?.let { text ->
-                        handleAgentResponse(text)
+                        if (shouldShowResource) {
+                            // Queue the message to show after resource card is dismissed
+                            _uiState.update { it.copy(pendingAgentResponse = text) }
+                        } else {
+                            // No resource card, show typing immediately and end loading
+                            _uiState.update { it.copy(isLoading = false) }
+                            handleAgentResponse(text)
+                        }
                     }
                 } else {
                     addErrorMessage(context)
+                    _uiState.update { it.copy(isLoading = false) }
                 }
             } catch (e: Exception) {
                 DebugLogger.errorLog("ChatViewModel", "sendMessage error: ${e.message}")
                 addErrorMessage(context)
-            } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }
         }
@@ -642,16 +684,10 @@ class ChatViewModel : ViewModel() {
 
     /**
      * handles the AI agent's response
-     * - if a resource card is being shown, queues the message in UI state
-     * - otherwise, starts the typing animation immediately
+     * - starts the typing animation immediately
      */
     private fun handleAgentResponse(text: String) {
-        if (_uiState.value.showResourceCard) {
-            DebugLogger.debugLog("ChatViewModel", "Resource card is showing, queuing agent response")
-            _uiState.update { it.copy(pendingAgentResponse = text) }
-        } else {
-            startTypingAnimation(text)
-        }
+        startTypingAnimation(text)
     }
 
     /// adds a standardized error message to the chat if any unexpected error occurs
@@ -673,7 +709,6 @@ class ChatViewModel : ViewModel() {
      * - adds the full message immediately to the chat
      * - animates the typing effect word by word
      * - triggers TTS start after a brief delay
-     * - calls onTypingAnimationComplete after animation finishes
      */
     private fun startTypingAnimation(fullText: String) {
         typingJob?.cancel()
@@ -707,43 +742,6 @@ class ChatViewModel : ViewModel() {
             }
 
             _uiState.update { it.copy(isTyping = false, typingText = "", isTypingComplete = true) }
-
-            // After typing animation completes, check if we should show resource card
-            onTypingAnimationComplete()
-        }
-    }
-
-    /**
-     * Called after typing animation completes
-     * - Sets a flag to wait for TTS to complete before showing resource card
-     * - This ensures resource card appears AFTER both typing AND TTS finish
-     */
-    private fun onTypingAnimationComplete() {
-        DebugLogger.debugLog("ChatViewModel", "Typing animation complete, waiting for TTS to finish...")
-        _uiState.update { it.copy(waitingForTTSToComplete = true) }
-    }
-
-    /**
-     * Called after TTS completes (when typing is also complete)
-     * - Checks if there's a resource card to show based on the current metadata
-     * - This ensures resource card appears AFTER both typing animation AND TTS
-     */
-    fun onTTSComplete() {
-        viewModelScope.launch {
-            // Only check for resources if we were waiting for TTS to complete
-            if (_uiState.value.waitingForTTSToComplete) {
-                DebugLogger.debugLog("ChatViewModel", "TTS complete, now checking for resources...")
-
-                _uiState.update { it.copy(waitingForTTSToComplete = false) }
-
-                // Get the current metadata
-                val metadata = _uiState.value.agentMetadata
-                if (metadata != null) {
-                    checkAndShowResourceCard(metadata)
-                } else {
-                    DebugLogger.debugLog("ChatViewModel", "No metadata available for resource card")
-                }
-            }
         }
     }
 
@@ -759,7 +757,9 @@ class ChatViewModel : ViewModel() {
                 currentResource = null,
                 resourceDisplayMode = ResourceDisplayMode.IMAGE,
                 ttsPausedForResource = false,
-                pendingAgentResponse = null  // Clear pending message
+                pendingAgentResponse = null,
+                loadingResourceMessage = null,
+                isLoading = false
             )
         }
 
@@ -768,7 +768,7 @@ class ChatViewModel : ViewModel() {
             DebugLogger.debugLog("ChatViewModel", "Processing pending agent response after resource card dismissed")
             startTypingAnimation(msg)
         }
-        DebugLogger.debugLog("ChatViewModel", "Resource card dismissed - idle timer will auto-start if conditions are met")
+        DebugLogger.debugLog("ChatViewModel", "Resource card dismissed")
     }
 
     /// resumes TTS when resource card is dismissed
@@ -779,62 +779,81 @@ class ChatViewModel : ViewModel() {
     /**
      * - checks session metadata for resource triggers
      * - shows image or concept map cards based on node transitions
-
+     * - returns true if a resource card was shown, false otherwise
+     *
      * for image condition : APK -> CI with valid image URL
      * for concept map condition : CI -> SIM_CC
      */
-    private fun checkAndShowResourceCard(metadata: SessionMetadata) {
-        viewModelScope.launch {
-            try {
-
-                // Check if we have any transitions
-                if (metadata.nodeTransitions.isEmpty()) {
-                    DebugLogger.debugLog("ChatViewModel", "No transitions")
-                    return@launch
-                }
-
-                // Get current (last) transition
-                val currentTransition = metadata.nodeTransitions.lastOrNull() ?: return@launch
-
-                val fromNode = currentTransition["from_node"] as? String
-                val toNode = currentTransition["to_node"] as? String
-
-                DebugLogger.debugLog("ChatViewModel", "Current transition: $fromNode → $toNode")
-                DebugLogger.debugLog("ChatViewModel", "imageUrl: ${metadata.imageUrl}")
-                // Check conditions and show resource if valid
-                when {
-                    fromNode == "APK" && toNode == "CI" && !metadata.imageUrl.isNullOrBlank() -> {
-                        DebugLogger.debugLog("ChatViewModel", " image is showing")
-                        _uiState.update {
-                            it.copy(
-                                currentResource = ResourceContent.Image(
-                                    url = metadata.imageUrl,
-                                    description = metadata.imageDescription
-                                ),
-                                resourceDisplayMode = ResourceDisplayMode.IMAGE,
-                                showResourceCard = true
-                            )
-                        }
-                    }
-
-                    fromNode == "CI" && toNode == "SIM_CC" -> {
-                        DebugLogger.debugLog("ChatViewModel", " generating concept map")
-                        val lastAiMsg = _uiState.value.lastAiMessage?.content
-                        if (!lastAiMsg.isNullOrBlank()) {
-                            fetchConceptMapWithLLM(lastAiMsg)
-                        } else {
-                            DebugLogger.debugLog("ChatViewModel", " No Agent message for concept map")
-                        }
-                    }
-                    // No matching condition - don't show
-                    else -> {
-                        DebugLogger.debugLog("ChatViewModel", " No resource Card for $fromNode → $toNode")
-                    }
-                }
-            } catch (e: Exception) {
-                DebugLogger.errorLog("ChatViewModel", "checkAndShowResourceCard error: ${e.message}")
-                e.printStackTrace()
+    private fun checkAndShowResourceCard(metadata: SessionMetadata): Boolean {
+        try {
+            // Check if we have any transitions
+            if (metadata.nodeTransitions.isEmpty()) {
+                DebugLogger.debugLog("ChatViewModel", "No transitions")
+                return false
             }
+
+            // Get current (last) transition
+            val currentTransition = metadata.nodeTransitions.lastOrNull() ?: return false
+
+            val fromNode = currentTransition["from_node"] as? String
+            val toNode = currentTransition["to_node"] as? String
+
+            DebugLogger.debugLog("ChatViewModel", "Current transition: $fromNode → $toNode")
+            DebugLogger.debugLog("ChatViewModel", "imageUrl: ${metadata.imageUrl}")
+
+            // Check conditions and show resource if valid
+            when {
+                fromNode == "APK" && toNode == "CI" && !metadata.imageUrl.isNullOrBlank() -> {
+                    DebugLogger.debugLog("ChatViewModel", " image is showing")
+
+                    // Set loading message first
+                    _uiState.update {
+                        it.copy(loadingResourceMessage = "Loading image...")
+                    }
+
+                    // Then show the image card (which clears the loading message)
+                    _uiState.update {
+                        it.copy(
+                            currentResource = ResourceContent.Image(
+                                url = metadata.imageUrl,
+                                description = metadata.imageDescription
+                            ),
+                            resourceDisplayMode = ResourceDisplayMode.IMAGE,
+                            showResourceCard = true,
+                            loadingResourceMessage = null
+                        )
+                    }
+                    return true
+                }
+
+                fromNode == "CI" && toNode == "SIM_CC" -> {
+                    DebugLogger.debugLog("ChatViewModel", " generating concept map")
+
+                    // Set loading message
+                    _uiState.update {
+                        it.copy(loadingResourceMessage = "Loading concept map...")
+                    }
+
+                    val lastAiMsg = _uiState.value.lastAiMessage?.content
+                    if (!lastAiMsg.isNullOrBlank()) {
+                        fetchConceptMapWithLLM(lastAiMsg)
+                        return true
+                    } else {
+                        DebugLogger.debugLog("ChatViewModel", " No Agent message for concept map")
+                        _uiState.update { it.copy(loadingResourceMessage = null) }
+                        return false
+                    }
+                }
+                // No matching condition - don't show
+                else -> {
+                    DebugLogger.debugLog("ChatViewModel", " No resource Card for $fromNode → $toNode")
+                    return false
+                }
+            }
+        } catch (e: Exception) {
+            DebugLogger.errorLog("ChatViewModel", "checkAndShowResourceCard error: ${e.message}")
+            e.printStackTrace()
+            return false
         }
     }
 

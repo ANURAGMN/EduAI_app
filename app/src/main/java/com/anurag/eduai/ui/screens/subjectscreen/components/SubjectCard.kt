@@ -1,7 +1,6 @@
 package com.anurag.eduai.ui.screens.subjectscreen.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,10 +18,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.anurag.eduai.R
-import com.anurag.eduai.ui.screens.subjectscreen.Subject
+import com.anurag.eduai.ui.models.SubjectUiModel
 import com.anurag.eduai.ui.theme.CardBackground
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextOnAccent
@@ -38,20 +38,21 @@ import com.anurag.eduai.ui.theme.TextSecondary
 
  * @param subject The Subject data to display.
  * @param onClick Lambda function to handle card click events.
+ * @param modifier Optional modifier for styling the card.
  */
 @Composable
 fun SubjectCard(
-    subject: Subject,
-    onClick: (Subject) -> Unit = {}
+    subject: SubjectUiModel,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val dimens = LocalDimensions.current
 
     ElevatedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable{ onClick(subject) },
-        shape=RoundedCornerShape(dimens.cornerRadiusMedium),
-        elevation =CardDefaults.elevatedCardElevation(
+        modifier = modifier
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(dimens.cornerRadiusMedium),
+        elevation = CardDefaults.elevatedCardElevation(
             defaultElevation = dimens.cardElevation
         ),
         colors = CardDefaults.elevatedCardColors(
@@ -61,7 +62,7 @@ fun SubjectCard(
         Column(
             modifier = Modifier.padding(dimens.cardPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
-        ){
+        ) {
             Box(
                 modifier = Modifier
                     .size(dimens.boxSizeSmall)
@@ -70,9 +71,10 @@ fun SubjectCard(
                         shape = RoundedCornerShape(dimens.cornerRadiusMedium)
                     ),
                 contentAlignment = Alignment.Center
-            ) {// Subject Initial
+            ) {
+                // Subject Initial
                 Text(
-                    text = subject.name.first().toString(),
+                    text = subject.name.firstOrNull()?.uppercase() ?: "",
                     style = MaterialTheme.typography.headlineMedium,
                     color = TextOnAccent
                 )
@@ -83,16 +85,20 @@ fun SubjectCard(
             // Subject Name
             Text(
                 text = subject.name,
-                style= MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
             )
 
             Spacer(modifier = Modifier.height(dimens.spaceSmall))
 
-            // total chapters in subject
+            // Total chapters in subject
             Text(
-                text = "${subject.chapterCount} Chapters",
+                text = pluralStringResource(
+                    R.plurals.chapter_count,
+                    subject.totalChapters,
+                    subject.totalChapters
+                ),
                 style = MaterialTheme.typography.labelSmall,
                 color = TextSecondary,
             )
@@ -101,9 +107,8 @@ fun SubjectCard(
 
             // Start Learning Button
             Button(
-                onClick = { onClick(subject) },
-                modifier = Modifier
-                    .fillMaxWidth(),
+                onClick = onClick,
+                modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = subject.color),
                 shape = RoundedCornerShape(dimens.cornerRadiusLarge)
             ) {

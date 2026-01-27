@@ -15,12 +15,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.IconPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
+import com.anurag.eduai.ui.theme.White
 
 /**
  * A composable overlay that indicates the app is listening for voice input
@@ -29,28 +31,23 @@ import com.anurag.eduai.ui.theme.TextPrimary
 @Composable
 fun ListeningOverlay(
     text: String,
-    amplitude: Float = 0f,  // Voice amplitude (0f to 1f)
+    amplitude: Float = 0f,
+    statusMessage: String = stringResource(R.string.listening),
     onStopClick: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
     val dimens = LocalDimensions.current
+    val scrollState = rememberScrollState()
     // Auto-scroll to bottom when new text arrives
     LaunchedEffect(text) {
         if (text.isNotEmpty()) {
             scrollState.animateScrollTo(scrollState.maxValue)
         }
     }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
-            .background(Color.White)
-    ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(color = White),
+            horizontalAlignment = Alignment.CenterHorizontally,
 
         ) {
             // Smooth curved line animation at the very top (acts as the top edge)
@@ -59,70 +56,64 @@ fun ListeningOverlay(
                 isListening = true,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(dimens.spaceMedium))
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(dimens.spaceSmall),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if(text.isEmpty()) {
+                if (text.isEmpty()) {
                     Text(
-                        text = stringResource(R.string.listening),
-                        fontSize = 18.sp,
+                        text = statusMessage,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium,
                         color = Color.Black
                     )
-                } else {
-                    Spacer(modifier = Modifier.width(1.dp))
                 }
-
                 IconButton(
                     onClick = onStopClick,
-                    modifier = Modifier
-                        .size(32.dp)
-                        .padding(4.dp)
+                    modifier = Modifier.size(dimens.iconMedium)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Stop listening",
+                        contentDescription = stringResource(R.string.stop_listening),
                         tint = IconPrimary,
-                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(2.dp))
 
-            // Text display area - more space for better visibility
-            Box(
+            // Text display area
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth(0.95f)
-                    .heightIn(min = 60.dp, max = 200.dp)  // Better height range
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                    .verticalScroll(scrollState)
+                    .fillMaxWidth()
+                    .padding(dimens.spaceMedium)
             ) {
-                Column(
-                    modifier = Modifier
-                        .verticalScroll(scrollState)
-                        .fillMaxWidth()
-                ) {
-                    if (text.isNotEmpty()) {
-                        Text(
-                            text = text,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = TextPrimary,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                if (text.isNotEmpty()) {
+                    Text(
+                        text = text,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Normal,
+                        color = TextPrimary,
+                    )
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
-    }
+
+}
+
+@Preview
+@Composable
+fun ListeningOverlayPreview() {
+    ListeningOverlay(
+        text = "This is a sample transcribed text from speech recognition. It can be quite long to demonstrate scrolling behavior in the overlay.",
+        amplitude = 0.5f,
+        statusMessage = "Listening...",
+        onStopClick = {}
+    )
 }

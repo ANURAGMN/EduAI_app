@@ -1,6 +1,5 @@
 package com.anurag.eduai.ui.screens.conceptscreen.components
 
-import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,13 +19,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import com.anurag.eduai.R
-import com.anurag.eduai.ui.screens.conceptscreen.Concept
-import com.anurag.eduai.ui.screens.conceptscreen.ConceptStatus
+import com.anurag.eduai.ui.models.ConceptStatus
+import com.anurag.eduai.ui.models.ConceptUiModel
 import com.anurag.eduai.ui.theme.CardBackground
 import com.anurag.eduai.ui.theme.CompleteTextColor
 import com.anurag.eduai.ui.theme.InProgressTextColor
@@ -43,7 +40,7 @@ import com.anurag.eduai.ui.theme.TextSecondary
  */
 @Composable
 fun ConceptCard(
-    concept: Concept,
+    concept: ConceptUiModel,
     onClick: () -> Unit = {}
 ) {
     val dimens = LocalDimensions.current
@@ -91,10 +88,7 @@ fun ConceptCard(
 
                 // Concept Completion status
                 Text(
-                    text = getStatus(
-                        concept.status,
-                        context = LocalContext.current
-                    ),
+                    text = getStatus(concept.status),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Medium,
                     color = getStatusColor(concept.status)
@@ -116,10 +110,11 @@ fun ConceptCard(
 }
 
 // Helper Functions for Status Texts and Colors
-private fun getStatus(status: ConceptStatus,context: Context): String = when (status) {
-    ConceptStatus.COMPLETED -> context.getString(R.string.completed)
-    ConceptStatus.IN_PROGRESS -> context.getString(R.string.in_progress_continue_learning)
-    ConceptStatus.NOT_STARTED -> context.getString(R.string.complete_previous_concepts)
+@Composable
+private fun getStatus(status: ConceptStatus): String = when (status) {
+    ConceptStatus.COMPLETED -> stringResource(R.string.completed)
+    ConceptStatus.IN_PROGRESS -> stringResource(R.string.in_progress_continue_learning)
+    ConceptStatus.NOT_STARTED -> stringResource(R.string.complete_previous_concepts)
 }
 
 private fun getStatusColor(status: ConceptStatus): Color = when (status) {

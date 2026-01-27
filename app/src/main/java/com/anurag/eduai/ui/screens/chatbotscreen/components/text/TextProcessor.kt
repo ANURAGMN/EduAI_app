@@ -51,45 +51,59 @@ class TextProcessor {
      *   ]
      */
     fun process(text: String): ProcessedText {
-        // Step 1: Find all bold sections using regex
-        val boldPattern = """\*{1,2}([^*]+?)\*{1,2}""".toRegex()
-        val boldMatches = boldPattern.findAll(text).toList()
-
-        // Step 2: Build clean text and track bold ranges
+        //Parse text and track bold sections
         val cleanText = StringBuilder()
         val boldRanges = mutableListOf<IntRange>()
 
-        var lastPosition = 0
+        var i = 0
         var cleanLength = 0
+        var boldStart: Int? = null  // Track where bold section starts in clean text
 
-        boldMatches.forEach { match ->
-            // Add normal text before bold section
-            if (match.range.first > lastPosition) {
-                val normalText = text.substring(lastPosition, match.range.first)
-                cleanText.append(normalText)
-                cleanLength += normalText.length
+        while (i < text.length) {
+            // Check for ** (double asterisk)
+            if (i + 1 < text.length && text[i] == '*' && text[i + 1] == '*') {
+                if (boldStart == null) {
+                    // Start bold section
+                    boldStart = cleanLength
+                    i += 2  // Skip **
+                } else {
+                    // End bold section
+                    if (cleanLength > boldStart) {
+                        boldRanges.add(boldStart until cleanLength)
+                    }
+                    boldStart = null
+                    i += 2  // Skip **
+                }
             }
+            // Check for * (single asterisk) - only if not already in bold
+            else if (text[i] == '*' && (i == 0 || text[i - 1] != '*') && (i + 1 >= text.length || text[i + 1] != '*')) {
+                if (boldStart == null) {
+                    // Start bold section
+                    boldStart = cleanLength
+                    i += 1  // Skip *
+                } else {
+                    // End bold section
+                    if (cleanLength > boldStart) {
+                        boldRanges.add(boldStart until cleanLength)
+                    }
+                    boldStart = null
+                    i += 1  // Skip *
+                }
+            }
+            // Regular character
+            else {
+                cleanText.append(text[i])
+                cleanLength++
+                i++
+            }
+        }
 
-            // Add bold text (without asterisks)
-            val boldText = match.groupValues[1]
-            val boldStart = cleanLength
-            cleanText.append(boldText)
-            cleanLength += boldText.length
-
-            // Mark this as bold range
+        // If bold section was never closed, close it at the end
+        if (boldStart != null && cleanLength > boldStart) {
             boldRanges.add(boldStart until cleanLength)
-
-            lastPosition = match.range.last + 1
         }
 
-        // Add remaining text
-        if (lastPosition < text.length) {
-            val remainingText = text.substring(lastPosition)
-            cleanText.append(remainingText)
-            cleanLength += remainingText.length
-        }
-
-        // Step 3: Extract word boundaries from clean text
+        // Extract word boundaries from clean text
         val cleanStr = cleanText.toString()
         val wordPositions = mutableListOf<WordPosition>()
         var wordStart = -1

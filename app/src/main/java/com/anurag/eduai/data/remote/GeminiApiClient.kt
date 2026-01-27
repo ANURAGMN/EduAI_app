@@ -440,4 +440,25 @@ class GeminiLLMClient(
     }
     """.trimIndent()
     }
+
+    /**
+     * Checks if the provided JSON is the default concept map
+     * Returns true if it's the default/error map
+     */
+    fun isDefaultConceptMap(jsonString: String): Boolean {
+        return try {
+            val json = JSONObject(jsonString)
+            val mainConcept = json.optString("main_concept", "")
+            val nodes = json.optJSONArray("nodes")
+
+            // Check if it matches the default structure
+            mainConcept == "Loading..." &&
+                    nodes != null &&
+                    nodes.length() == 1 &&
+                    nodes.getJSONObject(0).optString("label", "") == "Concept"
+        } catch (e: Exception) {
+            DebugLogger.errorLog("GeminiLLMClient", "Error checking default concept map: ${e.message}")
+            false
+        }
+    }
 }

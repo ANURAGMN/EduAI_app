@@ -6,14 +6,20 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -21,14 +27,23 @@ import com.anurag.eduai.R
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
-import com.anurag.eduai.ui.screens.chatbotscreen.components.*
+import com.anurag.eduai.ui.screens.chatbotscreen.components.AppDialog
+import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettings
+import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettingsState
+import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatEffects
+import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatHeaderIcons
+import com.anurag.eduai.ui.screens.chatbotscreen.components.ConversationView
+import com.anurag.eduai.ui.screens.chatbotscreen.components.InitialAvatarView
+import com.anurag.eduai.ui.screens.chatbotscreen.components.InputSection
+import com.anurag.eduai.ui.screens.chatbotscreen.components.LogOverlay
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
+import com.anurag.eduai.ui.theme.White
 import com.anurag.eduai.ui.viewModel.ChatUiState
 import com.anurag.eduai.ui.viewModel.ChatViewModel
 import com.anurag.eduai.ui.viewModel.SpeechToText
 import com.anurag.eduai.ui.viewModel.TextToSpeech
-import com.anurag.eduai.ui.viewModel.lastAiMessage
 import com.anurag.eduai.ui.viewModel.isConversationStarted
+import com.anurag.eduai.ui.viewModel.lastAiMessage
 
 @Composable
 fun ChatbotScreen(
@@ -40,8 +55,6 @@ fun ChatbotScreen(
     TrackScreenEvent(ScreenName.CHATBOT)
 
     val context = LocalContext.current
-    val keyboardController = LocalSoftwareKeyboardController.current
-    val density = LocalDensity.current
 
     // State collectors - using consolidated UI state
     val chatState by chatViewModel.uiState.collectAsState()
@@ -54,7 +67,6 @@ fun ChatbotScreen(
     var showSessionResumeDialog by remember { mutableStateOf(false) }
     var showSettingsMenu by remember { mutableStateOf(false) }
     var pendingConceptSelection by remember { mutableStateOf<String?>(null) }
-    var inputSectionHeight by remember { mutableStateOf(0.dp) }
 
     //settings state
     var settingsState by remember { mutableStateOf(ChatBotSettingsState()) }
@@ -83,10 +95,6 @@ fun ChatbotScreen(
         targetValue = if (isConversationStarted) 100.dp else 180.dp,
         label = "avatarSize"
     )
-    val avatarPadding by animateDpAsState(
-        targetValue = if (isConversationStarted) 20.dp else 0.dp,
-        label = "avatarPadding"
-    )
 
     // Permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -114,35 +122,18 @@ fun ChatbotScreen(
         lastProcessedSpeechText = lastProcessedSpeechText
     )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                if (!isConversationStarted) {
-                    // Initial centered avatar
-                    InitialAvatarView(
-                        avatarSize = avatarSize,
-                        ttsController = ttsController
-                    )
-                } else {
-                    // Conversation view
-                    ConversationView(
-                        avatarSize = avatarSize,
-                        avatarPadding = avatarPadding,
-                        chatState = chatState,
-                        lastAIMessage = lastAIMessage,
-                        ttsController = ttsController,
-                        inputSectionHeight = inputSectionHeight,
-                        onDismissResource = { chatViewModel.dismissResourceCard() },
-                        onResourceTimerComplete = {
-                            DebugLogger.debugLog("ChatViewModel", "Resource card timer completed")
-                        }
-                    )
-                }
-
+        // Background
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(White)
+        ) {
+            // Main content Column
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .imePadding()
+            ) {
                 // Header icons (settings, tts icon, kannada toggle)
                 ChatHeaderIcons(
                     isKannada = chatState.isKannada,
@@ -204,42 +195,67 @@ fun ChatbotScreen(
                         )
                     }
                 )
-            }
-        }
+                if (!isConversationStarted) {
+                    // Initial centered avatar
 
-        // Input section
-        InputSection(
-            chatState = chatState,
-            sttState = sttState,
-            onTextChange = { chatViewModel.updateInputText(it) },
-            onSendClick = {
-                if (chatState.inputText.isNotBlank()) {
-                    chatViewModel.hideAutosuggestions()
-                    chatViewModel.sendMessage(chatState.inputText, context)
-                    chatViewModel.updateInputText("")
-                    keyboardController?.hide()
+                        InitialAvatarView(
+                            avatarSize = avatarSize,
+                            ttsController = ttsController,
+                            modifier = Modifier.weight(0.1f).background(White)
+                        )
+
+                } else {
+                    // Conversation view with avatar and scrollable content
+                    ConversationView(
+                        avatarSize = avatarSize,
+                        chatState = chatState,
+                        lastAIMessage = lastAIMessage,
+                        ttsController = ttsController,
+                        onDismissResource = { chatViewModel.dismissResourceCard() },
+                        onResourceTimerComplete = {
+                            DebugLogger.debugLog("ChatViewModel", "Resource card timer completed")
+                        },
+                        modifier = Modifier.weight(0.1f).background(White)
+                    )
                 }
-            },
-            onSpeakClick = {
-                chatViewModel.hideAutosuggestions()
-                chatViewModel.markUserActive()
-                if (permissionGranted && sttState.isInitialized) {
-                    sttController.startListening("en-IN")
-                } else if (!permissionGranted) {
-                    permissionLauncher.launch(RECORD_AUDIO)
-                }
-            },
-            onStopListening = { sttController.stopListening() },
-            onSuggestionClick = { suggestion ->
-                chatViewModel.tapAutosuggestion(suggestion, context)
-                chatViewModel.hideAutosuggestions()
-            },
-            onSizeChanged = { size ->
-                inputSectionHeight = with(density) { size.height.toDp() }
-            },
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
+                // Input section
+                InputSection(
+                    chatState = chatState,
+                    sttState = sttState,
+                    onTextChange = { chatViewModel.updateInputText(it) },
+                    onSendClick = {
+                        if (chatState.inputText.isNotBlank()) {
+                            chatViewModel.hideAutosuggestions()
+                            chatViewModel.sendMessage(chatState.inputText, context)
+                            chatViewModel.updateInputText("")
+                        }
+                    },
+                    onSpeakClick = {
+                        chatViewModel.hideAutosuggestions()
+                        chatViewModel.markUserActive()
+                        if (permissionGranted && sttState.isInitialized) {
+                            sttController.startListening("en-IN")
+                        } else if (!permissionGranted) {
+                            permissionLauncher.launch(RECORD_AUDIO)
+                        }
+                    },
+                    onStopListening = { sttController.stopListening() },
+                    onSuggestionClick = { suggestion ->
+                        chatViewModel.tapAutosuggestion(suggestion, context)
+                        chatViewModel.hideAutosuggestions()
+                    }
+                )
+            }
+            // Debug LogOverlay
+            LogOverlay(
+                metadata = chatState.agentMetadata,
+                conceptMapStatus = chatState.conceptMapStatus,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+            )
     }
+
 
     // Session resume dialog
     AppDialog(

@@ -1,12 +1,15 @@
 package com.anurag.eduai.ui.screens.subjectscreen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -14,45 +17,41 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
+import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.repository.SubjectRepository
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
-import com.anurag.eduai.ui.screens.subjectscreen.components.SubjectScreenHeader
 import com.anurag.eduai.ui.screens.subjectscreen.components.SubjectCard
+import com.anurag.eduai.ui.screens.subjectscreen.components.SubjectScreenHeader
 import com.anurag.eduai.ui.theme.BackgroundPrimary
-import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
-import com.anurag.eduai.ui.theme.TextOnPrimary
 import com.anurag.eduai.ui.viewModel.SubjectViewModel
-
-data class Subject(
-    val id: String,
-    val name: String,
-    val color: Color,
-    val chapterCount: String
-)
+import com.anurag.eduai.ui.viewmodel_factory.SubjectViewModelFactory
 
 @Composable
 fun SubjectScreen(
     onBackClick: () -> Unit = {},
-    onSubjectClick: (Subject) -> Unit = {},
-    onGoHome:() -> Unit = {},
-    onGoSetting:() -> Unit = {},
+    onSubjectClick: (String) -> Unit = {},
+    onGoHome: () -> Unit = {},
+    onGoSetting: () -> Unit = {},
 ) {
     TrackScreenEvent(screenName = ScreenName.SUBJECT)
     val dimens = LocalDimensions.current
 
     val context = LocalContext.current
     val db = remember { EduAiDatabase.getInstance(context) }
-    val subjectDao = db.subjectDao()
+    val sharedPref = remember { SharedPreferenceUtils(context) }
 
-    val sharedPref = SharedPreferenceUtils(context)
-    val viewModel = remember { SubjectViewModel(subjectDao) }
+    val repository = remember { SubjectRepository(db.subjectDao()) }
+    val factory = remember { SubjectViewModelFactory(repository, sharedPref) }
+    val viewModel: SubjectViewModel = viewModel(factory = factory)
+
     val state by viewModel.state.collectAsState()
 
     Column(
@@ -61,7 +60,7 @@ fun SubjectScreen(
             .background(BackgroundPrimary)
     ) {
         SubjectScreenHeader(
-            title = "Class ${state.classLevel}",
+            title = stringResource(R.string.class_title, state.classLevel),
             subtitle = stringResource(R.string.ncert_curriculum),
             onBackClick = onBackClick,
             onGoHome = onGoHome,
@@ -76,11 +75,12 @@ fun SubjectScreen(
                 CircularProgressIndicator()
             }
         } else if (state.error != null) {
+            DebugLogger.errorLog("SubjectScreen", "Error loading subjects: ${state.error}")
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "Error: ${state.error}")
+                Text(text = stringResource(R.string.unable_to_load_subjects))
             }
         } else {
             LazyVerticalGrid(
@@ -89,24 +89,12 @@ fun SubjectScreen(
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
                 verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
             ) {
-                items(state.subjects) { subject ->
+                items(state.subjects, key = { it.id }) { subject ->
                     SubjectCard(
-                        subject = Subject(
-                            id = subject.subjectId,
-                            name = subject.subjectName,
-                            color = BrandPrimary,
-                            chapterCount = subject.totalChapters.toString()
-                        ),
+                        subject = subject,
                         onClick = {
-                            val selectedSubject = Subject(
-                                id = subject.subjectId,
-                                name = subject.subjectName,
-                                color = BrandPrimary,
-                                chapterCount = subject.totalChapters.toString()
-                            )
-
-                            onSubjectClick(selectedSubject)
-                            sharedPref.setSubjectSelection(subject.subjectId)
+                            viewModel.onSubjectSelected(subject.id)
+                            onSubjectClick(subject.id)
                         }
                     )
                 }

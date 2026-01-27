@@ -1,8 +1,7 @@
 package com.anurag.eduai.ui.screens.chapterscreen.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,28 +11,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import com.anurag.eduai.R
-import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextOnPrimary
@@ -43,17 +38,18 @@ import com.anurag.eduai.ui.theme.TextOnPrimary
  */
 @Composable
 fun ChapterScreenHeader(
+    modifier: Modifier = Modifier,
     classLevel: Int,
     subjectName: String,
     onBackClick: () -> Unit = {},
     onGoHome: () -> Unit = {},
     onGoSetting: () -> Unit = {},
-    onProgressClick: () -> Unit = {}
+    onProgressClick: () -> Unit = {},
 ) {
     val dimens = LocalDimensions.current
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(
                 color = HeaderGradientStart,
@@ -62,7 +58,7 @@ fun ChapterScreenHeader(
                     bottomEnd = dimens.cornerRadiusLarge
                 )
             )
-            .padding(dimens.spaceMedium)
+            .padding(dimens.spaceSmall)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -71,7 +67,6 @@ fun ChapterScreenHeader(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
             ) {
                 // Back button
                 IconButton(onClick = onBackClick) {
@@ -85,16 +80,16 @@ fun ChapterScreenHeader(
 
                 // Title and subtitle in the center
                 Column(
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(0.7f)
                 ) {
                     Text(
-                        text = "Class $classLevel - $subjectName",
+                        text = stringResource(R.string.class_and_subject, classLevel, subjectName),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = TextOnPrimary
                     )
                     Text(
-                        text = "NCERT Curriculum",
+                        text = stringResource(R.string.ncert),
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextOnPrimary.copy(alpha = 0.9f)
                     )
@@ -103,10 +98,7 @@ fun ChapterScreenHeader(
                 // Action buttons (Home & Settings)
                 Row {
                     IconButton(
-                        onClick = {
-                            DebugLogger.debugLog("ChapterScreenHeader", "Home button clicked")
-                            onGoHome()
-                        }
+                        onClick = onGoHome
                     ) {
                         Icon(
                             imageVector = Icons.Default.Home,
@@ -116,10 +108,7 @@ fun ChapterScreenHeader(
                         )
                     }
                     IconButton(
-                        onClick = {
-                            DebugLogger.debugLog("ChapterScreenHeader", "Settings button clicked")
-                            onGoSetting()
-                        }
+                        onClick = onGoSetting
                     ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
@@ -134,47 +123,42 @@ fun ChapterScreenHeader(
             Spacer(modifier = Modifier.height(dimens.spaceSmall))
 
             // My Progress chip
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
-            ) {
-                Surface(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(dimens.cornerRadiusMedium))
-                        .clickable {
-                            onProgressClick()
-                        }
-                        .border(
-                            width = 1.dp,
-                            color = TextOnPrimary.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(dimens.cornerRadiusMedium)
-                        ),
-                    color = Color.Transparent
-                ) {
-                    Row(
-                        modifier = Modifier.padding(
-                            horizontal = 12.dp,
-                            vertical = 6.dp
-                        ),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.BarChart,
-                            contentDescription = "My Progress",
-                            tint = TextOnPrimary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "My Progress",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextOnPrimary,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
+            AssistChip(
+                onClick = onProgressClick,
+                label = {
+                    Text(
+                        text = stringResource(R.string.my_progress),
+                        fontWeight = FontWeight.Medium
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.BarChart,
+                        contentDescription = stringResource(R.string.my_progress),
+                        modifier = Modifier.size(AssistChipDefaults.IconSize)
+                    )
+                },
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = HeaderGradientStart,
+                    labelColor = TextOnPrimary,
+                    leadingIconContentColor = TextOnPrimary
+                ),
+                border = BorderStroke(
+                    width = dimens.inputBorderWidth,
+                    color = TextOnPrimary.copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(dimens.cornerRadiusMedium),
+                modifier = Modifier.padding(start = dimens.spaceSmall)
+            )
         }
     }
 }
 
+@Preview
+@Composable
+fun ChapterScreenHeaderPreview() {
+    ChapterScreenHeader(
+        classLevel = 10,
+        subjectName = "Mathematics"
+    )
+}

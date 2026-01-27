@@ -26,12 +26,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.anurag.eduai.R
-import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.theme.HeaderGradientEnd
 import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextOnPrimary
-import com.anurag.eduai.ui.theme.TextSecondary
 
 /**
  * Header component specifically for SubjectScreen
@@ -39,22 +37,17 @@ import com.anurag.eduai.ui.theme.TextSecondary
  */
 @Composable
 fun SubjectScreenHeader(
+    modifier: Modifier = Modifier,
     title: String,
     subtitle: String,
     onBackClick: () -> Unit = {},
     onGoHome: () -> Unit = {},
     onGoSetting: () -> Unit = {},
-    headerBackground: Brush = Brush.verticalGradient(
-        colors = listOf(
-            HeaderGradientStart,
-            HeaderGradientEnd
-        )
-    )
 ) {
     val dimens = LocalDimensions.current
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(
                 brush = Brush.verticalGradient(
@@ -88,7 +81,7 @@ fun SubjectScreenHeader(
 
             // Title and subtitle in the center
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = modifier.weight(1f),
                 horizontalAlignment = Alignment.Start
             ) {
                 Text(
@@ -103,7 +96,7 @@ fun SubjectScreenHeader(
                     color = TextOnPrimary.copy(alpha = 0.9f)
                 )
 
-                Spacer(Modifier.height(dimens.spaceMedium))
+                Spacer(modifier.height(dimens.spaceMedium))
                 Text(
                     text = stringResource(R.string.choose_a_subject_to_continue),
                     style = MaterialTheme.typography.bodySmall,
@@ -114,10 +107,7 @@ fun SubjectScreenHeader(
             // Action buttons (Home & Settings)
             Row {
                 IconButton(
-                    onClick = {
-                        DebugLogger.debugLog("SubjectScreenHeader", "Home button clicked")
-                        onGoHome()
-                    }
+                    onClick = onGoHome
                 ) {
                     Icon(
                         imageVector = Icons.Default.Home,
@@ -127,16 +117,13 @@ fun SubjectScreenHeader(
                     )
                 }
                 IconButton(
-                    onClick = {
-                        DebugLogger.debugLog("SubjectScreenHeader", "Settings button clicked")
-                        onGoSetting()
-                    }
+                    onClick = onGoSetting
                 ) {
                     Icon(
                         imageVector = Icons.Default.Settings,
                         contentDescription = stringResource(R.string.settings),
                         tint = TextOnPrimary,
-                        modifier = Modifier.size(dimens.iconMedium)
+                        modifier = modifier.size(dimens.iconMedium)
                     )
                 }
             }

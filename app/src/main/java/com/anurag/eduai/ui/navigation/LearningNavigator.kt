@@ -49,8 +49,8 @@ fun LearningNavigator(
         composable(LearningRoutes.SUBJECTS) {
             SubjectScreen(
                 onBackClick = onBackToHome,
-                onSubjectClick = { subject ->
-                    navController.navigate("chapters/${subject.id}") },
+                onSubjectClick = { subjectId ->
+                    navController.navigate("chapters/${subjectId}") },
                 onGoHome = onGoHome,
                 onGoSetting = onGoSetting
             )
