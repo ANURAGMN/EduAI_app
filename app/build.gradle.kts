@@ -31,6 +31,7 @@ android {
         buildConfigField("String", "AGENTIC_AI_BASE_URL", "\"${prop("AGENTIC_AI_BASE_URL")}\"")
         buildConfigField("String", "GEMINI_API_KEY", "\"${prop("GEMINI_API_KEY")}\"")
         buildConfigField("String", "GROQ_API_KEY", "\"${prop("GROQ_API_KEY")}\"")
+        buildConfigField("String", "SIMULATION_BASE_URL", "\"${prop("SIMULATION_BASE_URL")}\"")
 
     }
     buildFeatures {

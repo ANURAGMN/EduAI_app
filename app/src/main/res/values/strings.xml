@@ -19,6 +19,38 @@
     <string name="current_subject">Current Subject</string>
     <string name="change">Change</string>
     <string name="view_ll_chapter">View All Chapters</string>
+    <string name="welcome_emoji">👋</string>
+    <string name="app_logo_desc">App Logo</string>
+
+    <!-- Language Selector -->
+    <string name="language_english">English</string>
+    <string name="language_kannada">ಕನ್ನಡ</string>
+    <string name="language_icon_desc">Language Selection Icon</string>
+
+    <!-- Google Sign In -->
+    <string name="google_icon_desc">Google Icon</string>
+
+    <!-- User Detail Entry -->
+    <string name="person_icon_desc">Person Icon</string>
+    <string name="phone_icon_desc">Phone Icon</string>
+    <string name="school_icon_desc">School Icon</string>
+    <string name="class_icon_desc">Class Icon</string>
+
+    <!-- Class Selection -->
+    <string name="class_format">Class %d</string>
+    <string name="class_prefix">Class </string>
+
+    <!-- Error Messages -->
+    <string name="error_phone_empty">Phone number cannot be empty</string>
+    <string name="error_phone_start_digit">Phone number should start from 6 to 9</string>
+    <string name="error_phone_invalid">Enter a valid 10-digit number</string>
+
+    <string name="error_school_empty">School name cannot be empty</string>
+    <string name="error_school_min_length">School name must be at least 3 characters</string>
+    <string name="error_school_invalid_chars">School name should only contain letters, numbers, and basic punctuation</string>
+
+    <!-- Success Messages -->
+    <string name="login_successful">Login Successful</string>
 <!--    login screen footer-->
     <string name="complete_ncert">Complete NCERT</string>
     <string name="language_number">2 Languages</string>
@@ -172,4 +204,33 @@
     <string name="stop">Stop</string>
     <string name="play">Play</string>
     <string name="close">Close</string>
+
+<!--    Simulation Screen-->
+    <string name="sim_title">Simulation AI</string>
+    <string name="sim_type_or_speak">Type or speak...</string>
+    <string name="sim_send_message">Send message</string>
+    <string name="sim_start_listening">Start listening</string>
+    <string name="sim_stop_listening">Stop listening</string>
+    <string name="sim_teacher_thinking">Teacher is thinking...</string>
+    <string name="sim_session_complete">🎉 Session Complete! 🎉</string>
+    <string name="sim_no_simulation">No simulation to display</string>
+    <string name="sim_before_label">Before</string>
+    <string name="sim_after_label">After</string>
+    <string name="sim_close_simulation">Close simulation</string>
+    <string name="sim_ai_title">Simulation AI</string>
+    <string name="sim_teacher_label">Teacher 👨‍🏫</string>
+    <string name="sim_you_label">You 👤</string>
+    <string name="sim_loading_simulation">Loading simulation...</string>
+    <string name="sim_error_loading">Error loading simulation</string>
+
+<!-- TTS/STT Common Strings -->
+    <string name="ready_for_speech">Ready for speech…</string>
+    <string name="processing_speech">Processing speech…</string>
+    <string name="no_speech_detected">No speech detected</string>
+    <string name="audio_permission_required">Audio permission required</string>
+    <string name="speech_stopped">Speech stopped</string>
+    <string name="tts_ready">TTS Ready</string>
+    <string name="playing">Playing</string>
+    <string name="playback_finished">Playback finished</string>
+    <string name="playback_error">Playback error</string>
 </resources>

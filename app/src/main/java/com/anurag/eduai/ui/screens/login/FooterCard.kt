@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -15,21 +14,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.BrandPrimary
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 
 @Composable
 fun FooterCard() {
+    val dimens = LocalDimensions.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(BackgroundPrimary)
-            .padding(16.dp),
+            .padding(dimens.spaceMedium),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         FeatureItem(
@@ -62,17 +63,19 @@ private fun FeatureItem(
     subtitle: String,
     modifier: Modifier = Modifier
 ) {
+    val dimens = LocalDimensions.current
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.padding(horizontal = 4.dp)
+        modifier = modifier.padding(horizontal = dimens.spaceExtraSmall)
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             tint = BrandPrimary,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(dimens.iconLarge)
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(dimens.spaceSmall))
         Text(
             text = title,
             fontSize = 13.sp,

@@ -20,10 +20,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.BrandPrimary
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 
 @Composable
@@ -31,24 +31,28 @@ fun LanguageSelector(
     selectedLanguage: String,
     onLanguageSelected: (String) -> Unit
 ) {
-    val languages = listOf("English","ಕನ್ನಡ",)
+    val dimens = LocalDimensions.current
+    val languages = listOf(
+        stringResource(R.string.language_english),
+        stringResource(R.string.language_kannada)
+    )
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = BackgroundPrimary),
-        elevation = CardDefaults.cardElevation(10.dp),
-        shape = RoundedCornerShape(20.dp)
+        elevation = CardDefaults.cardElevation(dimens.cardElevation + dimens.cardElevation),
+        shape = RoundedCornerShape(dimens.cornerRadiusLarge)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(dimens.spaceMedium)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     Icons.Default.Language,
-                    contentDescription = "Language Selection Icon",
+                    contentDescription = null,
                     tint = BrandPrimary
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(dimens.spaceSmall))
                 Text(
                     text = stringResource(R.string.choose_your_language),
                     style = MaterialTheme.typography.titleMedium,
@@ -56,11 +60,11 @@ fun LanguageSelector(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(dimens.spaceSmall + dimens.spaceExtraSmall))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
             ) {
                 languages.forEach { language ->
                     LanguageChip(

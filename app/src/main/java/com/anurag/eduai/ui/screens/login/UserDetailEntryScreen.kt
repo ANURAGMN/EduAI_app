@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +35,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -48,7 +48,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.EduAiDatabase
@@ -66,6 +65,7 @@ import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.ColorError
 import com.anurag.eduai.ui.theme.ColorHint
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.theme.White
@@ -75,8 +75,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun UserDetailEntryScreen(
     navController: NavController,
-    userViewModel: UserViewModel = UserViewModel()
+    userViewModel: UserViewModel
 ) {
+    val dimens = LocalDimensions.current
 
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.USER_DETAIL_ENTRY)
@@ -86,14 +87,13 @@ fun UserDetailEntryScreen(
 
     var fullName by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
-    var selectedClass by remember { mutableStateOf(7) } // default Class 7
-
+    var selectedClass by remember { mutableIntStateOf(7) } // default Class 7
     var schoolName by remember { mutableStateOf("") }
 
     var phoneError by remember { mutableStateOf<String?>(null) }
     var schoolError by remember { mutableStateOf<String?>(null) }
 
-    val classOptions = (1..10).map { "Class $it" }
+    val classOptions = (1..10).map { context.getString(R.string.class_format, it) }
 
     // shared preference object
     val sharedPreference = SharedPreferenceUtils(context)
@@ -116,7 +116,7 @@ fun UserDetailEntryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(BackgroundSecondary)
-                .padding(16.dp),
+                .padding(dimens.spaceMedium),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -128,25 +128,24 @@ fun UserDetailEntryScreen(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "Logo",
-                    modifier = Modifier.height(150.dp)
+                    contentDescription = stringResource(R.string.app_logo_desc),
+                    modifier = Modifier.height(dimens.containerMinHeight - dimens.buttonHeight)
                 )
             }
             Card(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(dimens.spaceMedium),
                 colors = CardDefaults.cardColors(containerColor = White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = dimens.spaceExtraSmall)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(BackgroundPrimary)
-                        .padding(10.dp),
+                        .padding(dimens.spaceSmall + dimens.spaceExtraSmall),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Spacer(modifier = Modifier.padding(10.dp))
+                    Spacer(modifier = Modifier.padding(dimens.spaceSmall + dimens.spaceExtraSmall))
 
                     Text(
                         text = stringResource(R.string.lets_go_to_know_you_message),
@@ -154,25 +153,21 @@ fun UserDetailEntryScreen(
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.padding(10.dp))
+                    Spacer(modifier = Modifier.padding(dimens.spaceSmall + dimens.spaceExtraSmall))
 
                     /**
                      * TextField to entry Full Name
-                     * ReadOnly
                      */
                     OutlinedTextField(
                         value = fullName,
-                        onValueChange = {
-                            fullName = it
-                        },
+                        onValueChange = { fullName = it },
                         label = { Text(stringResource(R.string.full_name_label)) },
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text(stringResource(R.string.full_name_hint)) },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Person,
-                                contentDescription = "Person Icon"
+                                contentDescription = stringResource(R.string.person_icon_desc)
                             )
                         },
                         colors = OutlinedTextFieldDefaults.colors(
@@ -188,7 +183,8 @@ fun UserDetailEntryScreen(
                         )
                     )
 
-                    Spacer(modifier = Modifier.padding(5.dp))
+                    Spacer(modifier = Modifier.padding(dimens.spaceSmall))
+
                     /**
                      * TextField to entry PhoneNumber
                      * On change it will update the mutable variable phoneNumber
@@ -206,13 +202,12 @@ fun UserDetailEntryScreen(
                             }
                         },
                         label = { Text(stringResource(R.string.phone_number_label)) },
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text(stringResource(R.string.phone_number_hint)) },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Phone,
-                                contentDescription = "Phone Icon"
+                                contentDescription = stringResource(R.string.phone_icon_desc)
                             )
                         },
                         isError = phoneError != null,
@@ -241,7 +236,6 @@ fun UserDetailEntryScreen(
                             errorTextColor = ColorError
                         )
                     )
-                    Spacer(modifier = Modifier.padding(0.dp))
 
                     /**
                      * Drop down menu for class section
@@ -249,9 +243,9 @@ fun UserDetailEntryScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = OutlinedTextFieldDefaults.shape,
-                        border = BorderStroke(width = 1.dp, color = ColorHint),
+                        border = BorderStroke(width = dimens.inputBorderWidth, color = ColorHint),
                         colors = CardDefaults.cardColors(containerColor = White),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = dimens.spaceExtraSmall)
                     ) {
                         Row(
                             modifier = Modifier
@@ -264,7 +258,7 @@ fun UserDetailEntryScreen(
                                 contentDescription = null,
                                 tint = ColorHint,
                                 modifier = Modifier
-                                    .padding(start = 10.dp, 15.dp)
+                                    .padding(start = dimens.spaceSmall + dimens.spaceExtraSmall, dimens.screenPadding - dimens.spaceExtraSmall)
                                     .alignByBaseline()
                             )
                             DropDownMenu(
@@ -274,13 +268,12 @@ fun UserDetailEntryScreen(
                                 onValueSelected = { selectedString ->
                                     selectedClass = selectedString.removePrefix("Class ").trim().toInt()
                                 }
-
                             )
                         }
-
                     }
 
-                    Spacer(modifier = Modifier.padding(5.dp))
+                    Spacer(modifier = Modifier.padding(dimens.spaceSmall))
+
                     /**
                      * TextField to entry school name
                      * On change it will update the mutable variable schoolName
@@ -298,13 +291,12 @@ fun UserDetailEntryScreen(
                             }
                         },
                         label = { Text(stringResource(R.string.school_name_label)) },
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text(stringResource(R.string.school_name_hint)) },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.School,
-                                contentDescription = "School Icon"
+                                contentDescription = stringResource(R.string.school_icon_desc)
                             )
                         },
                         isError = schoolError != null,
@@ -331,23 +323,20 @@ fun UserDetailEntryScreen(
                         )
                     )
 
-                    Spacer(modifier = Modifier.padding(15.dp))
+                    Spacer(modifier = Modifier.padding(dimens.screenPadding - dimens.spaceExtraSmall))
+
                     Button(
                         colors = ButtonDefaults.buttonColors(containerColor = AccentBlue),
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(dimens.spaceSmall),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp)
-                            .padding(horizontal = 20.dp),
-
-                        //  the button is only enabled if phoneNumber and schoolName is filled
-                        // Which makes the Name, Phone Number, and School Name as required and ambition as optional
-                        enabled = phoneError == null && schoolError == null,
+                            .height(dimens.buttonHeight)
+                            .padding(horizontal = dimens.spaceLarge - dimens.spaceExtraSmall),
+                        enabled = phoneError == null && schoolError == null &&
+                                phoneNumber.isNotBlank() && schoolName.isNotBlank(),
                         onClick = {
-                            DebugLogger.debugLog(
-                                "UserDetailEntryScreen",
-                                "Get Started Button Clicked"
-                            )
+                            DebugLogger.debugLog("UserDetailEntryScreen", "Get Started Button Clicked")
+
                             userViewModel.updateName(fullName)
                             userViewModel.updateSchool(schoolName)
                             userViewModel.updateClass(selectedClass)
@@ -358,7 +347,7 @@ fun UserDetailEntryScreen(
                             scope.launch {
                                 userViewModel.submit { success ->
                                     if (success) {
-                                        scope.launch { // new coroutine scope for saveStudentLocally() method
+                                        scope.launch {
                                             val studentEntity = StudentEntity(
                                                 studentId = userViewModel.user.value.id,
                                                 studentName = userViewModel.user.value.displayName.toString(),
@@ -388,12 +377,9 @@ fun UserDetailEntryScreen(
                                         sharedPreference.setLanguagePreference(userViewModel.user.value.language)
                                         sharedPreference.setUserId(userViewModel.user.value.id)
 
-
-
                                         navController.navigate("main") {
                                             popUpTo("login") { inclusive = true }
                                         }
-                                        Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }
@@ -406,24 +392,22 @@ fun UserDetailEntryScreen(
                                 text = stringResource(R.string.get_started),
                                 color = White,
                                 style = MaterialTheme.typography.titleMedium
-
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.padding(5.dp))
-
+                    Spacer(modifier = Modifier.padding(dimens.spaceSmall))
                 }
             }
             Spacer(modifier = Modifier.weight(1f))
 
             Card(
-                elevation = CardDefaults.cardElevation(10.dp),
-                shape = RoundedCornerShape(16.dp)
+                elevation = CardDefaults.cardElevation(dimens.cardElevation + dimens.cardElevation),
+                shape = RoundedCornerShape(dimens.spaceMedium)
             ) {
                 FooterCard()
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dimens.spaceMedium))
         }
     }
 }
