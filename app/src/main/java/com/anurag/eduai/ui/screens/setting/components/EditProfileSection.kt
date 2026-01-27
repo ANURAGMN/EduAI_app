@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -82,26 +81,25 @@ fun EditProfileScreen(
 
     var userName by remember {
         mutableStateOf(
-            student?.studentName
-                ?: error("Student Name not available for userId $userId")
+            student?.studentName.orEmpty()
         )
     }
     var classValue by remember {
         mutableIntStateOf(
             student?.classLevel
-                ?: error("Student class not available for userId $userId")
+                ?: 7
         )
     }
     var school by remember {
         mutableStateOf(
-            student?.studentSchool
-                ?: error("Student school not available for userId $userId")
+            student?.studentSchool.orEmpty()
         )
     }
+    // TODO: it should be Integer but due to refactoring purpose it is left this way
+    // Country code is not taken for future we can add country code
     var phoneNumber by remember {
         mutableStateOf(
-            student?.phoneNumber
-                ?: error("Student phone number not available for userId $userId")
+            student?.phoneNumber.orEmpty()
         )
     }
 
@@ -191,6 +189,7 @@ fun EditProfileScreen(
             onValueChange = {
                 userName = it
                 nameError = when {
+                    // TODO: remove hard coded error string from validation
                     userName.isBlank() -> "Name can not be empty"
                     userName.length < 5 ->
                         "Full Name must be at least 5 characters"
@@ -301,7 +300,7 @@ fun EditProfileScreen(
                     phoneNumber.matches(Regex("^[0-5]")) ->
                         "Phone number should start from 6 to 9"
                     !phoneNumber.matches(
-                        Regex("^(?:\\+91|91)?[6-9]\\d{9}$")
+                        Regex("^[6-9]\\d{9}$")
                     ) -> "Enter a valid 10-digit number"
                     else -> null
                 }},
@@ -334,6 +333,7 @@ fun EditProfileScreen(
         Button(
             onClick = {
                 userViewModel.viewModelScope.launch {
+                    // TODO: move it to viewmodel
                     userViewModel.updateProfile(
                         updatedName = userName,
                         updatedPhone = phoneNumber,

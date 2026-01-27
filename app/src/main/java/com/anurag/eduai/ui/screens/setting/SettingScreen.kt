@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Email
@@ -94,6 +95,7 @@ fun SettingScreen() {
     val sharedPref = SharedPreferenceUtils(context)
     val userId = sharedPref.getUserId().toString()
 
+    // TODO: move it to viewmodel
     val firebaseRepository = FirebaseRepository()
     val db = remember { EduAiDatabase.getInstance(context) }
     val studentDao = db.studentDao()
@@ -112,14 +114,14 @@ fun SettingScreen() {
             TopAppBar(
                 title = {
                     Text(
-                        "Settings",
+                        stringResource(R.string.settings),
                         fontWeight = FontWeight.SemiBold,
                         color = TextOnPrimary
                     ) },
                 navigationIcon = {
                     IconButton(onClick = { /* Navigate back */}) {
                         Icon(
-                            Icons.Default.ArrowBack,
+                            Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
                             modifier = Modifier.size(dimens.iconMedium),
                             tint = TextOnPrimary
@@ -129,6 +131,7 @@ fun SettingScreen() {
             )
         }
     ) { paddingValues ->
+        // TODO: remove all hard coded string
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier =
@@ -167,7 +170,13 @@ fun SettingScreen() {
                     fontWeight = FontWeight.Medium,
                     color = TextSecondary,
                 )
-
+                /**
+                 * sealed class ProfileState {
+                 *     object Loading
+                 *     data class Success(val student: Student)
+                 *     data class Error(val message: String)
+                 * }
+                 */
                 if (student == null) {
                     Text(
                         text = "Loading profile…",
@@ -215,7 +224,9 @@ fun SettingScreen() {
 
                 // Logout Button
                 Button(
-                    onClick = { /* Handle Logout */},
+                    onClick = {
+
+                    },
                     modifier = Modifier.fillMaxWidth().height(dimens.buttonHeightLarge),
                     colors =
                         ButtonDefaults.buttonColors(
