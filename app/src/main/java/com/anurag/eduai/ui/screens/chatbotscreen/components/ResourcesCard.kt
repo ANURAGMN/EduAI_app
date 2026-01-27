@@ -17,7 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.anurag.eduai.R
+import com.anurag.eduai.ui.theme.LocalDimensions
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -55,6 +58,7 @@ fun ResourcesCard(
     onTimerComplete: () -> Unit = {},
     timerDurationSeconds: Int = 6,
 ) {
+    val dimens =LocalDimensions.current
     var isVisible by remember { mutableStateOf(false) }
     var timeRemaining by remember { mutableIntStateOf(timerDurationSeconds) }
 
@@ -122,7 +126,7 @@ fun ResourcesCard(
                     totalDuration = timerDurationSeconds,
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .padding(16.dp)
+                        .padding(dimens.spaceMedium)
                 )
 
                 // Close Button
@@ -133,14 +137,14 @@ fun ResourcesCard(
                     },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(16.dp)
-                        .size(40.dp)
+                        .padding(dimens.spaceMedium)
+                        .size(dimens.iconExtraLarge)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.9f))
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
+                        contentDescription = stringResource(R.string.close),
                         tint = MaterialTheme.colorScheme.onErrorContainer
                     )
                 }

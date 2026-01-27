@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.anurag.eduai.ui.theme.LocalDimensions
 
 
 /**
@@ -27,16 +28,16 @@ fun ResourceCardCloseTimer(
     modifier: Modifier = Modifier
 ) {
     val progress = timeRemaining.toFloat() / totalDuration.toFloat()
-
+val dimens= LocalDimensions.current
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(dimens.cornerRadiusMedium),
         color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.9f)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal =dimens.messageHorizontalPadding, vertical = dimens.messageVerticalPadding),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceMedium)
         ) {
             // Progress bar
             LinearProgressIndicator(
@@ -44,7 +45,7 @@ fun ResourceCardCloseTimer(
                 modifier = Modifier
                     .height(4.dp)
                     .width(60.dp)
-                    .clip(RoundedCornerShape(2.dp)),
+                    .clip(RoundedCornerShape(dimens.cornerRadiusSmall)),
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant,
             )

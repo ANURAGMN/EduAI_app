@@ -2,12 +2,11 @@ package com.anurag.eduai.ui.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.anurag.eduai.data.local.dao.ConceptDao
-import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.data.local.entities.ProgressEntity
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.repository.ConceptRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,8 +21,7 @@ data class ConceptDetailScreenState(
 )
 
 class ConceptDetailViewModel(
-    private val conceptDao: ConceptDao,
-    private val progressDao: ProgressDao,
+    private val repository: ConceptRepository,
     private val sharedPrefs: SharedPreferenceUtils
 ) : ViewModel() {
 
@@ -34,10 +32,10 @@ class ConceptDetailViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
-                val concept = conceptDao.getConcept(conceptId)
+                val concept = repository.getConcept(conceptId)
                 val studentId = sharedPrefs.getUserId() ?: ""
 
-                val progress = progressDao.getProgress(
+                val progress = repository.getProgress(
                     studentId = studentId,
                     itemType = "CONCEPT",
                     itemId = conceptId
@@ -51,7 +49,7 @@ class ConceptDetailViewModel(
                     }
                 }
 
-                val updatedProgress = progressDao.getProgress(
+                val updatedProgress = repository.getProgress(
                     studentId = studentId,
                     itemType = "CONCEPT",
                     itemId = conceptId
@@ -77,7 +75,7 @@ class ConceptDetailViewModel(
 
     private suspend fun markAsStartedAutomatically(studentId: String, conceptId: String) {
         try {
-            progressDao.updateProgressStatus(
+            repository.updateProgressStatus(
                 studentId = studentId,
                 itemType = "CONCEPT",
                 itemId = conceptId,
@@ -104,7 +102,7 @@ class ConceptDetailViewModel(
                 }
 
                 // Update current concept status
-                progressDao.updateProgressStatus(
+                repository.updateProgressStatus(
                     studentId = studentId,
                     itemType = "CONCEPT",
                     itemId = concept.conceptId,
@@ -118,7 +116,7 @@ class ConceptDetailViewModel(
                 }
 
                 // Reload the progress data
-                val updatedProgress = progressDao.getProgress(
+                val updatedProgress = repository.getProgress(
                     studentId = studentId,
                     itemType = "CONCEPT",
                     itemId = concept.conceptId
@@ -149,21 +147,21 @@ class ConceptDetailViewModel(
 
     private suspend fun unlockNextConcept(studentId: String, currentConcept: ConceptEntity) {
         try {
-            val allConcepts = conceptDao.getConceptsForChapterSync(currentConcept.chapterId)
+            val allConcepts = repository.getConceptsForChapter(currentConcept.chapterId)
 
             val nextConcept = allConcepts.firstOrNull {
                 it.orderIndex == currentConcept.orderIndex + 1
             }
 
             if (nextConcept != null) {
-                val nextProgress = progressDao.getProgress(
+                val nextProgress = repository.getProgress(
                     studentId = studentId,
                     itemType = "CONCEPT",
                     itemId = nextConcept.conceptId
                 )
 
                 if (nextProgress == null || nextProgress.status == "NOT_STARTED") {
-                    progressDao.updateProgressStatus(
+                    repository.updateProgressStatus(
                         studentId = studentId,
                         itemType = "CONCEPT",
                         itemId = nextConcept.conceptId,

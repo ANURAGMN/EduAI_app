@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.ui.theme.BrandPrimary
+import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.theme.White
@@ -43,11 +44,12 @@ fun AppDialog(
     onDismiss: () -> Unit,
     content: (@Composable () -> Unit)? = null
 ) {
+    val dimens = LocalDimensions.current
     if (!show) return
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(dimens.cornerRadiusMedium),
         containerColor = White,
 
         title = title?.let {

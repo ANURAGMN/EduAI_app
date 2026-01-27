@@ -2,24 +2,25 @@ package com.anurag.eduai.ui.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.anurag.eduai.data.local.dao.ChapterDao
-import com.anurag.eduai.data.local.dao.ConceptDao
-import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.data.local.SharedPreferenceUtils
-import com.anurag.eduai.data.local.dao.StudentDao
-import com.anurag.eduai.data.local.dao.SubjectDao
-import com.anurag.eduai.data.local.entities.ChapterEntity
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.repository.ChapterRepository
+import com.anurag.eduai.repository.ConceptRepository
+import com.anurag.eduai.repository.StudentLocalRepository
+import com.anurag.eduai.repository.SubjectRepository
+import com.anurag.eduai.ui.models.ConceptStatus
+import com.anurag.eduai.ui.models.ConceptUiModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 data class ConceptScreenState(
-    val concepts: List<ConceptWithProgress> = emptyList(),
-    val chapter: ChapterEntity? = null,
+    val concepts: List<ConceptUiModel> = emptyList(),
+    val chapterName: String = "",
     val chapterId: String = "",
     val completedConceptsCount: Int = 0,
+    val totalConcepts: Int = 0,
     val subjectName: String = "",
     val classLevel: String = "",
     val isLoading: Boolean = false,
@@ -27,11 +28,10 @@ data class ConceptScreenState(
 )
 
 class ConceptViewModel(
-    private val conceptDao: ConceptDao,
-    private val chapterDao: ChapterDao,
-    private val progressDao: ProgressDao,
-    private val subjectDao: SubjectDao,
-    private val studentDao: StudentDao,
+    private val conceptRepository: ConceptRepository,
+    private val chapterRepository: ChapterRepository,
+    private val subjectRepository: SubjectRepository,
+    private val studentRepository: StudentLocalRepository,
     private val sharedPrefs: SharedPreferenceUtils
 ) : ViewModel() {
 
@@ -42,18 +42,18 @@ class ConceptViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
-                val concepts = conceptDao.getConceptsForChapterSync(chapterId)
-                val chapter = chapterDao.getChapter(chapterId)
+                val concepts = conceptRepository.getConceptsForChapter(chapterId)
+                val chapter = chapterRepository.getChapter(chapterId)
                 val studentId = sharedPrefs.getUserId() ?: ""
 
                 // Get subject and class level information
-                val subject = chapter?.let { subjectDao.getSubject(it.subjectId) }
-                val student = studentDao.getStudentSync(studentId)
+                val subject = chapter?.let { subjectRepository.getSubject(it.subjectId) }
+                val student = studentRepository.getStudentSync(studentId)
                 val classLevel = student?.classLevel ?: 7
 
-                // Get progress for all concepts
-                val conceptsWithProgress = concepts.mapIndexed { index, concept ->
-                    val progress = progressDao.getProgress(
+                // Convert to UI models with status
+                val conceptUiModels = concepts.mapIndexed { index, concept ->
+                    val progress = conceptRepository.getProgress(
                         studentId = studentId,
                         itemType = "CONCEPT",
                         itemId = concept.conceptId
@@ -64,7 +64,7 @@ class ConceptViewModel(
                         progress = progress,
                         isFirstConcept = index == 0,
                         previousConceptStatus = if (index > 0) {
-                            progressDao.getProgress(
+                            conceptRepository.getProgress(
                                 studentId = studentId,
                                 itemType = "CONCEPT",
                                 itemId = concepts[index - 1].conceptId
@@ -72,34 +72,40 @@ class ConceptViewModel(
                         } else null
                     )
 
-                    ConceptWithProgress(
-                        concept = concept,
-                        progress = progress,
-                        status = status
+                    ConceptUiModel(
+                        id = concept.conceptId,
+                        name = concept.conceptName,
+                        order = concept.orderIndex,
+                        status = when (status) {
+                            "COMPLETED" -> ConceptStatus.COMPLETED
+                            "IN_PROGRESS", "STARTED" -> ConceptStatus.IN_PROGRESS
+                            else -> ConceptStatus.NOT_STARTED
+                        }
                     )
                 }
 
                 // Auto-unlock first concept if not started
-                if (conceptsWithProgress.isNotEmpty() &&
-                    conceptsWithProgress[0].status == "NOT_STARTED") {
-                    unlockFirstConcept(studentId, conceptsWithProgress[0].concept.conceptId)
+                if (conceptUiModels.isNotEmpty() &&
+                    conceptUiModels[0].status == ConceptStatus.NOT_STARTED) {
+                    unlockFirstConcept(studentId, conceptUiModels[0].id)
                 }
 
                 // Count completed concepts
-                val completedCount = conceptsWithProgress.count { it.status == "COMPLETED" }
+                val completedCount = conceptUiModels.count { it.status == ConceptStatus.COMPLETED }
 
                 _state.value = _state.value.copy(
-                    concepts = conceptsWithProgress,
-                    chapter = chapter,
+                    concepts = conceptUiModels,
+                    chapterName = chapter?.chapterName ?: "",
                     chapterId = chapterId,
                     completedConceptsCount = completedCount,
+                    totalConcepts = chapter?.totalConcepts ?: 0,
                     subjectName = subject?.subjectName ?: "",
                     classLevel = "Class $classLevel",
                     isLoading = false,
                     error = null
                 )
 
-                DebugLogger.debugLog("ConceptViewModel", "Loaded ${conceptsWithProgress.size} concepts")
+                DebugLogger.debugLog("ConceptViewModel", "Loaded ${conceptUiModels.size} concepts")
             } catch (e: Exception) {
                 DebugLogger.debugLog("ConceptViewModel", "Error: ${e.message}")
                 _state.value = _state.value.copy(
@@ -136,7 +142,7 @@ class ConceptViewModel(
 
     private suspend fun unlockFirstConcept(studentId: String, conceptId: String) {
         try {
-            progressDao.updateProgressStatus(
+            conceptRepository.updateProgressStatus(
                 studentId = studentId,
                 itemType = "CONCEPT",
                 itemId = conceptId,

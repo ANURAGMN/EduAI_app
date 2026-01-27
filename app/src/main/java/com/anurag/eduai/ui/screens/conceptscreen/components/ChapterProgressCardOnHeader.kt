@@ -17,14 +17,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.anurag.eduai.ui.theme.CardBackground
-import com.anurag.eduai.ui.theme.ColorSuccess
-import com.anurag.eduai.ui.theme.HeaderGradientStart
+import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextOnPrimary
-import com.anurag.eduai.ui.theme.TextSecondary
 
 /**
  * Progress card displayed in the header of ConceptScreen
@@ -59,7 +57,7 @@ fun ChapterProgressCardOnHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Chapter Progress",
+                    text = stringResource(R.string.chapter_progress),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = TextOnPrimary
@@ -88,7 +86,12 @@ fun ChapterProgressCardOnHeader(
             Spacer(modifier = Modifier.height(dimens.spaceSmall))
 
             Text(
-                text = "$completed of $total • ${total - completed} left",
+                text = stringResource(
+                    R.string.progress_status,
+                    completed,
+                    total,
+                    total - completed
+                ),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Normal,
                 color = TextOnPrimary.copy(alpha = 0.9f)

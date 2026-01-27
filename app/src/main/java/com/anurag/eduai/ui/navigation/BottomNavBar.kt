@@ -229,8 +229,8 @@ fun BottomNavBar() {
                             launchSingleTop = true
                         }
                     },
-                    onSubjectClick = { subject ->
-                        navController.navigate("chapters/${subject.id}")
+                    onSubjectClick = { subjectId ->
+                        navController.navigate("chapters/$subjectId")
                     },
                     onGoHome = {
                         navController.navigate("home") {

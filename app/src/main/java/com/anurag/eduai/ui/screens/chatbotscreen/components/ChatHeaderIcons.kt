@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.IconPrimary
 import com.anurag.eduai.ui.theme.IconSecondary
+import com.anurag.eduai.ui.theme.LocalDimensions
 
 /**
  * Header icons row for the chat screen
@@ -32,10 +33,11 @@ fun ChatHeaderIcons(
     settingsContent: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimens= LocalDimensions.current
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 0.dp, end = 0.dp, bottom = 0.dp),
+            .padding(bottom = dimens.spaceSmall),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -43,7 +45,9 @@ fun ChatHeaderIcons(
         IconButton(onClick = onKannadaToggle) {
             Icon(
                 imageVector = Icons.Default.ClosedCaption,
-                contentDescription = if (isKannada) "Kannada Enabled" else "Kannada Disabled",
+                contentDescription = if (isKannada) stringResource(R.string.kannada_enabled) else stringResource(
+                    R.string.kannada_disabled
+                ),
                 tint = if (isKannada) IconPrimary else IconSecondary
             )
         }
@@ -52,10 +56,14 @@ fun ChatHeaderIcons(
         IconButton(onClick = onVolumeClick) {
             Icon(
                 imageVector = if (isSpeaking) Icons.Default.Stop else Icons.AutoMirrored.Filled.VolumeUp,
-                contentDescription = if (isSpeaking) "Stop" else "Play",
+                contentDescription =
+                    if (isSpeaking)
+                        stringResource(R.string.stop)
+                    else
+                        stringResource(R.string.play
+                    ),
                 tint = when {
                     isSpeaking -> IconPrimary
-                    showResourceCard && ttsPausedForResource -> IconSecondary.copy(alpha = 0.5f)
                     else -> IconSecondary
                 }
             )
@@ -67,7 +75,10 @@ fun ChatHeaderIcons(
                 Icon(
                     imageVector = Icons.Default.Tune,
                     contentDescription = stringResource(R.string.settings),
-                    tint = Color.Gray.copy(alpha = 0.6f)
+                    tint = when {
+                        showSettingsMenu -> IconPrimary
+                        else -> IconSecondary
+                    }
                 )
             }
             if (showSettingsMenu) {

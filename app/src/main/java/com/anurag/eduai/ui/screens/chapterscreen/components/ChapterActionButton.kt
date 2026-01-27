@@ -4,8 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,37 +28,44 @@ import com.anurag.eduai.ui.theme.TextPrimary
  * A customizable button used in the chapter screen for actions like starting a chapter or taking a quiz.
  *
  * @param label The text label displayed on the button.
- * @param icon The icon displayed alongside the label (can be an emoji or text).
- * @param modifier Optional [Modifier] for styling the button.
+ * @param icon Composable function to render the icon.
  * @param onClick Lambda function to be invoked when the button is clicked.
  */
 @Composable
 fun ChapterActionButton(
     label: String,
-    icon: String,
+    icon: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
     val dimens = LocalDimensions.current
     Box(
-        modifier =  modifier
+        modifier = modifier
             .background(
                 color = Color.White,
                 shape = RoundedCornerShape(dimens.cornerRadiusMedium)
             )
             .clickable(onClick = onClick)
-            .border(dimens.dividerThickness, ChipBackground,
-                RoundedCornerShape(dimens.cornerRadiusMedium))
-            .padding(dimens.buttonPadding
-            ),
+            .border(
+                dimens.dividerThickness,
+                ChipBackground,
+                RoundedCornerShape(dimens.cornerRadiusMedium)
+            )
+            .padding(dimens.buttonPadding),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "$icon $label",
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            icon()
+            Spacer(modifier = Modifier.width(dimens.spaceSmall))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary
+            )
+        }
     }
 }
 @Preview
@@ -60,6 +73,12 @@ fun ChapterActionButton(
 fun ChapterActionButtonPreview() {
     ChapterActionButton(
         label = "videos",
-        icon = "▶️",
+        icon = {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                contentDescription = "Study",
+                tint = TextPrimary
+            )
+        },
     )
 }

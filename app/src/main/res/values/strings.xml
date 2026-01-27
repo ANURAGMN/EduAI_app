@@ -159,9 +159,20 @@
     <string name="enter_phone_number">Enter phone number</string>
     <string name="save_changes">Save Changes</string>
     <string name="profile">Profile</string>
+    <string name="class_title">Class %s</string>
     <string name="ncert_curriculum">NCERT Curriculum</string>
     <string name="choose_subjects_to_continue">Choose subjects to continue</string>
     <string name="choose_a_subject_to_continue">Choose a subject to continue</string>
+
+    <plurals name="chapter_count">
+        <item quantity="one">%d Chapter</item>
+        <item quantity="other">%d Chapters</item>
+    </plurals>
+
+    <plurals name="concept_count">
+        <item quantity="one">%d main concept</item>
+        <item quantity="other">%d main concepts</item>
+    </plurals>
 
 <!--    Contact Details-->
     <string name="contact_email">anurag@gmail.com</string>
@@ -170,6 +181,29 @@
     <string name="send_us_mail_msg">Send us an email</string>
     <string name="we_would_love_msg">We\'d love to hear from you</string>
     <string name="open_email_app_msg">Open Email App</string>
+    <string name="unable_to_load_subjects">Unable to load subjects</string>
+    <string name="unable_to_load_chapters">Unable to load chapters</string>
+    <string name="unable_to_load_concepts">Unable to load concepts</string>
+    <string name="unable_to_load_concept_details">Unable to load concept details</string>
+    <string name="class_and_subject">Class %1$d - %2$s</string>
+    <string name="ncert">NCERT Curriculum</string>
+    <string name="my_progress">My Progress</string>
+    <string name="chapter_progress">Chapter Progress</string>
+    <string name="progress_status">%1$d of %2$d • %3$d left</string>
+    <string name="progress">Progress</string>
+    <string name="study">Study</string>
+    <string name="status_completed">Completed</string>
+    <string name="status_in_progress">In Progress</string>
+    <string name="status_not_started">Not Started</string>
+    <string name="type_or_speak">Type or speak...</string>
+    <string name="send_message">Send message</string>
+    <string name="start_listening">Start listening</string>
+    <string name="stop_listening">Stop listening</string>
+    <string name="kannada_enabled">Kannada Enabled</string>
+    <string name="kannada_disabled">Kannada Disabled</string>
+    <string name="stop">Stop</string>
+    <string name="play">Play</string>
+    <string name="close">Close</string>
 
 <!--    Simulation Screen-->
     <string name="sim_title">Simulation AI</string>

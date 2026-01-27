@@ -54,7 +54,13 @@ data class ChatUiState(
 
     // Pending Message Queue (for messages received while resource card is showing)
     val pendingAgentResponse: String? = null,
-    val waitingForResourceCardDismiss: Boolean = false
+    val waitingForResourceCardDismiss: Boolean = false,
+
+    // Concept Map Generation Status
+    val conceptMapStatus: String? = null,
+
+    // Resource Loading Message (shown instead of thinking text when resource is being loaded)
+    val loadingResourceMessage: String? = null
 )
 
 /**

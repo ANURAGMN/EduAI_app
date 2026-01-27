@@ -211,33 +211,55 @@ class SpeechToText : ViewModel() {
 
         override fun onError(error: Int) {
             val errorMessage = when (error) {
-                SpeechRecognizer.ERROR_NO_MATCH -> "No speech detected"
+                SpeechRecognizer.ERROR_NO_MATCH -> "Didn't catch that"
                 SpeechRecognizer.ERROR_CLIENT -> "Client error"
                 SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Insufficient permissions"
                 SpeechRecognizer.ERROR_NETWORK -> "Network error"
                 SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Recognition service busy"
                 SpeechRecognizer.ERROR_SERVER -> "Server error"
-                SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech (timeout)"
+                SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Didn't catch that"
                 else -> "Unknown error"
             }
 
-            // Clear listening flag for recoverable errors
-            _state.value = _state.value.copy(
-                isListening = false,
-                statusMessage = errorMessage
-            )
             DebugLogger.errorLog(TAG, "onError: $errorMessage ($error)")
 
-            // For timeouts or no match, do not spam — keep user in control to restart. UI may call startListening again.
+            // For no speech detected errors, show message and wait before closing
+            if (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
+                // Keep listening state true but show the message
+                _state.value = _state.value.copy(statusMessage = errorMessage)
+
+                // Wait 2 seconds before closing
+                handler.postDelayed({
+                    _state.value = _state.value.copy(
+                        isListening = false,
+                        statusMessage = errorMessage,
+                        audioAmplitude = 0f
+                    )
+                }, 2000L)
+            } else {
+                // For other errors, close immediately
+                _state.value = _state.value.copy(
+                    isListening = false,
+                    statusMessage = errorMessage,
+                    audioAmplitude = 0f
+                )
+            }
         }
 
         override fun onResults(results: Bundle?) {
             val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
             if (matches.isNullOrEmpty() || matches[0].trim().isEmpty()) {
                 DebugLogger.debugLog(TAG, "onResults() - Empty or blank result → stopping")
-                // treat as no speech
-                _state.value = _state.value.copy(statusMessage = "No speech detected")
-                _state.value = _state.value.copy(isListening = false)
+
+                // Show "Didn't catch that" and wait before closing
+                _state.value = _state.value.copy(statusMessage = "Didn't catch that")
+
+                handler.postDelayed({
+                    _state.value = _state.value.copy(
+                        isListening = false,
+                        audioAmplitude = 0f
+                    )
+                }, 2000L)
                 return
             }
 

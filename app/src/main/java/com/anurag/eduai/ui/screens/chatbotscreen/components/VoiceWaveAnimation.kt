@@ -78,7 +78,7 @@ fun VoiceWaveAnimation(
     Canvas(
         modifier = modifier
             .fillMaxWidth()
-            .height(80.dp)
+            .height(40.dp)
     ) {
         val canvasWidth = size.width
         val canvasHeight = size.height

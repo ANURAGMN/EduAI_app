@@ -12,4 +12,8 @@ class StudentLocalRepository(
     }
 
     fun getStudent(studentId: String) = dao.getStudent(studentId)
+
+    suspend fun getStudentSync(studentId: String): StudentEntity? {
+        return dao.getStudentSync(studentId)
+    }
 }

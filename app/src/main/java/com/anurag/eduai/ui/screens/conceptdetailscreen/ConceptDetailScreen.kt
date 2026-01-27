@@ -18,8 +18,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
+import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.conceptdetailscreen.components.ConceptDetailScreenHeader
@@ -28,6 +30,7 @@ import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.viewModel.ConceptDetailViewModel
+import com.anurag.eduai.ui.viewmodel_factory.ConceptDetailViewModelFactory
 import androidx.compose.foundation.background
 
 @Composable
@@ -41,13 +44,14 @@ fun ConceptDetailScreen(
 
     val context = LocalContext.current
     val db = remember { EduAiDatabase.getInstance(context) }
-    val conceptDao = db.conceptDao()
-    val progressDao = db.progressDao()
     val sharedPrefs = remember { SharedPreferenceUtils(context) }
 
-    val viewModel = remember {
-        ConceptDetailViewModel(conceptDao, progressDao, sharedPrefs)
-    }
+    // Create repository
+    val repository = remember { ConceptRepository(db.conceptDao(), db.progressDao()) }
+
+    // Create factory and ViewModel
+    val factory = remember { ConceptDetailViewModelFactory(repository, sharedPrefs) }
+    val viewModel: ConceptDetailViewModel = viewModel(factory = factory)
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(conceptId) {
