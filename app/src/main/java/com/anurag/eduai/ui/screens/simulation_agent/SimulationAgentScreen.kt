@@ -8,10 +8,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettings
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettingsState
@@ -59,6 +62,8 @@ fun SimulationAgentScreen(
     var lastProcessedSpeechText by remember { mutableStateOf("") }
     var showSettingsMenu by remember { mutableStateOf(false) }
     var settingsState by remember { mutableStateOf(ChatBotSettingsState()) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var hasSpokeCurrentMessage by remember { mutableStateOf(false) }
 
     // Animation values
     val avatarSize by
@@ -124,17 +129,26 @@ fun SimulationAgentScreen(
     LaunchedEffect(uiState, sessionData) {
         when (val state = uiState) {
             is SimAgentUiState.Success -> {
+                // Clear any previous errors
+                errorMessage = null
+
                 sessionData?.let { session ->
                     // Mark session as started
                     isSessionStarted = true
 
-                    // New message arrived - hide WebView and update text
-                    showWebView = false
-                    currentTeacherMessage = session.teacherMessage.text
+                    // Check if this is a new message
+                    val isNewMessage = currentTeacherMessage != session.teacherMessage.text
 
-                    // Start TTS
-                    if (!ttsState.isSpeaking) {
-                        ttsController.speak(session.teacherMessage.text)
+                    if (isNewMessage) {
+                        // New message arrived - reset flags and update text
+                        showWebView = false
+                        hasSpokeCurrentMessage = false
+                        currentTeacherMessage = session.teacherMessage.text
+
+                        // Start TTS only if not already speaking
+                        if (!ttsState.isSpeaking) {
+                            ttsController.speak(session.teacherMessage.text)
+                        }
                     }
 
                     // Update simulation URLs
@@ -151,18 +165,23 @@ fun SimulationAgentScreen(
                 }
             }
             is SimAgentUiState.Error -> {
-                currentTeacherMessage = state.message
+                errorMessage = state.message
+                currentTeacherMessage = ""
             }
             else -> {}
         }
     }
 
-    // Show WebView only after TTS completes
-    LaunchedEffect(ttsState.isSpeaking) {
+    // Show WebView only after TTS completes (and only once per message)
+    LaunchedEffect(ttsState.isSpeaking, currentTeacherMessage) {
         if (!ttsState.isSpeaking &&
             simulationUrls.isNotEmpty() &&
-            currentTeacherMessage.isNotEmpty()
+            currentTeacherMessage.isNotEmpty() &&
+            !hasSpokeCurrentMessage
         ) {
+            // Mark that we've spoken this message
+            hasSpokeCurrentMessage = true
+
             delay(dimens.spaceExtraSmall.value.toLong() * 75) // 300ms delay
             showWebView = true
         }
@@ -271,6 +290,49 @@ fun SimulationAgentScreen(
                 }
             )
 
+            // Show error if present
+            if (errorMessage != null) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(dimens.spaceMedium),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(dimens.spaceMedium),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Error",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(dimens.spaceSmall))
+                        Text(
+                            text = errorMessage ?: "Unknown error occurred",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(dimens.spaceMedium))
+                        Button(
+                            onClick = {
+                                errorMessage = null
+                                viewModel.startNewSession(simulationId)
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Text("Retry")
+                        }
+                    }
+                }
+            }
+
             if (!isSessionStarted) {
                 // Initial centered avatar (same as chatbot)
                 InitialAvatarView(
@@ -305,6 +367,8 @@ fun SimulationAgentScreen(
                         if (ttsState.isSpeaking) {
                             ttsController.stop()
                         }
+                        // Clear the webview when sending response
+                        showWebView = false
                         viewModel.sendStudentResponse(userInput)
                         userInput = ""
                     }
@@ -328,8 +392,9 @@ fun SimulationAgentScreen(
         }
 
         // WebView overlay (with blur effect on background)
+        // Only show when explicitly set to true (after TTS completion)
         SimulationWebViewCard(
-            visible = showWebView && !ttsState.isSpeaking,
+            visible = showWebView,
             simulationUrls = simulationUrls,
             onClose = { showWebView = false },
             blurBackground = true
