@@ -54,6 +54,7 @@ import com.anurag.eduai.ui.theme.TextSecondary
  *
  * @param chapter The chapter UI model to display.
  * @param onStudyClick Callback when the "Study" button is clicked.
+ * @param onSimulationClick Callback when the "Simulation" button is clicked.
  * @param modifier Optional modifier for styling the card.
  */
 @Composable
@@ -61,6 +62,7 @@ fun ChapterCard(
     modifier: Modifier = Modifier,
     chapter: ChapterUiModel,
     onStudyClick: () -> Unit = {},
+    onSimulationClick: () -> Unit = {}
 ) {
     val dimens = LocalDimensions.current
     val progress = if (chapter.totalConcepts > 0) {
@@ -219,7 +221,7 @@ fun ChapterCard(
                                         )
                                     },
                                     modifier = Modifier.weight(1f),
-                                    onClick = {/*TODO: Handle Simulation click*/}
+                                    onClick = onSimulationClick
                                 )
                             }
                         }

@@ -42,6 +42,7 @@ import com.anurag.eduai.ui.viewmodel_factory.ChapterViewModelFactory
  * @param subjectId The ID of the subject whose chapters are to be displayed.
  * @param onBackClick Callback function to be invoked when the back button is clicked.
  * @param onChapterClick Callback function to be invoked when a chapter is clicked, passing the chapter ID.
+ * @param onSimulationClick Callback function to be invoked when simulation button is clicked, passing chapter info.
  * @param onGoHome Callback function to navigate to the home screen.
  * @param onGoSetting Callback function to navigate to the settings screen.
  * @param onProgressClick Callback function to navigate to the progress screen.
@@ -51,6 +52,7 @@ fun ChapterScreen(
     subjectId: String,
     onBackClick: () -> Unit = {},
     onChapterClick: (String) -> Unit = {},
+    onSimulationClick: (chapterId: String, classLevel: Int, subjectName: String, chapterName: String) -> Unit = { _, _, _, _ -> },
     onGoHome: () -> Unit = {},
     onGoSetting: () -> Unit = {},
     onProgressClick: () -> Unit = {}
@@ -117,10 +119,18 @@ fun ChapterScreen(
                     .padding(dimens.cardPadding),
                 verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
             ) {
-                items(state.chapters,{it.id}) { chapterUiModel ->
+                items(state.chapters, { it.id }) { chapterUiModel ->
                     ChapterCard(
                         chapter = chapterUiModel,
-                        onStudyClick = { onChapterClick(chapterUiModel.id) }
+                        onStudyClick = { onChapterClick(chapterUiModel.id) },
+                        onSimulationClick = {
+                            onSimulationClick(
+                                chapterUiModel.id,
+                                state.classLevel,
+                                state.subjectName,
+                                chapterUiModel.name
+                            )
+                        }
                     )
                 }
             }

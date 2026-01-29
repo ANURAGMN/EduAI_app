@@ -34,7 +34,7 @@ import kotlinx.coroutines.delay
  * overall structure
  */
 @Composable
-fun SimulationScreen(
+fun SimulationAgentScreen(
     simulationId: String,
     onNavigateBack: () -> Unit,
     ttsController: TextToSpeech = viewModel(),

@@ -233,4 +233,13 @@
     <string name="playing">Playing</string>
     <string name="playback_finished">Playback finished</string>
     <string name="playback_error">Playback error</string>
+
+    <!-- Simulation Screen Strings -->
+    <string name="simulations">Simulations</string>
+    <string name="launch_simulation">Launch Simulation</string>
+    <string name="unable_to_load_simulations">Unable to load simulations</string>
+    <string name="no_simulations_available">No simulations available for this chapter</string>
+    <string name="reset">Reset</string>
+    <string name="fullscreen">Fullscreen</string>
+    <string name="exit_fullscreen">Exit Fullscreen</string>
 </resources>
