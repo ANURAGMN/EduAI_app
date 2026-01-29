@@ -6,12 +6,17 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.anurag.eduai.ui.screens.chatbotscreen.components.AgentMessage
@@ -61,46 +66,74 @@ fun SimulationConversationView(
                 .weight(1f)
                 .fillMaxWidth()
         ) {
-            // AgentMessage content
-            AgentMessage(
-                text = currentMessage,
-                isTyping = isLoading,
-                fullText = currentMessage,
-                ttsController = ttsController,
-                modifier = Modifier.fillMaxSize()
-            )
+            // Show loading spinner or message content
+            if (isLoading) {
+                // Loading state with spinner and text
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(dimens.spaceMedium),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(dimens.iconExtraLarge),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = dimens.inputBorderWidth
+                    )
 
-            // Top gradient fade
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(dimens.spaceLarge * 2) // Adjust for more/less fade
-                    .align(Alignment.TopCenter)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.White,
-                                Color.White.copy(alpha = 0f)
+                    Spacer(modifier = Modifier.height(dimens.spaceMedium))
+
+                    Text(
+                        text = "Teacher is thinking...",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        fontStyle = FontStyle.Italic,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                // AgentMessage content
+                AgentMessage(
+                    text = currentMessage,
+                    isTyping = false,
+                    fullText = currentMessage,
+                    ttsController = ttsController,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                // Top gradient fade
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(dimens.spaceLarge * 2) // Adjust for more/less fade
+                        .align(Alignment.TopCenter)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.White,
+                                    Color.White.copy(alpha = 0f)
+                                )
                             )
                         )
-                    )
-            )
+                )
 
-            // Bottom gradient fade
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(dimens.spaceLarge * 2) // Adjust for more/less fade
-                    .align(Alignment.BottomCenter)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0f),
-                                Color.White
+                // Bottom gradient fade
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(dimens.spaceLarge * 2) // Adjust for more/less fade
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0f),
+                                    Color.White
+                                )
                             )
                         )
-                    )
-            )
+                )
+            }
         }
     }
 }
