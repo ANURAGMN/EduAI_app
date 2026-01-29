@@ -30,11 +30,14 @@ import com.anurag.eduai.ui.viewModel.SimulationAgentViewModel
 import com.anurag.eduai.ui.viewModel.SpeechToText
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 import com.anurag.eduai.ui.viewmodel_factory.SimulationAgentViewmodelFactory
-import kotlinx.coroutines.delay
 
 /**
- * Main simulation screen that matches chatbot design exactly Same header, avatar, blur effects, and
- * overall structure
+ * Simulation Agent Screen - PURELY PRESENTATIONAL
+ * All business logic is in SimulationAgentViewModel
+ * This composable only:
+ * 1. Observes state from ViewModel
+ * 2. Renders UI based on state
+ * 3. Forwards user actions to ViewModel
  */
 @Composable
 fun SimulationAgentScreen(
@@ -45,172 +48,145 @@ fun SimulationAgentScreen(
 ) {
     val dimens = LocalDimensions.current
     val viewModel: SimulationAgentViewModel = viewModel(factory = SimulationAgentViewmodelFactory())
+
+    // Observe ALL state from ViewModel - no local state management
     val uiState by viewModel.uiState.collectAsState()
-    val sessionData by viewModel.sessionData.collectAsState()
+    val currentTeacherMessage by viewModel.currentTeacherMessage.collectAsState()
+    val showWebView by viewModel.showWebView.collectAsState()
+    val simulationUrls by viewModel.simulationUrls.collectAsState()
+    val isSessionStarted by viewModel.isSessionStarted.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val userInput by viewModel.userInput.collectAsState()
+    val isInputEnabled by viewModel.isInputEnabled.collectAsState()
+
+    // TTS/STT states
     val ttsState by ttsController.state.collectAsState()
     val sttState by sttController.state.collectAsState()
 
-    val context = LocalContext.current
-
-    // State
-    var userInput by remember { mutableStateOf("") }
-    var currentTeacherMessage by remember { mutableStateOf("") }
-    var showWebView by remember { mutableStateOf(false) }
-    var simulationUrls by remember { mutableStateOf<List<String>>(emptyList()) }
-    var isSessionStarted by remember { mutableStateOf(false) }
-    var permissionGranted by remember { mutableStateOf(false) }
-    var lastProcessedSpeechText by remember { mutableStateOf("") }
+    // Settings state (local UI-only state)
     var showSettingsMenu by remember { mutableStateOf(false) }
     var settingsState by remember { mutableStateOf(ChatBotSettingsState()) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var hasSpokeCurrentMessage by remember { mutableStateOf(false) }
+    var permissionGranted by remember { mutableStateOf(false) }
+    var lastProcessedSpeechText by remember { mutableStateOf("") }
 
-    // Animation values
-    val avatarSize by
-    animateDpAsState(
-        targetValue = if (isSessionStarted) dimens.avatarSizeLarge else dimens.avatarSizeLarge * 2.5f,
+    val context = LocalContext.current
+
+    /**
+     * Animation values (UI-only)
+     */
+    val avatarSize by animateDpAsState(
+        targetValue = if (isSessionStarted) dimens.avatarSizeLarge * 1.5f else dimens.avatarSizeLarge * 2.5f,
         label = "avatarSize"
     )
 
-    // Permission launcher
-    val permissionLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-                isGranted ->
-            permissionGranted = isGranted
-            sttController.handlePermissionResult(
-                SpeechToText.RECORD_AUDIO_PERMISSION_REQUEST,
-                if (isGranted) intArrayOf(PackageManager.PERMISSION_GRANTED)
-                else intArrayOf(PackageManager.PERMISSION_DENIED)
-            )
-        }
+    /**
+     * Permission launcher (UI-only)
+     */
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        permissionGranted = isGranted
+        sttController.handlePermissionResult(
+            SpeechToText.RECORD_AUDIO_PERMISSION_REQUEST,
+            if (isGranted) intArrayOf(PackageManager.PERMISSION_GRANTED)
+            else intArrayOf(PackageManager.PERMISSION_DENIED)
+        )
+    }
 
-    // Initialize STT and TTS
+    /**
+     * INITIALIZATION - One-time setup
+     */
     LaunchedEffect(Unit) {
         sttController.initialize(context)
         ttsController.initialize(context)
         viewModel.loadAvailableSimulations()
     }
 
-    // Handle back press
-    BackHandler {
-        if (showWebView) {
-            showWebView = false
-        } else {
-            viewModel.resetSession()
-            onNavigateBack()
-        }
-    }
-
-    // Initialize session and start simulation automatically
     LaunchedEffect(simulationId) {
         viewModel.startNewSession(simulationId)
     }
 
-    // Handle STT result - update input field when speech recognition completes
+    /**
+     * TTS STATE SYNCHRONIZATION
+     * Notify ViewModel when TTS state changes
+     */
+    LaunchedEffect(ttsState.isSpeaking) {
+        if (ttsState.isSpeaking) {
+            viewModel.onTtsStarted()
+        } else {
+            viewModel.onTtsStopped()
+        }
+    }
+
+    /** TTS PLAYBACK CONTROL
+     * Start TTS when new message arrives (only if not already speaking)
+    */
+
+    LaunchedEffect(currentTeacherMessage) {
+        if (currentTeacherMessage.isNotEmpty() && !ttsState.isSpeaking) {
+            ttsController.speak(currentTeacherMessage)
+        }
+    }
+
+    /**
+     *  STT Start Handling
+     */
     LaunchedEffect(sttState.resultText, sttState.isListening) {
-        // Only process when: result exists, not listening, and it's a new result
         if (sttState.resultText.isNotEmpty() &&
             !sttState.isListening &&
             sttState.resultText != lastProcessedSpeechText
         ) {
             lastProcessedSpeechText = sttState.resultText
-            userInput = sttState.resultText
+            viewModel.onUserInputChanged(sttState.resultText)
         }
     }
 
-    // Reset last processed text when user manually clears input
     LaunchedEffect(userInput) {
         if (userInput.isEmpty() && lastProcessedSpeechText.isNotEmpty()) {
             lastProcessedSpeechText = ""
         }
     }
 
-    // Handle UI state changes and update simulation data
-    LaunchedEffect(uiState, sessionData) {
-        when (val state = uiState) {
-            is SimAgentUiState.Success -> {
-                // Clear any previous errors
-                errorMessage = null
+    /**
+     * Back press handling
+     */
 
-                sessionData?.let { session ->
-                    // Mark session as started
-                    isSessionStarted = true
-
-                    // Check if this is a new message
-                    val isNewMessage = currentTeacherMessage != session.teacherMessage.text
-
-                    if (isNewMessage) {
-                        // New message arrived - reset flags and update text
-                        showWebView = false
-                        hasSpokeCurrentMessage = false
-                        currentTeacherMessage = session.teacherMessage.text
-
-                        // Start TTS only if not already speaking
-                        if (!ttsState.isSpeaking) {
-                            ttsController.speak(session.teacherMessage.text)
-                        }
-                    }
-
-                    // Update simulation URLs
-                    val urls = mutableListOf<String>()
-                    urls.add(session.simulation.htmlUrl)
-
-                    // Check if there's a param change (before/after comparison)
-                    session.simulation.paramChange?.let { change ->
-                        urls.clear()
-                        urls.add(change.beforeUrl)
-                        urls.add(change.afterUrl)
-                    }
-                    simulationUrls = urls
-                }
-            }
-            is SimAgentUiState.Error -> {
-                errorMessage = state.message
-                currentTeacherMessage = ""
-            }
-            else -> {}
+    BackHandler {
+        val consumed = viewModel.onBackPressed()
+        if (!consumed) {
+            onNavigateBack()
         }
     }
 
-    // Show WebView only after TTS completes (and only once per message)
-    LaunchedEffect(ttsState.isSpeaking, currentTeacherMessage) {
-        if (!ttsState.isSpeaking &&
-            simulationUrls.isNotEmpty() &&
-            currentTeacherMessage.isNotEmpty() &&
-            !hasSpokeCurrentMessage
-        ) {
-            // Mark that we've spoken this message
-            hasSpokeCurrentMessage = true
+    /**
+     * Voice option
+     */
 
-            delay(dimens.spaceExtraSmall.value.toLong() * 75) // 300ms delay
-            showWebView = true
-        }
+    val voiceOptions = remember(ttsState.availableVoices, settingsState.selectedAvatar) {
+        ttsController.getFilteredVoiceOptions("en", settingsState.selectedAvatar)
     }
 
-    // Voice options for settings
-    val voiceOptions =
-        remember(ttsState.availableVoices, settingsState.selectedAvatar) {
-            ttsController.getFilteredVoiceOptions("en", settingsState.selectedAvatar)
-        }
+    val displayedVoiceName = remember(ttsState.selectedVoice, settingsState.selectedAvatar) {
+        ttsState.selectedVoice?.let { ttsController.formatVoiceName(it) }
+            ?: ttsController.getDefaultVoiceName("en", settingsState.selectedAvatar)
+    }
 
-    val displayedVoiceName =
-        remember(ttsState.selectedVoice, settingsState.selectedAvatar) {
-            ttsState.selectedVoice?.let { ttsController.formatVoiceName(it) }
-                ?: ttsController.getDefaultVoiceName("en", settingsState.selectedAvatar)
-        }
+    /**
+     * UI
+     */
 
-    // Background - Same structure as chatbot
     Box(modifier = Modifier.fillMaxSize().background(White)) {
-        // Main content Column
         Column(modifier = Modifier.fillMaxSize().imePadding()) {
-            // Header icons (same as chatbot)
+            /**
+             * Header
+             */
             ChatHeaderIcons(
                 isKannada = false,
                 isSpeaking = ttsState.isSpeaking,
                 showResourceCard = false,
                 ttsPausedForResource = false,
                 showSettingsMenu = showSettingsMenu,
-                onKannadaToggle = { /* Not used in simulation */},
+                onKannadaToggle = { /* Not used */ },
                 onVolumeClick = {
                     if (ttsState.isSpeaking) {
                         ttsController.stop()
@@ -223,79 +199,65 @@ fun SimulationAgentScreen(
                     ChatBotSettings(
                         expanded = true,
                         onDismiss = { showSettingsMenu = false },
-                        state =
-                            settingsState.copy(
-                                voiceOptions = voiceOptions,
-                                displayedVoiceName = displayedVoiceName,
-                                availableConcepts =
-                                    viewModel.availableSimulations
-                                        .collectAsState()
-                                        .value
-                                        .map { it.title },
-                                selectedConcept = simulationId,
-                                isLoadingConcepts =
-                                    viewModel.simulationsLoading
-                                        .collectAsState()
-                                        .value
-                            ),
+                        state = settingsState.copy(
+                            voiceOptions = voiceOptions,
+                            displayedVoiceName = displayedVoiceName,
+                            availableConcepts = viewModel.availableSimulations.collectAsState().value.map { it.title },
+                            selectedConcept = simulationId,
+                            isLoadingConcepts = viewModel.simulationsLoading.collectAsState().value
+                        ),
                         onAvatarChange = { avatarCode ->
                             settingsState = settingsState.copy(selectedAvatar = avatarCode)
                             ttsController.switchCharacter(avatarCode)
                             if (avatarCode != "disable") {
-                                ttsController.applyDefaultsForAvatarLanguage(
-                                    avatarCode,
-                                    "en"
-                                )
+                                ttsController.applyDefaultsForAvatarLanguage(avatarCode, "en")
                             } else if (ttsState.isSpeaking) {
                                 ttsController.stop()
                             }
+                            viewModel.onAvatarChanged()
                         },
                         onVoiceChange = { selectedDisplayName ->
-                            ttsState.availableVoices
-                                .find {
-                                    ttsController.formatVoiceName(it) ==
-                                            selectedDisplayName
+                            ttsState.availableVoices.find {
+                                ttsController.formatVoiceName(it) == selectedDisplayName
+                            }?.let { voice ->
+                                ttsController.setVoice(voice)
+                                if (ttsState.isSpeaking) {
+                                    ttsController.stop()
+                                    ttsController.speak(currentTeacherMessage)
                                 }
-                                ?.let { voice ->
-                                    ttsController.setVoice(voice)
-                                    if (ttsState.isSpeaking) {
-                                        ttsController.stop()
-                                        ttsController.speak(currentTeacherMessage)
-                                    }
-                                }
+                                viewModel.onVoiceChanged()
+                            }
                         },
-                        onConceptChange = { /* Not used - simulations are selected from home */
-                        },
+                        onConceptChange = { /* Not used */ },
                         onLevelChange = { levelCode ->
-                            settingsState =
-                                settingsState.copy(selectedStudentLevel = levelCode)
+                            settingsState = settingsState.copy(selectedStudentLevel = levelCode)
                         },
                         onSpeedChange = { label ->
                             settingsState = settingsState.copy(selectedSpeed = label)
-                            val speed =
-                                when (label) {
-                                    "0.75x" -> 0.75f
-                                    "1.0x" -> 1.0f
-                                    "1.25x" -> 1.25f
-                                    "1.5x" -> 1.5f
-                                    else -> 0.75f
-                                }
+                            val speed = when (label) {
+                                "0.75x" -> 0.75f
+                                "1.0x" -> 1.0f
+                                "1.25x" -> 1.25f
+                                "1.5x" -> 1.5f
+                                else -> 0.75f
+                            }
                             ttsController.setSpeechRate(speed)
                             if (ttsState.isSpeaking) {
                                 ttsController.stop()
                                 ttsController.speak(currentTeacherMessage)
                             }
+                            viewModel.onSpeedChanged()
                         }
                     )
                 }
             )
 
-            // Show error if present
+            /**
+             * Error handling
+             */
             if (errorMessage != null) {
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(dimens.spaceMedium),
+                    modifier = Modifier.fillMaxWidth().padding(dimens.spaceMedium),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     )
@@ -319,10 +281,7 @@ fun SimulationAgentScreen(
                         )
                         Spacer(modifier = Modifier.height(dimens.spaceMedium))
                         Button(
-                            onClick = {
-                                errorMessage = null
-                                viewModel.startNewSession(simulationId)
-                            },
+                            onClick = { viewModel.onRetryClick(simulationId) },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.error
                             )
@@ -333,15 +292,16 @@ fun SimulationAgentScreen(
                 }
             }
 
+            /**
+             * The main content area
+             */
             if (!isSessionStarted) {
-                // Initial centered avatar (same as chatbot)
                 InitialAvatarView(
                     avatarSize = avatarSize,
                     ttsController = ttsController,
                     modifier = Modifier.weight(0.1f).background(White)
                 )
             } else {
-                // Conversation view with avatar and scrollable content
                 SimulationConversationView(
                     avatarSize = avatarSize,
                     currentMessage = currentTeacherMessage,
@@ -351,28 +311,17 @@ fun SimulationAgentScreen(
                 )
             }
 
-            // Input section (same as chatbot)
-            val chatState =
-                ChatUiState(
-                    inputText = userInput,
-                    isLoading = uiState is SimAgentUiState.Loading
-                )
-
+            /**
+             * User Input section
+             */
             InputSection(
-                chatState = chatState,
+                chatState = ChatUiState(
+                    inputText = userInput,
+                    isLoading = !isInputEnabled
+                ),
                 sttState = sttState,
-                onTextChange = { userInput = it },
-                onSendClick = {
-                    if (userInput.isNotBlank()) {
-                        if (ttsState.isSpeaking) {
-                            ttsController.stop()
-                        }
-                        // Clear the webview when sending response
-                        showWebView = false
-                        viewModel.sendStudentResponse(userInput)
-                        userInput = ""
-                    }
-                },
+                onTextChange = { viewModel.onUserInputChanged(it) },
+                onSendClick = { viewModel.onSendClick() },
                 onSpeakClick = {
                     if (ttsState.isSpeaking) {
                         ttsController.stop()
@@ -383,20 +332,18 @@ fun SimulationAgentScreen(
                         permissionLauncher.launch(RECORD_AUDIO)
                     }
                 },
-                onStopListening = {
-                    sttController.stopListening()
-                    // Result will be processed by LaunchedEffect above
-                },
-                onSuggestionClick = { /* Not used in simulation */}
+                onStopListening = { sttController.stopListening() },
+                onSuggestionClick = { /* Not used */ }
             )
         }
 
-        // WebView overlay (with blur effect on background)
-        // Only show when explicitly set to true (after TTS completion)
+        /**
+         * Webview Overlay
+         */
         SimulationWebViewCard(
             visible = showWebView,
             simulationUrls = simulationUrls,
-            onClose = { showWebView = false },
+            onClose = { viewModel.onWebViewClose() },
             blurBackground = true
         )
     }
