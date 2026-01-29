@@ -9,7 +9,6 @@ import com.anurag.eduai.R
 import com.anurag.eduai.data.local.ConceptSessionRepository
 import com.anurag.eduai.data.remote.AgenticAIClient
 import com.anurag.eduai.data.remote.GeminiLLMClient
-import com.anurag.eduai.data.remote.LLMClient
 import com.anurag.eduai.data.remote.SessionMetadata
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ResourceContent
@@ -48,6 +47,7 @@ class ChatViewModel : ViewModel() {
     // Internal state
     private var userId: String = ""
     private var clickedAutosuggestion = false
+    private var isInitialized = false
 
     // Jobs
     private var typingJob: Job? = null
@@ -65,12 +65,18 @@ class ChatViewModel : ViewModel() {
      * - sets userId if not already set
      */
     fun initialize(id: String) {
+        if (isInitialized) {
+            DebugLogger.debugLog("ChatViewModel", "Already initialized, skipping re-initialization")
+            return
+        }
+
         viewModelScope.launch {
             DebugLogger.debugLog("ChatViewModel", "Starting full initialization")
             refreshAvailableConcepts()
             if (userId.isEmpty()) {
                 userId = id
             }
+            isInitialized = true
             DebugLogger.debugLog("ChatViewModel", "Initialization complete")
         }
     }
@@ -727,9 +733,8 @@ class ChatViewModel : ViewModel() {
                 )
             }
 
-            delay(50)
             _uiState.update { it.copy(shouldStartTTS = true) }
-            delay(100)
+            delay(50)
             _uiState.update { it.copy(shouldStartTTS = false) }
 
             // Animate typing

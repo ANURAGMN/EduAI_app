@@ -493,9 +493,10 @@ class TextToSpeech : ViewModel(), TextToSpeech.OnInitListener {
      */
     private fun startLipSync(text: String) {
         val escapedText = text.replace("'", "\\'").replace("\n", "\\n")
+        val speechRate = _state.value.speechRate
         webView?.post {
             webView?.evaluateJavascript(
-                "window.AndroidLipSyncAPI.startLipSync('$escapedText')"
+                "window.AndroidLipSyncAPI.startLipSync('$escapedText', $speechRate)"
             ) { result ->
                 DebugLogger.debugLog("LipSync", "Start lip sync result: $result")
             }

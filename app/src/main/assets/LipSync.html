@@ -201,6 +201,7 @@
   }
 
   // Map full Kannada syllable (or vowel) to viseme + longer duration for vowels
+  // DURATIONS INCREASED 2x to match actual Kannada TTS speech rate
   function kannadaSyllableToViseme(syllable) {
     // Check for independent vowels first
     const independentVowels = 'ಅಆಇಈಉಊಋಎಏಐಒಓಔ';
@@ -209,10 +210,10 @@
     const open = 'ಅಆ';
 
     if (independentVowels.includes(syllable[0])) {
-      if (rounded.includes(syllable[0])) return { viseme: 'round', duration: 220 };
-      if (front.includes(syllable[0])) return { viseme: 'wide', duration: 200 };
-      if (open.includes(syllable[0])) return { viseme: 'open', duration: 240 }; // ← BIG OPEN!
-      return { viseme: 'open', duration: 220 };
+      if (rounded.includes(syllable[0])) return { viseme: 'round', duration: 440 };
+      if (front.includes(syllable[0])) return { viseme: 'wide', duration: 400 };
+      if (open.includes(syllable[0])) return { viseme: 'open', duration: 480 };
+      return { viseme: 'open', duration: 440 };
     }
 
     // Vowel signs attached (most common case: ಕ + ಾ = ಕಾ)
@@ -220,16 +221,16 @@
     const hasRoundVowelSign = /[\u0CC1\u0CC2\u0CC6\u0CC7\u0CC8\u0CCB\u0CCC]/.test(syllable);
     const hasWideVowelSign = /[\u0CBF\u0CC0\u0CC3\u0CC4]/.test(syllable);
 
-    if (hasOpenVowelSign) return { viseme: 'open', duration: 250 };   // ← MAX OPEN
-    if (hasRoundVowelSign) return { viseme: 'round', duration: 200 };
-    if (hasWideVowelSign) return { viseme: 'wide', duration: 190 };
+    if (hasOpenVowelSign) return { viseme: 'open', duration: 500 };
+    if (hasRoundVowelSign) return { viseme: 'round', duration: 400 };
+    if (hasWideVowelSign) return { viseme: 'wide', duration: 380 };
 
     // Labial consonants → closed mouth
-    if (/[ಪಬಮ]/.test(syllable)) return { viseme: 'closed', duration: 140 };
-    if (/[ಸಶಷ]/.test(syllable)) return { viseme: 'smush', duration: 130 };
-    if (/[ತದ]/.test(syllable)) return { viseme: 'th', duration: 130 };
+    if (/[ಪಬಮ]/.test(syllable)) return { viseme: 'closed', duration: 280 };
+    if (/[ಸಶಷ]/.test(syllable)) return { viseme: 'smush', duration: 260 };
+    if (/[ತದ]/.test(syllable)) return { viseme: 'th', duration: 260 };
 
-    return { viseme: 'rest', duration: 100 };
+    return { viseme: 'rest', duration: 200 };
   }
 
   // English G2P (slightly improved)
@@ -262,7 +263,7 @@
   }
 
   // Main pipeline
-  function prepareAnimationQueue(text) {
+  function prepareAnimationQueue(text, speechRate = 0.75) {
     const script = detectScript(text);
     let frames = [];
 
@@ -276,11 +277,19 @@
       // Fallback: treat any non-Latin as Kannada-style
       const chars = Array.from(text.replace(/\s+/g, ' '));
       frames = chars.filter(c => !/\s/.test(c)).map(ch => {
-        if (/[\u0CBE\u0CCC]/.test(ch)) return { viseme: 'open', duration: 250 };
-        if (/[ಪಬಮ]/.test(ch)) return { viseme: 'closed', duration: 140 };
-        return { viseme: 'rest', duration: 100 };
+        if (/[\u0CBE\u0CCC]/.test(ch)) return { viseme: 'open', duration: 500 };
+        if (/[ಪಬಮ]/.test(ch)) return { viseme: 'closed', duration: 280 };
+        return { viseme: 'rest', duration: 200 };
       });
     }
+
+    // Adjust all durations based on speech rate
+    // Lower speech rate (e.g., 0.75) means slower speech, so durations should be longer
+    const speedMultiplier = 1 / speechRate;
+    frames = frames.map(f => ({
+      viseme: f.viseme,
+      duration: Math.round(f.duration * speedMultiplier)
+    }));
 
     // Compress consecutive same visemes
     const compressed = [];
@@ -323,10 +332,10 @@
   }
 
   window.AndroidLipSyncAPI = {
-    startLipSync: function(text) {
+    startLipSync: function(text, speechRate = 0.75) {
       if (!text?.trim()) return;
       stopAnimation();
-      animationQueue = prepareAnimationQueue(text);
+      animationQueue = prepareAnimationQueue(text, speechRate);
       if (animationQueue.length > 0) {
         isAnimating = true;
         stepAnimationQueue();
