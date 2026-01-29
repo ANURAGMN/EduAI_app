@@ -25,7 +25,7 @@ import com.anurag.eduai.ui.screens.conceptscreen.ConceptScreen
 import com.anurag.eduai.ui.screens.home.HomeScreen
 import com.anurag.eduai.ui.screens.progess.ProgressScreen
 import com.anurag.eduai.ui.screens.setting.SettingScreen
-import com.anurag.eduai.ui.screens.simulation.SimulationScreen
+import com.anurag.eduai.ui.screens.simulation_agent.SimulationScreen
 import com.anurag.eduai.ui.screens.subjectscreen.SubjectScreen
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.TextPrimary
@@ -221,7 +221,7 @@ fun BottomNavBar() {
                             }
                         },
                         onSubjectClick = { subject ->
-                            navController.navigate("chapters/${subject.id}")
+                            navController.navigate("chapters/${subject}")
                         },
                         onGoHome = {
                             navController.navigate("home") {
