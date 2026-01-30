@@ -49,14 +49,62 @@ class SimulationRepository {
         return listOf(
             SimulationUiModel(
                 id = "unit_8_1",
-                title = "unit_8_1.html",
+                title = "Simulation 1",
                 htmlFileName = "unit_8_1.html",
                 chapterId = "8"
             ),
             SimulationUiModel(
                 id = "unit_8_2",
-                title = "unit_8_2.html",
+                title = "Simulation 2",
                 htmlFileName = "unit_8_2.html",
+                chapterId = "8"
+            ),
+            SimulationUiModel(
+                id = "unit_8_3",
+                title = "Simulation 3",
+                htmlFileName = "unit_8_3.html",
+                chapterId = "8"
+            ),
+            SimulationUiModel(
+                id = "unit_8_4",
+                title = "Simulation 4",
+                htmlFileName = "unit_8_4.html",
+                chapterId = "8"
+            ),
+            SimulationUiModel(
+                id = "unit_8_5",
+                title = "Simulation 5",
+                htmlFileName = "unit_8_5.html",
+                chapterId = "8"
+            ),
+            SimulationUiModel(
+                id = "unit_8_6",
+                title = "Simulation 6",
+                htmlFileName = "unit_8_6.html",
+                chapterId = "8"
+            ),
+            SimulationUiModel(
+                id = "unit_8_7",
+                title = "Simulation 7",
+                htmlFileName = "unit_8_7.html",
+                chapterId = "8"
+            ),
+            SimulationUiModel(
+                id = "unit_8_8",
+                title = "Simulation 8",
+                htmlFileName = "unit_8_8.html",
+                chapterId = "8"
+            ),
+            SimulationUiModel(
+                id = "unit_8_9",
+                title = "Simulation 9",
+                htmlFileName = "unit_8_9.html",
+                chapterId = "8"
+            ),
+            SimulationUiModel(
+                id = "unit_8_10",
+                title = "Simulation 10",
+                htmlFileName = "unit_8_10.html",
                 chapterId = "8"
             )
         )
