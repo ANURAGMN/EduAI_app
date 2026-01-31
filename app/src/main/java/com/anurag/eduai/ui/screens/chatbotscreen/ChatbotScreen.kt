@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -128,123 +129,129 @@ fun ChatbotScreen(
                 .fillMaxSize()
                 .background(White)
         ) {
-            // Main content Column
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .imePadding()
-            ) {
-                // Header icons (settings, tts icon, kannada toggle)
-                ChatHeaderIcons(
-                    isKannada = chatState.isKannada,
-                    isSpeaking = ttsState.isSpeaking,
-                    showResourceCard = chatState.showResourceCard,
-                    ttsPausedForResource = chatState.ttsPausedForResource,
-                    showSettingsMenu = showSettingsMenu,
-                    onKannadaToggle = { chatViewModel.setKannada(!chatState.isKannada) },
-                    onVolumeClick = {
-                        handleVolumeClick(
-                            chatState = chatState,
-                            ttsState = ttsState,
-                            lastAIMessage = lastAIMessage,
-                            chatViewModel = chatViewModel,
-                            ttsController = ttsController
-                        )
-                    },
-                    onSettingsClick = { showSettingsMenu = !showSettingsMenu },
-                    settingsContent = {
-                        ChatBotSettings(
-                            expanded = true,
-                            onDismiss = { showSettingsMenu = false },
-                            state = settingsState.copy(
-                                voiceOptions = voiceOptions,
-                                displayedVoiceName = displayedVoiceName,
-                                availableConcepts = chatState.availableConcepts,
-                                selectedConcept = chatState.selectedConcept,
-                                isLoadingConcepts = chatState.availableConcepts.isEmpty()
-                            ),
-                            onAvatarChange = { avatarCode ->
-                                settingsState = settingsState.copy(selectedAvatar = avatarCode)
-                                ttsController.switchCharacter(avatarCode)
-                                if (avatarCode != "disable") {
-                                    ttsController.applyDefaultsForAvatarLanguage(avatarCode, chatState.currentLanguage)
-                                } else if (ttsState.isSpeaking) {
-                                    ttsController.stop()
-                                }
-                            },
-                            onVoiceChange = { selectedDisplayName ->
-                                handleVoiceChange(selectedDisplayName, ttsState, ttsController, aiMessageOutput)
-                            },
-                            onConceptChange = { concept ->
-                                pendingConceptSelection = concept
-                                if (chatViewModel.hasExistingSession(concept, context)) {
-                                    showSessionResumeDialog = true
-                                } else {
-                                    chatViewModel.selectConcept(concept, context)
-                                    showSettingsMenu = false
-                                }
-                            },
-                            onLevelChange = { levelCode ->
-                                settingsState = settingsState.copy(selectedStudentLevel = levelCode)
-                                chatViewModel.setStudentLevel(levelCode)
-                            },
-                            onSpeedChange = { label ->
-                                settingsState = settingsState.copy(selectedSpeed = label)
-                                handleSpeedChange(label, ttsController, ttsState, aiMessageOutput)
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = White,
+                contentColor = White,
+                bottomBar = {
+                    InputSection(
+                        chatState = chatState,
+                        sttState = sttState,
+                        onTextChange = { chatViewModel.updateInputText(it) },
+                        onSendClick = {
+                            if (chatState.inputText.isNotBlank()) {
+                                chatViewModel.hideAutosuggestions()
+                                chatViewModel.sendMessage(chatState.inputText, context)
+                                chatViewModel.updateInputText("")
                             }
-                        )
-                    }
-                )
-                if (!isConversationStarted) {
-                    // Initial centered avatar
-
+                        },
+                        onSpeakClick = {
+                            chatViewModel.hideAutosuggestions()
+                            chatViewModel.markUserActive()
+                            if (permissionGranted && sttState.isInitialized) {
+                                sttController.startListening("en-IN")
+                            } else if (!permissionGranted) {
+                                permissionLauncher.launch(RECORD_AUDIO)
+                            }
+                        },
+                        onStopListening = { sttController.stopListening() },
+                        onSuggestionClick = { suggestion ->
+                            chatViewModel.tapAutosuggestion(suggestion, context)
+                            chatViewModel.hideAutosuggestions()
+                        },
+                        modifier = Modifier
+                            .imePadding()
+                    )
+                }
+            ) { innerPadding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    // Header icons (settings, tts icon, kannada toggle)
+                    ChatHeaderIcons(
+                        isKannada = chatState.isKannada,
+                        isSpeaking = ttsState.isSpeaking,
+                        showResourceCard = chatState.showResourceCard,
+                        ttsPausedForResource = chatState.ttsPausedForResource,
+                        showSettingsMenu = showSettingsMenu,
+                        onKannadaToggle = { chatViewModel.setKannada(!chatState.isKannada) },
+                        onVolumeClick = {
+                            handleVolumeClick(
+                                chatState = chatState,
+                                ttsState = ttsState,
+                                lastAIMessage = lastAIMessage,
+                                chatViewModel = chatViewModel,
+                                ttsController = ttsController
+                            )
+                        },
+                        onSettingsClick = { showSettingsMenu = !showSettingsMenu },
+                        settingsContent = {
+                            ChatBotSettings(
+                                expanded = true,
+                                onDismiss = { showSettingsMenu = false },
+                                state = settingsState.copy(
+                                    voiceOptions = voiceOptions,
+                                    displayedVoiceName = displayedVoiceName,
+                                    availableConcepts = chatState.availableConcepts,
+                                    selectedConcept = chatState.selectedConcept,
+                                    isLoadingConcepts = chatState.availableConcepts.isEmpty()
+                                ),
+                                onAvatarChange = { avatarCode ->
+                                    settingsState = settingsState.copy(selectedAvatar = avatarCode)
+                                    ttsController.switchCharacter(avatarCode)
+                                    if (avatarCode != "disable") {
+                                        ttsController.applyDefaultsForAvatarLanguage(avatarCode, chatState.currentLanguage)
+                                    } else if (ttsState.isSpeaking) {
+                                        ttsController.stop()
+                                    }
+                                },
+                                onVoiceChange = { selectedDisplayName ->
+                                    handleVoiceChange(selectedDisplayName, ttsState, ttsController, aiMessageOutput)
+                                },
+                                onConceptChange = { concept ->
+                                    pendingConceptSelection = concept
+                                    if (chatViewModel.hasExistingSession(concept, context)) {
+                                        showSessionResumeDialog = true
+                                    } else {
+                                        chatViewModel.selectConcept(concept, context)
+                                        showSettingsMenu = false
+                                    }
+                                },
+                                onLevelChange = { levelCode ->
+                                    settingsState = settingsState.copy(selectedStudentLevel = levelCode)
+                                    chatViewModel.setStudentLevel(levelCode)
+                                },
+                                onSpeedChange = { label ->
+                                    settingsState = settingsState.copy(selectedSpeed = label)
+                                    handleSpeedChange(label, ttsController, ttsState, aiMessageOutput)
+                                }
+                            )
+                        }
+                    )
+                    if (!isConversationStarted) {
+                        // Initial centered avatar
                         InitialAvatarView(
                             avatarSize = avatarSize,
                             ttsController = ttsController,
                             modifier = Modifier.weight(0.1f).background(White)
                         )
-
-                } else {
-                    // Conversation view with avatar and scrollable content
-                    ConversationView(
-                        avatarSize = avatarSize,
-                        chatState = chatState,
-                        lastAIMessage = lastAIMessage,
-                        ttsController = ttsController,
-                        onDismissResource = { chatViewModel.dismissResourceCard() },
-                        onResourceTimerComplete = {
-                            DebugLogger.debugLog("ChatViewModel", "Resource card timer completed")
-                        },
-                        modifier = Modifier.weight(0.1f).background(White)
-                    )
-                }
-                // Input section
-                InputSection(
-                    chatState = chatState,
-                    sttState = sttState,
-                    onTextChange = { chatViewModel.updateInputText(it) },
-                    onSendClick = {
-                        if (chatState.inputText.isNotBlank()) {
-                            chatViewModel.hideAutosuggestions()
-                            chatViewModel.sendMessage(chatState.inputText, context)
-                            chatViewModel.updateInputText("")
-                        }
-                    },
-                    onSpeakClick = {
-                        chatViewModel.hideAutosuggestions()
-                        chatViewModel.markUserActive()
-                        if (permissionGranted && sttState.isInitialized) {
-                            sttController.startListening("en-IN")
-                        } else if (!permissionGranted) {
-                            permissionLauncher.launch(RECORD_AUDIO)
-                        }
-                    },
-                    onStopListening = { sttController.stopListening() },
-                    onSuggestionClick = { suggestion ->
-                        chatViewModel.tapAutosuggestion(suggestion, context)
-                        chatViewModel.hideAutosuggestions()
+                    } else {
+                        // Conversation view with avatar and scrollable content
+                        ConversationView(
+                            avatarSize = avatarSize,
+                            chatState = chatState,
+                            lastAIMessage = lastAIMessage,
+                            ttsController = ttsController,
+                            onDismissResource = { chatViewModel.dismissResourceCard() },
+                            onResourceTimerComplete = {
+                                DebugLogger.debugLog("ChatViewModel", "Resource card timer completed")
+                            },
+                            modifier = Modifier.weight(0.1f).background(White)
+                        )
                     }
-                )
+                }
             }
             // Debug LogOverlay
             LogOverlay(

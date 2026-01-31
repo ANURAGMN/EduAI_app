@@ -3,7 +3,10 @@ package com.anurag.eduai.ui.screens.chatbotscreen.components
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,11 +36,11 @@ import kotlin.math.roundToInt
  */
 @Composable
 fun AgentMessage(
+    modifier: Modifier = Modifier,
     text: String,
     isTyping: Boolean = false,
     typingText: String = "",
     fullText: String = text,
-    modifier: Modifier = Modifier,
     ttsController: TextToSpeech = viewModel()
 ) {
     val scrollState = rememberScrollState()
@@ -93,13 +96,17 @@ fun AgentMessage(
             }
             .verticalScroll(scrollState)
     ) {
-        // TextWithHighlights final display
-        TextWithHighlights(
-            text = if (isTyping) typingText else fullText,
-            isTyping = isTyping,
-            fullText = fullText,
-            ttsController = ttsController,
-            onTextLayout = { textLayout = it }
-        )
+        Column {
+            Spacer(modifier = Modifier.height(50.dp))
+            // TextWithHighlights final display
+            TextWithHighlights(
+                text = if (isTyping) typingText else fullText,
+                isTyping = isTyping,
+                fullText = fullText,
+                ttsController = ttsController,
+                onTextLayout = { textLayout = it }
+            )
+            Spacer(modifier = Modifier.height(50.dp))
+        }
     }
 }

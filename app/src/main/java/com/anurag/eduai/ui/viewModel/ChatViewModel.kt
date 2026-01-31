@@ -9,6 +9,7 @@ import com.anurag.eduai.R
 import com.anurag.eduai.data.local.ConceptSessionRepository
 import com.anurag.eduai.data.remote.AgenticAIClient
 import com.anurag.eduai.data.remote.GeminiLLMClient
+import com.anurag.eduai.data.remote.LLMClient
 import com.anurag.eduai.data.remote.SessionMetadata
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ResourceContent
@@ -32,14 +33,14 @@ import kotlinx.coroutines.withTimeout
 class ChatViewModel : ViewModel() {
 
     private val agenticAIClient = AgenticAIClient(BuildConfig.AGENTIC_AI_BASE_URL)
-//    private val  llmClient= LLMClient(
-//        BuildConfig.GROQ_API_KEY, "7", "8", "250",
-//        "meta-llama/llama-4-scout-17b-16e-instruct"
-//    )
-    private val llmClient= GeminiLLMClient(
-        BuildConfig.GEMINI_API_KEY,
-        "7","8", "250","gemma-3-27b-it"
+    private val  llmClient= LLMClient(
+        BuildConfig.GROQ_API_KEY, "7", "8", "250",
+        "meta-llama/llama-4-scout-17b-16e-instruct"
     )
+//    private val llmClient= GeminiLLMClient(
+//        BuildConfig.GEMINI_API_KEY,
+//        "7","8", "250","gemma-3-27b-it"
+//    )
     // Consolidated UI State for chat screen
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
@@ -288,10 +289,9 @@ class ChatViewModel : ViewModel() {
 
 
     /**
-     * shows the concept map in the UI
-     * - updates the UI state with the concept map JSON
-     * - logs performance metrics
-     * - auto-starts progressive rendering
+     * Shows the concept map in the UI
+     * - Updates the UI state with the concept map JSON
+     * - Logs performance metrics
      * @param jsonString The concept map JSON string
      * @param generationTimeMs Time taken to generate the concept map JSON
      */
@@ -331,7 +331,7 @@ class ChatViewModel : ViewModel() {
                     json = jsonString,
                     description = null,
                     currentAudioTime = 0f,
-                    isAudioPlaying = true  // Auto-start progressive rendering
+                    isAudioPlaying = false  // Load full map at once (no progressive rendering)
                 ),
                 showResourceCard = true,
                 loadingResourceMessage = null
