@@ -86,6 +86,9 @@ fun ChatContentArea(
 
             // Agent Message
             else -> {
+                // Fade as a fraction of container height — fully dynamic, no hardcoded sizes
+                val fadeFraction = 0.12f
+
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -102,10 +105,11 @@ fun ChatContentArea(
                         )
                     }
 
-                    // Top fade overlay
-                    Box(modifier = Modifier
+                    // Top fade — height = fadeFraction of parent
+                    Box(
+                        modifier = Modifier
                             .fillMaxWidth()
-                            .height(100.dp)
+                            .fillMaxHeight(fadeFraction)
                             .align(Alignment.TopCenter)
                             .background(
                                 brush = Brush.verticalGradient(
@@ -117,10 +121,11 @@ fun ChatContentArea(
                             )
                     )
 
-                    // Bottom fade overlay
-                    Box(modifier = Modifier
+                    // Bottom fade — height = fadeFraction of parent
+                    Box(
+                        modifier = Modifier
                             .fillMaxWidth()
-                            .height(100.dp)
+                            .fillMaxHeight(fadeFraction)
                             .align(Alignment.BottomCenter)
                             .background(
                                 brush = Brush.verticalGradient(

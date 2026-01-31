@@ -52,8 +52,6 @@ fun InputSection(
     onSuggestionClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-    // Inner Column has rounded corners and content
     Column(
         modifier = modifier
             .fillMaxWidth()
