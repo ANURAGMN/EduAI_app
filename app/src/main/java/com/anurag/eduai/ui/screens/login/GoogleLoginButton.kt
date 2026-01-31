@@ -113,7 +113,7 @@ fun GoogleLoginButton(
             is LoginState.New -> {
                 isLoading = false
                 // Navigate to user detail entry for new users
-                navController.navigate("user_detail_entry")
+                navController.navigate("userDetailEntry")
             }
             is LoginState.Error -> {
                 isLoading = false
