@@ -10,19 +10,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.anurag.eduai.R
-import com.anurag.eduai.data.local.EduAiDatabase
-import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.repository.ChapterRepository
-import com.anurag.eduai.repository.StudentLocalRepository
-import com.anurag.eduai.repository.SubjectRepository
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.chapterscreen.components.ChapterScreenHeader
@@ -30,14 +23,10 @@ import com.anurag.eduai.ui.screens.chapterscreen.components.ChapterCard
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.ChapterViewModel
-import com.anurag.eduai.ui.viewmodel_factory.ChapterViewModelFactory
 
 
 /**
  * ChapterScreen displays a list of chapters for a given subject.
- * 1. It shows a loading indicator while data is being fetched.
- * 2. It displays the list of chapters using ChapterCard components.
- * 3. It includes a header with the subject name and a back button.
  *
  * @param subjectId The ID of the subject whose chapters are to be displayed.
  * @param onBackClick Callback function to be invoked when the back button is clicked.
@@ -46,6 +35,7 @@ import com.anurag.eduai.ui.viewmodel_factory.ChapterViewModelFactory
  * @param onGoHome Callback function to navigate to the home screen.
  * @param onGoSetting Callback function to navigate to the settings screen.
  * @param onProgressClick Callback function to navigate to the progress screen.
+ * @param viewModel ChapterViewModel injected by Hilt
  */
 @Composable
 fun ChapterScreen(
@@ -55,27 +45,13 @@ fun ChapterScreen(
     onSimulationClick: (chapterId: String, classLevel: Int, subjectName: String, chapterName: String) -> Unit = { _, _, _, _ -> },
     onGoHome: () -> Unit = {},
     onGoSetting: () -> Unit = {},
-    onProgressClick: () -> Unit = {}
+    onProgressClick: () -> Unit = {},
+    viewModel: ChapterViewModel = hiltViewModel()
 ) {
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.CHAPTER)
 
     val dimens = LocalDimensions.current
-    val context = LocalContext.current
-
-    val db = remember { EduAiDatabase.getInstance(context) }
-    val sharedPrefs = remember { SharedPreferenceUtils(context) }
-
-    // Create repositories
-    val chapterRepository = remember { ChapterRepository(db.chapterDao(), db.progressDao()) }
-    val subjectRepository = remember { SubjectRepository(db.subjectDao()) }
-    val studentRepository = remember { StudentLocalRepository(db.studentDao()) }
-
-    // Create factory and ViewModel
-    val factory = remember {
-        ChapterViewModelFactory(chapterRepository, subjectRepository, studentRepository, sharedPrefs)
-    }
-    val viewModel: ChapterViewModel = viewModel(factory = factory)
     val state by viewModel.state.collectAsState()
 
     // Load chapters when subjectId changes
