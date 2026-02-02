@@ -1,6 +1,5 @@
 package com.anurag.eduai.ui.screens.login
 
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -32,95 +31,70 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.anurag.eduai.R
-import com.anurag.eduai.data.local.EduAiDatabase
-import com.anurag.eduai.data.local.SharedPreferenceUtils
-import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.service.auth.GoogleSignIn
-import com.anurag.eduai.sync.FirebaseSyncManager
 import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
 import com.anurag.eduai.ui.viewModel.LoginState
 import com.anurag.eduai.ui.viewModel.UserViewModel
+import com.anurag.eduai.ui.viewmodel_factory.UserViewModelFactory
 import kotlinx.coroutines.launch
 
 @Composable
 fun GoogleLoginButton(
     selectedLanguage: String,
-    navController: NavController,
-    userViewModel: UserViewModel,
+    navController: NavController
 ) {
-    var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val dimens = LocalDimensions.current
     val scope = rememberCoroutineScope()
 
-    val db = remember { EduAiDatabase.getInstance(context) }
-    val studentDao = db.studentDao()
-    val conceptDao = db.conceptDao()
-    val localRepo = remember { StudentLocalRepository(studentDao) }
-    val sharedPreference = SharedPreferenceUtils(context)
+    // Get ViewModel using factory
+    val userViewModel: UserViewModel = viewModel(
+        factory = UserViewModelFactory()
+    )
 
+    var isLoading by remember { mutableStateOf(false) }
     val loginState by userViewModel.loginState.collectAsStateWithLifecycle()
 
     // Handle login state changes
     LaunchedEffect(loginState) {
         when (val state = loginState) {
-            is LoginState.Existing -> {
-                isLoading = false
-                val user = state.user
+            is LoginState.ExistingUser -> {
+                DebugLogger.debugLog("GoogleLoginButton", "Existing user detected: ${state.user.email}")
+                isLoading = true
 
-                // Save to local database
-                val studentEntity = StudentEntity(
-                    studentId = user.id,
-                    studentName = user.displayName.orEmpty(),
-                    email = user.email,
-                    phoneNumber = user.phoneNumber,
-                    studentSchool = user.schoolName,
-                    language = user.language,
-                    classLevel = user.studentClass,
-                    profilePhotoUrl = user.profilePictureUri,
-                    createdAt = user.createdAt,
-                    updatedAt = user.lastLogin,
-                    isSynced = true
-                )
-                localRepo.saveStudentLocally(studentEntity)
-
-                // Sync content from Firebase
-                val syncManager = FirebaseSyncManager(
-                    subjectDao = db.subjectDao(),
-                    chapterDao = db.chapterDao(),
-                    conceptDao = conceptDao
-                )
-                val result = syncManager.syncAllContent()
-                DebugLogger.debugLog("LoginSync", result.message)
-
-                // Save preferences
-                sharedPreference.setLoggedIn(true)
-                sharedPreference.setLanguagePreference(user.language)
-                sharedPreference.setUserId(user.id)
-
-                // Navigate to main screen
-                navController.navigate("main") {
-                    popUpTo("login") { inclusive = true }
+                // Save user data locally and sync content
+                userViewModel.saveExistingUserLocally(context) { success ->
+                    isLoading = false
+                    if (success) {
+                        navController.navigate("main") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    } else {
+                        DebugLogger.debugLog("GoogleLoginButton", "Failed to save existing user")
+                    }
                 }
             }
-            is LoginState.New -> {
+            is LoginState.NewUser -> {
                 isLoading = false
-                // Navigate to user detail entry for new users
+                DebugLogger.debugLog("GoogleLoginButton", "New user detected, navigating to detail entry")
                 navController.navigate("userDetailEntry")
             }
             is LoginState.Error -> {
                 isLoading = false
-                DebugLogger.debugLog("GoogleLoginButton", "Login Error: ${state.e.message}")
+                DebugLogger.debugLog("GoogleLoginButton", "Login error: ${state.exception.message}")
             }
             is LoginState.Loading -> {
-                // Keep loading state
+                isLoading = true
+            }
+            is LoginState.Idle -> {
+                isLoading = false
             }
         }
     }
@@ -139,24 +113,20 @@ fun GoogleLoginButton(
     OutlinedButton(
         onClick = {
             if (!isLoading) {
-                isLoading = true
                 GoogleSignIn.doGoogleSignIn(
                     context = context,
                     scope = scope,
                     launcher = launcher,
                     onLoginSuccess = { firebaseUser ->
-                        // Update language preference for new users
-                        userViewModel.updateLanguage(selectedLanguage)
-
                         // Handle login with ViewModel
                         scope.launch {
-                            userViewModel.handleGoogleLogin(firebaseUser)
+                            userViewModel.handleGoogleLogin(firebaseUser, selectedLanguage)
                         }
-                        DebugLogger.debugLog("GoogleLoginButton", "Login Success: ${firebaseUser.email}")
+                        DebugLogger.debugLog("GoogleLoginButton", "Google sign-in successful: ${firebaseUser.email}")
                     },
                     onLoginFailed = { error ->
                         isLoading = false
-                        DebugLogger.debugLog("GoogleLoginButton", "Login Failed: $error")
+                        DebugLogger.debugLog("GoogleLoginButton", "Google sign-in failed: $error")
                     }
                 )
             }

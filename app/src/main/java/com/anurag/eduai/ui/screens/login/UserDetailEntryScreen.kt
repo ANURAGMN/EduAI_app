@@ -1,6 +1,5 @@
 package com.anurag.eduai.ui.screens.login
 
-import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,6 +27,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -34,11 +35,11 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,16 +49,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.anurag.eduai.R
-import com.anurag.eduai.data.local.EduAiDatabase
-import com.anurag.eduai.data.local.SharedPreferenceUtils
-import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
-import com.anurag.eduai.sync.FirebaseSyncManager
 import com.anurag.eduai.ui.components.DropDownMenu
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.BackgroundPrimary
@@ -69,21 +68,24 @@ import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.theme.White
+import com.anurag.eduai.ui.viewModel.UserSaveState
 import com.anurag.eduai.ui.viewModel.UserViewModel
-import kotlinx.coroutines.launch
+import com.anurag.eduai.ui.viewmodel_factory.UserViewModelFactory
 
 @Composable
 fun UserDetailEntryScreen(
-    navController: NavController,
-    userViewModel: UserViewModel
+    navController: NavController
 ) {
     val dimens = LocalDimensions.current
+    val context = LocalContext.current
+
+    // Get ViewModel using factory
+    val userViewModel: UserViewModel = viewModel(
+        factory = UserViewModelFactory()
+    )
 
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.USER_DETAIL_ENTRY)
-
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
 
     var fullName by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
@@ -93,15 +95,33 @@ fun UserDetailEntryScreen(
     var phoneError by remember { mutableStateOf<String?>(null) }
     var schoolError by remember { mutableStateOf<String?>(null) }
 
-    val classOptions = (1..10).map { context.getString(R.string.class_format, it) }
+    val classOptions = (1..10).map { stringResource(R.string.class_format, it) }
 
-    // shared preference object
-    val sharedPreference = SharedPreferenceUtils(context)
-    // localDB instances
-    val db = remember { EduAiDatabase.getInstance(context) }
-    val studentDao = db.studentDao()
-    val conceptDao = db.conceptDao()
-    val localRepo = remember { StudentLocalRepository(studentDao) }
+    val userSaveState by userViewModel.userSaveState.collectAsStateWithLifecycle()
+    var isSaving by remember { mutableStateOf(false) }
+
+    // Handle user save state changes
+    LaunchedEffect(userSaveState) {
+        when (val state = userSaveState) {
+            is UserSaveState.Success -> {
+                isSaving = false
+                DebugLogger.debugLog("UserDetailEntryScreen", "User saved successfully")
+                navController.navigate("main") {
+                    popUpTo("login") { inclusive = true }
+                }
+            }
+            is UserSaveState.Error -> {
+                isSaving = false
+                DebugLogger.debugLog("UserDetailEntryScreen", "Error saving user: ${state.exception.message}")
+            }
+            is UserSaveState.Saving -> {
+                isSaving = true
+            }
+            is UserSaveState.Idle -> {
+                isSaving = false
+            }
+        }
+    }
 
     val scrollState = rememberScrollState()
     Surface(
@@ -111,7 +131,6 @@ fun UserDetailEntryScreen(
             .verticalScroll(scrollState)
             .background(BackgroundSecondary)
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -186,7 +205,7 @@ fun UserDetailEntryScreen(
                     Spacer(modifier = Modifier.padding(dimens.spaceSmall))
 
                     /**
-                     * TextField to entry PhoneNumber
+                     * TextField to entry phone number
                      * On change it will update the mutable variable phoneNumber
                      */
                     OutlinedTextField(
@@ -195,9 +214,8 @@ fun UserDetailEntryScreen(
                             phoneNumber = it
                             // Dynamic validation logic
                             phoneError = when {
-                                phoneNumber.isBlank() -> "Phone number cannot be empty"
-                                phoneNumber.matches(Regex("^[0-5]")) -> "Phone number should start from 6 to 9"
-                                !phoneNumber.matches(Regex("^(?:\\+91|91)?[6-9]\\d{9}$")) -> "Enter a valid 10-digit number"
+                                phoneNumber.isBlank() -> "Phone number can not be empty"
+                                !phoneNumber.matches(Regex("^[0-9]{10}$")) -> "Phone number must be exactly 10 digits"
                                 else -> null
                             }
                         },
@@ -210,6 +228,7 @@ fun UserDetailEntryScreen(
                                 contentDescription = stringResource(R.string.phone_icon_desc)
                             )
                         },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         isError = phoneError != null,
                         supportingText = {
                             if (phoneError != null) {
@@ -220,9 +239,6 @@ fun UserDetailEntryScreen(
                                 )
                             }
                         },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Phone
-                        ),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = White,
                             unfocusedContainerColor = White,
@@ -237,15 +253,16 @@ fun UserDetailEntryScreen(
                         )
                     )
 
+                    Spacer(modifier = Modifier.padding(dimens.spaceSmall))
+
                     /**
-                     * Drop down menu for class section
+                     * Dropdown to select a class
                      */
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = OutlinedTextFieldDefaults.shape,
-                        border = BorderStroke(width = dimens.inputBorderWidth, color = ColorHint),
-                        colors = CardDefaults.cardColors(containerColor = White),
-                        elevation = CardDefaults.cardElevation(defaultElevation = dimens.spaceExtraSmall)
+                        shape = RoundedCornerShape(dimens.cornerRadiusRound),
+                        border = BorderStroke(dimens.inputBorderWidth, ColorHint),
+                        colors = CardDefaults.cardColors(containerColor = White)
                     ) {
                         Row(
                             modifier = Modifier
@@ -263,7 +280,7 @@ fun UserDetailEntryScreen(
                             )
                             DropDownMenu(
                                 label = stringResource(R.string.class_selection),
-                                options =classOptions,
+                                options = classOptions,
                                 selectedValue = "Class $selectedClass",
                                 onValueSelected = { selectedString ->
                                     selectedClass = selectedString.removePrefix("Class ").trim().toInt()
@@ -332,11 +349,12 @@ fun UserDetailEntryScreen(
                             .fillMaxWidth()
                             .height(dimens.buttonHeight)
                             .padding(horizontal = dimens.spaceLarge - dimens.spaceExtraSmall),
-                        enabled = phoneError == null && schoolError == null &&
+                        enabled = !isSaving && phoneError == null && schoolError == null &&
                                 phoneNumber.isNotBlank() && schoolName.isNotBlank(),
                         onClick = {
                             DebugLogger.debugLog("UserDetailEntryScreen", "Get Started Button Clicked")
 
+                            // Update user data in ViewModel
                             userViewModel.updateName(fullName)
                             userViewModel.updateSchool(schoolName)
                             userViewModel.updateClass(selectedClass)
@@ -344,43 +362,10 @@ fun UserDetailEntryScreen(
                             userViewModel.updateUpdatedAt(System.currentTimeMillis())
                             userViewModel.updateCreatedAt(System.currentTimeMillis())
 
-                            scope.launch {
-                                userViewModel.submit { success ->
-                                    if (success) {
-                                        scope.launch {
-                                            val studentEntity = StudentEntity(
-                                                studentId = userViewModel.user.value.id,
-                                                studentName = userViewModel.user.value.displayName.toString(),
-                                                email = userViewModel.user.value.email,
-                                                phoneNumber = userViewModel.user.value.phoneNumber,
-                                                studentSchool = userViewModel.user.value.schoolName,
-                                                language = userViewModel.user.value.language,
-                                                classLevel = userViewModel.user.value.studentClass,
-                                                profilePhotoUrl = userViewModel.user.value.profilePictureUri,
-                                                createdAt = userViewModel.user.value.createdAt,
-                                                updatedAt = userViewModel.user.value.lastLogin,
-                                                isSynced = true
-                                            )
-                                            localRepo.saveStudentLocally(studentEntity)
-
-                                            val syncManager = FirebaseSyncManager(
-                                                subjectDao = db.subjectDao(),
-                                                chapterDao = db.chapterDao(),
-                                                conceptDao = conceptDao
-                                            )
-
-                                            val result = syncManager.syncAllContent()
-                                            DebugLogger.debugLog("LoginSync", result.message)
-                                        }
-
-                                        sharedPreference.setLoggedIn(true)
-                                        sharedPreference.setLanguagePreference(userViewModel.user.value.language)
-                                        sharedPreference.setUserId(userViewModel.user.value.id)
-
-                                        navController.navigate("main") {
-                                            popUpTo("login") { inclusive = true }
-                                        }
-                                    }
+                            // Submit new user - all logic handled in ViewModel
+                            userViewModel.submitNewUser(context) { success ->
+                                if (!success) {
+                                    DebugLogger.debugLog("UserDetailEntryScreen", "Failed to submit user")
                                 }
                             }
                         },
@@ -388,11 +373,19 @@ fun UserDetailEntryScreen(
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(
-                                text = stringResource(R.string.get_started),
-                                color = White,
-                                style = MaterialTheme.typography.titleMedium
-                            )
+                            if (isSaving) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(dimens.iconLarge),
+                                    color = White,
+                                    strokeWidth = dimens.inputBorderWidth
+                                )
+                            } else {
+                                Text(
+                                    text = stringResource(R.string.get_started),
+                                    color = White,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
                         }
                     }
                     Spacer(modifier = Modifier.padding(dimens.spaceSmall))

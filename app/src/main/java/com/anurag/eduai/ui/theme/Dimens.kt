@@ -145,7 +145,7 @@ data class Dimensions(
             inputHeight = 44.dp,
             inputPadding = 12.dp,
             inputHorizontalPadding = 12.dp,
-            inputBorderWidth = 1.dp,
+            inputBorderWidth = 2.dp,
             inputRadius = 24.dp,
 
             // Cards & containers
