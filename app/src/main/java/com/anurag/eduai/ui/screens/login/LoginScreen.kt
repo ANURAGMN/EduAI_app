@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -39,13 +38,10 @@ import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
-import com.anurag.eduai.ui.viewModel.UserViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    navController: NavController,
-    userViewModel: UserViewModel
+    navController: NavController
 ) {
     val dimens = LocalDimensions.current
 
@@ -126,7 +122,6 @@ fun LoginScreen(
                     // Google Sign in
                     GoogleLoginButton(
                         selectedLanguage = selectedLanguage,
-                        userViewModel = userViewModel,
                         navController = navController
                     )
 

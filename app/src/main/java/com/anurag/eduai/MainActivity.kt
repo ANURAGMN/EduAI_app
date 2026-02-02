@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
                             .fillMaxSize()
                             .statusBarsPadding() // This adds padding for status bar
                     ) {
-                        LoginNavigator(userViewModel = viewModel())
+                        LoginNavigator()
                     }
                 }
             }
