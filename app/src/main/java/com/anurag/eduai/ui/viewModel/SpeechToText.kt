@@ -14,11 +14,14 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import com.anurag.eduai.debug.DebugLogger
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import javax.inject.Inject
 
-class SpeechToText : ViewModel() {
+@HiltViewModel
+class SpeechToText @Inject constructor() : ViewModel() {
     private val TAG = "SpeechToText"
     private val handler = Handler(Looper.getMainLooper())
 

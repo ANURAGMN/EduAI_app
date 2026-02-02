@@ -1,10 +1,6 @@
-package com.anurag.eduai.ui.viewModel
+package com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass
 
 import com.anurag.eduai.data.remote.SessionMetadata
-import com.anurag.eduai.ui.screens.chatbotscreen.components.ResourceContent
-import com.anurag.eduai.ui.screens.chatbotscreen.components.ResourceDisplayMode
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
-
 /**
  * Consolidated UI state for the chat screen
  * Reduces number of StateFlows from 20+ to just 2-3
@@ -30,10 +26,7 @@ data class ChatUiState(
     val isUserActive: Boolean = false,
 
     // Resources
-    val showResourceCard: Boolean = false,
-    val currentResource: ResourceContent? = null,
-    val resourceDisplayMode: ResourceDisplayMode = ResourceDisplayMode.IMAGE,
-    val conceptMapJSON: String = """{"visualization_type":"None","main_concept":"Chat for a Concept Map","nodes":[],"edges":[]}""",
+    val resourceCardState: ResourceCardUiState = ResourceCardUiState.Hidden,
 
     // TTS
     val shouldStartTTS: Boolean = false,

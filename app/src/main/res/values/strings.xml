@@ -269,4 +269,5 @@
     <!-- Progress Text -->
     <string name="completed_concepts_format">%1$d/%2$d</string>
     <string name="percentage_format">%1$d%%</string>
+    <string name="loading_concept_map">Loading concept map...</string>
 </resources>

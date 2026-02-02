@@ -32,7 +32,7 @@ import com.anurag.eduai.ui.theme.IconPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
-import com.anurag.eduai.ui.viewModel.ChatUiState
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
 import com.anurag.eduai.ui.viewModel.SpeechToText
 
 /**

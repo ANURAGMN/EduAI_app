@@ -23,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.anurag.eduai.R
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.ScreenName
@@ -37,20 +37,22 @@ import com.anurag.eduai.ui.screens.chatbotscreen.components.ConversationView
 import com.anurag.eduai.ui.screens.chatbotscreen.components.InitialAvatarView
 import com.anurag.eduai.ui.screens.chatbotscreen.components.InputSection
 import com.anurag.eduai.ui.screens.chatbotscreen.components.LogOverlay
+import com.anurag.eduai.ui.screens.chatbotscreen.components.ResourcesCard
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
 import com.anurag.eduai.ui.theme.White
-import com.anurag.eduai.ui.viewModel.ChatUiState
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
 import com.anurag.eduai.ui.viewModel.ChatViewModel
 import com.anurag.eduai.ui.viewModel.SpeechToText
 import com.anurag.eduai.ui.viewModel.TextToSpeech
-import com.anurag.eduai.ui.viewModel.isConversationStarted
-import com.anurag.eduai.ui.viewModel.lastAiMessage
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.isConversationStarted
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.lastAiMessage
 
 @Composable
 fun ChatbotScreen(
-    chatViewModel: ChatViewModel = viewModel(),
-    ttsController: TextToSpeech = viewModel(),
-    sttController: SpeechToText = viewModel(),
+    chatViewModel: ChatViewModel = hiltViewModel(),
+    ttsController: TextToSpeech = hiltViewModel(),
+    sttController: SpeechToText = hiltViewModel()
 ) {
     // Track screen analytics
     TrackScreenEvent(ScreenName.CHATBOT)
@@ -173,7 +175,7 @@ fun ChatbotScreen(
                     ChatHeaderIcons(
                         isKannada = chatState.isKannada,
                         isSpeaking = ttsState.isSpeaking,
-                        showResourceCard = chatState.showResourceCard,
+                        showResourceCard = chatState.resourceCardState !is ResourceCardUiState.Hidden,
                         ttsPausedForResource = chatState.ttsPausedForResource,
                         showSettingsMenu = showSettingsMenu,
                         onKannadaToggle = { chatViewModel.setKannada(!chatState.isKannada) },
@@ -244,15 +246,19 @@ fun ChatbotScreen(
                             chatState = chatState,
                             lastAIMessage = lastAIMessage,
                             ttsController = ttsController,
-                            onDismissResource = { chatViewModel.dismissResourceCard() },
-                            onResourceTimerComplete = {
-                                DebugLogger.debugLog("ChatViewModel", "Resource card timer completed")
-                            },
                             modifier = Modifier.weight(0.1f).background(White)
                         )
                     }
                 }
             }
+
+            // Resource Card
+            ResourcesCard(
+                state = chatState.resourceCardState,
+                onDismiss = chatViewModel::dismissResourceCard,
+                modifier = Modifier.align(Alignment.Center)
+            )
+
             // Debug LogOverlay
             LogOverlay(
                 metadata = chatState.agentMetadata,
@@ -302,7 +308,7 @@ private fun handleVolumeClick(
     ttsController: TextToSpeech
 ) {
     when {
-        chatState.showResourceCard && chatState.ttsPausedForResource -> {
+        chatState.resourceCardState !is ResourceCardUiState.Hidden && chatState.ttsPausedForResource -> {
             chatViewModel.resumeTTSForResource()
             lastAIMessage?.let { ttsController.speak(it.content) }
         }

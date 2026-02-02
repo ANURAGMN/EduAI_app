@@ -5,9 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -15,74 +13,29 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
 import com.anurag.eduai.ui.theme.LocalDimensions
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /**
- * Resource type for different content types
- */
-sealed class ResourceContent {
-    data class Image(
-        val url: String,
-        val description: String?
-    ) : ResourceContent()
-
-    data class ConceptMap(
-        val json: String,
-        val description: String?,
-        val currentAudioTime: Float = 0f,
-        val isAudioPlaying: Boolean = false
-    ) : ResourceContent()
-}
-enum class ResourceDisplayMode {
-    IMAGE,           // APK -> CI (Image display)
-    CONCEPT_MAP,     // CI -> SIM_CC (Concept Map)
-}
-
-
-/**
- * Main ResourcesCard - Template container with progress timer and close option
+ * ResourcesCard
  */
 @Composable
 fun ResourcesCard(
-    modifier: Modifier = Modifier,
-    content: ResourceContent?,
-    displayMode: ResourceDisplayMode,
+    state: ResourceCardUiState,
     onDismiss: () -> Unit,
-    onTimerComplete: () -> Unit = {},
-    timerDurationSeconds: Int = 6,
+    modifier: Modifier = Modifier
 ) {
-    val dimens =LocalDimensions.current
-    var isVisible by remember { mutableStateOf(false) }
-    var timeRemaining by remember { mutableIntStateOf(timerDurationSeconds) }
-
-    // Timer countdown
-    LaunchedEffect(Unit) {
-        isVisible = true
-        launch {
-            while (timeRemaining > 0) {
-                delay(1000)
-                timeRemaining--
-            }
-            // Auto-close when timer reaches 0
-            onTimerComplete()
-            delay(300) // Allow exit animation
-            onDismiss()
-        }
-    }
-
+    val dimens = LocalDimensions.current
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val cardHeight = (screenHeight * 0.60f) // 60% of screen height
 
     AnimatedVisibility(
-        visible = isVisible && content != null,
+        visible = state !is ResourceCardUiState.Hidden,
         enter = fadeIn() + slideInVertically(initialOffsetY = { it / 4 }),
         exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 4 })
     ) {
@@ -97,50 +50,54 @@ fun ResourcesCard(
                 containerColor = MaterialTheme.colorScheme.surface
             )
         ) {
-            Box(modifier = Modifier.fillMaxSize()
-            ) {
-                // Content based on type
-                when (displayMode) {
-                    ResourceDisplayMode.IMAGE -> {
-                        if (content is ResourceContent.Image) {
-                            ImageResourceContent(
-                                imageUrl = content.url,
-                                description = content.description
-                            )
-                        }
+            Box(modifier = Modifier.fillMaxSize()) {
+                when (state) {
+                    is ResourceCardUiState.Image -> {
+                        ImageResourceContent(
+                            imageUrl = state.imageUrl,
+                            description = state.description
+                        )
                     }
-                    ResourceDisplayMode.CONCEPT_MAP -> {
-                        if (content is ResourceContent.ConceptMap) {
-                            ConceptMapResourceContent(
-                                json = content.json,
-                                currentAudioTime = content.currentAudioTime,
-                                isAudioPlaying = content.isAudioPlaying
-                            )
-                        }
+                    is ResourceCardUiState.ConceptMap -> {
+                        ConceptMapResourceContent(
+                            json = state.json,
+                            currentAudioTime = state.audioProgress,
+                            isAudioPlaying = state.isAudioPlaying
+                        )
                     }
+                    ResourceCardUiState.Hidden -> Unit
                 }
 
-                // Progress Timer Overlay
-                ResourceCardCloseTimer(
-                    timeRemaining = timeRemaining,
-                    totalDuration = timerDurationSeconds,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(dimens.spaceMedium)
-                )
+                // Progress Timer
+                if (state !is ResourceCardUiState.Hidden) {
+                    ResourceCardCloseTimer(
+                        timeRemaining = when (state) {
+                            is ResourceCardUiState.Image -> state.remainingSeconds
+                            is ResourceCardUiState.ConceptMap -> state.remainingSeconds
+                            else -> 0
+                        },
+                        totalDuration = when (state) {
+                            is ResourceCardUiState.Image -> state.totalSeconds
+                            is ResourceCardUiState.ConceptMap -> state.totalSeconds
+                            else -> 1
+                        },
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(dimens.spaceMedium)
+                    )
+                }
 
                 // Close Button
-                IconButton(
-                    onClick = {
-                        isVisible = false
-                        onDismiss()
-                    },
+                FilledIconButton(
+                    onClick = onDismiss,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(dimens.spaceMedium)
-                        .size(dimens.iconExtraLarge)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.9f))
+                        .size(48.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    )
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
