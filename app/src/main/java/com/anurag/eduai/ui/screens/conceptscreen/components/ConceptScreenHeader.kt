@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.anurag.eduai.R
+import com.anurag.eduai.ui.models.ChapterProgressUiModel
 import com.anurag.eduai.ui.theme.HeaderGradientStart
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextOnPrimary
@@ -41,8 +42,7 @@ fun ConceptScreenHeader(
     onBackClick: () -> Unit = {},
     onGoHome: () -> Unit = {},
     onGoSetting: () -> Unit = {},
-    completed: Int,
-    total: Int,
+    progress: ChapterProgressUiModel,
 ) {
     val dimens = LocalDimensions.current
 
@@ -126,8 +126,7 @@ fun ConceptScreenHeader(
                 .padding(horizontal = dimens.spaceSmall)
         ) {
             ChapterProgressCardOnHeader(
-                completed = completed,
-                total = total
+                progress = progress
             )
         }
 

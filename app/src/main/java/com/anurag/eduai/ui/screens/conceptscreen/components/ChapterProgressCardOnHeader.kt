@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
+import com.anurag.eduai.ui.models.ChapterProgressUiModel
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextOnPrimary
 
@@ -28,25 +29,20 @@ import com.anurag.eduai.ui.theme.TextOnPrimary
  * Progress card displayed in the header of ConceptScreen
  * Shows chapter completion progress
  *
- * @param completed Number of completed concepts
- * @param total Total number of concepts in the chapter
+ * @param progress ChapterProgressUiModel containing all calculated progress data
  */
 @Composable
 fun ChapterProgressCardOnHeader(
-    completed: Int = 0,
-    total: Int = 0
+    progress: ChapterProgressUiModel
 ) {
     val dimens = LocalDimensions.current
 
-    val progress = if (total > 0) completed.toFloat() / total.toFloat() else 0f
-    val progressPercentage = (progress * 100).toInt()
-
-// Main Card Container
- Box(
+    // Main Card Container
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(dimens.cornerRadiusMedium))
-            .background(    color = TextOnPrimary.copy(alpha = 0.12f))
+            .background(color = TextOnPrimary.copy(alpha = 0.12f))
             .padding(dimens.cardPadding)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -63,7 +59,7 @@ fun ChapterProgressCardOnHeader(
                     color = TextOnPrimary
                 )
                 Text(
-                    text = "$progressPercentage%",
+                    text = "${progress.progressPercentage}%",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = TextOnPrimary
@@ -72,9 +68,9 @@ fun ChapterProgressCardOnHeader(
 
             Spacer(modifier = Modifier.height(dimens.spaceSmall))
 
-            // Thinner Progress Bar
+            // Progress Bar
             LinearProgressIndicator(
-                progress = { progress },
+                progress = { progress.progressFraction },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)
@@ -88,9 +84,9 @@ fun ChapterProgressCardOnHeader(
             Text(
                 text = stringResource(
                     R.string.progress_status,
-                    completed,
-                    total,
-                    total - completed
+                    progress.completed,
+                    progress.total,
+                    progress.remaining
                 ),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Normal,

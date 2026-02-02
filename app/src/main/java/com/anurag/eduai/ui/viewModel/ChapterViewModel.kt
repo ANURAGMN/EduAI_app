@@ -8,7 +8,7 @@ import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.repository.SubjectRepository
 import com.anurag.eduai.ui.models.ChapterStatus
 import com.anurag.eduai.ui.models.ChapterUiModel
-import com.anurag.eduai.ui.screens.chapterscreen.model.ChapterUiState
+import com.anurag.eduai.ui.screens.chapterscreen.dataclass.ChapterUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

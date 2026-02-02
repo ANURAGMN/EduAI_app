@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.chapterscreen.model
+package com.anurag.eduai.ui.screens.chapterscreen.dataclass
 
 import com.anurag.eduai.ui.models.ChapterUiModel
 
