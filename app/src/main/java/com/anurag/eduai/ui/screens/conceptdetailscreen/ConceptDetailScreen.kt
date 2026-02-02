@@ -10,18 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.anurag.eduai.data.local.EduAiDatabase
-import com.anurag.eduai.data.local.SharedPreferenceUtils
-import com.anurag.eduai.repository.ConceptRepository
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.conceptdetailscreen.components.ConceptDetailScreenHeader
@@ -30,28 +22,22 @@ import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.viewModel.ConceptDetailViewModel
-import com.anurag.eduai.ui.viewmodel_factory.ConceptDetailViewModelFactory
 import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
+import com.anurag.eduai.ui.theme.AccentBlue
+import com.anurag.eduai.ui.theme.ColorWarning
+import com.anurag.eduai.ui.theme.LocalDimensions
 
 @Composable
 fun ConceptDetailScreen(
     conceptId: String,
     onBackClick: () -> Unit = {},
-    onGoHome:() -> Unit = {},
-    onGoSetting:() -> Unit = {},
+    onGoHome: () -> Unit = {},
+    onGoSetting: () -> Unit = {},
+    viewModel: ConceptDetailViewModel = hiltViewModel()
 ) {
     TrackScreenEvent(screenName = ScreenName.CONCEPT_DETAIL)
-
-    val context = LocalContext.current
-    val db = remember { EduAiDatabase.getInstance(context) }
-    val sharedPrefs = remember { SharedPreferenceUtils(context) }
-
-    // Create repository
-    val repository = remember { ConceptRepository(db.conceptDao(), db.progressDao()) }
-
-    // Create factory and ViewModel
-    val factory = remember { ConceptDetailViewModelFactory(repository, sharedPrefs) }
-    val viewModel: ConceptDetailViewModel = viewModel(factory = factory)
+    val dimens = LocalDimensions.current
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(conceptId) {
@@ -81,7 +67,7 @@ fun ConceptDetailScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
+                    .padding(dimens.spaceLarge),
                 contentAlignment = Alignment.Center
             ) {
                 Text(text = "Error: ${state.error}", color = TextPrimary)
@@ -90,21 +76,21 @@ fun ConceptDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
+                    .padding(dimens.spaceLarge)
                     .verticalScroll(rememberScrollState())
             ) {
                 state.concept?.let { concept ->
                     Text(
                         text = concept.conceptName,
-                        fontSize = 24.sp,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 8.dp),
+                        modifier = Modifier.padding(bottom =dimens.spaceMedium),
                         color = TextPrimary
                     )
                     Text(
                         text = concept.description ?: "No description available",
-                        fontSize = 16.sp,
-                        modifier = Modifier.padding(bottom = 24.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = dimens.spaceLarge),
                         color = TextSecondary
                     )
 
@@ -122,20 +108,20 @@ fun ConceptDetailScreen(
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(dimens.spaceExtraLarge))
 
                     // Placeholder for Future Simulation Section
                     if (concept.hasSimulation) {
                         Text(
                             text = "Simulations",
-                            fontSize = 18.sp,
+                            style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(bottom = 12.dp),
+                            modifier = Modifier.padding(bottom = dimens.spaceMedium ),
                             color = TextPrimary
                         )
                         Text(
                             text = "Simulation content will be displayed here",
-                            fontSize = 14.sp,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = TextSecondary
                         )
                     }
@@ -153,24 +139,25 @@ private fun ProgressTrackingSection(
     onMarkInProgress: () -> Unit,
     onMarkCompleted: () -> Unit
 ) {
+    val dimens = LocalDimensions.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(12.dp)
+            .padding(dimens.spaceMedium)
     ) {
         Text(
             text = "Learning Progress",
-            fontSize = 18.sp,
+            style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
             color = TextPrimary,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = dimens.spaceLarge)
         )
 
         // Started Checkbox
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
+                .padding(vertical = dimens.spaceMedium),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
@@ -178,17 +165,17 @@ private fun ProgressTrackingSection(
                 onCheckedChange = { if (it) onMarkStarted() },
                 enabled = progressStatus !in listOf("IN_PROGRESS", "COMPLETED")
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(dimens.spaceLarge))
             Column {
                 Text(
                     text = " Started Learning",
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = TextPrimary
                 )
                 Text(
                     text = "I've opened and read this concept",
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary
                 )
             }
@@ -198,7 +185,7 @@ private fun ProgressTrackingSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
+                .padding(vertical = dimens.spaceMedium),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
@@ -206,17 +193,17 @@ private fun ProgressTrackingSection(
                 onCheckedChange = { if (it) onMarkInProgress() },
                 enabled = progressStatus in listOf("STARTED", "IN_PROGRESS") && progressStatus != "COMPLETED"
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(dimens.spaceLarge))
             Column {
                 Text(
                     text = " In Progress",
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = TextPrimary
                 )
                 Text(
                     text = "I'm actively studying this concept",
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary
                 )
             }
@@ -226,7 +213,7 @@ private fun ProgressTrackingSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
+                .padding(vertical = dimens.spaceMedium),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
@@ -234,23 +221,23 @@ private fun ProgressTrackingSection(
                 onCheckedChange = { if (it) onMarkCompleted() },
                 enabled = progressStatus in listOf("IN_PROGRESS", "COMPLETED")
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(dimens.spaceLarge))
             Column {
                 Text(
                     text = " Completed",
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = TextPrimary
                 )
                 Text(
                     text = "I've mastered this concept",
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(dimens.spaceLarge))
 
         // Status Display with better visuals
         Row(
@@ -259,7 +246,7 @@ private fun ProgressTrackingSection(
         ) {
             Text(
                 text = "Current Status: ",
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodySmall,
                 color = TextSecondary,
                 fontWeight = FontWeight.Medium
             )
@@ -270,11 +257,11 @@ private fun ProgressTrackingSection(
                     "COMPLETED" -> " Completed"
                     else -> " Not Started"
                 },
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 color = when (progressStatus) {
                     "COMPLETED" -> AccentGreen
-                    "IN_PROGRESS" -> Color(0xFFFFA500)
-                    "STARTED" -> Color(0xFF2196F3)
+                    "IN_PROGRESS" -> ColorWarning
+                    "STARTED" -> AccentBlue
                     else -> TextSecondary
                 },
                 fontWeight = FontWeight.Bold
