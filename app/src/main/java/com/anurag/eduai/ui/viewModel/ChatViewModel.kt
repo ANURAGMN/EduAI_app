@@ -111,8 +111,12 @@ class ChatViewModel : ViewModel() {
      * checks and sets Kannada language
      */
     fun setKannada(enabled: Boolean) {
-        _uiState.update { it.copy(isKannada = enabled) }
-        DebugLogger.debugLog("ChatViewModel", "Kannada language: ${if (enabled) "enabled" else "disabled"}")
+        _uiState.update {
+            it.copy(
+                isKannada = enabled,
+                currentLanguage = if (enabled) "kn" else "en"
+            )
+        }
     }
 
     /**
