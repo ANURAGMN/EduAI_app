@@ -4,21 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.repository.SubjectRepository
+import com.anurag.eduai.ui.screens.subjectscreen.dataclass.SubjectScreenState
 import com.anurag.eduai.ui.models.SubjectUiModel
 import com.anurag.eduai.ui.theme.BrandPrimary
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-data class SubjectScreenState(
-    val subjects: List<SubjectUiModel> = emptyList(),
-    val classLevel: Int = 7,
-    val isLoading: Boolean = false,
-    val error: String? = null
-)
-
-class SubjectViewModel(
+@HiltViewModel
+class SubjectViewModel @Inject constructor(
     private val repository: SubjectRepository,
     private val sharedPreferenceUtils: SharedPreferenceUtils
 ) : ViewModel() {

@@ -733,6 +733,7 @@ class ChatViewModel : ViewModel() {
                 )
             }
 
+            delay(50)
             _uiState.update { it.copy(shouldStartTTS = true) }
             delay(50)
             _uiState.update { it.copy(shouldStartTTS = false) }

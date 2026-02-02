@@ -9,6 +9,7 @@ plugins {
     id("kotlin-parcelize")
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.21"
     alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 android {
     namespace = "com.anurag.eduai"
@@ -108,6 +109,11 @@ dependencies {
     implementation("androidx.room:room-runtime:2.8.4")
     implementation("androidx.room:room-ktx:2.8.4")
     ksp("androidx.room:room-compiler:2.8.4")
+
+    // Hilt Dependency Injection
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
 
     //Retrofit for networking
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
