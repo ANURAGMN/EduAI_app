@@ -11,78 +11,55 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.anurag.eduai.R
 import com.anurag.eduai.data.local.dao.ChapterProgressSummary
 import com.anurag.eduai.data.local.entities.SubjectEntity
-import com.anurag.eduai.ui.theme.BackgroundSecondary
-import com.anurag.eduai.ui.theme.Black
-import com.anurag.eduai.ui.theme.ColorHint
-import com.anurag.eduai.ui.theme.Dimensions
-import com.anurag.eduai.ui.theme.LocalDimensions
-import com.anurag.eduai.ui.theme.StatusBlue
-import com.anurag.eduai.ui.theme.StatusGray
-import com.anurag.eduai.ui.theme.StatusGreen
-import com.anurag.eduai.ui.theme.StatusOrange
-import com.anurag.eduai.ui.theme.TextPrimary
-import com.anurag.eduai.ui.theme.TextSecondary
-import com.anurag.eduai.ui.theme.White
-import java.util.Locale.getDefault
+import com.anurag.eduai.ui.theme.*
+import com.anurag.eduai.ui.viewModel.ProgressColorType
 
+/**
+ * Skills Progress Section Component
+ * Pure UI component - displays subject dropdown and chapter progress
+ * NO business logic, NO data manipulation, NO hardcoded values
+ * All logic handled by ViewModel
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SkillsProgressSection(
     subjects: List<SubjectEntity>,
     selectedSubject: SubjectEntity?,
-    chapterProgress: List<ChapterProgressSummary>,
-    onSubjectSelected: (SubjectEntity) -> Unit
+    chaptersToShow: List<ChapterProgressSummary>,
+    showAllChapters: Boolean,
+    hasMoreChapters: Boolean,
+    hiddenChaptersCount: Int,
+    onSubjectSelected: (SubjectEntity) -> Unit,
+    onToggleShowAll: () -> Unit,
+    getProgressColor: (Float) -> ProgressColorType,
+    capitalizeSubjectName: (String) -> String
 ) {
     val dimes = LocalDimensions.current
     var expanded by remember { mutableStateOf(false) }
-    var showAll by remember { mutableStateOf(false) }
-
-    // Reset showAll when subject changes
-    LaunchedEffect(selectedSubject) { showAll = false }
-
-    // Separate chapters into categories
-    val inProgressChapters =
-            chapterProgress.filter { it.completionPercentage > 0 && it.completionPercentage < 100 }
-    val completedChapters = chapterProgress.filter { it.completionPercentage >= 100 }
-    val notStartedChapters = chapterProgress.filter { it.completionPercentage == 0f }
-
-    // Determine which chapters to show
-    val chaptersToShow =
-        if (showAll) {
-            chapterProgress
-        } else {
-            // Show first 4 in-progress chapters
-            val selected = inProgressChapters.take(4).toMutableList()
-            // If less than 4 in-progress, fill with not started (by order index)
-            if (selected.size < 4) {
-                val remaining = 4 - selected.size
-                selected.addAll(notStartedChapters.take(remaining))
-            }
-            selected
-        }
-
-    // Show "Show More" button if there are hidden chapters
-    val hasMoreChapters = chapterProgress.size > chaptersToShow.size
 
     Column {
         // Header with dropdown
         Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = dimes.spaceMedium),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = dimes.spaceMedium),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Subject Progress",
+                text = stringResource(R.string.subject_progress),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = Black
+                color = TextPrimary
             )
+
             Spacer(modifier = Modifier.width(dimes.spaceLarge))
+
             // Subject Dropdown
             ExposedDropdownMenuBox(
                 expanded = expanded,
@@ -90,28 +67,23 @@ fun SkillsProgressSection(
             ) {
                 TextField(
                     readOnly = true,
-                    value =
-                        selectedSubject?.subjectName?.replaceFirstChar {
-                            if (it.isLowerCase()) it.titlecase(getDefault())
-                            else it.toString()
-                        }
-                            ?: "Select Subject",
+                    value = selectedSubject?.let { capitalizeSubjectName(it.subjectName) }
+                        ?: stringResource(R.string.select_subject),
                     onValueChange = {},
-                    modifier =
-                        Modifier.menuAnchor()
-                            .fillMaxWidth()
-                            .height(dimes.buttonHeightLarge),
-                    colors =
-                        TextFieldDefaults.colors(
-                            focusedContainerColor = BackgroundSecondary,
-                            unfocusedContainerColor = BackgroundSecondary,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            focusedLabelColor = TextSecondary,
-                            unfocusedLabelColor = ColorHint
-                        ),
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                        .height(dimes.buttonHeightLarge),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = DropdownBackgroundColor,
+                        unfocusedContainerColor = DropdownBackgroundColor,
+                        focusedTextColor = DropdownTextColor,
+                        unfocusedTextColor = DropdownTextColor,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedLabelColor = TextSecondary,
+                        unfocusedLabelColor = DropdownHintColor
+                    ),
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                     }
@@ -120,7 +92,7 @@ fun SkillsProgressSection(
                 ExposedDropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
-                    modifier = Modifier.background(BackgroundSecondary)
+                    modifier = Modifier.background(DropdownBackgroundColor)
                 ) {
                     subjects.forEach { subject ->
                         DropdownMenuItem(
@@ -128,7 +100,7 @@ fun SkillsProgressSection(
                                 Text(
                                     text = subject.subjectName,
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = TextPrimary
+                                    color = DropdownTextColor
                                 )
                             },
                             onClick = {
@@ -136,11 +108,11 @@ fun SkillsProgressSection(
                                 expanded = false
                             }
                         )
-                        // adds a divider between each item except the last one
+                        // Divider between items except last
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = dimes.spaceSmall),
                             thickness = dimes.dividerThickness,
-                            color = ColorHint
+                            color = DropdownDividerColor
                         )
                     }
                 }
@@ -150,17 +122,17 @@ fun SkillsProgressSection(
         // Progress Card
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = White),
+            colors = CardDefaults.cardColors(containerColor = CardBackground),
             elevation = CardDefaults.cardElevation(defaultElevation = dimes.cardElevation),
             shape = RoundedCornerShape(dimes.cornerRadiusMedium)
         ) {
             Column(modifier = Modifier.padding(dimes.cardPadding)) {
-                if (chapterProgress.isEmpty()) {
+                if (chaptersToShow.isEmpty()) {
                     Text(
-                        text = "No progress data available",
-                        fontSize = 14.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(vertical = 20.dp)
+                        text = stringResource(R.string.no_progress_data),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = ColorHint,
+                        modifier = Modifier.padding(vertical = dimes.spaceLarge)
                     )
                 } else {
                     // Chapter progress bars
@@ -171,7 +143,7 @@ fun SkillsProgressSection(
                                 progress = chapter.completionPercentage.toInt(),
                                 completedConcepts = chapter.completedConcepts,
                                 totalConcepts = chapter.totalConcepts,
-                                color = getProgressColor(chapter.completionPercentage)
+                                colorType = getProgressColor(chapter.completionPercentage)
                             )
                         }
                     }
@@ -181,23 +153,30 @@ fun SkillsProgressSection(
                         Spacer(modifier = Modifier.height(dimes.spaceSmall))
 
                         TextButton(
-                            onClick = { showAll = !showAll },
+                            onClick = onToggleShowAll,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text =
-                                    if (showAll) "Show Less"
-                                    else
-                                        "Show More (${chapterProgress.size - chaptersToShow.size} more)",
+                                text = if (showAllChapters) {
+                                    stringResource(R.string.show_less)
+                                } else {
+                                    stringResource(R.string.show_more_count, hiddenChaptersCount)
+                                },
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Medium
                             )
-                            Spacer(modifier = Modifier.width(Dimensions.Compact.spaceMedium))
+                            Spacer(modifier = Modifier.width(dimes.spaceMedium))
                             Icon(
-                                imageVector =
-                                    if (showAll) Icons.Default.KeyboardArrowUp
-                                    else Icons.Default.KeyboardArrowDown,
-                                contentDescription = if (showAll) "Show Less" else "Show More",
+                                imageVector = if (showAllChapters) {
+                                    Icons.Default.KeyboardArrowUp
+                                } else {
+                                    Icons.Default.KeyboardArrowDown
+                                },
+                                contentDescription = if (showAllChapters) {
+                                    stringResource(R.string.show_less_icon)
+                                } else {
+                                    stringResource(R.string.show_more_icon)
+                                },
                                 modifier = Modifier.size(dimes.iconSmall)
                             )
                         }
@@ -208,15 +187,30 @@ fun SkillsProgressSection(
     }
 }
 
+/**
+ * Chapter Progress Bar Component
+ * Pure UI component - displays individual chapter progress
+ * NO hardcoded values
+ */
 @Composable
 private fun ChapterProgressBar(
     chapterName: String,
     progress: Int,
     completedConcepts: Int,
     totalConcepts: Int,
-    color: Color
+    colorType: ProgressColorType
 ) {
     val dimes = LocalDimensions.current
+
+    // Map color type to actual color
+    val color = when (colorType) {
+        ProgressColorType.COMPLETED -> StatusGreen
+        ProgressColorType.HIGH_PROGRESS -> StatusGreen
+        ProgressColorType.MEDIUM_PROGRESS -> StatusOrange
+        ProgressColorType.STARTED -> StatusBlue
+        ProgressColorType.NOT_STARTED -> StatusGray
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(dimes.spaceSmall)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -225,12 +219,20 @@ private fun ChapterProgressBar(
         ) {
             Text(
                 text = chapterName,
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
-                color = Black,
+                color = TextPrimary,
                 modifier = Modifier.weight(1f)
             )
-            Text(text = "$completedConcepts/$totalConcepts", style = MaterialTheme.typography.labelSmall, color = ColorHint)
+            Text(
+                text = stringResource(
+                    R.string.completed_concepts_format,
+                    completedConcepts,
+                    totalConcepts
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                color = ColorHint
+            )
         }
 
         Row(
@@ -239,26 +241,18 @@ private fun ChapterProgressBar(
         ) {
             LinearProgressIndicator(
                 progress = progress / 100f,
-                modifier = Modifier.weight(1f).height(dimes.spaceSmall),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(dimes.spaceSmall),
                 color = color,
-                trackColor = Color(0xFFE0E0E0)
+                trackColor = ProgressTrackColor
             )
             Text(
-                text = "$progress%",
+                text = stringResource(R.string.percentage_format, progress),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = color
             )
         }
-    }
-}
-
-private fun getProgressColor(percentage: Float): Color {
-    return when {
-        percentage >= 100 -> StatusGreen // Green for completed
-        percentage >= 80 -> StatusGreen // Green
-        percentage >= 50 -> StatusOrange // Orange
-        percentage > 0 -> StatusBlue // Blue for started
-        else -> StatusGray // Gray for not started
     }
 }

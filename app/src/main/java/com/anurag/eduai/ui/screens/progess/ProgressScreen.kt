@@ -13,7 +13,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -27,33 +26,37 @@ import com.anurag.eduai.ui.screens.progess.component.StatusCardGrid
 import com.anurag.eduai.ui.screens.progess.component.WeeklyActivitySection
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.theme.LocalDimensions
-import com.anurag.eduai.ui.viewModel.ProgressScreenVIewModel
+import com.anurag.eduai.ui.viewModel.ProgressScreenViewModel
 import com.anurag.eduai.ui.viewmodel_factory.ProgressViewModelFactory
 import com.anurag.eduai.utils.StreakManager
-import com.anurag.eduai.utils.WeeklyProgressUtils
 
+/**
+ * Progress Screen Composable
+ * Pure UI component - NO business logic, NO data manipulation
+ * Only observes ViewModel state and triggers ViewModel actions
+ */
 @Composable
-fun ProgressScreen(onGoHome: () -> Unit = {}, onGoSetting: () -> Unit = {}) {
+fun ProgressScreen(
+    onGoHome: () -> Unit = {},
+    onGoSetting: () -> Unit = {}
+) {
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.PROGRESS)
 
     val dimes = LocalDimensions.current
     val context = LocalContext.current
-    // Object of util class
-    val weeklyProgressUtil = WeeklyProgressUtils()
 
+    // Setup dependencies
     val sharedPref = SharedPreferenceUtils(context)
     val userId = sharedPref.getUserId().toString()
-    var classLevel = 7
-
     val streakManager = StreakManager(context)
-
     val db = remember { EduAiDatabase.getInstance(context) }
     val progressDao = db.progressDao()
     val studentDao = db.studentDao()
     val subjectDao = db.subjectDao()
 
-    val viewModel: ProgressScreenVIewModel =
+    // Initialize ViewModel
+    val viewModel: ProgressScreenViewModel =
         viewModel(
             factory =
                 ProgressViewModelFactory(
@@ -65,31 +68,35 @@ fun ProgressScreen(onGoHome: () -> Unit = {}, onGoSetting: () -> Unit = {}) {
                 )
         )
 
-    // collecting all the values as state
+    // Collect all state from ViewModel
     val totalCompletedConcept by viewModel.totalCompletedConcept.collectAsState()
     val streakCount by viewModel.streakCount.collectAsState()
-    val sevenDayProgress by viewModel.sevenDayProgress.collectAsState()
-
+    val weeklyProgressData by viewModel.weeklyProgressData.collectAsState()
     val chapterProgress by viewModel.chapterProgressSummary.collectAsState()
     val subjects by viewModel.subjects.collectAsState()
     val selectedSubject by viewModel.selectedSubject.collectAsState()
     val student by viewModel.student.collectAsState()
+    val chaptersToShow by viewModel.chaptersToShow.collectAsState()
+    val showAllChapters by viewModel.showAllChapters.collectAsState()
+    val hasMoreChapters by viewModel.hasMoreChapters.collectAsState()
 
-    LaunchedEffect(userId) {
-        classLevel = student?.classLevel ?: 7 // default value as class 7
-    }
-    // loading all the value to their state through method call of viewmodel
+    // Get class level from student (with default)
+    val classLevel = student?.classLevel ?: 7
+
+    // Load data when screen launches
     LaunchedEffect(Unit) {
-        viewModel.getSevenDayProgress(userId, weeklyProgressUtil.getSevenDaysAgoInMillis())
+        viewModel.getSevenDayProgress(viewModel.getSevenDaysAgoInMillis())
     }
 
-    // Load subjects when screen launches
-    LaunchedEffect(classLevel) { viewModel.loadSubjects(classLevel) }
+    // Load subjects when class level is available
+    LaunchedEffect(classLevel) {
+        viewModel.loadSubjects(classLevel)
+    }
+
     // Load chapter progress when subject is selected
     LaunchedEffect(selectedSubject) {
         selectedSubject?.let { subject ->
             viewModel.getChapterProgressSummary(
-                userId = userId,
                 classLevel = classLevel,
                 subject = subject.subjectId
             )
@@ -97,32 +104,53 @@ fun ProgressScreen(onGoHome: () -> Unit = {}, onGoSetting: () -> Unit = {}) {
     }
 
     val scrollState = rememberScrollState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundSecondary)
             .verticalScroll(scrollState)
     ) {
-        ProgressScreenTopBar(onGoHome, onGoSetting)
+        ProgressScreenTopBar(
+            onGoHome = onGoHome,
+            onGoSetting = onGoSetting
+        )
 
         Spacer(modifier = Modifier.padding(dimes.screenPadding))
-        Column(modifier = Modifier.background(BackgroundSecondary).padding(dimes.screenPadding)) {
+
+        Column(
+            modifier = Modifier
+                .background(BackgroundSecondary)
+                .padding(dimes.screenPadding)
+        ) {
             StatusCardGrid(
                 streakCount = streakCount,
                 completedConceptCount = totalCompletedConcept,
-                completedSimulationCount = 0,
-                score = 78
+                completedSimulationCount = 0, // TODO: Get from ViewModel when available
+                score = 78 // TODO: Get from ViewModel when available
             )
+
             Spacer(modifier = Modifier.height(dimes.sectionSpacing))
-            WeeklyActivitySection(weeklyProgressList = sevenDayProgress)
+
+            WeeklyActivitySection(
+                weeklyProgressData = weeklyProgressData,
+                maxValue = viewModel.maxWeeklyValue.collectAsState().value,
+                getBarHeight = { count -> viewModel.calculateBarHeight(count) }
+            )
 
             Spacer(modifier = Modifier.height(dimes.sectionSpacing))
 
             SkillsProgressSection(
                 subjects = subjects,
                 selectedSubject = selectedSubject,
-                chapterProgress = chapterProgress,
-                onSubjectSelected = { subject -> viewModel.selectSubject(subject) }
+                chaptersToShow = chaptersToShow,
+                showAllChapters = showAllChapters,
+                hasMoreChapters = hasMoreChapters,
+                hiddenChaptersCount = viewModel.getHiddenChaptersCount(),
+                onSubjectSelected = { subject -> viewModel.selectSubject(subject) },
+                onToggleShowAll = { viewModel.toggleShowAllChapters() },
+                getProgressColor = { percentage -> viewModel.getProgressColor(percentage) },
+                capitalizeSubjectName = { name -> viewModel.capitalizeFirstLetter(name) }
             )
 
             Spacer(modifier = Modifier.height(dimes.spaceMedium))

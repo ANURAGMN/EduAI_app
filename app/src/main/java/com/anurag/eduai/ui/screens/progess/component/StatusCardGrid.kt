@@ -5,15 +5,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.anurag.eduai.R
+import com.anurag.eduai.ui.theme.IconColorUnspecified
 import com.anurag.eduai.ui.theme.LocalDimensions
 
+/**
+ * Status Card Grid Component
+ * Pure UI component - displays status cards in a 2x2 grid
+ * NO business logic, NO hardcoded strings/dimensions/colors
+ */
 @Composable
 fun StatusCardGrid(
     streakCount: Int,
@@ -22,39 +26,46 @@ fun StatusCardGrid(
     score: Int
 ) {
     val dimes = LocalDimensions.current
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth()) {
             StatusCardItem(
                 icon = painterResource(R.drawable.ic_fire),
                 value = streakCount,
-                title = "Day Streak",
-                iconColor = Color.Unspecified,
+                title = stringResource(R.string.day_streak),
+                iconColor = IconColorUnspecified,
+                iconContentDescription = stringResource(R.string.fire_icon),
                 modifier = Modifier.weight(0.5f)
             )
             Spacer(modifier = Modifier.padding(dimes.spaceSmall))
             StatusCardItem(
-                icon = painterResource(R.drawable.ic_book), // icon value "📚"
+                icon = painterResource(R.drawable.ic_book),
                 value = completedConceptCount,
                 title = stringResource(R.string.concept),
-                iconColor = Color.Unspecified,
+                iconColor = IconColorUnspecified,
+                iconContentDescription = stringResource(R.string.book_icon),
                 modifier = Modifier.weight(0.5f)
             )
         }
+
         Spacer(modifier = Modifier.padding(dimes.spaceSmall))
+
         Row(modifier = Modifier.fillMaxWidth()) {
             StatusCardItem(
                 icon = painterResource(R.drawable.ic_simulation),
                 value = completedSimulationCount,
-                title = "Simulation",
-                iconColor = Color.Unspecified,
+                title = stringResource(R.string.simulation),
+                iconColor = IconColorUnspecified,
+                iconContentDescription = stringResource(R.string.simulation_icon),
                 modifier = Modifier.weight(0.5f)
             )
             Spacer(modifier = Modifier.padding(dimes.spaceSmall))
             StatusCardItem(
-                icon = painterResource(R.drawable.ic_graph), // icon value "📈"
+                icon = painterResource(R.drawable.ic_graph),
                 value = score,
-                title = "Average Score",
-                iconColor = Color.Unspecified,
+                title = stringResource(R.string.average_score),
+                iconColor = IconColorUnspecified,
+                iconContentDescription = stringResource(R.string.graph_icon),
                 modifier = Modifier.weight(0.5f)
             )
         }
