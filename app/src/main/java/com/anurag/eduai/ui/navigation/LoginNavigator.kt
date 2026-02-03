@@ -10,7 +10,6 @@ import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.ui.screens.login.LoginScreen
 import com.anurag.eduai.ui.screens.login.UserDetailEntryScreen
 import com.anurag.eduai.ui.viewModel.UserViewModel
-import com.anurag.eduai.ui.viewModel.UserViewModelFactory
 import com.anurag.eduai.ui.viewmodel_factory.UserViewModelFactory
 
 @Composable

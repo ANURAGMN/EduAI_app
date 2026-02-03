@@ -18,49 +18,35 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.anurag.eduai.data.local.dao.DailyConceptCount
-import com.anurag.eduai.ui.theme.AccentGreen
-import com.anurag.eduai.ui.theme.Black
+import com.anurag.eduai.R
+import com.anurag.eduai.ui.theme.CardBackground
 import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
-import com.anurag.eduai.ui.theme.White
-import com.anurag.eduai.utils.WeeklyProgressUtils
-import java.time.LocalDate
+import com.anurag.eduai.ui.theme.WeeklyActivityBarColor
+import com.anurag.eduai.ui.viewModel.DayProgress
 
-// helper model
-data class DayProgress(val dayLabel: String, val count: Int)
-
+/**
+ * Weekly Activity Section Component
+ * Pure UI component - displays weekly activity bar chart
+ * NO business logic, NO data processing, NO hardcoded values
+ * All data and calculations come from ViewModel
+ */
 @Composable
-fun WeeklyActivitySection(weeklyProgressList: List<DailyConceptCount>) {
+fun WeeklyActivitySection(
+    weeklyProgressData: List<DayProgress>,
+    maxValue: Int,
+    getBarHeight: (Int) -> Float
+) {
     val dimes = LocalDimensions.current
-    val util = WeeklyProgressUtils()
 
-    val today = LocalDate.now()
-    val last7day = (6 downTo 0).map { today.minusDays(it.toLong()).toString() }
-
-    // converting the list to a map for easy use
-    val progressMap = weeklyProgressList.associateBy { it.date }
-
-    // Building full 7-day dataset :
-    // missing day = 0 (or if days not found)
-    val weeklyData =
-        last7day.map { date ->
-            DayProgress(
-                dayLabel = util.getDayOfWeek(date),
-                count = progressMap[date]?.count ?: 0 // if not found then 0
-            )
-        }
-
-    val maxValue = (weeklyData.maxOfOrNull { it.count } ?: 1).coerceAtLeast(1)
-
-    // UI layout
     Column {
         Text(
-            text = "Weekly Activity",
+            text = stringResource(R.string.weekly_activity),
             style = MaterialTheme.typography.titleLarge,
             color = TextPrimary,
             fontWeight = FontWeight.Bold,
@@ -68,9 +54,8 @@ fun WeeklyActivitySection(weeklyProgressList: List<DailyConceptCount>) {
         )
 
         Card(
-            modifier = Modifier
-                .fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = White),
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = CardBackground),
             elevation = CardDefaults.cardElevation(defaultElevation = dimes.cardElevation),
             shape = RoundedCornerShape(dimes.cornerRadiusMedium)
         ) {
@@ -83,26 +68,24 @@ fun WeeklyActivitySection(weeklyProgressList: List<DailyConceptCount>) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Bottom
                 ) {
-                    weeklyData.forEach { day ->
+                    weeklyProgressData.forEach { day ->
                         Column(
                             modifier = Modifier.weight(1f),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            val barHeight = (day.count.toFloat() / maxValue * 100).coerceAtLeast(4f)
+                            val barHeight = getBarHeight(day.count)
+
                             // Bar
                             Box(
                                 modifier = Modifier
                                     .width(dimes.spaceLarge)
                                     .height(barHeight.dp)
                                     .background(
-                                        color = AccentGreen,
-                                        shape =
-                                            RoundedCornerShape(
-                                                topStart =
-                                                    dimes.cornerRadiusSmall,
-                                                topEnd =
-                                                    dimes.cornerRadiusSmall
-                                            )
+                                        color = WeeklyActivityBarColor,
+                                        shape = RoundedCornerShape(
+                                            topStart = dimes.cornerRadiusSmall,
+                                            topEnd = dimes.cornerRadiusSmall
+                                        )
                                     )
                             )
                         }
@@ -116,7 +99,7 @@ fun WeeklyActivitySection(weeklyProgressList: List<DailyConceptCount>) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    weeklyData.forEach { day ->
+                    weeklyProgressData.forEach { day ->
                         Text(
                             text = day.dayLabel,
                             style = MaterialTheme.typography.labelMedium,

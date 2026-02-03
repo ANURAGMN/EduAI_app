@@ -5,9 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.data.local.dao.StudentDao
 import com.anurag.eduai.data.local.dao.SubjectDao
-import com.anurag.eduai.ui.screens.progess.ProgressScreen
-import com.anurag.eduai.ui.viewModel.HomeViewModel
-import com.anurag.eduai.ui.viewModel.ProgressScreenVIewModel
+import com.anurag.eduai.ui.viewModel.ProgressScreenViewModel
 import com.anurag.eduai.utils.StreakManager
 
 class ProgressViewModelFactory(
@@ -18,8 +16,8 @@ class ProgressViewModelFactory(
     private val userId: String
 ): ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ProgressScreenVIewModel::class.java)) {
-            return ProgressScreenVIewModel(progressDao,subjectDao,streakManager, studentDao, userId) as T
+        if (modelClass.isAssignableFrom(ProgressScreenViewModel::class.java)) {
+            return ProgressScreenViewModel(progressDao,subjectDao,streakManager, studentDao, userId) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

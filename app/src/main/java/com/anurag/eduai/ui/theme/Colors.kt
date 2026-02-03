@@ -79,3 +79,19 @@ val StatusGreen = Color(0xFF4CAF50)
 val StatusOrange = Color(0xFFFF9800)
 val StatusBlue = Color(0xFF2196F3)
 val StatusGray = Color(0xFF9E9E9E)
+// Status Card Icon Colors (Can be Color.Unspecified to use original drawable colors)
+val IconColorUnspecified = Color.Unspecified
+// Weekly Activity Bar Color
+val WeeklyActivityBarColor = Color(0xFF4CAF50)
+val WeeklyActivityTrackColor = Color(0xFFE0E0E0)
+// Progress Bar Colors
+val ProgressTrackColor = Color(0xFFE0E0E0)
+// Top Bar Colors
+val TopBarTextColor = Color(0xFFFFFFFF)
+val TopBarIconColor = Color(0xFFFFFFFF)
+val TopBarSubtextColor = Color(0xCCFFFFFF) // White with 80% alpha
+// Dropdown Colors
+val DropdownBackgroundColor = Color(0xFFF5F5F5)
+val DropdownTextColor = Color(0xFF000000)
+val DropdownHintColor = Color(0xFF999999)
+val DropdownDividerColor = Color(0xFFE0E0E0)

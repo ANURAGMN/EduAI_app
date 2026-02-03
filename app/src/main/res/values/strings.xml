@@ -242,4 +242,31 @@
     <string name="reset">Reset</string>
     <string name="fullscreen">Fullscreen</string>
     <string name="exit_fullscreen">Exit Fullscreen</string>
+
+    <string name="average_score">Average Score</string>
+
+    <!-- Weekly Activity -->
+    <string name="weekly_activity">Weekly Activity</string>
+
+    <!-- Skills Progress -->
+    <string name="subject_progress">Subject Progress</string>
+    <string name="select_subject">Select Subject</string>
+    <string name="no_progress_data">No progress data available</string>
+    <string name="show_more">Show More</string>
+    <string name="show_less">Show Less</string>
+    <string name="show_more_count">Show More (%1$d more)</string>
+
+    <!-- Content Descriptions -->
+    <string name="home_icon">Home Icon</string>
+    <string name="setting_icon">Setting Icon</string>
+    <string name="show_more_icon">Show More</string>
+    <string name="show_less_icon">Show Less</string>
+    <string name="fire_icon">Fire Icon</string>
+    <string name="book_icon">Book Icon</string>
+    <string name="simulation_icon">Simulation Icon</string>
+    <string name="graph_icon">Graph Icon</string>
+
+    <!-- Progress Text -->
+    <string name="completed_concepts_format">%1$d/%2$d</string>
+    <string name="percentage_format">%1$d%%</string>
 </resources>

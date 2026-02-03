@@ -29,66 +29,84 @@ import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.ProgressGradientEnd
 import com.anurag.eduai.ui.theme.ProgressGradientStart
-import com.anurag.eduai.ui.theme.White
+import com.anurag.eduai.ui.theme.TopBarIconColor
+import com.anurag.eduai.ui.theme.TopBarSubtextColor
+import com.anurag.eduai.ui.theme.TopBarTextColor
 
+/**
+ * Progress Screen Top Bar Component
+ * Pure UI component - displays top bar with navigation icons
+ * NO hardcoded strings/dimensions/colors
+ */
 @Composable
-fun ProgressScreenTopBar(onGoHome: () -> Unit = {}, onGoSetting: () -> Unit = {}) {
+fun ProgressScreenTopBar(
+    onGoHome: () -> Unit = {},
+    onGoSetting: () -> Unit = {}
+) {
     val dimes = LocalDimensions.current
+
     Box(
-        modifier =
-            Modifier.fillMaxWidth()
-                .background(
-                    brush =
-                        Brush.horizontalGradient(
-                            colors =
-                                listOf(
-                                    ProgressGradientStart,
-                                    ProgressGradientEnd
-                                )
-                        ),
-                    shape =
-                        RoundedCornerShape(
-                            bottomStart = dimes.cornerRadiusRound,
-                            bottomEnd = dimes.cornerRadiusRound
-                        )
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                brush = Brush.horizontalGradient(
+                    colors = listOf(
+                        ProgressGradientStart,
+                        ProgressGradientEnd
+                    )
+                ),
+                shape = RoundedCornerShape(
+                    bottomStart = dimes.cornerRadiusRound,
+                    bottomEnd = dimes.cornerRadiusRound
                 )
-                .padding(dimes.screenPadding)
+            )
+            .padding(dimes.screenPadding)
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(0.dp, dimes.spaceSmall)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(0.dp, dimes.spaceSmall)
+        ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = stringResource(R.string.your_progress),
-                    color = White,
+                    color = TopBarTextColor,
                     style = MaterialTheme.typography.headlineMedium
                 )
+
                 Spacer(modifier = Modifier.weight(1f))
+
                 // Navigate to home
                 Icon(
                     imageVector = Icons.Outlined.Home,
-                    contentDescription = "Home Icon",
-                    modifier =
-                        Modifier.size(dimes.iconMedium)
-                            .clickable(enabled = true, onClick = onGoHome),
-                    tint = White,
+                    contentDescription = stringResource(R.string.home_icon),
+                    modifier = Modifier
+                        .size(dimes.iconMedium)
+                        .clickable(enabled = true, onClick = onGoHome),
+                    tint = TopBarIconColor
                 )
+
                 Spacer(modifier = Modifier.width(dimes.spaceSmall))
-                // navigate to stting
+
+                // Navigate to setting
                 Icon(
                     imageVector = Icons.Outlined.Settings,
-                    contentDescription = "Setting Icon",
-                    modifier =
-                        Modifier.size(dimes.iconMedium)
-                            .clickable(enabled = true, onClick = onGoSetting),
-                    tint = White
+                    contentDescription = stringResource(R.string.setting_icon),
+                    modifier = Modifier
+                        .size(dimes.iconMedium)
+                        .clickable(enabled = true, onClick = onGoSetting),
+                    tint = TopBarIconColor
                 )
             }
+
             Spacer(modifier = Modifier.height(dimes.spaceMedium))
+
             Text(
                 text = stringResource(R.string.last_seven_days),
-                color = White.copy(alpha = 0.8f),
+                color = TopBarSubtextColor,
                 style = MaterialTheme.typography.titleSmall
             )
         }
