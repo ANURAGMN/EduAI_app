@@ -58,6 +58,7 @@ fun SimulationAgentScreen(
     val errorMessage by viewModel.errorMessage.collectAsState()
     val userInput by viewModel.userInput.collectAsState()
     val isInputEnabled by viewModel.isInputEnabled.collectAsState()
+    val shouldTriggerTts by viewModel.shouldTriggerTts.collectAsState()
 
     // TTS/STT states
     val ttsState by ttsController.state.collectAsState()
@@ -95,6 +96,7 @@ fun SimulationAgentScreen(
 
     /**
      * INITIALIZATION - One-time setup
+     * Uses Unit as key so it only runs once per composition lifecycle
      */
     LaunchedEffect(Unit) {
         sttController.initialize(context)
@@ -102,6 +104,11 @@ fun SimulationAgentScreen(
         viewModel.loadAvailableSimulations()
     }
 
+    /**
+     * SESSION INITIALIZATION
+     * Uses simulationId as key so it only runs when simulationId changes
+     * ViewModel internally checks if session is already started for this ID
+     */
     LaunchedEffect(simulationId) {
         viewModel.startNewSession(simulationId)
     }
@@ -118,18 +125,21 @@ fun SimulationAgentScreen(
         }
     }
 
-    /** TTS PLAYBACK CONTROL
-     * Start TTS when new message arrives (only if not already speaking)
-    */
-
-    LaunchedEffect(currentTeacherMessage) {
-        if (currentTeacherMessage.isNotEmpty() && !ttsState.isSpeaking) {
+    /**
+     * TTS PLAYBACK CONTROL
+     * CRITICAL: Uses shouldTriggerTts flag from ViewModel to prevent re-triggering on config changes
+     * Only triggers when ViewModel explicitly sets shouldTriggerTts to true (on new message)
+     */
+    LaunchedEffect(shouldTriggerTts) {
+        if (shouldTriggerTts && currentTeacherMessage.isNotEmpty() && !ttsState.isSpeaking) {
             ttsController.speak(currentTeacherMessage)
+            viewModel.onTtsTriggered() // Acknowledge that TTS was triggered
         }
     }
 
     /**
-     *  STT Start Handling
+     * STT Result Handling
+     * Processes speech-to-text results and updates input
      */
     LaunchedEffect(sttState.resultText, sttState.isListening) {
         if (sttState.resultText.isNotEmpty() &&
@@ -141,6 +151,9 @@ fun SimulationAgentScreen(
         }
     }
 
+    /**
+     * Clean up STT tracking when input is cleared
+     */
     LaunchedEffect(userInput) {
         if (userInput.isEmpty() && lastProcessedSpeechText.isNotEmpty()) {
             lastProcessedSpeechText = ""
@@ -150,7 +163,6 @@ fun SimulationAgentScreen(
     /**
      * Back press handling
      */
-
     BackHandler {
         val consumed = viewModel.onBackPressed()
         if (!consumed) {
@@ -159,9 +171,8 @@ fun SimulationAgentScreen(
     }
 
     /**
-     * Voice option
+     * Voice options (derived state)
      */
-
     val voiceOptions = remember(ttsState.availableVoices, settingsState.selectedAvatar) {
         ttsController.getFilteredVoiceOptions("en", settingsState.selectedAvatar)
     }
@@ -172,9 +183,8 @@ fun SimulationAgentScreen(
     }
 
     /**
-     * UI
+     * UI RENDERING
      */
-
     Box(modifier = Modifier.fillMaxSize().background(White)) {
         Column(modifier = Modifier.fillMaxSize().imePadding()) {
             /**
@@ -293,7 +303,7 @@ fun SimulationAgentScreen(
             }
 
             /**
-             * The main content area
+             * Main content area
              */
             if (!isSessionStarted) {
                 InitialAvatarView(
@@ -338,7 +348,7 @@ fun SimulationAgentScreen(
         }
 
         /**
-         * Webview Overlay
+         * WebView Overlay
          */
         SimulationWebViewCard(
             visible = showWebView,

@@ -65,12 +65,19 @@ class SimulationAgentViewModel(
     private val _hasSpokeCurrentMessage = MutableStateFlow(false)
     val hasSpokeCurrentMessage: StateFlow<Boolean> = _hasSpokeCurrentMessage.asStateFlow()
 
+    // NEW: Track if TTS should be triggered for current message
+    private val _shouldTriggerTts = MutableStateFlow(false)
+    val shouldTriggerTts: StateFlow<Boolean> = _shouldTriggerTts.asStateFlow()
+
     // Input Enabling Logic
     private val _isInputEnabled = MutableStateFlow(true)
     val isInputEnabled: StateFlow<Boolean> = _isInputEnabled.asStateFlow()
 
     // WebView delay job
     private var webViewDelayJob: Job? = null
+
+    // NEW: Track current simulation ID to prevent re-starting on config change
+    private var currentSimulationId: String? = null
 
     companion object {
         private const val TAG = "SimulationAgentVM"
@@ -106,7 +113,7 @@ class SimulationAgentViewModel(
      * Called when user clicks send button
      */
     fun onSendClick() {
-        val input = _userInput.value
+        val input = _userInput.value.trim()
         if (input.isBlank() || !_isInputEnabled.value) {
             return
         }
@@ -114,7 +121,7 @@ class SimulationAgentViewModel(
         // Hide webview immediately when sending
         _showWebView.value = false
 
-        // Clear input
+        // Clear input IMMEDIATELY
         _userInput.value = ""
 
         // Send response
@@ -127,6 +134,8 @@ class SimulationAgentViewModel(
     fun onTtsStarted() {
         _isTtsSpeaking.value = true
         _hasSpokeCurrentMessage.value = false
+        // Reset the trigger flag once TTS has started
+        _shouldTriggerTts.value = false
     }
 
     /**
@@ -142,6 +151,13 @@ class SimulationAgentViewModel(
         ) {
             scheduleWebViewDisplay()
         }
+    }
+
+    /**
+     * Acknowledge that TTS was triggered - prevents re-triggering on config change
+     */
+    fun onTtsTriggered() {
+        _shouldTriggerTts.value = false
     }
 
     /**
@@ -169,6 +185,7 @@ class SimulationAgentViewModel(
      */
     fun onRetryClick(simulationId: String) {
         _errorMessage.value = null
+        currentSimulationId = null // Reset to allow retry
         startNewSession(simulationId)
     }
 
@@ -200,7 +217,7 @@ class SimulationAgentViewModel(
     }
 
     /**
-     * Business Login
+     * Business Logic
      */
 
     /**
@@ -235,95 +252,82 @@ class SimulationAgentViewModel(
             _hasSpokeCurrentMessage.value = false
             _currentTeacherMessage.value = response.teacherMessage.text
 
-            // Update simulation URLs
-            val urls = buildSimulationUrls(response)
-            _simulationUrls.value = urls
+            // IMPORTANT: Set flag to trigger TTS in UI
+            _shouldTriggerTts.value = true
 
-            // Mark session as started
+            // Process simulation URLs
+            val paramChange = response.simulation.paramChange
+            if (paramChange != null) {
+                // Use the URL properties, not the numeric values
+                _simulationUrls.value = listOf(
+                    paramChange.beforeUrl,
+                    paramChange.afterUrl
+                )
+            } else {
+                _simulationUrls.value = listOf(response.simulation.htmlUrl)
+            }
+
             _isSessionStarted.value = true
 
-            // Clear any previous errors
-            _errorMessage.value = null
+            DebugLogger.debugLog(TAG, "📝 New teacher message processed:")
+            DebugLogger.debugLog(TAG, "  Message: ${response.teacherMessage.text}")
+            DebugLogger.debugLog(TAG, "  Has param change: ${paramChange != null}")
+            DebugLogger.debugLog(TAG, "  URL count: ${_simulationUrls.value.size}")
+        } else {
+            DebugLogger.debugLog(TAG, "Same message - no state change needed")
         }
     }
 
     /**
-     * Build simulation URLs from response
+     * Reset session data (for back navigation)
      */
-    private fun buildSimulationUrls(response: SimSessionResponse): List<String> {
-        val urls = mutableListOf<String>()
-
-        // Add main simulation URL
-        urls.add(response.simulation.htmlUrl)
-
-        // Check if there's a param change (before/after comparison)
-        response.simulation.paramChange?.let { change ->
-            urls.clear()
-            urls.add(change.beforeUrl)
-            urls.add(change.afterUrl)
-        }
-
-        return urls
+    private fun resetSessionForNavigation() {
+        currentSimulationId = null
+        _sessionData.value = null
+        _uiState.value = SimAgentUiState.Initial
+        _currentTeacherMessage.value = ""
+        _showWebView.value = false
+        _simulationUrls.value = emptyList()
+        _isSessionStarted.value = false
+        _errorMessage.value = null
+        _userInput.value = ""
+        _hasSpokeCurrentMessage.value = false
+        _shouldTriggerTts.value = false
+        webViewDelayJob?.cancel()
+        DebugLogger.debugLog(TAG, "Session reset for navigation")
     }
 
     /**
-     * Handle error with user-friendly messages
+     * ERROR HANDLING
+     */
+
+    /**
+     * Handle exceptions and return user-friendly error message
      */
     private fun handleError(e: Exception, operation: String): String {
         val errorMessage = when (e) {
-            is UnknownHostException -> {
-                "Unable to connect to server. Please check your internet connection."
-            }
             is SocketTimeoutException -> {
-                when (operation) {
-                    "start_session" -> "Connection timed out. The server took too long to respond. Please try again."
-                    "send_response" -> "Request timed out. The teacher is taking too long to respond. Please try again."
-                    "submit_quiz" -> "Quiz submission timed out. Please try again."
-                    "get_session" -> "Session retrieval timed out. Please try again."
-                    else -> "Connection timed out. Please try again."
+                "Connection timed out. Please check your internet connection."
+            }
+
+            is UnknownHostException -> {
+                "Unable to reach server. Please check your internet connection."
+            }
+
+            is retrofit2.HttpException -> {
+                when (e.code()) {
+                    404 -> "Simulation not found. Please try a different simulation."
+                    500 -> "Server error. Please try again later."
+                    else -> "Network error (${e.code()}). Please try again."
                 }
             }
-            is java.io.IOException -> {
-                when (operation) {
-                    "start_session" -> "Network error occurred. Please check your connection and try again."
-                    "send_response" -> "Network error. Please check your connection and try sending again."
-                    "submit_quiz" -> "Network error during quiz submission. Please try again."
-                    "get_session" -> "Network error. Unable to retrieve session state."
-                    else -> "Network error occurred. Please try again."
-                }
-            }
+
             else -> {
-                e.message?.let { msg ->
-                    when {
-                        msg.contains("500") -> when (operation) {
-                            "start_session" -> "Server error occurred. Please try again later."
-                            "send_response" -> "Server error. The teacher encountered a problem. Please try again."
-                            "submit_quiz" -> "Server error. Failed to grade your answer. Please try again."
-                            else -> "Server error occurred. Please try again later."
-                        }
-                        msg.contains("404") -> when (operation) {
-                            "start_session" -> "Simulation not found. Please select a different simulation."
-                            "send_response" -> "Session expired. Please restart the simulation."
-                            "submit_quiz" -> "Session expired. Please restart the simulation."
-                            "get_session" -> "Session not found or expired. Please start a new session."
-                            else -> "Resource not found. Please try again."
-                        }
-                        msg.contains("401") || msg.contains("403") -> {
-                            "Authentication failed. Please restart the app."
-                        }
-                        else -> when (operation) {
-                            "start_session" -> "Failed to start session: $msg"
-                            "send_response" -> "Failed to send response: $msg"
-                            "submit_quiz" -> "Failed to submit quiz answer: $msg"
-                            "get_session" -> "Failed to retrieve session: $msg"
-                            else -> msg
-                        }
-                    }
-                } ?: when (operation) {
-                    "start_session" -> "Failed to start session. Please try again."
-                    "send_response" -> "Failed to send your response. Please try again."
+                when (operation) {
+                    "start_session" -> "Failed to start simulation. Please try again."
+                    "send_response" -> "Failed to send response. Please try again."
                     "submit_quiz" -> "Failed to submit quiz answer. Please try again."
-                    "get_session" -> "Failed to get session state. Please try again."
+                    "get_session" -> "Failed to retrieve session. Please try again."
                     else -> "An error occurred. Please try again."
                 }
             }
@@ -378,8 +382,17 @@ class SimulationAgentViewModel(
 
     /**
      * Start a new teaching session
+     * IMPORTANT: Only starts if simulation ID has changed (prevents re-start on config change)
      */
     fun startNewSession(simulationId: String) {
+        // Check if we're already in this simulation session
+        if (currentSimulationId == simulationId && _sessionData.value != null) {
+            DebugLogger.debugLog(TAG, "⏭️ Already in session for $simulationId - skipping restart")
+            return
+        }
+
+        currentSimulationId = simulationId
+
         viewModelScope.launch {
             try {
                 _uiState.value = SimAgentUiState.Loading
@@ -439,8 +452,10 @@ class SimulationAgentViewModel(
                 apiResponse.simulation.paramChange?.let { change ->
                     DebugLogger.debugLog(TAG, "📊 Parameter Changed!")
                     DebugLogger.debugLog(TAG, "  Parameter: ${change.parameter}")
-                    DebugLogger.debugLog(TAG, "  Before: ${change.before}")
-                    DebugLogger.debugLog(TAG, "  After: ${change.after}")
+                    DebugLogger.debugLog(TAG, "  Before Value: ${change.before}")
+                    DebugLogger.debugLog(TAG, "  After Value: ${change.after}")
+                    DebugLogger.debugLog(TAG, "  Before URL: ${change.beforeUrl}")
+                    DebugLogger.debugLog(TAG, "  After URL: ${change.afterUrl}")
                 }
 
                 _sessionData.value = apiResponse
@@ -523,17 +538,7 @@ class SimulationAgentViewModel(
      * Reset session data
      */
     fun resetSession() {
-        _sessionData.value = null
-        _uiState.value = SimAgentUiState.Initial
-        _currentTeacherMessage.value = ""
-        _showWebView.value = false
-        _simulationUrls.value = emptyList()
-        _isSessionStarted.value = false
-        _errorMessage.value = null
-        _userInput.value = ""
-        _hasSpokeCurrentMessage.value = false
-        webViewDelayJob?.cancel()
-        DebugLogger.debugLog(TAG, "Session reset")
+        resetSessionForNavigation()
     }
 
     override fun onCleared() {
