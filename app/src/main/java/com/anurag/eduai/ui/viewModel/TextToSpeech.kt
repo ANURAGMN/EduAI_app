@@ -11,12 +11,15 @@ import android.webkit.WebViewClient
 import androidx.lifecycle.ViewModel
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.screens.chatbotscreen.components.text.ProcessedText
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.Locale
+import javax.inject.Inject
 
-class TextToSpeech : ViewModel(), TextToSpeech.OnInitListener {
+@HiltViewModel
+class TextToSpeech @Inject constructor() : ViewModel(), TextToSpeech.OnInitListener {
 
     data class TTSState(
         val isInitialized: Boolean = false,

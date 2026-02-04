@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">EduAI</string>
 
-<!--   Login Screen -->
+    <!--   Login Screen -->
     <string name="choose_your_language">Choose Your Language</string>
     <string name="welcome_message">Welcome Back</string>
     <string name="welcome_message_secondary">Sign in to continue your learning journey\n</string>
@@ -51,7 +51,7 @@
 
     <!-- Success Messages -->
     <string name="login_successful">Login Successful</string>
-<!--    login screen footer-->
+    <!--    login screen footer-->
     <string name="complete_ncert">Complete NCERT</string>
     <string name="language_number">2 Languages</string>
     <string name="ai_title">AI-Powered</string>
@@ -68,8 +68,8 @@
     <string name="school_name_hint">Enter your school name</string>
     <string name="get_started">Get Started</string>
     <string name="class_selection">Select your class</string>
-    
-<!--    Home Screen-->
+
+    <!--    Home Screen-->
     <string name="today_progress">"Today's Progress"</string>
     <string name="concept">Concept</string>
     <string name="simulation">Simulation</string>
@@ -84,7 +84,7 @@
     <string name="status_label">Status: %1$s</string>
     <string name="loading">Loading.....</string>
 
-<!--    Progress Screen-->
+    <!--    Progress Screen-->
     <string name="your_progress">Your Progress</string>
     <string name="last_seven_days">Last 7 days</string>
     <string name="start_learning">Start Learning</string>
@@ -146,7 +146,7 @@
     <string name="close_settings">Close Setting\n</string>
     <string name="thinking">Thinking...</string>
 
-<!--    Setting Screen-->
+    <!--    Setting Screen-->
     <string name="profile_photo">Profile Photo</string>
     <string name="change_photo">Change Photo</string>
     <string name="name">Name</string>
@@ -174,7 +174,7 @@
         <item quantity="other">%d main concepts</item>
     </plurals>
 
-<!--    Contact Details-->
+    <!--    Contact Details-->
     <string name="contact_email">anurag@gmail.com</string>
     <string name="contact_number">+91 94495 31117</string>
     <string name="contact_website">paadams.in</string>
@@ -205,7 +205,7 @@
     <string name="play">Play</string>
     <string name="close">Close</string>
 
-<!--    Simulation Screen-->
+    <!--    Simulation Screen-->
     <string name="sim_title">Simulation AI</string>
     <string name="sim_type_or_speak">Type or speak...</string>
     <string name="sim_send_message">Send message</string>
@@ -223,7 +223,7 @@
     <string name="sim_loading_simulation">Loading simulation...</string>
     <string name="sim_error_loading">Error loading simulation</string>
 
-<!-- TTS/STT Common Strings -->
+    <!-- TTS/STT Common Strings -->
     <string name="ready_for_speech">Ready for speech…</string>
     <string name="processing_speech">Processing speech…</string>
     <string name="no_speech_detected">No speech detected</string>
@@ -269,4 +269,8 @@
     <!-- Progress Text -->
     <string name="completed_concepts_format">%1$d/%2$d</string>
     <string name="percentage_format">%1$d%%</string>
+    <string name="loading_concept_map">Loading concept map...</string>
+    <string name="image_is_loading">Image is loading...</string>
+    <string name="zoom_in">Zoom In</string>
+    <string name="zoom_out">Zoom Out</string>
 </resources>

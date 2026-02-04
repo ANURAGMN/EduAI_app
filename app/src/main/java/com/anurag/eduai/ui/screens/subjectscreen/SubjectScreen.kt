@@ -14,17 +14,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.anurag.eduai.R
-import com.anurag.eduai.data.local.EduAiDatabase
-import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.repository.SubjectRepository
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.subjectscreen.components.SubjectCard
@@ -32,26 +27,17 @@ import com.anurag.eduai.ui.screens.subjectscreen.components.SubjectScreenHeader
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.SubjectViewModel
-import com.anurag.eduai.ui.viewmodel_factory.SubjectViewModelFactory
 
 @Composable
 fun SubjectScreen(
-    onBackClick: () -> Unit = {},
-    onSubjectClick: (String) -> Unit = {},
-    onGoHome: () -> Unit = {},
-    onGoSetting: () -> Unit = {},
+    onBackClick: () -> Unit,
+    onSubjectClick: (String) -> Unit,
+    onGoHome: () -> Unit,
+    onGoSetting: () -> Unit,
+    viewModel: SubjectViewModel = hiltViewModel()
 ) {
     TrackScreenEvent(screenName = ScreenName.SUBJECT)
     val dimens = LocalDimensions.current
-
-    val context = LocalContext.current
-    val db = remember { EduAiDatabase.getInstance(context) }
-    val sharedPref = remember { SharedPreferenceUtils(context) }
-
-    val repository = remember { SubjectRepository(db.subjectDao()) }
-    val factory = remember { SubjectViewModelFactory(repository, sharedPref) }
-    val viewModel: SubjectViewModel = viewModel(factory = factory)
-
     val state by viewModel.state.collectAsState()
 
     Column(

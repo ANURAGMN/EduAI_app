@@ -9,11 +9,12 @@ import com.anurag.eduai.R
 import com.anurag.eduai.data.local.ConceptSessionRepository
 import com.anurag.eduai.data.remote.AgenticAIClient
 import com.anurag.eduai.data.remote.GeminiLLMClient
-import com.anurag.eduai.data.remote.LLMClient
 import com.anurag.eduai.data.remote.SessionMetadata
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.ui.screens.chatbotscreen.components.ResourceContent
-import com.anurag.eduai.ui.screens.chatbotscreen.components.ResourceDisplayMode
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.lastAiMessage
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -25,22 +26,24 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import javax.inject.Inject
 
 
 /**
  * ViewModel for managing chat interactions with an AI agent.
  */
-class ChatViewModel : ViewModel() {
+@HiltViewModel
+class ChatViewModel @Inject constructor() : ViewModel() {
 
     private val agenticAIClient = AgenticAIClient(BuildConfig.AGENTIC_AI_BASE_URL)
-    private val  llmClient= LLMClient(
-        BuildConfig.GROQ_API_KEY, "7", "8", "250",
-        "meta-llama/llama-4-scout-17b-16e-instruct"
-    )
-//    private val llmClient= GeminiLLMClient(
-//        BuildConfig.GEMINI_API_KEY,
-//        "7","8", "250","gemma-3-27b-it"
+    //    private val  llmClient= LLMClient(
+//        BuildConfig.GROQ_API_KEY, "7", "8", "250",
+//        "meta-llama/llama-4-scout-17b-16e-instruct"
 //    )
+    private val llmClient= GeminiLLMClient(
+        BuildConfig.GEMINI_API_KEY,
+        "7","8", "250","gemma-3-27b-it"
+    )
     // Consolidated UI State for chat screen
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
@@ -55,6 +58,7 @@ class ChatViewModel : ViewModel() {
     private var idleJob: Job? = null
     private var userActivityJob: Job? = null
     private var conceptMapJob: Job? = null
+    private var resourceCardTimerJob: Job? = null
 
     // Session mapping
     private val conceptThreadMap = mutableMapOf<String, String>()
@@ -111,8 +115,12 @@ class ChatViewModel : ViewModel() {
      * checks and sets Kannada language
      */
     fun setKannada(enabled: Boolean) {
-        _uiState.update { it.copy(isKannada = enabled) }
-        DebugLogger.debugLog("ChatViewModel", "Kannada language: ${if (enabled) "enabled" else "disabled"}")
+        _uiState.update {
+            it.copy(
+                isKannada = enabled,
+                currentLanguage = if (enabled) "kn" else "en"
+            )
+        }
     }
 
     /**
@@ -296,6 +304,10 @@ class ChatViewModel : ViewModel() {
      * @param generationTimeMs Time taken to generate the concept map JSON
      */
     private fun showConceptMap(jsonString: String, generationTimeMs: Long) {
+
+        //timer duration for concept map display in seconds
+        val durationSeconds = 10
+
         // Check if this is the default/error concept map
         if (llmClient.isDefaultConceptMap(jsonString)) {
             DebugLogger.debugLog("ChatViewModel", "Default concept map detected - not showing resource card")
@@ -306,8 +318,7 @@ class ChatViewModel : ViewModel() {
                 it.copy(
                     conceptMapStatus = "default - error in generation",
                     pendingAgentResponse = null,
-                    showResourceCard = false,
-                    currentResource = null,
+                    resourceCardState = ResourceCardUiState.Hidden,
                     loadingResourceMessage = null,
                     isLoading = false
                 )
@@ -323,19 +334,20 @@ class ChatViewModel : ViewModel() {
 
         val renderStartTime = System.currentTimeMillis()
 
-        _uiState.update {
-            it.copy(
-                conceptMapJSON = jsonString,
-                resourceDisplayMode = ResourceDisplayMode.CONCEPT_MAP,
-                currentResource = ResourceContent.ConceptMap(
-                    json = jsonString,
-                    description = null,
-                    currentAudioTime = 0f,
-                    isAudioPlaying = false  // Load full map at once (no progressive rendering)
-                ),
-                showResourceCard = true,
-                loadingResourceMessage = null
-            )
+        // Show the concept map with timer
+        startResourceCardTimer(durationSeconds) { remaining ->
+            _uiState.update {
+                it.copy(
+                    resourceCardState = ResourceCardUiState.ConceptMap(
+                        json = jsonString,
+                        audioProgress = 0f,
+                        isAudioPlaying = false,  // Load full map at once (no progressive rendering)
+                        remainingSeconds = remaining,
+                        totalSeconds = durationSeconds
+                    ),
+                    loadingResourceMessage = null
+                )
+            }
         }
 
         val renderLatency = System.currentTimeMillis() - renderStartTime
@@ -733,6 +745,7 @@ class ChatViewModel : ViewModel() {
                 )
             }
 
+            delay(50)
             _uiState.update { it.copy(shouldStartTTS = true) }
             delay(50)
             _uiState.update { it.copy(shouldStartTTS = false) }
@@ -752,15 +765,18 @@ class ChatViewModel : ViewModel() {
 
     // ===== Resource Management =====
 
-    /// dismisses the currently shown resource card and processes any pending messages
+    /**
+     * dismisses the currently shown resource card and processes any pending messages
+     */
     fun dismissResourceCard() {
+        resourceCardTimerJob?.cancel()
+        resourceCardTimerJob = null
+
         val pendingMsg = _uiState.value.pendingAgentResponse
 
         _uiState.update {
             it.copy(
-                showResourceCard = false,
-                currentResource = null,
-                resourceDisplayMode = ResourceDisplayMode.IMAGE,
+                resourceCardState = ResourceCardUiState.Hidden,
                 ttsPausedForResource = false,
                 pendingAgentResponse = null,
                 loadingResourceMessage = null,
@@ -776,9 +792,73 @@ class ChatViewModel : ViewModel() {
         DebugLogger.debugLog("ChatViewModel", "Resource card dismissed")
     }
 
-    /// resumes TTS when resource card is dismissed
+    /**
+     * Resumes TTS when resource card is dismissed
+     */
     fun resumeTTSForResource() {
         _uiState.update { it.copy(ttsPausedForResource = false) }
+    }
+
+    /**
+     * Shows an image resource card with auto-dismiss timer
+     */
+    private fun showImageResource(
+        imageUrl: String,
+        description: String?,
+        durationSeconds: Int = 150
+    ) {
+        // Process image URL (convert GitHub blob URLs to raw URLs)
+        val imageUrl = processImageUrl(imageUrl)
+
+        startResourceCardTimer(durationSeconds) { remaining ->
+            _uiState.update {
+                it.copy(
+                    resourceCardState = ResourceCardUiState.Image(
+                        imageUrl = imageUrl,
+                        description = description,
+                        remainingSeconds = remaining,
+                        totalSeconds = durationSeconds
+                    ),
+                    loadingResourceMessage = null
+                )
+            }
+        }
+    }
+
+    /**
+     * Converts GitHub blob URLs to raw URLs
+     */
+    private fun processImageUrl(url: String): String {
+        return when {
+            url.contains("github.com") && url.contains("/blob/") -> {
+                url.replace("github.com", "raw.githubusercontent.com")
+                    .replace("/blob/", "/")
+            }
+            else -> url
+        }
+    }
+
+    /* ---------------- INTERNAL TIMER ---------------- */
+
+    /**
+     * Starts a countdown timer for the resource card
+     */
+    private fun startResourceCardTimer(
+        durationSeconds: Int,
+        onTick: (remaining: Int) -> Unit
+    ) {
+        resourceCardTimerJob?.cancel()
+
+        resourceCardTimerJob = viewModelScope.launch {
+            for (remaining in durationSeconds downTo 0) {
+                onTick(remaining)
+                if (remaining > 0) {
+                    delay(1000)
+                }
+            }
+            // Auto-dismiss when timer reaches 0
+            dismissResourceCard()
+        }
     }
 
     /**
@@ -809,25 +889,17 @@ class ChatViewModel : ViewModel() {
             // Check conditions and show resource if valid
             when {
                 fromNode == "APK" && toNode == "CI" && !metadata.imageUrl.isNullOrBlank() -> {
-                    DebugLogger.debugLog("ChatViewModel", " image is showing")
+                    DebugLogger.debugLog("ChatViewModel", "Image is showing")
 
                     // Set loading message first
                     _uiState.update {
                         it.copy(loadingResourceMessage = "Loading image...")
                     }
 
-                    // Then show the image card (which clears the loading message)
-                    _uiState.update {
-                        it.copy(
-                            currentResource = ResourceContent.Image(
-                                url = metadata.imageUrl,
-                                description = metadata.imageDescription
-                            ),
-                            resourceDisplayMode = ResourceDisplayMode.IMAGE,
-                            showResourceCard = true,
-                            loadingResourceMessage = null
-                        )
-                    }
+                    showImageResource(
+                        imageUrl = metadata.imageUrl,
+                        description = metadata.imageDescription
+                    )
                     return true
                 }
 

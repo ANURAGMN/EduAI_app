@@ -9,12 +9,14 @@ import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.SessionManager
 import com.anurag.eduai.sync.WeeklySyncWorker
 import com.anurag.eduai.utils.AppLifecycleObserver
+import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
+@HiltAndroidApp
 class EduAiApplication : Application(), Configuration.Provider{
 
     private lateinit var appLifecycleObserver: AppLifecycleObserver

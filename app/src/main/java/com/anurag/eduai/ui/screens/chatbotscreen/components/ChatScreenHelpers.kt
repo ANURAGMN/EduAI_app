@@ -29,7 +29,8 @@ import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
 import com.anurag.eduai.ui.theme.LocalDimensions
-import com.anurag.eduai.ui.viewModel.ChatUiState
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
 import com.anurag.eduai.ui.viewModel.ChatViewModel
 import com.anurag.eduai.ui.viewModel.SpeechToText
 import com.anurag.eduai.ui.viewModel.TextToSpeech
@@ -77,8 +78,6 @@ fun ConversationView(
     chatState: ChatUiState,
     lastAIMessage: ChatMessageModel?,
     ttsController: TextToSpeech,
-    onDismissResource: () -> Unit,
-    onResourceTimerComplete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens = LocalDimensions.current
@@ -112,17 +111,12 @@ fun ConversationView(
 
         // Content area - This scrolls
         ChatContentArea(
-            showResourceCard = chatState.showResourceCard,
-            currentResource = chatState.currentResource,
-            resourceDisplayMode = chatState.resourceDisplayMode,
             isLoading = chatState.isLoading,
             loadingResourceMessage = chatState.loadingResourceMessage,
             lastAIMessage = lastAIMessage,
             isTyping = chatState.isTyping,
             typingText = chatState.typingText,
             ttsController = ttsController,
-            onDismissResource = onDismissResource,
-            onResourceTimerComplete = onResourceTimerComplete,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
@@ -188,8 +182,8 @@ fun ChatEffects(
     }
 
     // Stop TTS when resource card is shown
-    LaunchedEffect(chatState.showResourceCard) {
-        if (chatState.showResourceCard && ttsState.isSpeaking) {
+    LaunchedEffect(chatState.resourceCardState) {
+        if (chatState.resourceCardState !is ResourceCardUiState.Hidden && ttsState.isSpeaking) {
             ttsController.stop()
         }
     }
@@ -214,14 +208,16 @@ fun ChatEffects(
     }
 
     // Start idle timer AFTER everything completes (typing, TTS, and resource card if exists)
-    LaunchedEffect(ttsState.isSpeaking, chatState.isLoading, chatState.isTyping, chatState.waitingForTTSToComplete, chatState.isUserActive, chatState.showResourceCard) {
+    LaunchedEffect(ttsState.isSpeaking, chatState.isLoading, chatState.isTyping, chatState.waitingForTTSToComplete, chatState.isUserActive, chatState.resourceCardState) {
+        val isResourceCardShowing = chatState.resourceCardState !is ResourceCardUiState.Hidden
+
         // Only trigger if all agent message components are complete AND user is idle
         if (!ttsState.isSpeaking &&
             !chatState.isLoading &&
             !chatState.isTyping &&
             !chatState.waitingForTTSToComplete &&
             !chatState.isUserActive &&
-            !chatState.showResourceCard &&  //  Wait for resource card to be dismissed
+            !isResourceCardShowing &&  // Wait for resource card to be dismissed
             chatState.messages.isNotEmpty()) {
 
             // All agent message components complete, check if we should start idle timer
@@ -234,7 +230,7 @@ fun ChatEffects(
                 !isTyping: ${!chatState.isTyping}
                 !waitingForTTSToComplete: ${!chatState.waitingForTTSToComplete}
                 !isUserActive: ${!chatState.isUserActive}
-                !showResourceCard: ${!chatState.showResourceCard}
+                !isResourceCardShowing: ${!isResourceCardShowing}
                 messages.isNotEmpty(): ${chatState.messages.isNotEmpty()}
                 inputText.isEmpty(): ${chatState.inputText.isEmpty()}
                 autosuggestions.size: ${chatState.autosuggestions.size}

@@ -18,21 +18,16 @@ import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 
 /**
- * Main content area showing either resource card, loading, or agent message
+ * Main content area showing either loading or agent message
  */
 @Composable
 fun ChatContentArea(
-    showResourceCard: Boolean,
-    currentResource: ResourceContent?,
-    resourceDisplayMode: ResourceDisplayMode,
     isLoading: Boolean,
     loadingResourceMessage: String?,
     lastAIMessage: ChatMessageModel?,
     isTyping: Boolean,
     typingText: String,
     ttsController: TextToSpeech,
-    onDismissResource: () -> Unit,
-    onResourceTimerComplete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens= LocalDimensions.current
@@ -42,18 +37,6 @@ fun ChatContentArea(
             .padding(bottom = 16.dp)
     ) {
         when {
-            // Resource Card
-            showResourceCard && currentResource != null -> {
-                ResourcesCard(
-                    content = currentResource,
-                    displayMode = resourceDisplayMode,
-                    onDismiss = onDismissResource,
-                    onTimerComplete = onResourceTimerComplete,
-                    timerDurationSeconds = 150,//timeout for resource card
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
             // Loading State
             isLoading -> {
                 Box(

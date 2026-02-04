@@ -28,7 +28,7 @@ fun ResourceCardCloseTimer(
     modifier: Modifier = Modifier
 ) {
     val progress = timeRemaining.toFloat() / totalDuration.toFloat()
-val dimens= LocalDimensions.current
+    val dimens= LocalDimensions.current
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(dimens.cornerRadiusMedium),
@@ -43,8 +43,8 @@ val dimens= LocalDimensions.current
             LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier
-                    .height(4.dp)
-                    .width(60.dp)
+                    .height(dimens.progressIndicatorStrokeWidth)
+                    .width(dimens.timerLength)
                     .clip(RoundedCornerShape(dimens.cornerRadiusSmall)),
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant,

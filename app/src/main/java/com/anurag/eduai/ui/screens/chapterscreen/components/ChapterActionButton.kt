@@ -29,6 +29,7 @@ import com.anurag.eduai.ui.theme.TextPrimary
  *
  * @param label The text label displayed on the button.
  * @param icon Composable function to render the icon.
+ * @param modifier for styling.
  * @param onClick Lambda function to be invoked when the button is clicked.
  */
 @Composable

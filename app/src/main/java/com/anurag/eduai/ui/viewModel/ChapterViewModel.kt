@@ -8,29 +8,24 @@ import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.repository.SubjectRepository
 import com.anurag.eduai.ui.models.ChapterStatus
 import com.anurag.eduai.ui.models.ChapterUiModel
+import com.anurag.eduai.ui.screens.chapterscreen.dataclass.ChapterUiState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-data class ChapterScreenState(
-    val isLoading: Boolean = false,
-    val classLevel: Int = 7,
-    val subjectName: String = "",
-    val chapters: List<ChapterUiModel> = emptyList(),
-    val error: String? = null
-)
-
-
-class ChapterViewModel(
+@HiltViewModel
+class ChapterViewModel @Inject constructor(
     private val chapterRepository: ChapterRepository,
     private val subjectRepository: SubjectRepository,
     private val studentRepository: StudentLocalRepository,
     private val sharedPrefs: SharedPreferenceUtils
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(ChapterScreenState())
-    val state: StateFlow<ChapterScreenState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(ChapterUiState())
+    val state: StateFlow<ChapterUiState> = _state.asStateFlow()
 
     fun loadChapters(subjectId: String) {
         viewModelScope.launch {

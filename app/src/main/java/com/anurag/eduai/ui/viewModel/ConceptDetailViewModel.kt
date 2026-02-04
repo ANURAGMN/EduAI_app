@@ -7,10 +7,12 @@ import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.data.local.entities.ProgressEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.repository.ConceptRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class ConceptDetailScreenState(
     val concept: ConceptEntity? = null,
@@ -20,7 +22,8 @@ data class ConceptDetailScreenState(
     val progressStatus: String = "NOT_STARTED"
 )
 
-class ConceptDetailViewModel(
+@HiltViewModel
+class ConceptDetailViewModel @Inject constructor(
     private val repository: ConceptRepository,
     private val sharedPrefs: SharedPreferenceUtils
 ) : ViewModel() {
