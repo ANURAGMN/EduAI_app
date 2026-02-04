@@ -9,7 +9,6 @@ import com.anurag.eduai.R
 import com.anurag.eduai.data.local.ConceptSessionRepository
 import com.anurag.eduai.data.remote.AgenticAIClient
 import com.anurag.eduai.data.remote.GeminiLLMClient
-import com.anurag.eduai.data.remote.LLMClient
 import com.anurag.eduai.data.remote.SessionMetadata
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
@@ -37,7 +36,7 @@ import javax.inject.Inject
 class ChatViewModel @Inject constructor() : ViewModel() {
 
     private val agenticAIClient = AgenticAIClient(BuildConfig.AGENTIC_AI_BASE_URL)
-//    private val  llmClient= LLMClient(
+    //    private val  llmClient= LLMClient(
 //        BuildConfig.GROQ_API_KEY, "7", "8", "250",
 //        "meta-llama/llama-4-scout-17b-16e-instruct"
 //    )
@@ -806,8 +805,11 @@ class ChatViewModel @Inject constructor() : ViewModel() {
     private fun showImageResource(
         imageUrl: String,
         description: String?,
-        durationSeconds: Int = 10
+        durationSeconds: Int = 150
     ) {
+        // Process image URL (convert GitHub blob URLs to raw URLs)
+        val imageUrl = processImageUrl(imageUrl)
+
         startResourceCardTimer(durationSeconds) { remaining ->
             _uiState.update {
                 it.copy(
@@ -823,6 +825,18 @@ class ChatViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    /**
+     * Converts GitHub blob URLs to raw URLs
+     */
+    private fun processImageUrl(url: String): String {
+        return when {
+            url.contains("github.com") && url.contains("/blob/") -> {
+                url.replace("github.com", "raw.githubusercontent.com")
+                    .replace("/blob/", "/")
+            }
+            else -> url
+        }
+    }
 
     /* ---------------- INTERNAL TIMER ---------------- */
 

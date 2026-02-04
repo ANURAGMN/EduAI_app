@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
 import com.anurag.eduai.ui.theme.LocalDimensions
+import com.anurag.eduai.ui.theme.White
 
 /**
  * ResourcesCard
@@ -41,13 +42,13 @@ fun ResourcesCard(
     ) {
         Card(
             modifier = modifier
-                .padding(16.dp)
+                .padding(dimens.spaceMedium)
                 .heightIn(max = cardHeight)
                 .fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            shape = RoundedCornerShape(dimens.cornerRadiusMedium),
+            elevation = CardDefaults.cardElevation(defaultElevation =dimens.cardElevation),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = White
             )
         ) {
             Box(modifier = Modifier.fillMaxSize()) {

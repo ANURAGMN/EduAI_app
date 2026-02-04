@@ -97,7 +97,11 @@ data class Dimensions(
     // status card height
     val statusCardHeight: Dp,
 
-    val weeklyActivityCardHeight: Dp
+    val weeklyActivityCardHeight: Dp,
+
+    // Progress Indicator
+    val progressIndicatorStrokeWidth: Dp,
+    val timerLength: Dp
 ) {
     companion object {
         val Compact = Dimensions(
@@ -178,6 +182,10 @@ data class Dimensions(
             statusCardHeight = 100.dp,
 
             weeklyActivityCardHeight = 120.dp,
+
+            // Progress Indicator
+            progressIndicatorStrokeWidth = 4.dp,
+            timerLength= 60.dp
         )
 
         val Medium = Dimensions(
@@ -256,7 +264,10 @@ data class Dimensions(
             boxSizeMedium = 100.dp,
 
             statusCardHeight = 120.dp,
-            weeklyActivityCardHeight = 140.dp
+            weeklyActivityCardHeight = 140.dp,
+            // Progress Indicator
+            progressIndicatorStrokeWidth = 6.dp,
+            timerLength= 64.dp
         )
 
         val Expanded = Dimensions(
@@ -339,6 +350,9 @@ data class Dimensions(
             statusCardHeight = 140.dp,
 
             weeklyActivityCardHeight = 160.dp,
+            //progress indicator
+            progressIndicatorStrokeWidth = 8.dp,
+            timerLength= 68.dp
         )
     }
 }
