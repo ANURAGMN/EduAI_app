@@ -363,11 +363,7 @@ fun UserDetailEntryScreen(
                             userViewModel.updateCreatedAt(System.currentTimeMillis())
 
                             // Submit new user - all logic handled in ViewModel
-                            userViewModel.submitNewUser(context) { success ->
-                                if (!success) {
-                                    DebugLogger.debugLog("UserDetailEntryScreen", "Failed to submit user")
-                                }
-                            }
+                            userViewModel.submitNewUser(context)
                         },
                     ) {
                         Row(

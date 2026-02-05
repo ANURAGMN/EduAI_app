@@ -10,6 +10,7 @@ import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.repository.FirebaseRepository
 import com.anurag.eduai.repository.StudentLocalRepository
+import com.anurag.eduai.repository.UserCheckResult
 import com.anurag.eduai.sync.FirebaseSyncManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,6 +28,9 @@ class UserViewModel(
 
     private val _userSaveState = MutableStateFlow<UserSaveState>(UserSaveState.Idle)
     val userSaveState = _userSaveState.asStateFlow()
+
+    private val _existingUserSyncState = MutableStateFlow<ExistingUserSyncState>(ExistingUserSyncState.Idle)
+    val existingUserSyncState = _existingUserSyncState.asStateFlow()
 
     fun updateId(id: String) {
         _user.value = _user.value.copy(id = id)
@@ -88,18 +92,20 @@ class UserViewModel(
                 updateLanguage(selectedLanguage)
 
                 // Check if user exists in Firebase
-                val existingUser = repo.checkUserExists(firebaseUser.id)
+                when (val result = repo.checkUserExists(firebaseUser.id)) {
+                    is UserCheckResult.Found -> {
+                        _user.value = result.user
+                        _loginState.value = LoginState.ExistingUser(result.user)
+                    }
 
-                if (existingUser != null) {
-                    // Existing user found
-                    _user.value = existingUser
-                    _loginState.value = LoginState.ExistingUser(existingUser)
-                    DebugLogger.debugLog("UserViewModel", "Existing user logged in: ${existingUser.email}")
-                } else {
-                    // New user - prepare for registration
-                    _user.value = firebaseUser.copy(language = selectedLanguage)
-                    _loginState.value = LoginState.NewUser
-                    DebugLogger.debugLog("UserViewModel", "New user detected: ${firebaseUser.email}")
+                    is UserCheckResult.NotFound -> {
+                        _user.value = firebaseUser.copy(language = selectedLanguage)
+                        _loginState.value = LoginState.NewUser
+                    }
+
+                    is UserCheckResult.Error -> {
+                        _loginState.value = LoginState.Error(result.exception)
+                    }
                 }
             } catch (e: Exception) {
                 _loginState.value = LoginState.Error(e)
@@ -109,11 +115,19 @@ class UserViewModel(
     }
 
     /**
+     * Check if user exists - delegates to repository
+     */
+    suspend fun checkUserExists(uid: String): UserCheckResult {
+        return repo.checkUserExists(uid)
+    }
+
+    /**
      * Save existing user data locally and sync content
      * This is called when an existing user logs in
      */
-    fun saveExistingUserLocally(context: Context, onComplete: (Boolean) -> Unit) {
+    fun saveExistingUserLocally(context: Context) {
         viewModelScope.launch {
+            _existingUserSyncState.value = ExistingUserSyncState.Syncing
             try {
                 val currentUser = _user.value
                 val db = EduAiDatabase.getInstance(context)
@@ -150,10 +164,10 @@ class UserViewModel(
                 sharedPreference.setLanguagePreference(currentUser.language)
                 sharedPreference.setUserId(currentUser.id)
 
-                onComplete(true)
+                _existingUserSyncState.value = ExistingUserSyncState.Success
             } catch (e: Exception) {
                 DebugLogger.debugLog("UserViewModel", "Error saving user locally: ${e.message}")
-                onComplete(false)
+                _existingUserSyncState.value = ExistingUserSyncState.Error(e)
             }
         }
     }
@@ -162,7 +176,7 @@ class UserViewModel(
      * Submit new user data to Firebase and save locally
      * This is called when a new user completes registration
      */
-    fun submitNewUser(context: Context, onComplete: (Boolean) -> Unit) {
+    fun submitNewUser(context: Context) {
         viewModelScope.launch {
             _userSaveState.value = UserSaveState.Saving
             try {
@@ -207,15 +221,12 @@ class UserViewModel(
                     sharedPreference.setUserId(currentUser.id)
 
                     _userSaveState.value = UserSaveState.Success
-                    onComplete(true)
                 } else {
                     _userSaveState.value = UserSaveState.Error(Exception("Failed to create user"))
-                    onComplete(false)
                 }
             } catch (e: Exception) {
                 _userSaveState.value = UserSaveState.Error(e)
                 DebugLogger.debugLog("UserViewModel", "Error submitting user: ${e.message}")
-                onComplete(false)
             }
         }
     }
@@ -234,12 +245,19 @@ class UserViewModel(
     fun resetUserSaveState() {
         _userSaveState.value = UserSaveState.Idle
     }
+
+    /**
+     * Reset existing user sync state to Idle
+     */
+    fun resetExistingUserSyncState() {
+        _existingUserSyncState.value = ExistingUserSyncState.Idle
+    }
 }
 
 sealed class LoginState {
     object Idle : LoginState()
     object Loading : LoginState()
-    data class ExistingUser(val user: User) : LoginState()
+    data class ExistingUser(val currentUser: User) : LoginState()
     object NewUser : LoginState()
     data class Error(val exception: Throwable) : LoginState()
 }
@@ -249,4 +267,11 @@ sealed class UserSaveState {
     object Saving : UserSaveState()
     object Success : UserSaveState()
     data class Error(val exception: Throwable) : UserSaveState()
+}
+
+sealed class ExistingUserSyncState {
+    object Idle : ExistingUserSyncState()
+    object Syncing : ExistingUserSyncState()
+    object Success : ExistingUserSyncState()
+    data class Error(val exception: Throwable) : ExistingUserSyncState()
 }

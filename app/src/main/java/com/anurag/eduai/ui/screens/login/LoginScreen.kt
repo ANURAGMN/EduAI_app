@@ -16,9 +16,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +40,7 @@ import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.BackgroundSecondary
+import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
@@ -44,111 +50,142 @@ fun LoginScreen(
     navController: NavController
 ) {
     val dimens = LocalDimensions.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.LOGIN)
 
     var selectedLanguage by remember { mutableStateOf("English") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .background(BackgroundSecondary),
-    ) {
-        Column(
+    // Show snackbar when error message is set
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            errorMessage = null // Clear after showing
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Surface(
             modifier = Modifier
-                .fillMaxWidth()
-                .background(BackgroundSecondary)
-                .padding(dimens.screenPadding)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .statusBarsPadding()
+                .background(BackgroundSecondary),
         ) {
-            // Logo Section
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.Transparent)
-                    .padding(dimens.spaceLarge),
-                contentAlignment = Alignment.Center
+                    .background(BackgroundSecondary)
+                    .padding(dimens.screenPadding)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = stringResource(R.string.app_logo_desc),
-                    modifier = Modifier.height(dimens.containerMinHeight - dimens.buttonHeight)
-                )
-            }
-
-            // Language Selector Card
-            LanguageSelector(
-                selectedLanguage = selectedLanguage,
-                onLanguageSelected = { selectedLanguage = it }
-            )
-
-            Spacer(modifier = Modifier.height(dimens.spaceMedium))
-
-            // Main Login/SignUp Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(dimens.cornerRadiusLarge),
-                elevation = CardDefaults.cardElevation(dimens.cardElevation + dimens.spaceExtraSmall),
-                colors = CardDefaults.cardColors(containerColor = BackgroundPrimary)
-            ) {
-                Column(
+                // Logo Section
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(dimens.spaceLarge - dimens.spaceExtraSmall),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .background(Color.Transparent)
+                        .padding(dimens.spaceLarge),
+                    contentAlignment = Alignment.Center
                 ) {
-                    // Welcome Header
-                    Text(
-                        text = stringResource(R.string.welcome_emoji),
-                        style = MaterialTheme.typography.headlineLarge,
-                        modifier = Modifier.padding(bottom = dimens.spaceSmall)
-                    )
-                    Text(
-                        text = stringResource(R.string.welcome_message),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = stringResource(R.string.welcome_message_secondary),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = TextSecondary
-                    )
-
-                    Spacer(modifier = Modifier.height(dimens.spaceLarge - dimens.spaceExtraSmall))
-
-                    // Google Sign in
-                    GoogleLoginButton(
-                        selectedLanguage = selectedLanguage,
-                        navController = navController
-                    )
-
-                    Spacer(modifier = Modifier.height(dimens.spaceMedium))
-
-                    // Terms and Privacy
-                    Text(
-                        text = stringResource(R.string.policy_msg),
-                        fontSize = 11.sp,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(top = dimens.spaceSmall + dimens.spaceExtraSmall),
-                        lineHeight = 16.sp
+                    Image(
+                        painter = painterResource(id = R.drawable.logo),
+                        contentDescription = stringResource(R.string.app_logo_desc),
+                        modifier = Modifier.height(dimens.containerMinHeight - dimens.buttonHeight)
                     )
                 }
+
+                // Language Selector Card
+                LanguageSelector(
+                    selectedLanguage = selectedLanguage,
+                    onLanguageSelected = { selectedLanguage = it }
+                )
+
+                Spacer(modifier = Modifier.height(dimens.spaceMedium))
+
+                // Main Login/SignUp Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(dimens.cornerRadiusLarge),
+                    elevation = CardDefaults.cardElevation(dimens.cardElevation + dimens.spaceExtraSmall),
+                    colors = CardDefaults.cardColors(containerColor = BackgroundPrimary)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(dimens.spaceLarge - dimens.spaceExtraSmall),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Welcome Header
+                        Text(
+                            text = stringResource(R.string.welcome_emoji),
+                            style = MaterialTheme.typography.headlineLarge,
+                            modifier = Modifier.padding(bottom = dimens.spaceSmall)
+                        )
+                        Text(
+                            text = stringResource(R.string.welcome_message),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = stringResource(R.string.welcome_message_secondary),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = TextSecondary
+                        )
+
+                        Spacer(modifier = Modifier.height(dimens.spaceLarge - dimens.spaceExtraSmall))
+
+                        // Google Sign in
+                        GoogleLoginButton(
+                            selectedLanguage = selectedLanguage,
+                            navController = navController,
+                            onError = { error ->
+                                errorMessage = error
+                            }
+                        )
+
+                        Spacer(modifier = Modifier.height(dimens.spaceMedium))
+
+                        // Terms and Privacy
+                        Text(
+                            text = stringResource(R.string.policy_msg),
+                            fontSize = 11.sp,
+                            color = TextSecondary,
+                            modifier = Modifier.padding(top = dimens.spaceSmall + dimens.spaceExtraSmall),
+                            lineHeight = 16.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // Footer Card
+                Card(
+                    elevation = CardDefaults.cardElevation(dimens.cardElevation + dimens.cardElevation),
+                    shape = RoundedCornerShape(dimens.spaceMedium)
+                ) {
+                    FooterCard()
+                }
+
+                Spacer(modifier = Modifier.height(dimens.spaceMedium))
             }
+        }
 
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Footer Card
-            Card(
-                elevation = CardDefaults.cardElevation(dimens.cardElevation + dimens.cardElevation),
-                shape = RoundedCornerShape(dimens.spaceMedium)
-            ) {
-                FooterCard()
-            }
-
-            Spacer(modifier = Modifier.height(dimens.spaceMedium))
+        // Snackbar for error messages
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(dimens.spaceMedium)
+        ) { snackbarData ->
+            Snackbar(
+                snackbarData = snackbarData,
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                actionColor = BrandPrimary,
+                shape = RoundedCornerShape(dimens.cornerRadiusMedium),
+            )
         }
     }
 }

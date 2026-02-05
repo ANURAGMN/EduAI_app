@@ -36,10 +36,12 @@ import androidx.navigation.NavController
 import com.anurag.eduai.R
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.auth.GoogleSignIn
+import com.anurag.eduai.service.auth.NetworkException
 import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
+import com.anurag.eduai.ui.viewModel.ExistingUserSyncState
 import com.anurag.eduai.ui.viewModel.LoginState
 import com.anurag.eduai.ui.viewModel.UserViewModel
 import com.anurag.eduai.ui.viewmodel_factory.UserViewModelFactory
@@ -48,7 +50,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun GoogleLoginButton(
     selectedLanguage: String,
-    navController: NavController
+    navController: NavController,
+    onError: (String) -> Unit
 ) {
     val context = LocalContext.current
     val dimens = LocalDimensions.current
@@ -59,43 +62,61 @@ fun GoogleLoginButton(
         factory = UserViewModelFactory()
     )
 
-    var isLoading by remember { mutableStateOf(false) }
     val loginState by userViewModel.loginState.collectAsStateWithLifecycle()
+    val existingUserSyncState by userViewModel.existingUserSyncState.collectAsStateWithLifecycle()
+    var hasNavigated by remember { mutableStateOf(false) }
 
-    // Handle login state changes
-    LaunchedEffect(loginState) {
-        when (val state = loginState) {
-            is LoginState.ExistingUser -> {
-                DebugLogger.debugLog("GoogleLoginButton", "Existing user detected: ${state.user.email}")
-                isLoading = true
-
-                // Save user data locally and sync content
-                userViewModel.saveExistingUserLocally(context) { success ->
-                    isLoading = false
-                    if (success) {
-                        navController.navigate("main") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    } else {
-                        DebugLogger.debugLog("GoogleLoginButton", "Failed to save existing user")
+    // Handle existing user sync completion
+    LaunchedEffect(existingUserSyncState) {
+        when (val state = existingUserSyncState) {
+            is ExistingUserSyncState.Success -> {
+                if (!hasNavigated) {
+                    hasNavigated = true
+                    // Navigate to main screen
+                    navController.navigate("main") {
+                        popUpTo("login") { inclusive = true }
                     }
+                    userViewModel.resetExistingUserSyncState()
                 }
             }
+            is ExistingUserSyncState.Error -> {
+                onError("Failed to sync user data. Please try again.")
+                userViewModel.resetExistingUserSyncState()
+            }
+            else -> {}
+        }
+    }
+
+    LaunchedEffect(loginState) {
+        if (hasNavigated) return@LaunchedEffect
+
+        when (val state = loginState) {
+            is LoginState.ExistingUser -> {
+                // Trigger save and sync for existing user
+                userViewModel.saveExistingUserLocally(context)
+            }
             is LoginState.NewUser -> {
-                isLoading = false
-                DebugLogger.debugLog("GoogleLoginButton", "New user detected, navigating to detail entry")
+                hasNavigated = true
                 navController.navigate("userDetailEntry")
             }
             is LoginState.Error -> {
-                isLoading = false
-                DebugLogger.debugLog("GoogleLoginButton", "Login error: ${state.exception.message}")
+                // Display error message to user
+                val errorMessage = when (state.exception) {
+                    is NetworkException -> state.exception.message ?: "Network error. Please try again."
+                    else -> when {
+                        state.exception.message?.contains("network", ignoreCase = true) == true ||
+                                state.exception.message?.contains("timeout", ignoreCase = true) == true ||
+                                state.exception.message?.contains("connection", ignoreCase = true) == true -> {
+                            "Network error. Please check your connection and try again."
+                        }
+                        else -> {
+                            "Login failed. Please try again."
+                        }
+                    }
+                }
+                onError(errorMessage)
             }
-            is LoginState.Loading -> {
-                isLoading = true
-            }
-            is LoginState.Idle -> {
-                isLoading = false
-            }
+            else -> {}
         }
     }
 
@@ -109,6 +130,8 @@ fun GoogleLoginButton(
         // The actual result handling is done in GoogleSignIn.doGoogleSignIn
         DebugLogger.debugLog("GoogleLoginButton", "Activity result received: ${result.resultCode}")
     }
+
+    val isLoading = loginState is LoginState.Loading
 
     OutlinedButton(
         onClick = {
@@ -125,8 +148,22 @@ fun GoogleLoginButton(
                         DebugLogger.debugLog("GoogleLoginButton", "Google sign-in successful: ${firebaseUser.email}")
                     },
                     onLoginFailed = { error ->
-                        isLoading = false
-                        DebugLogger.debugLog("GoogleLoginButton", "Google sign-in failed: $error")
+                        // Show error to user - don't show for NoCredentialException
+                        val errorMessage = when (error) {
+                            is NetworkException -> error.message ?: "Network error. Please try again."
+                            else -> when {
+                                error.message?.contains("network", ignoreCase = true) == true ||
+                                        error.message?.contains("timeout", ignoreCase = true) == true ||
+                                        error.message?.contains("connection", ignoreCase = true) == true -> {
+                                    "Network error. Please check your connection and try again."
+                                }
+                                else -> {
+                                    "Sign-in failed. Please try again."
+                                }
+                            }
+                        }
+                        onError(errorMessage)
+                        DebugLogger.debugLog("GoogleLoginButton", "Google sign-in failed: ${error.message}")
                     }
                 )
             }
