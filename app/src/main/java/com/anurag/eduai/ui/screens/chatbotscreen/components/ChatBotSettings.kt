@@ -10,25 +10,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.components.DropDownMenu
+import com.anurag.eduai.ui.screens.chatbotscreen.dataclass.ChatBotSettingsState
 import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.IconPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
-
-data class ChatBotSettingsState(
-    val selectedAvatar: String = "disable",
-    val selectedSpeed: String = "0.75x",
-    val selectedStudentLevel: String = "medium",
-    val voiceOptions: List<String> = emptyList(),
-    val displayedVoiceName: String = "",
-    val availableConcepts: List<String> = emptyList(),
-    val selectedConcept: String? = null,
-    val isLoadingConcepts: Boolean = false
-)
 
 @Composable
 fun ChatBotSettings(
@@ -42,6 +31,18 @@ fun ChatBotSettings(
     onSpeedChange: (String) -> Unit
 ) {
     val dimens = LocalDimensions.current
+
+    val boy = stringResource(R.string.boy)
+    val girl = stringResource(R.string.girl)
+    val disable = stringResource(R.string.disable)
+    val avatarList = listOf(boy, girl, disable)
+
+    val low = stringResource(R.string.level_low)
+    val medium = stringResource(R.string.level_medium)
+    val advanced = stringResource(R.string.level_advanced)
+    val studentLevelList = listOf(low, medium, advanced)
+
+    val speedOptions = listOf("0.75x", "1.0x", "1.25x", "1.5x")
 
     DropdownMenu(
         expanded = expanded,
@@ -89,21 +90,19 @@ fun ChatBotSettings(
             Spacer(Modifier.height(dimens.spaceSmall))
             DropDownMenu(
                 label = stringResource(R.string.avatar),
-                options = listOf(
-                    stringResource(R.string.disable),
-                    stringResource(R.string.boy),
-                    stringResource(R.string.girl)
-                ),
+                options = avatarList,
                 selectedValue = when (state.selectedAvatar) {
-                    "boy" -> stringResource(R.string.boy)
-                    "girl" -> stringResource(R.string.girl)
-                    else -> stringResource(R.string.disable)
+                    boy -> boy
+                    girl -> girl
+                    disable -> disable
+                    else -> boy
                 },
                 onValueSelected = { displayName ->
                     val code = when (displayName) {
-                        "boy" -> "boy"
-                        "girl" -> "girl"
-                        else -> "disable"
+                        boy -> boy
+                        girl -> girl
+                        disable -> disable
+                        else -> boy
                     }
                     onAvatarChange(code)
                 }
@@ -178,23 +177,19 @@ fun ChatBotSettings(
             Spacer(Modifier.height(dimens.spaceSmall))
             DropDownMenu(
                 label = stringResource(R.string.student_level),
-                options = listOf(
-                    stringResource(R.string.level_low),
-                    stringResource(R.string.level_medium),
-                    stringResource(R.string.level_advanced)
-                ),
+                options = studentLevelList,
                 selectedValue = when (state.selectedStudentLevel) {
-                    "low" -> stringResource(R.string.level_low)
-                    "medium" -> stringResource(R.string.level_medium)
-                    "advanced" -> stringResource(R.string.level_advanced)
-                    else -> stringResource(R.string.level_medium)
+                    low -> low
+                    medium -> medium
+                    advanced -> advanced
+                    else -> medium
                 },
                 onValueSelected = { displayName ->
                     val code = when (displayName) {
-                        "low" -> "low"
-                        "medium" -> "medium"
-                        "advanced" -> "advanced"
-                        else -> "medium"
+                        low -> low
+                        medium -> medium
+                        advanced -> advanced
+                        else -> medium
                     }
                     onLevelChange(code)
                 }
@@ -211,7 +206,7 @@ fun ChatBotSettings(
             Spacer(Modifier.height(dimens.spaceSmall))
             DropDownMenu(
                 label = stringResource(R.string.speed),
-                options = listOf("0.75x", "1.0x", "1.25x", "1.5x"),
+                options = speedOptions,
                 selectedValue = state.selectedSpeed,
                 onValueSelected = onSpeedChange
             )

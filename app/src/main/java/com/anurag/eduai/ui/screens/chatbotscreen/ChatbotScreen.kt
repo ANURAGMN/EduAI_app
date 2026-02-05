@@ -25,28 +25,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.anurag.eduai.R
-import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
-import com.anurag.eduai.ui.screens.chatbotscreen.components.AppDialog
+import com.anurag.eduai.ui.components.AppDialog
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettings
-import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettingsState
-import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatEffects
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatHeaderIcons
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ConversationView
 import com.anurag.eduai.ui.screens.chatbotscreen.components.InitialAvatarView
 import com.anurag.eduai.ui.screens.chatbotscreen.components.InputSection
 import com.anurag.eduai.ui.screens.chatbotscreen.components.LogOverlay
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ResourcesCard
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
-import com.anurag.eduai.ui.theme.White
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
+import com.anurag.eduai.ui.screens.chatbotscreen.dataclass.ChatBotSettingsState
+import com.anurag.eduai.ui.screens.chatbotscreen.utility.ChatScreenUtils
 import com.anurag.eduai.ui.viewModel.ChatViewModel
 import com.anurag.eduai.ui.viewModel.SpeechToText
 import com.anurag.eduai.ui.viewModel.TextToSpeech
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.isConversationStarted
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.lastAiMessage
+import com.anurag.eduai.ui.screens.chatbotscreen.dataclass.isConversationStarted
+import com.anurag.eduai.ui.screens.chatbotscreen.dataclass.lastAiMessage
+import com.anurag.eduai.ui.theme.LocalDimensions
+import com.anurag.eduai.ui.theme.White
 
 @Composable
 fun ChatbotScreen(
@@ -56,10 +53,10 @@ fun ChatbotScreen(
 ) {
     // Track screen analytics
     TrackScreenEvent(ScreenName.CHATBOT)
-
+    val dimens  = LocalDimensions.current
     val context = LocalContext.current
 
-    // State collectors - using consolidated UI state
+    // State collectors
     val chatState by chatViewModel.uiState.collectAsState()
     val ttsState by ttsController.state.collectAsState()
     val sttState by sttController.state.collectAsState()
@@ -96,7 +93,7 @@ fun ChatbotScreen(
     // Animation values
     val avatarSize by animateDpAsState(
         targetValue = if (isConversationStarted) 100.dp else 180.dp,
-        label = "avatarSize"
+        label = stringResource(R.string.avatarsize)
     )
 
     // Permission launcher
@@ -151,7 +148,7 @@ fun ChatbotScreen(
                         chatViewModel.hideAutosuggestions()
                         chatViewModel.markUserActive()
                         if (permissionGranted && sttState.isInitialized) {
-                            sttController.startListening("en-IN")
+                            sttController.startListening(chatState.currentLanguage)
                         } else if (!permissionGranted) {
                             permissionLauncher.launch(RECORD_AUDIO)
                         }
@@ -175,12 +172,10 @@ fun ChatbotScreen(
                 ChatHeaderIcons(
                     isKannada = chatState.isKannada,
                     isSpeaking = ttsState.isSpeaking,
-                    showResourceCard = chatState.resourceCardState !is ResourceCardUiState.Hidden,
-                    ttsPausedForResource = chatState.ttsPausedForResource,
                     showSettingsMenu = showSettingsMenu,
                     onKannadaToggle = { chatViewModel.setKannada(!chatState.isKannada) },
                     onVolumeClick = {
-                        handleVolumeClick(
+                        ChatScreenUtils.handleVolumeClick(
                             chatState = chatState,
                             ttsState = ttsState,
                             lastAIMessage = lastAIMessage,
@@ -210,11 +205,11 @@ fun ChatbotScreen(
                                 }
                             },
                             onVoiceChange = { selectedDisplayName ->
-                                handleVoiceChange(selectedDisplayName, ttsState, ttsController, aiMessageOutput)
+                                ChatScreenUtils.handleVoiceChange(selectedDisplayName, ttsState, ttsController, aiMessageOutput)
                             },
                             onConceptChange = { concept ->
                                 pendingConceptSelection = concept
-                                if (chatViewModel.hasExistingSession(concept, context)) {
+                                if (chatViewModel.hasExistingSession(concept)) {
                                     showSessionResumeDialog = true
                                 } else {
                                     chatViewModel.selectConcept(concept, context)
@@ -227,7 +222,7 @@ fun ChatbotScreen(
                             },
                             onSpeedChange = { label ->
                                 settingsState = settingsState.copy(selectedSpeed = label)
-                                handleSpeedChange(label, ttsController, ttsState, aiMessageOutput)
+                                ChatScreenUtils.handleSpeedChange(label, ttsController, ttsState, aiMessageOutput)
                             }
                         )
                     }
@@ -237,7 +232,9 @@ fun ChatbotScreen(
                     InitialAvatarView(
                         avatarSize = avatarSize,
                         ttsController = ttsController,
-                        modifier = Modifier.weight(0.1f).background(White)
+                        modifier = Modifier
+                            .weight(0.1f)
+                            .background(White)
                     )
                 } else {
                     // Conversation view with avatar and scrollable content
@@ -246,7 +243,9 @@ fun ChatbotScreen(
                         chatState = chatState,
                         lastAIMessage = lastAIMessage,
                         ttsController = ttsController,
-                        modifier = Modifier.weight(0.1f).background(White)
+                        modifier = Modifier
+                            .weight(0.1f)
+                            .background(White)
                     )
                 }
             }
@@ -265,7 +264,7 @@ fun ChatbotScreen(
             conceptMapStatus = chatState.conceptMapStatus,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(16.dp)
+                .padding(dimens.spaceSmall)
         )
     }
 
@@ -290,76 +289,4 @@ fun ChatbotScreen(
             showSettingsMenu = false
         }
     )
-}
-
-// Helper functions
-
-/**
- * volume Click function check
- * 1. If resource card is showing and TTS was paused for resource, resume TTS for resource
- * 2. If TTS is currently speaking, stop it
- * 3. Else, speak the last AI message
- */
-private fun handleVolumeClick(
-    chatState: ChatUiState,
-    ttsState: TextToSpeech.TTSState,
-    lastAIMessage: ChatMessageModel?,
-    chatViewModel: ChatViewModel,
-    ttsController: TextToSpeech
-) {
-    when {
-        chatState.resourceCardState !is ResourceCardUiState.Hidden && chatState.ttsPausedForResource -> {
-            chatViewModel.resumeTTSForResource()
-            lastAIMessage?.let { ttsController.speak(it.content) }
-        }
-        ttsState.isSpeaking -> ttsController.stop()
-        else -> lastAIMessage?.let { ttsController.speak(it.content) }
-    }
-}
-
-/**
- * Handle voice change from settings
- * 1. it do the voice change
- * 2. if TTS is speaking, stop and restart with new voice
- * 3. if no voice found, do nothing
- */
-private fun handleVoiceChange(
-    selectedDisplayName: String,
-    ttsState: TextToSpeech.TTSState,
-    ttsController: TextToSpeech,
-    aiMessageOutput: String
-) {
-    ttsState.availableVoices.find { ttsController.formatVoiceName(it) == selectedDisplayName }?.let { voice ->
-        ttsController.setVoice(voice)
-        if (ttsState.isSpeaking) {
-            ttsController.stop()
-            ttsController.speak(aiMessageOutput)
-        }
-    }
-}
-
-/**
- * this function handle speed change from settings
- * 1. it do the speed change
- * 2. if TTS is speaking, stop and restart with new speed
- * 3. if no speed found, set to default 0.75x
- */
-private fun handleSpeedChange(
-    label: String,
-    ttsController: TextToSpeech,
-    ttsState: TextToSpeech.TTSState,
-    aiMessageOutput: String
-) {
-    val speed = when (label) {
-        "0.75x" -> 0.75f
-        "1.0x" -> 1.0f
-        "1.25x" -> 1.25f
-        "1.5x" -> 1.5f
-        else -> 0.75f
-    }
-    ttsController.setSpeechRate(speed)
-    if (ttsState.isSpeaking) {
-        ttsController.stop()
-        ttsController.speak(aiMessageOutput)
-    }
 }

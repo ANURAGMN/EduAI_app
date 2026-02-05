@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.chatbotscreen.components.text
+package com.anurag.eduai.ui.screens.chatbotscreen.utility
 
 /**
  * WordPosition - Marks where a word is

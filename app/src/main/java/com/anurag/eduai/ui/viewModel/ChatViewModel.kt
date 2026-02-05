@@ -1,19 +1,18 @@
 package com.anurag.eduai.ui.viewModel
 
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
+import com.anurag.eduai.ui.screens.chatbotscreen.dataclass.ChatMessageModel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.anurag.eduai.BuildConfig
 import com.anurag.eduai.R
-import com.anurag.eduai.data.local.ConceptSessionRepository
 import com.anurag.eduai.data.remote.AgenticAIClient
 import com.anurag.eduai.data.remote.GeminiLLMClient
 import com.anurag.eduai.data.remote.SessionMetadata
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.lastAiMessage
+import com.anurag.eduai.ui.screens.chatbotscreen.dataclass.ChatUiState
+import com.anurag.eduai.ui.screens.chatbotscreen.dataclass.ResourceCardUiState
+import com.anurag.eduai.ui.screens.chatbotscreen.dataclass.lastAiMessage
+import com.anurag.eduai.ui.screens.chatbotscreen.utility.SessionMappingManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,7 +23,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
@@ -33,18 +31,12 @@ import javax.inject.Inject
  * ViewModel for managing chat interactions with an AI agent.
  */
 @HiltViewModel
-class ChatViewModel @Inject constructor() : ViewModel() {
+class ChatViewModel @Inject constructor(
+    private val agenticAIClient: AgenticAIClient,
+    private val llmClient: GeminiLLMClient,
+    private val sessionMappingManager: SessionMappingManager
+) : ViewModel() {
 
-    private val agenticAIClient = AgenticAIClient(BuildConfig.AGENTIC_AI_BASE_URL)
-    //    private val  llmClient= LLMClient(
-//        BuildConfig.GROQ_API_KEY, "7", "8", "250",
-//        "meta-llama/llama-4-scout-17b-16e-instruct"
-//    )
-    private val llmClient= GeminiLLMClient(
-        BuildConfig.GEMINI_API_KEY,
-        "7","8", "250","gemma-3-27b-it"
-    )
-    // Consolidated UI State for chat screen
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
@@ -270,11 +262,11 @@ class ChatViewModel @Inject constructor() : ViewModel() {
 
             try {
                 // get existing session mapping
-                val stored = loadThreadMapping(context, concept)
+                val stored = loadThreadMapping( concept)
                 if (stored != null) {
                     resumeExistingSession( stored.first, stored.second)//resume existing session
                 } else {
-                    sessionStart(context, concept)//start new session
+                    sessionStart( concept)//start new session
                 }
             } catch (e: Exception) {
                 DebugLogger.errorLog("ChatViewModel", "selectConcept error: ${e.message}")
@@ -286,13 +278,12 @@ class ChatViewModel @Inject constructor() : ViewModel() {
 
     /**
      * checks if there is an existing session for the given concept
-     * - first checks in-memory mapping
-     * - then checks persistent storage
      */
-    fun hasExistingSession(concept: String, context: Context): Boolean {
-        if (conceptThreadMap[concept] != null) return true
-        val repository = ConceptSessionRepository(context.applicationContext)
-        return repository.loadMapping(concept) != null
+    fun hasExistingSession(concept: String): Boolean {
+        return sessionMappingManager.hasSession(
+            concept = concept,
+            checkMemoryCache = { conceptThreadMap[concept] != null }
+        )
     }
 
 
@@ -393,80 +384,22 @@ class ChatViewModel @Inject constructor() : ViewModel() {
             }
         }
     }
-
-    //remove all session when logout
-    fun clearAllSessions(context: Context) {
-        viewModelScope.launch {
-            try {
-                conceptThreadMap.clear()
-                conceptSessionMap.clear()
-                withContext(Dispatchers.IO) {
-                    ConceptSessionRepository(context.applicationContext).clearAllMappings()
-                }
-                agenticAIClient.setCurrentThreadAndSession(null, null)
-
-                _uiState.update {
-                    it.copy(
-                        isSessionStarted = false,
-                        messages = emptyList(),
-                        selectedConcept = null,
-                        shouldStartTTS = false,
-                        fullTextForTTS = "",
-                        autosuggestions = emptyList()
-                    )
-                }
-
-                DebugLogger.debugLog("ChatViewModel", "All sessions cleared")
-            } catch (e: Exception) {
-                DebugLogger.errorLog("ChatViewModel", "clearAllSessions failed: ${e.message}")
-            }
-        }
-    }
-
-    /**
-     * saves the thread and session mapping for a concept
-     * - updates in-memory maps
-     * - persists the mapping asynchronously
-     */
-    private fun saveThreadMapping(context: Context, concept: String, threadId: String?, sessionId: String?) {
-        if (threadId.isNullOrBlank()) return
-        conceptThreadMap[concept] = threadId
-        sessionId?.let { conceptSessionMap[concept] = it }
-
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                // Save mapping to persistent storage
-                ConceptSessionRepository(context.applicationContext).saveMapping(concept, threadId, sessionId)
-                DebugLogger.debugLog("ChatViewModel", "Saved mapping for concept: $concept (thread: $threadId, session: $sessionId)")
-            } catch (e: Exception) {
-                DebugLogger.errorLog("ChatViewModel", "saveThreadMapping: ${e.message}")
-            }
-        }
-    }
-
     /**
      * loads the thread and session mapping for a concept
-     * - first checks in-memory maps
-     * - then checks persistent storage if not found in memory
      */
-
-    private suspend fun loadThreadMapping(context: Context, concept: String): Pair<String, String?>? {
-        conceptThreadMap[concept]?.let { threadId ->
-            return Pair(threadId, conceptSessionMap[concept])
-        }
-
-        return withContext(Dispatchers.IO) {
-            try {
-                ConceptSessionRepository(context.applicationContext)
-                    .loadMapping(concept)?.also { (thread, session) ->
-                        conceptThreadMap[concept] = thread
-                        session?.let { conceptSessionMap[concept] = it }
-                    }
-            } catch (e: Exception) {
-                DebugLogger.errorLog("ChatViewModel", "loadThreadMapping: ${e.message}")
-                null
+    private suspend fun loadThreadMapping( concept: String): Pair<String, String?>? {
+        return sessionMappingManager.loadMapping(
+            concept = concept,
+            checkMemoryCache = {
+                conceptThreadMap[concept]?.let { threadId ->
+                    Pair(threadId, conceptSessionMap[concept])
+                }
+            },
+            onMemoryUpdate = { thread: String, session: String? ->
+                conceptThreadMap[concept] = thread
+                session?.let { conceptSessionMap[concept] = it }
             }
-        }
+        )
     }
 
     /**
@@ -476,7 +409,7 @@ class ChatViewModel @Inject constructor() : ViewModel() {
      * - updates the UI state with initial data
      */
 
-    fun sessionStart(context: Context, concept: String) {
+    fun sessionStart(concept: String) {
         viewModelScope.launch {
             try {
                 //fetch  start new session response from backend
@@ -493,7 +426,20 @@ class ChatViewModel @Inject constructor() : ViewModel() {
                     if (!response.success) return@launch
 
                     //save thread and session mapping
-                    saveThreadMapping(context, concept, response.threadId, response.sessionId)
+                    if (!response.threadId.isNullOrBlank()) {
+                        viewModelScope.launch(Dispatchers.IO) {
+                            sessionMappingManager.saveMapping(
+                                concept = concept,
+                                threadId = response.threadId,
+                                sessionId = response.sessionId,
+                                onMemoryUpdate = { thread: String, session: String? ->
+                                    conceptThreadMap[concept] = thread
+                                    session?.let { conceptSessionMap[concept] = it }
+                                }
+                            )
+                        }
+                    }
+
                     agenticAIClient.setCurrentThreadAndSession(response.threadId, response.sessionId)
 
                     // Cancel any pending idle timer
@@ -578,9 +524,8 @@ class ChatViewModel @Inject constructor() : ViewModel() {
             try {
                 conceptThreadMap.remove(concept)
                 conceptSessionMap.remove(concept)
-                withContext(Dispatchers.IO) {
-                    ConceptSessionRepository(context.applicationContext).deleteMapping(concept)
-                }
+
+                sessionMappingManager.deleteMapping(concept)
 
                 agenticAIClient.setCurrentThreadAndSession(null, null)
                 cancelAnimations()

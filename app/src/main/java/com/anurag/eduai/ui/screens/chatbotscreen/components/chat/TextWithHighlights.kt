@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.chatbotscreen.components.text
+package com.anurag.eduai.ui.screens.chatbotscreen.components.chat
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -14,6 +14,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.anurag.eduai.ui.screens.chatbotscreen.utility.TextProcessor
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.viewModel.TextToSpeech

@@ -93,6 +93,7 @@ class SpeechToText @Inject constructor() : ViewModel() {
     /**
      * Public start API.
      * Pass `requestedLanguage` like "kn" or "kn-IN" to request Kannada recognition.
+     * for english use "en" or "en-IN".
      * If `requestedLanguage` is null, current selected language is used.
      */
     fun startListening(requestedLanguage: String? = null) {

@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.anurag.eduai.ui.screens.chatbotscreen.components.AgentMessage
+import com.anurag.eduai.ui.screens.chatbotscreen.components.chat.AgentMessage
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 

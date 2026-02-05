@@ -1,6 +1,6 @@
 package com.anurag.eduai.ui.screens.chatbotscreen.utility
 
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.GraphData
+import com.anurag.eduai.ui.screens.chatbotscreen.dataclass.GraphData
 import kotlinx.serialization.json.Json
 import kotlin.text.trimIndent
 

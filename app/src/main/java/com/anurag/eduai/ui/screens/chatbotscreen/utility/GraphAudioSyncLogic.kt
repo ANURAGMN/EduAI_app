@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.GraphData
+import com.anurag.eduai.ui.screens.chatbotscreen.dataclass.GraphData
 import kotlin.collections.filter
 import kotlin.collections.find
 import kotlin.collections.forEach

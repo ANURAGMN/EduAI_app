@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass
+package com.anurag.eduai.ui.screens.chatbotscreen.dataclass
 
 import com.anurag.eduai.data.remote.SessionMetadata
 /**

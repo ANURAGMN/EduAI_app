@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.chatbotscreen.components
+package com.anurag.eduai.ui.screens.chatbotscreen.components.chat
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -7,13 +7,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Brush
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
+import com.anurag.eduai.ui.screens.chatbotscreen.dataclass.ChatMessageModel
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 
@@ -34,7 +33,7 @@ fun ChatContentArea(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(bottom = 16.dp)
+            .padding(bottom = dimens.spaceSmall)
     ) {
         when {
             // Loading State

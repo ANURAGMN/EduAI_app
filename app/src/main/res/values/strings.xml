@@ -273,4 +273,5 @@
     <string name="image_is_loading">Image is loading...</string>
     <string name="zoom_in">Zoom In</string>
     <string name="zoom_out">Zoom Out</string>
+    <string name="avatarsize">avatarSize</string>
 </resources>

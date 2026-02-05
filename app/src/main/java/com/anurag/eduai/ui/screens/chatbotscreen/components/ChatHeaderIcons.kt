@@ -24,8 +24,6 @@ import com.anurag.eduai.ui.theme.LocalDimensions
 fun ChatHeaderIcons(
     isKannada: Boolean,
     isSpeaking: Boolean,
-    showResourceCard: Boolean,
-    ttsPausedForResource: Boolean,
     showSettingsMenu: Boolean,
     onKannadaToggle: () -> Unit,
     onVolumeClick: () -> Unit,

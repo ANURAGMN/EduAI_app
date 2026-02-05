@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.chatbotscreen.components
+package com.anurag.eduai.ui.screens.chatbotscreen.components.resourceCard
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -33,7 +33,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.debug.DebugLogger
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.GraphData
+import com.anurag.eduai.ui.screens.chatbotscreen.dataclass.GraphData
 import com.anurag.eduai.ui.screens.chatbotscreen.utility.GraphAudioSyncLogic
 import com.anurag.eduai.ui.screens.chatbotscreen.utility.GraphInteractionHandler
 import com.anurag.eduai.ui.screens.chatbotscreen.utility.GraphRenderLogic

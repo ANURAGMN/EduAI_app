@@ -17,7 +17,10 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
+import com.anurag.eduai.ui.screens.chatbotscreen.dataclass.ResourceCardUiState
+import com.anurag.eduai.ui.screens.chatbotscreen.components.resourceCard.ConceptMapResourceContent
+import com.anurag.eduai.ui.screens.chatbotscreen.components.resourceCard.ImageResourceContent
+import com.anurag.eduai.ui.screens.chatbotscreen.components.resourceCard.ResourceCardCloseTimer
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.White
 
@@ -94,7 +97,7 @@ fun ResourcesCard(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(dimens.spaceMedium)
-                        .size(48.dp),
+                        .size(dimens.iconExtraLarge),
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
                         contentColor = MaterialTheme.colorScheme.onErrorContainer

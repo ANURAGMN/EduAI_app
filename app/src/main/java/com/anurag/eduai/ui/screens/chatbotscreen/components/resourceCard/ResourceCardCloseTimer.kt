@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.chatbotscreen.components
+package com.anurag.eduai.ui.screens.chatbotscreen.components.resourceCard
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -14,7 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
+import com.anurag.eduai.ui.theme.AccentBlue
+import com.anurag.eduai.ui.theme.IconSecondary
 import com.anurag.eduai.ui.theme.LocalDimensions
 
 
@@ -46,8 +47,8 @@ fun ResourceCardCloseTimer(
                     .height(dimens.progressIndicatorStrokeWidth)
                     .width(dimens.timerLength)
                     .clip(RoundedCornerShape(dimens.cornerRadiusSmall)),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                color = AccentBlue,
+                trackColor = IconSecondary,
             )
 
             // Timer text

@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
-import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.GraphData
+import com.anurag.eduai.ui.screens.chatbotscreen.dataclass.GraphData
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 

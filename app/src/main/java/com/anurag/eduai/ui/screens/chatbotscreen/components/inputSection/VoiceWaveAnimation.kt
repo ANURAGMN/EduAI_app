@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.chatbotscreen.components
+package com.anurag.eduai.ui.screens.chatbotscreen.components.inputSection
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.ui.theme.HeaderGradientEnd
 import com.anurag.eduai.ui.theme.HeaderGradientStart
+import com.anurag.eduai.ui.theme.LocalDimensions
 import kotlin.math.abs
 
 /**
@@ -29,6 +30,7 @@ fun VoiceWaveAnimation(
     colors: List<Color> = listOf(HeaderGradientStart, HeaderGradientEnd),
     segmentCount: Int = 150
 ) {
+    val dimens =LocalDimensions.current
     // Smoothly animate the amplitude
     val animatedAmplitude by animateFloatAsState(
         targetValue = if (isListening) amplitude else 0f,
@@ -78,7 +80,7 @@ fun VoiceWaveAnimation(
     Canvas(
         modifier = modifier
             .fillMaxWidth()
-            .height(40.dp)
+            .height(dimens.voiceWaveAnimationHeight)
     ) {
         val canvasWidth = size.width
         val canvasHeight = size.height

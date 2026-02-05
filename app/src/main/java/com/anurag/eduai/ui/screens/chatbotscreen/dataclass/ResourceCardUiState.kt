@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass
+package com.anurag.eduai.ui.screens.chatbotscreen.dataclass
 
 /**
  * Sealed class resource card.

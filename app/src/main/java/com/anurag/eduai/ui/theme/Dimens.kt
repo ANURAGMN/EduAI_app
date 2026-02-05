@@ -101,7 +101,10 @@ data class Dimensions(
 
     // Progress Indicator
     val progressIndicatorStrokeWidth: Dp,
-    val timerLength: Dp
+    val timerLength: Dp,
+
+    // Voice Wave Animation
+    val voiceWaveAnimationHeight: Dp
 ) {
     companion object {
         val Compact = Dimensions(
@@ -185,7 +188,10 @@ data class Dimensions(
 
             // Progress Indicator
             progressIndicatorStrokeWidth = 4.dp,
-            timerLength= 60.dp
+            timerLength= 60.dp,
+
+            //  Voice animation
+            voiceWaveAnimationHeight= 40.dp
         )
 
         val Medium = Dimensions(
@@ -267,7 +273,10 @@ data class Dimensions(
             weeklyActivityCardHeight = 140.dp,
             // Progress Indicator
             progressIndicatorStrokeWidth = 6.dp,
-            timerLength= 64.dp
+            timerLength= 64.dp,
+
+            //  Voice animation
+            voiceWaveAnimationHeight= 44.dp
         )
 
         val Expanded = Dimensions(
@@ -352,7 +361,10 @@ data class Dimensions(
             weeklyActivityCardHeight = 160.dp,
             //progress indicator
             progressIndicatorStrokeWidth = 8.dp,
-            timerLength= 68.dp
+            timerLength= 68.dp,
+
+            //  Voice animation
+            voiceWaveAnimationHeight= 48.dp
         )
     }
 }

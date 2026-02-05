@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass
+package com.anurag.eduai.ui.screens.chatbotscreen.dataclass
 
 import kotlinx.serialization.Serializable
 import kotlin.collections.sumOf

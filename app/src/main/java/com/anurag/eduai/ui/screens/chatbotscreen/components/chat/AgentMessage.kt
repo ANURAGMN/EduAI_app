@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.chatbotscreen.components
+package com.anurag.eduai.ui.screens.chatbotscreen.components.chat
 
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -23,8 +23,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.anurag.eduai.ui.screens.chatbotscreen.components.text.TextProcessor
-import com.anurag.eduai.ui.screens.chatbotscreen.components.text.TextWithHighlights
+import com.anurag.eduai.ui.screens.chatbotscreen.utility.TextProcessor
 import com.anurag.eduai.ui.theme.White
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 import kotlin.math.roundToInt
