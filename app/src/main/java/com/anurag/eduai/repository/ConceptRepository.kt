@@ -16,8 +16,8 @@ class ConceptRepository(
      * Retrieves a list of concepts for a given chapter.
      * returns List of ConceptEntity
      */
-    suspend fun getConceptsForChapter(chapterId: String): List<ConceptEntity> {
-        return conceptDao.getConceptsForChapterSync(chapterId)
+    suspend fun getConceptsForChapter(chapterId: String, type: String): List<ConceptEntity> {
+        return conceptDao.getConceptsForChapterSync(chapterId , type )
     }
 
     /**

@@ -273,4 +273,6 @@
     <string name="image_is_loading">Image is loading...</string>
     <string name="zoom_in">Zoom In</string>
     <string name="zoom_out">Zoom Out</string>
+    <string name="simulations_to_explore">Simulation To Explore</string>
+    <string name="lessons_to_master">Lessons To Master</string>
 </resources>

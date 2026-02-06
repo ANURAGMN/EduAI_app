@@ -59,8 +59,8 @@ fun ConceptScreen(
     LaunchedEffect(Unit) {
         streakManager.onConceptOpened()
     }
-    LaunchedEffect(chapterId) {
-        viewModel.loadConcepts(chapterId)
+    LaunchedEffect(chapterId, state.type) {
+        viewModel.loadConcepts(chapterId, state.type)
     }
 
     Column(
@@ -98,7 +98,10 @@ fun ConceptScreen(
                 modifier = Modifier.padding(dimens.spaceMedium),
             ) {
                 Text(
-                    text = stringResource(R.string.concepts_to_master),
+                    text = if (state.type == stringResource(R.string.simulation))
+                        stringResource(R.string.simulations_to_explore)
+                    else
+                        stringResource(R.string.lessons_to_master),
                     style = MaterialTheme.typography.titleMedium,
                     color = TextPrimary,
                 )

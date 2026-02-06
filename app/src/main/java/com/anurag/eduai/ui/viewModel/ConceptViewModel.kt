@@ -31,11 +31,11 @@ class ConceptViewModel @Inject constructor(
     private val _state = MutableStateFlow(ConceptScreenState())
     val state: StateFlow<ConceptScreenState> = _state.asStateFlow()
 
-    fun loadConcepts(chapterId: String) {
+    fun loadConcepts(chapterId: String, type: String) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
-                val concepts = conceptRepository.getConceptsForChapter(chapterId)
+                val concepts = conceptRepository.getConceptsForChapter(chapterId, type)
                 val chapter = chapterRepository.getChapter(chapterId)
                 val studentId = sharedPrefs.getUserId() ?: ""
 

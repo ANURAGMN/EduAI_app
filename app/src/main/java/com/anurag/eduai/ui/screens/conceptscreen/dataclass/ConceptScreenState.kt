@@ -15,6 +15,7 @@ data class ConceptScreenState(
         progressPercentage = 0,
         remaining = 0
     ),
+    val type :String = "",
     val subjectName: String = "",
     val classLevel: String = "",
     val isLoading: Boolean = false,
