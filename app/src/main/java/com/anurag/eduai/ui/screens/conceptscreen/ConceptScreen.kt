@@ -32,6 +32,7 @@ import com.anurag.eduai.utils.StreakManager
 /**
  * Composable screen to display concepts of a chapter.
  * chapterId: ID of the chapter whose concepts are to be displayed.
+ * type: Type of concepts to load (STUDY or SIMULATION).
  * onBackClick: Lambda function to handle back navigation.
  * onConceptClick: Lambda function to handle concept item clicks.
  *
@@ -40,6 +41,7 @@ import com.anurag.eduai.utils.StreakManager
 @Composable
 fun ConceptScreen(
     chapterId: String,
+    type: String,
     onBackClick: () -> Unit = {},
     onConceptClick: (String) -> Unit = {},
     onGoHome:() -> Unit = {},
@@ -59,8 +61,8 @@ fun ConceptScreen(
     LaunchedEffect(Unit) {
         streakManager.onConceptOpened()
     }
-    LaunchedEffect(chapterId, state.type) {
-        viewModel.loadConcepts(chapterId, state.type)
+    LaunchedEffect(chapterId, type) {
+        viewModel.loadConcepts(chapterId, type)
     }
 
     Column(

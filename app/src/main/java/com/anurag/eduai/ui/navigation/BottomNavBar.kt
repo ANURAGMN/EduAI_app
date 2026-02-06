@@ -152,10 +152,10 @@ fun BottomNavBar() {
                     subjectId = subjectId,
                     onBackClick = { navController.popBackStack() },
                     onStudyClick = { chapterId, type ->
-                        navController.navigate("concepts/$chapterId")
+                        navController.navigate("concepts/$chapterId/$type")
                     },
                     onSimulationClick = { chapterId, type ->
-                        navController.navigate("concepts/$chapterId")
+                        navController.navigate("concepts/$chapterId/$type")
                     },
                     onGoHome = {
                         navController.navigate("home") {
@@ -171,11 +171,14 @@ fun BottomNavBar() {
                     }
                 )
             }
-            composable("concepts/{chapterId}") { backStackEntry ->
+            composable("concepts/{chapterId}/{type}") { backStackEntry ->
                 val chapterId =
                     backStackEntry.arguments?.getString("chapterId") ?: return@composable
+                val type =
+                    backStackEntry.arguments?.getString("type") ?: return@composable
                 ConceptScreen(
                     chapterId = chapterId,
+                    type = type,
                     onBackClick = { navController.popBackStack() },
                     onConceptClick = { navController.navigate("chatbot") },
                     onGoHome = {

@@ -19,7 +19,7 @@ object LearningRoutes {
     const val HOME = "home"
     const val SUBJECTS = "subjects"
     const val CHAPTERS = "chapters/{subjectId}"
-    const val CONCEPTS = "concepts/{chapterId}"
+    const val CONCEPTS = "concepts/{chapterId}/{type}"
     const val CONCEPT_DETAIL = "concept_detail/{conceptId}"
     const val CHATBOT = "chatbot"
     const val SIMULATION_LIST = "simulation_list/{chapterId}/{classLevel}/{subjectName}/{chapterName}"
@@ -66,10 +66,10 @@ fun LearningNavigator(
                 subjectId = subjectId,
                 onBackClick = { navController.popBackStack() },
                 onStudyClick = { chapterId, type ->
-                    navController.navigate("concepts/$chapterId")
+                    navController.navigate("concepts/$chapterId/$type")
                 },
                 onSimulationClick = { chapterId, type ->
-                    navController.navigate("concepts/$chapterId")
+                    navController.navigate("concepts/$chapterId/$type")
                 },
                 onGoHome = onGoHome,
                 onGoSetting = onGoSetting
@@ -78,8 +78,10 @@ fun LearningNavigator(
 
         composable(LearningRoutes.CONCEPTS) { backStackEntry ->
             val chapterId = backStackEntry.arguments?.getString("chapterId") ?: return@composable
+            val type = backStackEntry.arguments?.getString("type") ?: "STUDY"
             ConceptScreen(
                 chapterId = chapterId,
+                type = type,
                 onBackClick = { navController.popBackStack() },
                 onConceptClick = {
                     navController.navigate(LearningRoutes.CHATBOT)
