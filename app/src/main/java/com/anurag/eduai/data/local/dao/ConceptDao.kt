@@ -25,8 +25,8 @@ interface ConceptDao {
     @Query("SELECT * FROM concepts WHERE chapterId = :chapterId ORDER BY orderIndex ASC")
     fun getConceptsForChapter(chapterId: String): Flow<List<ConceptEntity>>
 
-    @Query("SELECT * FROM concepts WHERE chapterId = :chapterId ORDER BY orderIndex ASC")
-    suspend fun getConceptsForChapterSync(chapterId: String): List<ConceptEntity>
+    @Query("SELECT * FROM concepts WHERE chapterId = :chapterId AND type = :type ORDER BY orderIndex ASC")
+    suspend fun getConceptsForChapterSync(chapterId: String, type: String): List<ConceptEntity>
 
     @Query("SELECT * FROM concepts WHERE conceptId = :conceptId")
     suspend fun getConcept(conceptId: String): ConceptEntity?
