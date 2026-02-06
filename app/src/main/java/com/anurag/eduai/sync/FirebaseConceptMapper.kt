@@ -18,6 +18,8 @@ import com.google.firebase.firestore.DocumentSnapshot
  *  - unit_name: Unit/Chapter name
  *  - subject_id: Subject identifier
  *  - class_id: Class level
+ *  - type: either "SIMULATION" or "STUDY"
+ *  - simulation_url: if type == simulation then webpage url else empty or null
  */
 object FirebaseConceptMapper {
 
@@ -32,8 +34,10 @@ object FirebaseConceptMapper {
                 append(detail)
             }
         }
-//        val conceptName = document.getString("concept_name")
-//            ?: error("concept_name missing for concept ${document.id}")
+        val typeRaw = document.getString("type")
+            ?: error("concept_type missing at concept ${document.id}")
+        val conceptType = ConceptType.from(typeRaw)
+
 
         return ConceptEntity(
             conceptId = document.id,
@@ -42,9 +46,25 @@ object FirebaseConceptMapper {
             conceptNameKannada = "",
             orderIndex = document.getLong("conceptOrder")?.toInt() ?: 0,
             description = combinedDescription,
-            hasSimulation = false,
+            hasSimulation = conceptType is ConceptType.Simulation,
+            type = conceptType.raw,
+            simulationUrl = document.get("simulation_url").toString() ?: "no url for",
             syncAt = System.currentTimeMillis(),
             isSynced = true
         )
+    }
+}
+
+sealed class ConceptType(val raw: String) {
+    object Simulation : ConceptType("SIMULATION")
+    object Study : ConceptType("STUDY")
+
+    companion object {
+        fun from(raw: String?): ConceptType =
+            when (raw) {
+                "SIMULATION" -> Simulation
+                "STUDY" -> Study
+                else -> error("Unknown concept type: $raw")
+            }
     }
 }

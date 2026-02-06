@@ -150,7 +150,7 @@ class ConceptDetailViewModel @Inject constructor(
 
     private suspend fun unlockNextConcept(studentId: String, currentConcept: ConceptEntity) {
         try {
-            val allConcepts = repository.getConceptsForChapter(currentConcept.chapterId)
+            val allConcepts = repository.getConceptsForChapter(currentConcept.chapterId, type = "STUDY")
 
             val nextConcept = allConcepts.firstOrNull {
                 it.orderIndex == currentConcept.orderIndex + 1

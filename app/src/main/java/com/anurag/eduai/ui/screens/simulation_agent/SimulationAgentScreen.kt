@@ -21,10 +21,10 @@ import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatHeaderIcons
 import com.anurag.eduai.ui.screens.chatbotscreen.components.InitialAvatarView
 import com.anurag.eduai.ui.screens.chatbotscreen.components.InputSection
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
 import com.anurag.eduai.ui.screens.simulation_agent.components.SimulationConversationView
 import com.anurag.eduai.ui.screens.simulation_agent.components.SimulationWebViewCard
 import com.anurag.eduai.ui.theme.LocalDimensions
-import com.anurag.eduai.ui.viewModel.ChatUiState
 import com.anurag.eduai.ui.viewModel.SimAgentUiState
 import com.anurag.eduai.ui.viewModel.SimulationAgentViewModel
 import com.anurag.eduai.ui.viewModel.SpeechToText
