@@ -18,7 +18,7 @@ class FirebaseSyncManager(
         private val conceptDao: ConceptDao
 ) {
     companion object {
-        private const val CONCEPTS_COLLECTION = "concepts"
+        private const val CONCEPTS_COLLECTION = "Concept"
         private const val TAG = "FirebaseSyncManager"
     }
 
