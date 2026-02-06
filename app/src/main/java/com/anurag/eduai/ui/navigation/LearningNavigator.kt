@@ -12,7 +12,6 @@ import com.anurag.eduai.ui.screens.chatbotscreen.ChatbotScreen
 import com.anurag.eduai.ui.screens.conceptdetailscreen.ConceptDetailScreen
 import com.anurag.eduai.ui.screens.conceptscreen.ConceptScreen
 import com.anurag.eduai.ui.screens.home.HomeScreen
-import com.anurag.eduai.ui.screens.simulationscreen.SimulationListScreen
 import com.anurag.eduai.ui.screens.simulationscreen.SimulationViewerScreen
 import com.anurag.eduai.ui.screens.subjectscreen.SubjectScreen
 
@@ -66,11 +65,11 @@ fun LearningNavigator(
             ChapterScreen(
                 subjectId = subjectId,
                 onBackClick = { navController.popBackStack() },
-                onChapterClick = { chapterId ->
+                onStudyClick = { chapterId, type ->
                     navController.navigate("concepts/$chapterId")
                 },
-                onSimulationClick = { chapterId, classLevel, subjectName, chapterName ->
-                    navController.navigate("simulation_list/$chapterId/$classLevel/$subjectName/$chapterName")
+                onSimulationClick = { chapterId, type ->
+                    navController.navigate("concepts/$chapterId")
                 },
                 onGoHome = onGoHome,
                 onGoSetting = onGoSetting
@@ -102,27 +101,6 @@ fun LearningNavigator(
 
         composable(LearningRoutes.CHATBOT) {
             ChatbotScreen()
-        }
-
-        // Simulation List Screen
-        composable(LearningRoutes.SIMULATION_LIST) { backStackEntry ->
-            val chapterId = backStackEntry.arguments?.getString("chapterId") ?: return@composable
-            val classLevel = backStackEntry.arguments?.getString("classLevel")?.toIntOrNull() ?: 7
-            val subjectName = backStackEntry.arguments?.getString("subjectName") ?: ""
-            val chapterName = backStackEntry.arguments?.getString("chapterName") ?: ""
-
-            SimulationListScreen(
-                chapterId = chapterId,
-                classLevel = classLevel,
-                subjectName = subjectName,
-                chapterName = chapterName,
-                onBackClick = { navController.popBackStack() },
-                onSimulationClick = { simulationId, htmlFileName, simulationTitle ->
-                    navController.navigate("simulation_viewer/$simulationId/$htmlFileName/$simulationTitle")
-                },
-                onGoHome = onGoHome,
-                onGoSetting = onGoSetting
-            )
         }
 
         // Simulation Viewer Screen

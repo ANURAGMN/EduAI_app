@@ -26,7 +26,6 @@ import com.anurag.eduai.ui.screens.home.HomeScreen
 import com.anurag.eduai.ui.screens.progess.ProgressScreen
 import com.anurag.eduai.ui.screens.setting.SettingScreen
 import com.anurag.eduai.ui.screens.simulation_agent.SimulationAgentScreen
-import com.anurag.eduai.ui.screens.simulationscreen.SimulationListScreen
 import com.anurag.eduai.ui.screens.simulationscreen.SimulationViewerScreen
 import com.anurag.eduai.ui.screens.subjectscreen.SubjectScreen
 import com.anurag.eduai.ui.theme.BackgroundPrimary
@@ -152,11 +151,11 @@ fun BottomNavBar() {
                 ChapterScreen(
                     subjectId = subjectId,
                     onBackClick = { navController.popBackStack() },
-                    onChapterClick = { chapterId ->
+                    onStudyClick = { chapterId, type ->
                         navController.navigate("concepts/$chapterId")
                     },
-                    onSimulationClick = { chapterId, classLevel, subjectName, chapterName ->
-                        navController.navigate("simulation_list/$chapterId/$classLevel/$subjectName/$chapterName")
+                    onSimulationClick = { chapterId, type ->
+                        navController.navigate("concepts/$chapterId")
                     },
                     onGoHome = {
                         navController.navigate("home") {
@@ -246,35 +245,6 @@ fun BottomNavBar() {
                 SimulationAgentScreen(
                     simulationId = simulationId,
                     onNavigateBack = { navController.popBackStack() }
-                )
-            }
-
-            // New Simulation Routes
-            composable("simulation_list/{chapterId}/{classLevel}/{subjectName}/{chapterName}") { backStackEntry ->
-                val chapterId = backStackEntry.arguments?.getString("chapterId") ?: return@composable
-                val classLevel = backStackEntry.arguments?.getString("classLevel")?.toIntOrNull() ?: 7
-                val subjectName = backStackEntry.arguments?.getString("subjectName") ?: ""
-                val chapterName = backStackEntry.arguments?.getString("chapterName") ?: ""
-
-                SimulationListScreen(
-                    chapterId = chapterId,
-                    classLevel = classLevel,
-                    subjectName = subjectName,
-                    chapterName = chapterName,
-                    onBackClick = { navController.popBackStack() },
-                    onSimulationClick = { simulationId, htmlFileName, simulationTitle ->
-                        navController.navigate("simulation_viewer/$simulationId/$htmlFileName/$simulationTitle")
-                    },
-                    onGoHome = {
-                        navController.navigate("home") {
-                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                        }
-                    },
-                    onGoSetting = {
-                        navController.navigate("setting") {
-                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                        }
-                    }
                 )
             }
 
