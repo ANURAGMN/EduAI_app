@@ -2,6 +2,7 @@ package com.anurag.eduai.ui.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.repository.SimulationRepository
 import com.anurag.eduai.ui.models.SimulationUiModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,7 +13,7 @@ import kotlinx.coroutines.launch
 data class SimulationScreenState(
     val isLoading: Boolean = false,
     val chapterId: String = "",
-    val simulations: List<SimulationUiModel> = emptyList(),
+    val simulations: List<ConceptEntity> = emptyList(),
     val error: String? = null
 )
 

@@ -41,8 +41,8 @@ import com.anurag.eduai.ui.viewModel.ChapterViewModel
 fun ChapterScreen(
     subjectId: String,
     onBackClick: () -> Unit = {},
-    onChapterClick: (String) -> Unit = {},
-    onSimulationClick: (chapterId: String, classLevel: Int, subjectName: String, chapterName: String) -> Unit = { _, _, _, _ -> },
+    onStudyClick: (String, String) -> Unit = {_, _ -> },
+    onSimulationClick: (String, String) -> Unit = {_, _ -> },
     onGoHome: () -> Unit = {},
     onGoSetting: () -> Unit = {},
     onProgressClick: () -> Unit = {},
@@ -98,15 +98,8 @@ fun ChapterScreen(
                 items(state.chapters, { it.id }) { chapterUiModel ->
                     ChapterCard(
                         chapter = chapterUiModel,
-                        onStudyClick = { onChapterClick(chapterUiModel.id) },
-                        onSimulationClick = {
-                            onSimulationClick(
-                                chapterUiModel.id,
-                                state.classLevel,
-                                state.subjectName,
-                                chapterUiModel.name
-                            )
-                        }
+                        onStudyClick = { onStudyClick(chapterUiModel.id, "STUDY") },
+                        onSimulationClick = { onSimulationClick(chapterUiModel.id, "SIMULATION") }
                     )
                 }
             }

@@ -97,6 +97,7 @@ class ConceptViewModel @Inject constructor(
                     concepts = conceptUiModels,
                     chapterName = chapter?.chapterName ?: "",
                     chapterId = chapterId,
+                    type = type,
                     progressUiModel = progressUiModel,
                     subjectName = subject?.subjectName ?: "",
                     classLevel = "Class $classLevel",
