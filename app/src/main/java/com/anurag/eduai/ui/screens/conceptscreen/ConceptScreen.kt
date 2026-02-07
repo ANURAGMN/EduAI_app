@@ -61,8 +61,8 @@ fun ConceptScreen(
     LaunchedEffect(Unit) {
         streakManager.onConceptOpened()
     }
-    LaunchedEffect(chapterId, type) {
-        viewModel.loadConcepts(chapterId, type)
+    LaunchedEffect(chapterId, state.type) {
+        viewModel.loadConcepts(chapterId, state.type)
     }
 
     Column(
