@@ -25,7 +25,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.anurag.eduai.R
-import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.chatbotscreen.components.AppDialog
@@ -47,6 +46,7 @@ import com.anurag.eduai.ui.viewModel.SpeechToText
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.isConversationStarted
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.lastAiMessage
+import com.anurag.eduai.domain.chatbot.usecase.ChatIntent
 
 @Composable
 fun ChatbotScreen(
@@ -139,17 +139,17 @@ fun ChatbotScreen(
                 InputSection(
                     chatState = chatState,
                     sttState = sttState,
-                    onTextChange = { chatViewModel.updateInputText(it) },
+                    onTextChange = { chatViewModel.onIntent(ChatIntent.UpdateInputText(it)) },
                     onSendClick = {
                         if (chatState.inputText.isNotBlank()) {
-                            chatViewModel.hideAutosuggestions()
-                            chatViewModel.sendMessage(chatState.inputText, context)
-                            chatViewModel.updateInputText("")
+                            chatViewModel.onIntent(ChatIntent.HideAutosuggestions)
+                            chatViewModel.onIntent(ChatIntent.SendMessage(chatState.inputText))
+                            chatViewModel.onIntent(ChatIntent.UpdateInputText(""))
                         }
                     },
                     onSpeakClick = {
-                        chatViewModel.hideAutosuggestions()
-                        chatViewModel.markUserActive()
+                        chatViewModel.onIntent(ChatIntent.HideAutosuggestions)
+                        chatViewModel.onIntent(ChatIntent.MarkUserActive)
                         if (permissionGranted && sttState.isInitialized) {
                             sttController.startListening("en-IN")
                         } else if (!permissionGranted) {
@@ -158,8 +158,8 @@ fun ChatbotScreen(
                     },
                     onStopListening = { sttController.stopListening() },
                     onSuggestionClick = { suggestion ->
-                        chatViewModel.tapAutosuggestion(suggestion, context)
-                        chatViewModel.hideAutosuggestions()
+                        chatViewModel.onIntent(ChatIntent.TapAutosuggestion(suggestion))
+                        chatViewModel.onIntent(ChatIntent.HideAutosuggestions)
                     },
                     modifier = Modifier
                         .imePadding()
@@ -178,7 +178,7 @@ fun ChatbotScreen(
                     showResourceCard = chatState.resourceCardState !is ResourceCardUiState.Hidden,
                     ttsPausedForResource = chatState.ttsPausedForResource,
                     showSettingsMenu = showSettingsMenu,
-                    onKannadaToggle = { chatViewModel.setKannada(!chatState.isKannada) },
+                    onKannadaToggle = { chatViewModel.onIntent(ChatIntent.SetKannada(!chatState.isKannada)) },
                     onVolumeClick = {
                         handleVolumeClick(
                             chatState = chatState,
@@ -214,16 +214,16 @@ fun ChatbotScreen(
                             },
                             onConceptChange = { concept ->
                                 pendingConceptSelection = concept
-                                if (chatViewModel.hasExistingSession(concept, context)) {
+                                if (chatViewModel.hasExistingSession(concept)) {
+                                    pendingConceptSelection = concept
                                     showSessionResumeDialog = true
                                 } else {
-                                    chatViewModel.selectConcept(concept, context)
-                                    showSettingsMenu = false
+                                    chatViewModel.onIntent(ChatIntent.SelectConcept(concept))
                                 }
                             },
                             onLevelChange = { levelCode ->
                                 settingsState = settingsState.copy(selectedStudentLevel = levelCode)
-                                chatViewModel.setStudentLevel(levelCode)
+                                chatViewModel.onIntent(ChatIntent.SetStudentLevel(levelCode))
                             },
                             onSpeedChange = { label ->
                                 settingsState = settingsState.copy(selectedSpeed = label)
@@ -255,7 +255,7 @@ fun ChatbotScreen(
         // Resource Card
         ResourcesCard(
             state = chatState.resourceCardState,
-            onDismiss = chatViewModel::dismissResourceCard,
+            onDismiss = { chatViewModel.onIntent(ChatIntent.DismissResource) },
             modifier = Modifier.align(Alignment.Center)
         )
 
@@ -278,13 +278,13 @@ fun ChatbotScreen(
         confirmText = stringResource(R.string.continue_session),
         dismissText = stringResource(R.string.start_new),
         onConfirm = {
-            pendingConceptSelection?.let { chatViewModel.selectConcept(it, context) }
+            pendingConceptSelection?.let { chatViewModel.onIntent(ChatIntent.SelectConcept(it)) }
             showSessionResumeDialog = false
             pendingConceptSelection = null
             showSettingsMenu = false
         },
         onDismiss = {
-            pendingConceptSelection?.let { chatViewModel.startFreshSession(it, context) }
+            pendingConceptSelection?.let { chatViewModel.onIntent(ChatIntent.StartFreshSession(it)) }
             showSessionResumeDialog = false
             pendingConceptSelection = null
             showSettingsMenu = false
@@ -309,7 +309,7 @@ private fun handleVolumeClick(
 ) {
     when {
         chatState.resourceCardState !is ResourceCardUiState.Hidden && chatState.ttsPausedForResource -> {
-            chatViewModel.resumeTTSForResource()
+            chatViewModel.onIntent(ChatIntent.ResumeTTS)
             lastAIMessage?.let { ttsController.speak(it.content) }
         }
         ttsState.isSpeaking -> ttsController.stop()
