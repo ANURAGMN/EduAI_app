@@ -5,8 +5,11 @@ import androidx.core.content.edit
 import com.anurag.eduai.debug.DebugLogger
 import org.json.JSONObject
 
-class ConceptSessionRepository(
-    private val context: Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+
+class ConceptSessionRepository @Inject constructor(
+    @ApplicationContext private val context: Context
 ) {
     private val conceptThreadMap = mutableMapOf<String, String>()
     private val conceptSessionMap = mutableMapOf<String, String?>()
@@ -15,7 +18,7 @@ class ConceptSessionRepository(
     save mapping of concept to threadId and sessionId
     saved in shared preferences as JSON object
     */
-    fun saveMapping(concept: String, threadId: String, sessionId: String?) {
+    fun saveMapping(concept: String, threadId: String, sessionId: String) {
         if (concept.isBlank() || threadId.isBlank()) {
             DebugLogger.errorLog("SessionRepository", "Cannot save mapping with blank concept or threadId")
             return
@@ -28,7 +31,7 @@ class ConceptSessionRepository(
             val json = JSONObject(raw)
             val item = JSONObject().apply {
                 put("thread", threadId)
-                put("session", sessionId ?: JSONObject.NULL)
+                put("session", sessionId)
             }
             json.put(concept, item)
             prefs.edit { putString("concept_thread_map", json.toString()) }

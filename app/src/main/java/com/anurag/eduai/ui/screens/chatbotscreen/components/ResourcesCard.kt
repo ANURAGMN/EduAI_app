@@ -94,7 +94,7 @@ fun ResourcesCard(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(dimens.spaceMedium)
-                        .size(48.dp),
+                        .size(dimens.iconLarge),
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
                         contentColor = MaterialTheme.colorScheme.onErrorContainer

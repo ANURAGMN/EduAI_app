@@ -118,9 +118,7 @@ class AgenticAIClient(
             is SessionHistoryResponse -> body.success
             is SessionSummaryResponse -> body.success
             is ConceptsListResponse -> body.success
-            is PersonasListResponse -> body.success
             is TestImageResponse -> body.success
-            is TestSimulationResponse -> body.success
             is HealthResponse -> true
             else -> true
         }
@@ -134,9 +132,7 @@ class AgenticAIClient(
             is SessionHistoryResponse -> body.message
             is SessionSummaryResponse -> body.message
             is ConceptsListResponse -> body.message
-            is PersonasListResponse -> body.message
             is TestImageResponse -> body.message
-            is TestSimulationResponse -> body.message
             else -> null
         }
     }

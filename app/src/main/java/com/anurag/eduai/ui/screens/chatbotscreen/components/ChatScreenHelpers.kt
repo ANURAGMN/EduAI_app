@@ -27,6 +27,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.domain.chatbot.usecase.ChatIntent
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
@@ -146,7 +147,7 @@ fun ChatEffects(
     LaunchedEffect(Unit) {
         val sharedPrefs = SharedPreferenceUtils(context)
         val userId = sharedPrefs.getUserId().toString()
-        chatViewModel.initialize(userId)
+        chatViewModel.onIntent(ChatIntent.Initialize(userId))
         sttController.initialize(context)
         ttsController.initialize(context)
 
@@ -192,18 +193,18 @@ fun ChatEffects(
     // Handle speech recognition
     LaunchedEffect(sttState.isListening) {
         if (sttState.isListening) {
-            chatViewModel.markUserActive()
-            chatViewModel.hideAutosuggestions()
+            chatViewModel.onIntent(ChatIntent.MarkUserActive)
+            chatViewModel.onIntent(ChatIntent.HideAutosuggestions)
             // Stop TTS when user starts listening
             if (ttsState.isSpeaking) {
                 ttsController.stop()
             }
         } else {
             if (sttState.resultText.isNotEmpty() && sttState.resultText != lastProcessedSpeechText) {
-                chatViewModel.updateInputText(sttState.resultText)
+                chatViewModel.onIntent(ChatIntent.UpdateInputText(sttState.resultText))
                 onSpeechTextProcessed(sttState.resultText)
             }
-            chatViewModel.markUserInactive()
+            chatViewModel.onIntent(ChatIntent.MarkUserInactive)
         }
     }
 
@@ -240,7 +241,7 @@ fun ChatEffects(
             // Start the idle timer which will show autosuggestions after 5s delay
             if (chatState.inputText.isEmpty() && chatState.autosuggestions.isNotEmpty()) {
                 DebugLogger.debugLog("ChatScreenHelpers", " Starting idle timer (5s countdown)")
-                chatViewModel.startIdleTimer()
+                chatViewModel.onIntent(ChatIntent.StartIdleTimer)
             } else {
                 DebugLogger.debugLog("ChatScreenHelpers", " NOT starting timer - inputText: '${chatState.inputText}', suggestions: ${chatState.autosuggestions.size}")
             }
@@ -255,4 +256,3 @@ fun ChatEffects(
         }
     }
 }
-

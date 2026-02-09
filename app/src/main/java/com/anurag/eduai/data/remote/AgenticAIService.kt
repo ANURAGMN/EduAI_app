@@ -21,6 +21,7 @@ interface AgenticAIService {
 
     @GET("/session/history/{thread_id}")
     suspend fun getSessionHistory(@Path("thread_id") threadId: String): Response<SessionHistoryResponse>
+
     @GET("/session/summary/{thread_id}")
     suspend fun getSessionSummary(@Path("thread_id") threadId: String): Response<SessionSummaryResponse>
 
@@ -28,18 +29,12 @@ interface AgenticAIService {
     suspend fun getAvailableConcepts(): Response<ConceptsListResponse>
 
     //Utility Endpoints
-    @GET("/personas")
-    suspend fun getPersonas(): Response<PersonasListResponse>
-
     @GET("/health")
     suspend fun healthCheck(): Response<HealthResponse>
 
     //test endpoints
     @POST("/test/image")
     suspend fun getTestImage(@Body request: TestImageRequest): Response<TestImageResponse>
-
-    @POST("/test/simulation")
-    suspend fun getTestSimulation(@Body request: TestSimulationRequest): Response<TestSimulationResponse>
 
 }
 
@@ -66,11 +61,6 @@ data class TestImageRequest(
     @SerializedName("definition_context") val definitionContext: String = ""
 )
 
-data class TestSimulationRequest(
-    @SerializedName("concept_title") val conceptTitle: String,
-    @SerializedName("simulation_type") val simulationType: String? = null
-)
-
 data class SessionMetadata(
     @SerializedName("show_simulation") val showSimulation: Boolean? = false,
     @SerializedName("simulation_config") val simulationConfig: Map<String,Any>? = emptyMap(),
@@ -91,10 +81,10 @@ data class SessionMetadata(
 
 data class StartSessionResponse(
     val success: Boolean = false,
-    @SerializedName("session_id") val sessionId: String? = null,
-    @SerializedName("thread_id") val threadId: String? = null,
-    @SerializedName("user_id") val userId: String? = null,
-    @SerializedName("agent_response") val agentResponse: String? = null,
+    @SerializedName("session_id") val sessionId: String,
+    @SerializedName("thread_id") val threadId: String,
+    @SerializedName("user_id") val userId: String,
+    @SerializedName("agent_response") val agentResponse: String,
     @SerializedName("current_state") val currentState: String? = null,
     @SerializedName("concept_title") val conceptTitle: String? = null,
     val message: String? = "Session started successfully",
@@ -120,31 +110,11 @@ data class TestImageResponse(
     val message: String? = null
 )
 
-data class TestSimulationResponse(
-    val success: Boolean = false,
-    val concept: String? = null,
-    @SerializedName("simulation_config") val simulationConfig: Map<String, Any>? = null,
-    val message: String? = null
-)
-
 data class ConceptsListResponse(
     val success: Boolean = true,
     val concepts: List<String> = emptyList(),
     val total: Int = 0,
     val message: String? = "Available concepts retrieved successfully"
-)
-
-data class PersonaInfo(
-    val name: String,
-    val description: String,
-    @SerializedName("sample_phrases") val samplePhrases: List<String>
-)
-
-data class PersonasListResponse(
-    val success: Boolean = true,
-    val personas: List<PersonaInfo> = emptyList(),
-    val total: Int = 0,
-    val message: String? = "Available test personas retrieved successfully"
 )
 
 data class HealthResponse(
@@ -164,7 +134,6 @@ data class SessionStatusResponse(
     @SerializedName("concept_title") val conceptTitle: String? = null,
     val message: String? = "Status retrieved successfully"
 )
-
 data class SessionHistoryResponse(
     val success: Boolean = false,
     @SerializedName("thread_id") val threadId: String? = null,
