@@ -25,35 +25,11 @@ fun ConceptMapResourceContent(
     isAudioPlaying: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val dimens = LocalDimensions.current
-    // Track loading state
-    var isLoading by remember(json) { mutableStateOf(true) }
-
     Box(modifier = modifier.fillMaxSize()) {
-        if (isLoading) {
-            // Show loading indicator while parsing
-            Column(
-                modifier = Modifier.align(Alignment.Center),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = dimens.progressIndicatorStrokeWidth
-                )
-                Text(
-                    text = stringResource(R.string.loading_concept_map),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        } else {
-            // Render the concept map with timing
-            ConceptMapModel(
-                json = json,
-                currentAudioTime = currentAudioTime,
-                isAudioPlaying = isAudioPlaying
-            )
-        }
+        ConceptMapModel(
+            json = json,
+            currentAudioTime = currentAudioTime,
+            isAudioPlaying = isAudioPlaying
+        )
     }
 }

@@ -28,6 +28,7 @@ fun ChatContentArea(
     isTyping: Boolean,
     typingText: String,
     ttsController: TextToSpeech,
+    isResourceCardShowing: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val dimens= LocalDimensions.current
@@ -67,8 +68,8 @@ fun ChatContentArea(
                 }
             }
 
-            // Agent Message
-            else -> {
+            // Agent Message (hidden when ResourceCard is showing)
+            !isResourceCardShowing -> {
                 // Fade as a fraction of container height — fully dynamic, no hardcoded sizes
                 val fadeFraction = 0.12f
 
