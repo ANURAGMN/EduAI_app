@@ -39,7 +39,7 @@ class UserViewModel(
 
     private val _selectedLanguage = MutableStateFlow(
         // Load saved language on initialization, default to "en" if null
-        sharedPreferenceUtils.getSelectedLanguage() ?: "en"
+        sharedPreferenceUtils.getLanguagePreference() ?: "en"
     )
     val selectedLanguage: StateFlow<String> = _selectedLanguage.asStateFlow()
 
@@ -101,7 +101,7 @@ class UserViewModel(
             _selectedLanguage.value = langCode
 
             // Save to SharedPreferences
-            sharedPreferenceUtils.saveSelectedLanguage(langCode)
+            sharedPreferenceUtils.setLanguagePreference(langCode)
 
             // Apply language change to app
             LanguageHelper.setLanguage(langCode)
@@ -192,8 +192,8 @@ class UserViewModel(
 
                 // Save preferences
                 sharedPreference.setLoggedIn(true)
-                sharedPreference.saveSelectedLanguage(currentUser.language)
-                sharedPreference.saveUserId(currentUser.id)
+                sharedPreference.setLanguagePreference(currentUser.language)
+                sharedPreference.setUserId(currentUser.id)
 
                 _existingUserSyncState.value = ExistingUserSyncState.Success
             } catch (e: Exception) {
@@ -248,8 +248,8 @@ class UserViewModel(
 
                     // Save preferences
                     sharedPreference.setLoggedIn(true)
-                    sharedPreference.saveSelectedLanguage(currentUser.language)
-                    sharedPreference.saveUserId(currentUser.id)
+                    sharedPreference.setLanguagePreference(currentUser.language)
+                    sharedPreference.setUserId(currentUser.id)
 
                     _userSaveState.value = UserSaveState.Success
                 } else {

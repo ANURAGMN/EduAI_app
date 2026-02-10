@@ -73,6 +73,7 @@
 # Keep all API request/response models
 -keep class com.anurag.eduai.data.remote.** { *; }
 -keep class com.anurag.eduai.data.model.** { *; }
+-keep class com.anurag.eduai.data.firebase.** { *; }
 
 # ========== KOTLINX SERIALIZATION ==========
 # Keep serializers for kotlinx.serialization (used for other purposes, not Retrofit)

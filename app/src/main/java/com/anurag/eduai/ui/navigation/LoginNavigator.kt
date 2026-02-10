@@ -21,7 +21,7 @@ fun LoginNavigator() {
 
     // Create ViewModel using factory
     val userViewModel: UserViewModel = viewModel(
-        factory = UserViewModelFactory()
+        factory = UserViewModelFactory(context = context)
     )
 
     NavHost(
