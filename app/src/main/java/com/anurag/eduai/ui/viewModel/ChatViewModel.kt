@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.anurag.eduai.data.remote.AgenticAIClient
 import com.anurag.eduai.data.remote.SessionMetadata
+import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.domain.chatbot.controller.IdleTimerController
 import com.anurag.eduai.domain.chatbot.controller.ResourceController
 import com.anurag.eduai.domain.chatbot.controller.TypingAnimationController
@@ -11,7 +12,7 @@ import com.anurag.eduai.domain.chatbot.usecase.AutoSuggestionUseCase
 import com.anurag.eduai.domain.chatbot.usecase.ChatIntent
 import com.anurag.eduai.domain.chatbot.usecase.ConceptMapUseCase
 import com.anurag.eduai.domain.chatbot.usecase.HandleAgentResponseUseCase
-import com.anurag.eduai.domain.chatbot.usecase.ResourceDecision
+import com.anurag.eduai.domain.chatbot.model.ResourceDecision
 import com.anurag.eduai.domain.chatbot.usecase.ResourceDecisionUseCase
 import com.anurag.eduai.domain.chatbot.usecase.SendMessageUseCase
 import com.anurag.eduai.domain.chatbot.usecase.SessionUseCase
@@ -58,13 +59,13 @@ class ChatViewModel @Inject constructor(
         is ChatIntent.TapAutosuggestion -> sendMessage(intent.suggestion, true)
         is ChatIntent.StartFreshSession -> startFreshSession(intent.concept)
         is ChatIntent.HasExistingSession -> Unit
-        ChatIntent.StartIdleTimer -> startIdleTimer()
-        ChatIntent.HideAutosuggestions -> hideAutosuggestions()
-        ChatIntent.MarkUserActive -> markUserActive()
-        ChatIntent.MarkUserInactive -> markUserInactive()
-        ChatIntent.RefreshConcepts -> refreshConcepts()
-        ChatIntent.DismissResource -> dismissResource()
-        ChatIntent.ResumeTTS -> resumeTTS()
+        is ChatIntent.StartIdleTimer -> startIdleTimer()
+        is ChatIntent.HideAutosuggestions -> hideAutosuggestions()
+        is ChatIntent.MarkUserActive -> markUserActive()
+        is ChatIntent.MarkUserInactive -> markUserInactive()
+        is ChatIntent.RefreshConcepts -> refreshConcepts()
+        is ChatIntent.DismissResource -> dismissResource()
+        is ChatIntent.ResumeTTS -> resumeTTS()
     }
 
     /**
@@ -302,17 +303,17 @@ class ChatViewModel @Inject constructor(
         return when (
             val decision = resourceDecisionUseCase.decide(metadata)) {
             is ResourceDecision.ShowImage -> {
-                com.anurag.eduai.debug.DebugLogger.debugLog("ChatViewModel", "Showing image: ${decision.url}")
+                DebugLogger.debugLog("ChatViewModel", "Showing image: ${decision.url}")
                 startImageResource(decision.url, decision.description)
                 true
             }
             is ResourceDecision.ShowConceptMap -> {
-                com.anurag.eduai.debug.DebugLogger.debugLog("ChatViewModel", "Generating concept map")
+                DebugLogger.debugLog("ChatViewModel", "Generating concept map")
                 generateAndShowConceptMap(agentResponse)
                 true
             }
             ResourceDecision.None -> {
-                com.anurag.eduai.debug.DebugLogger.debugLog("ChatViewModel", "No resource to show")
+                DebugLogger.debugLog("ChatViewModel", "No resource to show")
                 false
             }
         }
@@ -321,7 +322,7 @@ class ChatViewModel @Inject constructor(
     /**
      * Starts a timer to show an image resource for a certain duration.
      */
-    private fun startImageResource(url: String, description: String?, duration: Int = 120) = startResource(duration) { remaining ->
+    private fun startImageResource(url: String, description: String?, duration: Int=120) = startResource(duration) { remaining ->
         ResourceCardUiState.Image(url, description, remaining, duration)
     }
 

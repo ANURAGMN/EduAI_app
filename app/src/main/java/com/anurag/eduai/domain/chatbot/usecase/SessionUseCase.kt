@@ -5,6 +5,7 @@ import com.anurag.eduai.data.local.ConceptSessionRepository
 import com.anurag.eduai.data.remote.AgenticAIClient
 import com.anurag.eduai.data.remote.SessionMetadata
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.domain.chatbot.model.SessionResult
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -13,19 +14,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-data class SessionResult(
-    val success: Boolean,
-    val autosuggestions: List<String> = emptyList(),
-    val agentResponse: String? = null,
-    val metadata: SessionMetadata? = null,
-    val messages: List<ChatMessageModel> = emptyList()
-)
-
-data class SessionData(
-    val threadId: String,
-    val sessionId: String?,
-    val messages: List<ChatMessageModel>
-)
 
 class SessionUseCase @Inject constructor(
     @ApplicationContext private val context: Context,

@@ -1,15 +1,11 @@
 package com.anurag.eduai.domain.chatbot.usecase
 
+import com.anurag.eduai.domain.chatbot.model.HighlightResult
 import javax.inject.Inject
 
 class TextHighlightUseCase @Inject constructor(
     private val textProcessingUseCase: TextProcessingUseCase = TextProcessingUseCase()
 ) {
-    data class HighlightResult(
-        val displayText: String,
-        val boldRanges: List<IntRange>,
-        val highlightRange: IntRange?
-    )
 
     fun build(
         text: String,

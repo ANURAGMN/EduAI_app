@@ -2,6 +2,7 @@ package com.anurag.eduai.domain.chatbot.usecase
 
 import com.anurag.eduai.data.remote.SessionMetadata
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.domain.chatbot.model.ResourceDecision
 import javax.inject.Inject
 
 class ResourceDecisionUseCase @Inject constructor() {
