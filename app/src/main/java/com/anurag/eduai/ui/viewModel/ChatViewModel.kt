@@ -264,7 +264,10 @@ class ChatViewModel @Inject constructor(
                 if (resourceShown) _uiState.update { it.copy(pendingAgentResponse = agentText) }
                 else handleAgentMessage(agentText, response.metadata)
             }
-            _uiState.update { it.copy(isLoading = false) }
+            // Only set isLoading to false if no resource is being generated
+            if (!resourceShown) {
+                _uiState.update { it.copy(isLoading = false) }
+            }
         }
     }
 
@@ -328,8 +331,11 @@ class ChatViewModel @Inject constructor(
 
     private fun generateAndShowConceptMap(agentResponse: String) {
         viewModelScope.launch {
-            // Show loading message
-            _uiState.update { it.copy(loadingResourceMessage = "Generating concept map...") }
+            // Show loading message "Generating concept map..." in ChatContentArea
+            _uiState.update { it.copy(
+                loadingResourceMessage = "Generating concept map...",
+                isLoading = true
+            ) }
 
             // Generate concept map from agent response
             val result = conceptMapUseCase.generateConceptMap(
@@ -337,13 +343,32 @@ class ChatViewModel @Inject constructor(
                 language = _uiState.value.currentLanguage
             )
 
+            // Clear loading state
+            _uiState.update { it.copy(
+                loadingResourceMessage = null,
+                isLoading = false
+            ) }
+
             if (result.success && result.json != null && !result.isDefault) {
-                // Successfully generated concept map
+                // Successfully generated concept map - show ResourceCard
+                DebugLogger.debugLog("ChatViewModel", "Concept map generated successfully")
                 startConceptMap(result.json)
             } else {
-                // Failed to generate or got default map, dismiss resource
-                _uiState.update { it.copy(loadingResourceMessage = null) }
-                dismissResource()
+                // Failed to generate or got default map - log error and show agent message normally
+                val errorMsg = if (result.isDefault)
+                    "Default concept map detected - skipping"
+                else
+                    "Error generating concept map"
+
+                DebugLogger.debugLog("ChatViewModel", errorMsg)
+                _uiState.update { it.copy(conceptMapStatus = errorMsg) }
+
+                // Show the pending agent message with typing animation
+                val pending = _uiState.value.pendingAgentResponse
+                pending?.let {
+                    _uiState.update { it.copy(pendingAgentResponse = null) }
+                    handleAgentMessage(it, _uiState.value.agentMetadata)
+                }
             }
         }
     }
@@ -360,6 +385,19 @@ class ChatViewModel @Inject constructor(
      * Starts a timer to display a resource (image or concept map) for a specified duration.
      */
     private fun startResource(duration: Int, builder: (Int) -> ResourceCardUiState) {
+        // Immediately show the resource card
+        _uiState.update {
+            it.copy(
+                resourceCardState = builder(duration),
+                loadingResourceMessage = null,
+                isLoading = false,
+                ttsPausedForResource = true
+            )
+        }
+
+        DebugLogger.debugLog("ChatViewModel", "ResourceCard shown: ${_uiState.value.resourceCardState}")
+
+        // Start the countdown timer
         resourceController.startTimer(viewModelScope, duration,
             onTick = { remaining -> _uiState.update {
                 it.copy(resourceCardState = builder(remaining),

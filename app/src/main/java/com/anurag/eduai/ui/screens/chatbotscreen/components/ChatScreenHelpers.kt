@@ -118,6 +118,7 @@ fun ConversationView(
             isTyping = chatState.isTyping,
             typingText = chatState.typingText,
             ttsController = ttsController,
+            isResourceCardShowing = chatState.resourceCardState !is ResourceCardUiState.Hidden,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
