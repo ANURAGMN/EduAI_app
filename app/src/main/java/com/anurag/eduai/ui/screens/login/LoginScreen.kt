@@ -21,9 +21,9 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,9 +31,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.anurag.eduai.R
 import com.anurag.eduai.service.analytics.ScreenName
@@ -44,18 +46,26 @@ import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
+import com.anurag.eduai.ui.viewModel.UserViewModel
+import com.anurag.eduai.ui.viewmodel_factory.UserViewModelFactory
 
 @Composable
 fun LoginScreen(
     navController: NavController
 ) {
     val dimens = LocalDimensions.current
+    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.LOGIN)
 
-    var selectedLanguage by remember { mutableStateOf("English") }
+    // Get ViewModel
+    val userViewModel: UserViewModel = viewModel(
+        factory = UserViewModelFactory(context)
+    )
+
+    val selectedLanguage by userViewModel.selectedLanguage.collectAsState()
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     // Show snackbar when error message is set
@@ -99,7 +109,9 @@ fun LoginScreen(
                 // Language Selector Card
                 LanguageSelector(
                     selectedLanguage = selectedLanguage,
-                    onLanguageSelected = { selectedLanguage = it }
+                    onLanguageSelected = { langCode ->
+                        userViewModel.setLanguage(langCode)
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(dimens.spaceMedium))
@@ -138,8 +150,8 @@ fun LoginScreen(
 
                         // Google Sign in
                         GoogleLoginButton(
-                            selectedLanguage = selectedLanguage,
                             navController = navController,
+                            userViewModel = userViewModel,
                             onError = { error ->
                                 errorMessage = error
                             }

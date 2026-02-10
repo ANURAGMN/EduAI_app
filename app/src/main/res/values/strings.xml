@@ -275,4 +275,40 @@
     <string name="zoom_out">Zoom Out</string>
     <string name="simulations_to_explore">Simulation To Explore</string>
     <string name="lessons_to_master">Lessons To Master</string>
+
+    <string name="loading_profile">Loading profile…</string>
+    <string name="account">Account</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="notifications">Notifications</string>
+    <string name="support">Support</string>
+    <string name="contact_us">Contact Us</string>
+
+    <!-- Profile -->
+    <string name="email">Email</string>
+    <string name="phone">Phone</string>
+    <string name="class_level">Class</string>
+
+    <!-- Edit Profile -->
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="updating_profile">Updating profile…</string>
+    <string name="profile_updated">Profile updated successfully</string>
+    <string name="profile_update_failed">Failed to update profile</string>
+
+    <!-- Validation Messages -->
+    <string name="name_required">Name is required</string>
+    <string name="phone_required">Phone number is required</string>
+    <string name="invalid_phone">Invalid phone number</string>
+    <string name="school_required">School name is required</string>
+    <string name="class_required">Class is required</string>
+
+    <!-- Logout -->
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+
+    <!-- General -->
+    <string name="error">Error</string>
+    <string name="success">Success</string>
+    <string name="retry">Retry</string>
+    <string name="ok">OK</string>
 </resources>

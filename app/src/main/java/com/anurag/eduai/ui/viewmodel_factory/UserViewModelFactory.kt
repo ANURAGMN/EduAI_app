@@ -7,12 +7,12 @@ import androidx.lifecycle.ViewModelProvider
 import com.anurag.eduai.repository.FirebaseRepository
 import com.anurag.eduai.ui.viewModel.UserViewModel
 
-class UserViewModelFactory() : ViewModelProvider.Factory {
+class UserViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(UserViewModel::class.java)) {
-            return UserViewModel() as T
+            return UserViewModel(context = context) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }

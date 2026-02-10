@@ -81,7 +81,7 @@ fun UserDetailEntryScreen(
 
     // Get ViewModel using factory
     val userViewModel: UserViewModel = viewModel(
-        factory = UserViewModelFactory()
+        factory = UserViewModelFactory(context)
     )
 
     // Analytics Tracking

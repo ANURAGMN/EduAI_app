@@ -126,7 +126,15 @@ fun BottomNavBar() {
                     }
                 )
             }
-            composable(BottomNavItem.Setting.route) { SettingScreen() }
+            composable(BottomNavItem.Setting.route) {
+                SettingScreen(
+                    onNavigateBack = {
+                        navController.navigate("home") {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                            restoreState = true
+                        }
+                    }
+            ) }
             composable("learning") {
                 LearningNavigator(
                     onBackToHome = { navController.popBackStack() },

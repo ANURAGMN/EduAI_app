@@ -12,13 +12,18 @@ import com.anurag.eduai.repository.FirebaseRepository
 import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.repository.UserCheckResult
 import com.anurag.eduai.sync.FirebaseSyncManager
+import com.anurag.eduai.utils.LanguageHelper
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class UserViewModel(
-    private val repo: FirebaseRepository = FirebaseRepository()
+    private val repo: FirebaseRepository = FirebaseRepository(),
+    context: Context
 ) : ViewModel() {
+
+    val sharedPreferenceUtils = SharedPreferenceUtils(context)
 
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
     val loginState = _loginState.asStateFlow()
@@ -31,6 +36,12 @@ class UserViewModel(
 
     private val _existingUserSyncState = MutableStateFlow<ExistingUserSyncState>(ExistingUserSyncState.Idle)
     val existingUserSyncState = _existingUserSyncState.asStateFlow()
+
+    private val _selectedLanguage = MutableStateFlow(
+        // Load saved language on initialization, default to "en" if null
+        sharedPreferenceUtils.getSelectedLanguage() ?: "en"
+    )
+    val selectedLanguage: StateFlow<String> = _selectedLanguage.asStateFlow()
 
     fun updateId(id: String) {
         _user.value = _user.value.copy(id = id)
@@ -81,15 +92,35 @@ class UserViewModel(
     }
 
     /**
+     * Set language with language code (en, kn, etc.)
+     * Updates UI state, saves to SharedPreferences, and applies to app
+     */
+    fun setLanguage(langCode: String) {
+        viewModelScope.launch {
+            // Update UI state immediately
+            _selectedLanguage.value = langCode
+
+            // Save to SharedPreferences
+            sharedPreferenceUtils.saveSelectedLanguage(langCode)
+
+            // Apply language change to app
+            LanguageHelper.setLanguage(langCode)
+        }
+    }
+
+    /**
      * Handle Google login flow
      * Checks if user exists in Firebase and updates login state accordingly
      */
-    fun handleGoogleLogin(firebaseUser: User, selectedLanguage: String) {
+    fun handleGoogleLogin(firebaseUser: User) {
         viewModelScope.launch {
             _loginState.value = LoginState.Loading
             try {
+                // Use the currently selected language from state
+                val currentLanguage = _selectedLanguage.value
+
                 // Update language for new users
-                updateLanguage(selectedLanguage)
+                updateLanguage(currentLanguage)
 
                 // Check if user exists in Firebase
                 when (val result = repo.checkUserExists(firebaseUser.id)) {
@@ -99,7 +130,7 @@ class UserViewModel(
                     }
 
                     is UserCheckResult.NotFound -> {
-                        _user.value = firebaseUser.copy(language = selectedLanguage)
+                        _user.value = firebaseUser.copy(language = currentLanguage)
                         _loginState.value = LoginState.NewUser
                     }
 
@@ -161,8 +192,8 @@ class UserViewModel(
 
                 // Save preferences
                 sharedPreference.setLoggedIn(true)
-                sharedPreference.setLanguagePreference(currentUser.language)
-                sharedPreference.setUserId(currentUser.id)
+                sharedPreference.saveSelectedLanguage(currentUser.language)
+                sharedPreference.saveUserId(currentUser.id)
 
                 _existingUserSyncState.value = ExistingUserSyncState.Success
             } catch (e: Exception) {
@@ -217,8 +248,8 @@ class UserViewModel(
 
                     // Save preferences
                     sharedPreference.setLoggedIn(true)
-                    sharedPreference.setLanguagePreference(currentUser.language)
-                    sharedPreference.setUserId(currentUser.id)
+                    sharedPreference.saveSelectedLanguage(currentUser.language)
+                    sharedPreference.saveUserId(currentUser.id)
 
                     _userSaveState.value = UserSaveState.Success
                 } else {

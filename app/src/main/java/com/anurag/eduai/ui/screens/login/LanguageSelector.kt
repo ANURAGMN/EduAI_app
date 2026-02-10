@@ -32,10 +32,6 @@ fun LanguageSelector(
     onLanguageSelected: (String) -> Unit
 ) {
     val dimens = LocalDimensions.current
-    val languages = listOf(
-        stringResource(R.string.language_english),
-        stringResource(R.string.language_kannada)
-    )
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -66,14 +62,18 @@ fun LanguageSelector(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
             ) {
-                languages.forEach { language ->
-                    LanguageChip(
-                        text = language,
-                        isSelected = selectedLanguage == language,
-                        onClick = { onLanguageSelected(language) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                LanguageChip(
+                    text = stringResource(R.string.language_english),
+                    isSelected = selectedLanguage == "en",
+                    onClick = { onLanguageSelected("en") },
+                    modifier = Modifier.weight(1f)
+                )
+                LanguageChip(
+                    text = stringResource(R.string.language_kannada),
+                    isSelected = selectedLanguage == "kn",
+                    onClick = { onLanguageSelected("kn") },
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }

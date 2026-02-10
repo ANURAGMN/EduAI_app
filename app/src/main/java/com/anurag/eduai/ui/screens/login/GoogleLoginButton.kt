@@ -31,7 +31,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.anurag.eduai.R
 import com.anurag.eduai.debug.DebugLogger
@@ -44,23 +43,17 @@ import com.anurag.eduai.ui.theme.White
 import com.anurag.eduai.ui.viewModel.ExistingUserSyncState
 import com.anurag.eduai.ui.viewModel.LoginState
 import com.anurag.eduai.ui.viewModel.UserViewModel
-import com.anurag.eduai.ui.viewmodel_factory.UserViewModelFactory
 import kotlinx.coroutines.launch
 
 @Composable
 fun GoogleLoginButton(
-    selectedLanguage: String,
     navController: NavController,
+    userViewModel: UserViewModel,
     onError: (String) -> Unit
 ) {
     val context = LocalContext.current
     val dimens = LocalDimensions.current
     val scope = rememberCoroutineScope()
-
-    // Get ViewModel using factory
-    val userViewModel: UserViewModel = viewModel(
-        factory = UserViewModelFactory()
-    )
 
     val loginState by userViewModel.loginState.collectAsStateWithLifecycle()
     val existingUserSyncState by userViewModel.existingUserSyncState.collectAsStateWithLifecycle()
@@ -141,9 +134,9 @@ fun GoogleLoginButton(
                     scope = scope,
                     launcher = launcher,
                     onLoginSuccess = { firebaseUser ->
-                        // Handle login with ViewModel
+                        // Handle login with ViewModel - language is already in ViewModel state
                         scope.launch {
-                            userViewModel.handleGoogleLogin(firebaseUser, selectedLanguage)
+                            userViewModel.handleGoogleLogin(firebaseUser)
                         }
                         DebugLogger.debugLog("GoogleLoginButton", "Google sign-in successful: ${firebaseUser.email}")
                     },

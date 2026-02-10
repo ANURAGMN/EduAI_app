@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Notifications
@@ -50,9 +49,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.R
-import com.anurag.eduai.data.local.EduAiDatabase
-import com.anurag.eduai.data.local.SharedPreferenceUtils
-import com.anurag.eduai.repository.FirebaseRepository
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.setting.components.CenterPopupCard
@@ -76,39 +72,28 @@ import com.anurag.eduai.ui.viewmodel_factory.SettingViewModelFactory
 sealed class PopupScreen {
     object EditProfile : PopupScreen()
     object ContactUs : PopupScreen()
-    //    object Notification : PopupScreen()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingScreen() {
-    // Analytics Tracking
+fun SettingScreen(
+    onNavigateBack: () -> Unit
+) {
     TrackScreenEvent(screenName = ScreenName.SETTINGS)
 
     val dimens = LocalDimensions.current
 
-    var selectedLanguage by remember { mutableStateOf("English") }
     var activeScreen by remember { mutableStateOf<PopupScreen?>(null) }
-
     val context = LocalContext.current
 
-    val sharedPref = SharedPreferenceUtils(context)
-    val userId = sharedPref.getUserId().toString()
-
-    // TODO: move it to viewmodel
-    val firebaseRepository = FirebaseRepository()
-    val db = remember { EduAiDatabase.getInstance(context) }
-    val studentDao = db.studentDao()
-
-    val viewModel: SettingViewModel =
-        viewModel(
-            factory =
-                SettingViewModelFactory(firebaseRepository, studentDao, userId, context)
-        )
+    val viewModel: SettingViewModel = viewModel(factory = SettingViewModelFactory(context))
 
     val student by viewModel.student.collectAsState()
+    val selectedLanguage by viewModel.selectedLanguage.collectAsState()
+    val logoutState by viewModel.logoutState.collectAsState()
 
     val scrollState = rememberScrollState()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -117,48 +102,52 @@ fun SettingScreen() {
                         stringResource(R.string.settings),
                         fontWeight = FontWeight.SemiBold,
                         color = TextOnPrimary
-                    ) },
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = { /* Navigate back */}) {
+                    IconButton(onClick = onNavigateBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.back),
                             modifier = Modifier.size(dimens.iconMedium),
                             tint = TextOnPrimary
                         )
-                    } },
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandPrimary)
             )
         }
     ) { paddingValues ->
-        // TODO: remove all hard coded string
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier =
-                    Modifier.fillMaxSize()
+                    Modifier
+                        .fillMaxSize()
                         .background(BackgroundSecondary)
                         .padding(paddingValues)
                         .verticalScroll(scrollState)
                         .padding(dimens.screenPadding),
-                    verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)
+                verticalArrangement = Arrangement.spacedBy(dimens.spaceMedium)
             ) {
                 // Learning Language Section
-                SettingsSection(title = "Learning Language") {
+                SettingsSection(title = stringResource(R.string.language)) {
                     Row(
                         modifier =
-                            Modifier.fillMaxWidth().padding(vertical = dimens.spaceSmall),
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = dimens.spaceSmall),
                         horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
                     ) {
                         LanguageButton(
-                            text = "English",
-                            isSelected = selectedLanguage == "English",
-                            onClick = { selectedLanguage = "English" },
+                            text = stringResource(R.string.language_english),
+                            isSelected = selectedLanguage == "en",
+                            onClick = { viewModel.setLanguage("en") },
                             modifier = Modifier.weight(1f)
                         )
                         LanguageButton(
-                            text = "తెలుగు",
-                            isSelected = selectedLanguage == "తెలుగు",
-                            onClick = { selectedLanguage = "తెలుగు" },
+                            text = stringResource(R.string.language_kannada),
+                            isSelected = selectedLanguage == "kn",
+                            onClick = { viewModel.setLanguage("kn") },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -170,16 +159,10 @@ fun SettingScreen() {
                     fontWeight = FontWeight.Medium,
                     color = TextSecondary,
                 )
-                /**
-                 * sealed class ProfileState {
-                 *     object Loading
-                 *     data class Success(val student: Student)
-                 *     data class Error(val message: String)
-                 * }
-                 */
+
                 if (student == null) {
                     Text(
-                        text = "Loading profile…",
+                        text = stringResource(R.string.loading_profile),
                         modifier = Modifier.padding(dimens.spaceMedium),
                         color = TextSecondary
                     )
@@ -195,27 +178,27 @@ fun SettingScreen() {
                 }
 
                 // Account Section
-                SettingsSection(title = "Account") {
+                SettingsSection(title = stringResource(R.string.account)) {
                     SettingsItem(
                         icon = Icons.Default.Person,
                         iconTint = AccentBlue,
-                        title = "Edit Profile",
+                        title = stringResource(R.string.edit_profile),
                         onClick = { activeScreen = PopupScreen.EditProfile }
                     )
                     SettingsItem(
                         icon = Icons.Default.Notifications,
                         iconTint = ColorWarning,
-                        title = "Notifications",
-                        onClick = { /* Navigate to Notifications */}
+                        title = stringResource(R.string.notifications),
+                        onClick = { /* Navigate to Notifications */ }
                     )
                 }
 
                 // Support Section
-                SettingsSection(title = "Support") {
+                SettingsSection(title = stringResource(R.string.support)) {
                     SettingsItem(
                         icon = Icons.Default.Email,
                         iconTint = AccentBlue,
-                        title = "Contact Us",
+                        title = stringResource(R.string.contact_us),
                         onClick = { activeScreen = PopupScreen.ContactUs }
                     )
                 }
@@ -224,10 +207,10 @@ fun SettingScreen() {
 
                 // Logout Button
                 Button(
-                    onClick = {
-
-                    },
-                    modifier = Modifier.fillMaxWidth().height(dimens.buttonHeightLarge),
+                    onClick = { viewModel.logout() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(dimens.buttonHeightLarge),
                     colors =
                         ButtonDefaults.buttonColors(
                             containerColor = ColorError.copy(alpha = 0.1f)
@@ -235,7 +218,7 @@ fun SettingScreen() {
                     shape = RoundedCornerShape(dimens.cornerRadiusMedium)
                 ) {
                     Text(
-                        text = "Logout",
+                        text = stringResource(R.string.logout),
                         color = ColorError,
                         fontWeight = FontWeight.SemiBold,
                         style = MaterialTheme.typography.bodyLarge
@@ -248,7 +231,7 @@ fun SettingScreen() {
             when (activeScreen) {
                 PopupScreen.EditProfile ->
                     EditProfileScreen(
-                        userId = userId,
+                        userId = viewModel.userId,
                         student = student,
                         userViewModel = viewModel
                     ) { activeScreen = null }
@@ -264,6 +247,12 @@ fun SettingScreen() {
                     ) { activeScreen = null }
                 null -> {}
             }
+        }
+
+        // Handle logout success
+        if (logoutState) {
+//            onLogout()
+            // TODO:
         }
     }
 }
@@ -333,7 +322,8 @@ fun SettingsItem(icon: ImageVector, iconTint: Color, title: String, onClick: () 
 
     Row(
         modifier =
-            Modifier.fillMaxWidth()
+            Modifier
+                .fillMaxWidth()
                 .clickable(onClick = onClick)
                 .padding(vertical = dimens.spaceSmall),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -353,7 +343,7 @@ fun SettingsItem(icon: ImageVector, iconTint: Color, title: String, onClick: () 
         }
         Icon(
             imageVector = Icons.Default.ChevronRight,
-            contentDescription = "Navigate",
+            contentDescription = null,
             tint = IconSecondary,
             modifier = Modifier.size(dimens.iconMedium)
         )
