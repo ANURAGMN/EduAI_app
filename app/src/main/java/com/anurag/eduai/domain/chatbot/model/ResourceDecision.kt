@@ -1,4 +1,4 @@
-package com.anurag.eduai.domain.chatbot.usecase
+package com.anurag.eduai.domain.chatbot.model
 
 sealed class ResourceDecision {
     object None : ResourceDecision()

@@ -57,8 +57,6 @@ fun ChatbotScreen(
     // Track screen analytics
     TrackScreenEvent(ScreenName.CHATBOT)
 
-    val context = LocalContext.current
-
     // State collectors - using consolidated UI state
     val chatState by chatViewModel.uiState.collectAsState()
     val ttsState by ttsController.state.collectAsState()

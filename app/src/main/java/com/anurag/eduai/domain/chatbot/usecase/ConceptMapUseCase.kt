@@ -2,20 +2,14 @@ package com.anurag.eduai.domain.chatbot.usecase
 
 import com.anurag.eduai.data.remote.GeminiLLMClient
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.domain.chatbot.model.ConceptMap
 import javax.inject.Inject
-
-data class ConceptMapResult(
-    val success: Boolean,
-    val json: String? = null,
-    val generationTimeMs: Long = 0,
-    val isDefault: Boolean = false
-)
 
 class ConceptMapUseCase @Inject constructor(
     private val llmClient: GeminiLLMClient
 ) {
 
-    suspend fun generateConceptMap(aiResponse: String, language: String): ConceptMapResult {
+    suspend fun generateConceptMap(aiResponse: String, language: String): ConceptMap {
         return try {
             val generationStartTime = System.currentTimeMillis()
             DebugLogger.debugLog("ConceptMapUseCase", "Starting concept map generation...")
@@ -30,7 +24,7 @@ class ConceptMapUseCase @Inject constructor(
 
             DebugLogger.debugLog("ConceptMapUseCase", "Concept map JSON extracted in ${generationTimeMs}ms")
 
-            ConceptMapResult(
+            ConceptMap(
                 success = true,
                 json = json,
                 generationTimeMs = generationTimeMs,
@@ -38,10 +32,9 @@ class ConceptMapUseCase @Inject constructor(
             )
         } catch (e: Exception) {
             DebugLogger.errorLog("ConceptMapUseCase", "generateConceptMap error: ${e.message}")
-            ConceptMapResult(success = false)
+            ConceptMap(success = false)
         }
     }
-
 
      fun isDefaultConceptMap(json: String): Boolean {
         return llmClient.isDefaultConceptMap(json)
