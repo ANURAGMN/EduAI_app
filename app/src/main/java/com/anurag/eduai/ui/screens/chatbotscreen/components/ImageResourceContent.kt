@@ -25,7 +25,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
+import com.anurag.eduai.ui.theme.BackgroundPrimary
+import com.anurag.eduai.ui.theme.IconPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.White
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -50,7 +53,7 @@ fun ImageResourceContent(
         modifier = modifier
             .fillMaxSize()
             .clip(RectangleShape)
-            .background(MaterialTheme.colorScheme.surface)
+            .background(White)
             .pointerInput(Unit) {
                 // Handle Double Tap to Reset
                 detectTapGestures(
@@ -87,7 +90,7 @@ fun ImageResourceContent(
             when (state) {
                 is RequestState.Loading -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        CircularProgressIndicator(color = IconPrimary)
                     }
                 }
                 is RequestState.Failure -> {
@@ -136,13 +139,13 @@ private fun ZoomControlsOverlay(
         // Zoom Out Button
         IconButton(
             onClick = { onScaleChange((scale - 0.5f).coerceAtLeast(1f)) },
-            modifier = Modifier.size(dimens.iconLarge).background(White)
+            modifier = Modifier.size(dimens.iconLarge).background(BackgroundPrimary)
 
         ) {
             Icon(
                 imageVector = Icons.Filled.Remove,
                 contentDescription = stringResource(R.string.zoom_out),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = IconPrimary
             )
         }
         Spacer(modifier = Modifier.width(dimens.spaceSmall))
@@ -150,12 +153,14 @@ private fun ZoomControlsOverlay(
         // Zoom In Button
         IconButton(
             onClick = { onScaleChange((scale + 0.5f).coerceAtMost(4f)) },
-            modifier = Modifier.size(dimens.iconLarge).background(White)
+            modifier = Modifier
+                .size(dimens.iconLarge)
+                .background(BackgroundPrimary),
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = stringResource(R.string.zoom_in),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = IconPrimary
             )
         }
     }

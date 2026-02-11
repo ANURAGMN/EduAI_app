@@ -18,6 +18,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
+import com.anurag.eduai.ui.theme.BackgroundPrimary
+import com.anurag.eduai.ui.theme.IconPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.White
 
@@ -96,14 +98,14 @@ fun ResourcesCard(
                         .padding(dimens.spaceMedium)
                         .size(dimens.iconLarge),
                     colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        containerColor = BackgroundPrimary,
+                        contentColor = White
                     )
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = stringResource(R.string.close),
-                        tint = MaterialTheme.colorScheme.onErrorContainer
+                        tint = IconPrimary
                     )
                 }
             }
