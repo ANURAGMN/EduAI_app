@@ -250,12 +250,20 @@ fun ChatbotScreen(
             }
         }
 
-        // Resource Card
-        ResourcesCard(
-            state = chatState.resourceCardState,
-            onDismiss = { chatViewModel.onIntent(ChatIntent.DismissResource) },
-            modifier = Modifier.align(Alignment.Center)
-        )
+        // Resource Card - centered on screen
+        if (chatState.resourceCardState !is ResourceCardUiState.Hidden) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .align(Alignment.Center),
+                contentAlignment = Alignment.Center
+            ) {
+                ResourcesCard(
+                    state = chatState.resourceCardState,
+                    onDismiss = { chatViewModel.onIntent(ChatIntent.DismissResource) }
+                )
+            }
+        }
 
         // Debug LogOverlay
         LogOverlay(
