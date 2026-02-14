@@ -43,7 +43,7 @@ object FirebaseConceptMapper {
             conceptId = document.id,
             chapterId = document.get("chapter_id")?.toString() ?: error("ChapterId missing for concept ${document.id}"),
             conceptName = document.getString("concept_name") ?: error("concept_name missing for concept ${document.id}"),
-            conceptNameKannada = "",
+            conceptNameKannada = document.getString("concept_name_kn") ?: error("Kannada Concept name missing for concept ${document.id}"),
             orderIndex = document.getLong("conceptOrder")?.toInt() ?: 0,
             description = combinedDescription,
             hasSimulation = conceptType is ConceptType.Simulation,
