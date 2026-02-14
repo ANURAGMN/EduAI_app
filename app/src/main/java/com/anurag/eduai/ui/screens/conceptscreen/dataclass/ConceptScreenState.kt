@@ -17,7 +17,7 @@ data class ConceptScreenState(
     ),
     val type :String = "",
     val subjectName: String = "",
-    val classLevel: String = "",
+    val classLevel: Int = 7,
     val isLoading: Boolean = false,
     val error: String? = null
 )

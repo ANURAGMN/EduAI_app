@@ -10,6 +10,7 @@ import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.utils.StreakManager
+import com.anurag.eduai.utils.getLocalizedName
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -98,7 +99,11 @@ class HomeViewModel(
 
                         // Show concepts without progress entries
                         val combined = firstUnitConcepts.map { concept ->
-                            null to concept
+                            // copy with localized name
+                            val localizedConcept = concept.copy(
+                                conceptName = concept.getLocalizedName()
+                            )
+                            null to localizedConcept
                         }
 
                         progressConcepts.value = combined
@@ -113,7 +118,11 @@ class HomeViewModel(
                         .collect { concepts ->
                             val combined = curatedProgress.map { progress ->
                                 val concept = concepts.find { it.conceptId == progress.itemId }
-                                progress to concept
+                                val localizedConcept = concept?.copy(
+                                    conceptName = concept.getLocalizedName()
+                                )
+
+                                progress to localizedConcept
                             }
 
                             progressConcepts.value = combined

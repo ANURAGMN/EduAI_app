@@ -12,6 +12,7 @@ import com.anurag.eduai.ui.models.ConceptStatus
 import com.anurag.eduai.ui.models.ConceptUiModel
 import com.anurag.eduai.ui.models.ChapterProgressUiModel
 import com.anurag.eduai.ui.screens.conceptscreen.dataclass.ConceptScreenState
+import com.anurag.eduai.utils.getLocalizedName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -67,7 +68,7 @@ class ConceptViewModel @Inject constructor(
 
                     ConceptUiModel(
                         id = concept.conceptId,
-                        name = concept.conceptName,
+                        name = concept.getLocalizedName(),
                         order = concept.orderIndex,
                         status = when (status) {
                             "COMPLETED" -> ConceptStatus.COMPLETED
@@ -95,12 +96,12 @@ class ConceptViewModel @Inject constructor(
 
                 _state.value = _state.value.copy(
                     concepts = conceptUiModels,
-                    chapterName = chapter?.chapterName ?: "",
+                    chapterName = chapter?.getLocalizedName() ?: "",
                     chapterId = chapterId,
                     type = type,
                     progressUiModel = progressUiModel,
-                    subjectName = subject?.subjectName ?: "",
-                    classLevel = "Class $classLevel",
+                    subjectName = subject?.getLocalizedName() ?: "",
+                    classLevel = classLevel,
                     isLoading = false,
                     error = null
                 )

@@ -74,7 +74,7 @@ fun SubjectCard(
             ) {
                 // Subject Initial
                 Text(
-                    text = subject.name.firstOrNull()?.uppercase() ?: "",
+                    text=stringResource(R.string.science_emoji),//TODO: Replace with different emoji for each subject
                     style = MaterialTheme.typography.headlineMedium,
                     color = TextOnAccent
                 )

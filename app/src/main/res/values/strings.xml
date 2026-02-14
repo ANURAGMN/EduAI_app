@@ -163,6 +163,7 @@
     <string name="ncert_curriculum">NCERT Curriculum</string>
     <string name="choose_subjects_to_continue">Choose subjects to continue</string>
     <string name="choose_a_subject_to_continue">Choose a subject to continue</string>
+    <string name="science_emoji">👩🏻‍🔬</string>
 
     <plurals name="chapter_count">
         <item quantity="one">%d Chapter</item>

@@ -71,7 +71,7 @@ fun ConceptScreen(
             .background(BackgroundPrimary)
     ) {
         ConceptScreenHeader(
-            classId = state.classLevel,
+            classLevel = state.classLevel,
             subjectName = state.subjectName,
             chapterName = state.chapterName,
             progress = state.progressUiModel,

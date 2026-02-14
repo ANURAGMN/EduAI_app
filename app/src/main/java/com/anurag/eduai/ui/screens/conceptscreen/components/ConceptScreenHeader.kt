@@ -36,7 +36,7 @@ import com.anurag.eduai.ui.theme.TextOnPrimary
 @Composable
 fun ConceptScreenHeader(
     modifier: Modifier = Modifier,
-    classId: String,
+    classLevel: Int,
     subjectName: String,
     chapterName: String,
     onBackClick: () -> Unit = {},
@@ -84,7 +84,7 @@ fun ConceptScreenHeader(
             ) {
                 // First line: Class X - Subject
                 Text(
-                    text = "$classId - $subjectName",
+                    text = stringResource(R.string.class_and_subject, classLevel, subjectName),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Normal,
                     color = TextOnPrimary.copy(alpha = 0.9f)

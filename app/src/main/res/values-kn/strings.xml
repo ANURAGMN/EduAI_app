@@ -164,6 +164,7 @@
     <string name="ncert_curriculum">NCERT ಪಠ್ಯಕ್ರಮ</string>
     <string name="choose_subjects_to_continue">ಮುಂದುವರಿಸಲು ವಿಷಯಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="choose_a_subject_to_continue">ಮುಂದುವರಿಸಲು ಒಂದು ವಿಷಯವನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="science_emoji">👩🏻‍🔬</string>
 
     <plurals name="chapter_count">
         <item quantity="one">%d ಅಧ್ಯಾಯ</item>

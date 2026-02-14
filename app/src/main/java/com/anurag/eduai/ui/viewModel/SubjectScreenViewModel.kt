@@ -7,6 +7,7 @@ import com.anurag.eduai.repository.SubjectRepository
 import com.anurag.eduai.ui.screens.subjectscreen.dataclass.SubjectScreenState
 import com.anurag.eduai.ui.models.SubjectUiModel
 import com.anurag.eduai.ui.theme.BrandPrimary
+import com.anurag.eduai.utils.getLocalizedName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,11 +34,10 @@ class SubjectViewModel @Inject constructor(
             try {
                 val subjectEntities = repository.getSubjectsForClass(_state.value.classLevel)
 
-                // Convert entities to UI models
                 val subjectUiModels = subjectEntities.map { entity ->
                     SubjectUiModel(
                         id = entity.subjectId,
-                        name = entity.subjectName,
+                        name = entity.getLocalizedName(),
                         color = BrandPrimary,
                         totalChapters = entity.totalChapters
                     )

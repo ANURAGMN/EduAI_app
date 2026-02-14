@@ -9,6 +9,7 @@ import com.anurag.eduai.repository.SubjectRepository
 import com.anurag.eduai.ui.models.ChapterStatus
 import com.anurag.eduai.ui.models.ChapterUiModel
 import com.anurag.eduai.ui.screens.chapterscreen.dataclass.ChapterUiState
+import com.anurag.eduai.utils.getLocalizedName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -62,7 +63,7 @@ class ChapterViewModel @Inject constructor(
 
                     ChapterUiModel(
                         id = chapter.chapterId,
-                        name = chapter.chapterName,
+                        name = chapter.getLocalizedName(),
                         totalConcepts = totalConcepts,
                         completedConcepts = completedConcepts,
                         status = status
@@ -71,7 +72,7 @@ class ChapterViewModel @Inject constructor(
 
                 _state.value = _state.value.copy(
                     chapters = chapterUiModels,
-                    subjectName = subject?.subjectName ?: "",
+                    subjectName = subject?.getLocalizedName() ?: "",
                     classLevel = classLevel,
                     isLoading = false,
                     error = null
