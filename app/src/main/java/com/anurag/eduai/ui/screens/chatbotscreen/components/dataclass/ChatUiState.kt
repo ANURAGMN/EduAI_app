@@ -54,7 +54,10 @@ data class ChatUiState(
     val conceptMapStatus: String? = null,
 
     // Resource Loading Message (shown instead of thinking text when resource is being loaded)
-    val loadingResourceMessage: String? = null
+    val loadingResourceMessage: String? = null,
+
+    // Session Resume Dialog (for ConceptScreen) - stores conceptName when dialog should be shown
+    val pendingConceptForDialog: String? = null
 )
 
 /**

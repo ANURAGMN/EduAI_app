@@ -2,8 +2,8 @@ package com.anurag.eduai.domain.chatbot.usecase
 
 import android.content.Context
 import com.anurag.eduai.data.local.ConceptSessionRepository
+import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.remote.AgenticAIClient
-import com.anurag.eduai.data.remote.SessionMetadata
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.domain.chatbot.model.SessionResult
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
@@ -17,7 +17,8 @@ import javax.inject.Inject
 
 class SessionUseCase @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val agenticAIClient: AgenticAIClient
+    private val agenticAIClient: AgenticAIClient,
+    private val sharedPrefs: SharedPreferenceUtils
 ) {
     private val conceptThreadMap = mutableMapOf<String, String>()
     private val conceptSessionMap = mutableMapOf<String, String>()
@@ -165,6 +166,14 @@ class SessionUseCase @Inject constructor(
         if (conceptThreadMap[concept] != null) return true
         val repository = ConceptSessionRepository(context)
         return repository.loadMapping(concept) != null
+    }
+
+    /**
+     * Gets the app language preference
+     * Returns "en" or "kn" based on user's app language setting
+     */
+    fun getAppLanguage(): String {
+        return sharedPrefs.getLanguagePreference() ?: "en"
     }
 
     private fun saveThreadMapping(concept: String, threadId: String, sessionId: String) {

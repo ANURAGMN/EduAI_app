@@ -14,10 +14,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.anurag.eduai.ui.screens.chapterscreen.ChapterScreen
 import com.anurag.eduai.ui.screens.chatbotscreen.ChatbotScreen
 import com.anurag.eduai.ui.screens.conceptdetailscreen.ConceptDetailScreen
@@ -147,7 +149,7 @@ fun BottomNavBar() {
                     onGoSetting = {
                         navController.navigate("setting") {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                            launchSingleTop = true
+                            launchSingleTop =  true
                             restoreState = true
                         }
                     }
@@ -188,7 +190,9 @@ fun BottomNavBar() {
                     chapterId = chapterId,
                     type = type,
                     onBackClick = { navController.popBackStack() },
-                    onConceptClick = { navController.navigate("chatbot") },
+                    onConceptClick = { conceptId ->
+                        navController.navigate("chatbot?conceptId=$conceptId")
+                    },
                     onGoHome = {
                         navController.navigate("home") {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
@@ -250,7 +254,17 @@ fun BottomNavBar() {
                     }
                 )
             }
-            composable("chatbot") { ChatbotScreen() }
+            composable(
+                route = "chatbot?conceptId={conceptId}",
+                arguments = listOf(navArgument("conceptId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                })
+            ) { backStackEntry ->
+                val conceptId = backStackEntry.arguments?.getString("conceptId")
+                ChatbotScreen(conceptId = conceptId)
+            }
             composable(route = "simulation_agent/{simulationId}") { backStackEntry ->
                 val simulationId = backStackEntry.arguments?.getString("simulationId")!!
                 SimulationAgentScreen(

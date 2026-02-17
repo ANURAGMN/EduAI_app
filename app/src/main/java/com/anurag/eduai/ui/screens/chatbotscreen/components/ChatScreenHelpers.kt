@@ -140,7 +140,8 @@ fun ChatEffects(
     permissionLauncher: ManagedActivityResultLauncher<String, Boolean>,
     onPermissionGranted: (Boolean) -> Unit,
     onSpeechTextProcessed: (String) -> Unit,
-    lastProcessedSpeechText: String
+    lastProcessedSpeechText: String,
+    conceptId: String? = null
 ){
     val context = LocalContext.current
 
@@ -159,6 +160,12 @@ fun ChatEffects(
 
         if (!hasPermission) {
             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+
+        // Auto-start session after initialization completes
+        conceptId?.let {
+            DebugLogger.debugLog("ChatEffects", "Auto-starting with conceptId: $it")
+            chatViewModel.onIntent(ChatIntent.AutoStartWithConcept(it))
         }
     }
 

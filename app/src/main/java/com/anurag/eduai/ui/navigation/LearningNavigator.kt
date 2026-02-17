@@ -4,9 +4,11 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.anurag.eduai.ui.screens.chapterscreen.ChapterScreen
 import com.anurag.eduai.ui.screens.chatbotscreen.ChatbotScreen
 import com.anurag.eduai.ui.screens.conceptdetailscreen.ConceptDetailScreen
@@ -21,7 +23,7 @@ object LearningRoutes {
     const val CHAPTERS = "chapters/{subjectId}"
     const val CONCEPTS = "concepts/{chapterId}/{type}"
     const val CONCEPT_DETAIL = "concept_detail/{conceptId}"
-    const val CHATBOT = "chatbot"
+    const val CHATBOT = "chatbot?conceptId={conceptId}"
     const val SIMULATION_LIST = "simulation_list/{chapterId}/{classLevel}/{subjectName}/{chapterName}"
     const val SIMULATION_VIEWER = "simulation_viewer/{simulationId}/{htmlFileName}/{simulationTitle}"
 }
@@ -83,8 +85,8 @@ fun LearningNavigator(
                 chapterId = chapterId,
                 type = type,
                 onBackClick = { navController.popBackStack() },
-                onConceptClick = {
-                    navController.navigate(LearningRoutes.CHATBOT)
+                onConceptClick = { conceptId ->
+                    navController.navigate("chatbot?conceptId=$conceptId")
                 },
                 onGoHome = onGoHome,
                 onGoSetting = onGoSetting
@@ -101,8 +103,16 @@ fun LearningNavigator(
             )
         }
 
-        composable(LearningRoutes.CHATBOT) {
-            ChatbotScreen()
+        composable(
+            route = LearningRoutes.CHATBOT,
+            arguments = listOf(navArgument("conceptId") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            })
+        ) { backStackEntry ->
+            val conceptId = backStackEntry.arguments?.getString("conceptId")
+            ChatbotScreen(conceptId = conceptId)
         }
 
         // Simulation Viewer Screen

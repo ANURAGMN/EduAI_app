@@ -17,6 +17,7 @@ import com.anurag.eduai.domain.chatbot.usecase.ResourceDecisionUseCase
 import com.anurag.eduai.domain.chatbot.usecase.SendMessageUseCase
 import com.anurag.eduai.domain.chatbot.usecase.SessionUseCase
 import com.anurag.eduai.domain.chatbot.usecase.TranslationUseCase
+import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,7 +40,8 @@ class ChatViewModel @Inject constructor(
     private val sendMessageUseCase: SendMessageUseCase,
     private val handleAgentResponseUseCase: HandleAgentResponseUseCase,
     private val agenticAIClient: AgenticAIClient,
-    private val translationUseCase: TranslationUseCase
+    private val translationUseCase: TranslationUseCase,
+    private val conceptRepository: ConceptRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -53,6 +55,7 @@ class ChatViewModel @Inject constructor(
      */
     fun onIntent(intent: ChatIntent) = when (intent) {
         is ChatIntent.Initialize -> initialize(intent.userId)
+        is ChatIntent.AutoStartWithConcept -> autoStartWithConcept(intent.conceptId)
         is ChatIntent.UpdateInputText -> updateInput(intent.text)
         is ChatIntent.SetStudentLevel -> _uiState.update { it.copy(studentLevel = intent.level) }
         is ChatIntent.SetKannada -> {
@@ -86,7 +89,41 @@ class ChatViewModel @Inject constructor(
         if (initialized) return
         initialized = true
         userId = id
+
+        val appLanguage = sessionUseCase.getAppLanguage()
+        val isKannada = appLanguage == "kn"
+        _uiState.update {
+            it.copy(
+                isKannada = isKannada,
+                currentLanguage = appLanguage
+            )
+        }
+        DebugLogger.debugLog("ChatViewModel", "Initialized with app language: $appLanguage, isKannada: $isKannada")
+
         refreshConcepts()
+    }
+
+    /**
+     * Auto-starts a session with a concept from navigation (when user clicks a concept).
+     * Fetches the concept name from the database using conceptId and delegates to selectConcept.
+     * Uses only English concept name for starting the session, not Kannada.
+     */
+    private fun autoStartWithConcept(conceptId: String) = viewModelScope.launch {
+        try {
+            DebugLogger.debugLog("ChatViewModel", "autoStartWithConcept called with conceptId: $conceptId, userId: $userId")
+
+            // Fetch concept from repository and use English name only
+            val conceptEntity = conceptRepository.getConcept(conceptId)
+            if (conceptEntity == null) {
+                DebugLogger.errorLog("ChatViewModel", "Concept not found for ID: $conceptId")
+                return@launch
+            }
+
+            DebugLogger.debugLog("ChatViewModel", "Auto-starting with concept: ${conceptEntity.conceptName}")
+            selectConcept(conceptEntity.conceptName)
+        } catch (e: Exception) {
+            DebugLogger.errorLog("ChatViewModel", "Error auto-starting concept: ${e.message}")
+        }
     }
 
     /**
@@ -175,13 +212,49 @@ class ChatViewModel @Inject constructor(
     /**
      * Handles the selection of a concept by the user.
      * It checks if there's an existing session for the selected concept.
+     * If from ConceptScreen and session exists, shows dialog. Otherwise proceeds directly.
      */
-    private fun selectConcept(concept: String) = viewModelScope.launch {
-        resetUiForConcept(concept)
+    private fun selectConcept(concept: String, showDialogIfExists: Boolean = false) = viewModelScope.launch {
+        DebugLogger.debugLog("ChatViewModel", "selectConcept called with concept: $concept, showDialog: $showDialogIfExists")
+
+        // Check if session exists
         val mapping = sessionUseCase.loadThreadMapping(concept)
-        if (mapping != null)
-            resumeSession(mapping.first, mapping.second)
-        else startSession(concept)
+
+        if (showDialogIfExists && mapping != null) {
+            // Show dialog for user to choose resume or start new
+            DebugLogger.debugLog("ChatViewModel", "Session exists, showing dialog for concept: $concept")
+            _uiState.update { it.copy(pendingConceptForDialog = concept) }
+        } else {
+            // Proceed with session (resume if exists, start new if not)
+            resetUiForConcept(concept)
+            if (mapping != null) {
+                DebugLogger.debugLog("ChatViewModel", "Found existing session, resuming: threadId=${mapping.first}, sessionId=${mapping.second}")
+                resumeSession(mapping.first, mapping.second)
+            } else {
+                DebugLogger.debugLog("ChatViewModel", "No existing session found, starting new session")
+                startSession(concept)
+            }
+        }
+    }
+
+    /**
+     * Overloaded method for ConceptScreen to check and show dialog if session exists
+     */
+    fun selectConceptWithDialog(concept: String) {
+        if (sessionUseCase.hasExistingSession(concept)) {
+            // Show dialog
+            _uiState.update { it.copy(pendingConceptForDialog = concept) }
+        } else {
+            // No session exists, start directly
+            selectConcept(concept, showDialogIfExists = false)
+        }
+    }
+
+    /**
+     * Dismiss the session dialog without taking action
+     */
+    fun dismissSessionDialog() {
+        _uiState.update { it.copy(pendingConceptForDialog = null) }
     }
 
     /**
@@ -211,8 +284,15 @@ class ChatViewModel @Inject constructor(
      * Translates autosuggestions if Kannada mode is enabled.
      */
     private suspend fun startSession(concept: String) {
+        DebugLogger.debugLog("ChatViewModel", "startSession called for concept: $concept, userId: $userId, studentLevel: ${_uiState.value.studentLevel}")
         val result = sessionUseCase.startSession(concept, userId, _uiState.value.isKannada, _uiState.value.studentLevel)
-        if (!result.success) return _uiState.update { it.copy(isLoading = false) }
+
+        if (!result.success) {
+            DebugLogger.errorLog("ChatViewModel", "Failed to start session for concept: $concept")
+            return _uiState.update { it.copy(isLoading = false) }
+        }
+
+        DebugLogger.debugLog("ChatViewModel", "Session started successfully for concept: $concept")
 
         // Translate autosuggestions if Kannada mode is enabled
         val translatedSuggestions = if (_uiState.value.isKannada && result.autosuggestions.isNotEmpty()) {
@@ -488,5 +568,4 @@ class ChatViewModel @Inject constructor(
      * This is called when a resource is dismissed to allow the agent's response to be read aloud again.
      */
     private fun resumeTTS() = _uiState.update { it.copy(ttsPausedForResource = false) }
-
 }

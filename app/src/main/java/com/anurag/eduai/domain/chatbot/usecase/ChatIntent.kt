@@ -2,6 +2,7 @@ package com.anurag.eduai.domain.chatbot.usecase
 
 sealed interface ChatIntent {
     data class Initialize(val userId: String) : ChatIntent
+    data class AutoStartWithConcept(val conceptId: String) : ChatIntent
     data class UpdateInputText(val text: String) : ChatIntent
     data class SetStudentLevel(val level: String) : ChatIntent
     data class SetKannada(val enabled: Boolean) : ChatIntent

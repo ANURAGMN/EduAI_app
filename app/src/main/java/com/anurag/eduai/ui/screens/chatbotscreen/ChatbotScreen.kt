@@ -49,10 +49,14 @@ import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSet
 
 @Composable
 fun ChatbotScreen(
+    conceptId: String? = null,
     chatViewModel: ChatViewModel = hiltViewModel(),
     ttsController: TextToSpeech = hiltViewModel(),
     sttController: SpeechToText = hiltViewModel()
 ) {
+    // Debug logging
+    com.anurag.eduai.debug.DebugLogger.debugLog("ChatbotScreen", "ChatbotScreen composable - conceptId: $conceptId")
+
     // Track screen analytics
     TrackScreenEvent(ScreenName.CHATBOT)
 
@@ -119,7 +123,8 @@ fun ChatbotScreen(
         permissionLauncher = permissionLauncher,
         onPermissionGranted = { permissionGranted = it },
         onSpeechTextProcessed =  {lastProcessedSpeechText = it} ,
-        lastProcessedSpeechText = lastProcessedSpeechText
+        lastProcessedSpeechText = lastProcessedSpeechText,
+        conceptId = conceptId
     )
 
     // Background

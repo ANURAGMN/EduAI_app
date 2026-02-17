@@ -19,13 +19,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.anurag.eduai.R
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.domain.chatbot.usecase.ChatIntent
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
+import com.anurag.eduai.ui.screens.chatbotscreen.components.AppDialog
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptScreenHeader
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptCard
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
+import com.anurag.eduai.ui.viewModel.ChatViewModel
 import com.anurag.eduai.ui.viewModel.ConceptViewModel
 import com.anurag.eduai.utils.StreakManager
 
@@ -46,13 +49,15 @@ fun ConceptScreen(
     onConceptClick: (String) -> Unit = {},
     onGoHome:() -> Unit = {},
     onGoSetting:() -> Unit = {},
-    viewModel: ConceptViewModel = hiltViewModel()
+    viewModel: ConceptViewModel = hiltViewModel(),
+    chatViewModel: ChatViewModel = hiltViewModel()
 ) {
     TrackScreenEvent(screenName = ScreenName.CONCEPT)
 
     val dimens = LocalDimensions.current
     val context = LocalContext.current
     val state by viewModel.state.collectAsState()
+    val chatState by chatViewModel.uiState.collectAsState()
 
     // streak update
     val streakManager = remember { StreakManager(context) }
@@ -118,12 +123,50 @@ fun ConceptScreen(
                             concept = conceptUiModel,
                             onClick = {
                                 DebugLogger.debugLog("ConceptScreen", "Concept clicked: ${conceptUiModel.id}")
-                                onConceptClick(conceptUiModel.id)
+                                
+                                // Use the simplified approach - check and show dialog if session exists
+                                chatViewModel.selectConceptWithDialog(conceptUiModel.name)
+
+                                // If no existing session, navigate directly
+                                if (!chatViewModel.hasExistingSession(conceptUiModel.name)) {
+                                    onConceptClick(conceptUiModel.id)
+                                }
                             }
                         )
                     }
                 }
             }
         }
+        
+        // Session Resume Dialog - Completely stateless, driven by ChatViewModel
+        AppDialog(
+            show = chatState.pendingConceptForDialog != null,
+            title = stringResource(R.string.existing_session_found),
+            message = stringResource(R.string.resume_or_start_fresh),
+            confirmText = stringResource(R.string.continue_session),
+            dismissText = stringResource(R.string.start_new),
+            onConfirm = {
+                // Resume existing session - use SelectConcept intent
+                chatState.pendingConceptForDialog?.let { conceptName ->
+                    chatViewModel.onIntent(ChatIntent.SelectConcept(conceptName))
+                    chatViewModel.dismissSessionDialog()
+                    // Find conceptId and navigate
+                    state.concepts.find { it.name == conceptName }?.let { concept ->
+                        onConceptClick(concept.id)
+                    }
+                }
+            },
+            onDismiss = {
+                // Start fresh session - use StartFreshSession intent
+                chatState.pendingConceptForDialog?.let { conceptName ->
+                    chatViewModel.onIntent(ChatIntent.StartFreshSession(conceptName))
+                    chatViewModel.dismissSessionDialog()
+                    // Find conceptId and navigate
+                    state.concepts.find { it.name == conceptName }?.let { concept ->
+                        onConceptClick(concept.id)
+                    }
+                }
+            }
+        )
     }
 }
