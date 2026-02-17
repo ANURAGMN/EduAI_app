@@ -244,4 +244,10 @@ class AgenticAIClient(
         withContext(Dispatchers.IO) {
             callWithRetry { service.getAvailableConcepts() }
         }
+
+    suspend fun getTranslatedText(text: String): Result<TranslationResponse> =
+        withContext(Dispatchers.IO) {
+            val req = TranslationRequest(text)
+            callWithRetry { service.translateText(req) }
+        }
 }

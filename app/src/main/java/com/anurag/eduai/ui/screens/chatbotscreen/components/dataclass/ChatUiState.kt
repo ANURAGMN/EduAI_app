@@ -19,6 +19,7 @@ data class ChatUiState(
     val isSessionStarted: Boolean = false,
     val selectedConcept: String? = null,
     val availableConcepts: List<String> = emptyList(),
+    val displayConcepts: List<String> = emptyList(),
 
     // Auto-suggestions
     val autosuggestions: List<String> = emptyList(),

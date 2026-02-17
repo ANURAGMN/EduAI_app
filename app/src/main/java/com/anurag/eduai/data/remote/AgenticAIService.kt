@@ -36,6 +36,9 @@ interface AgenticAIService {
     @POST("/test/image")
     suspend fun getTestImage(@Body request: TestImageRequest): Response<TestImageResponse>
 
+    //translation
+    @POST("/translate")
+    suspend fun translateText(@Body request: TranslationRequest): Response<TranslationResponse>
 }
 
 //All Data Classes
@@ -61,6 +64,9 @@ data class TestImageRequest(
     @SerializedName("definition_context") val definitionContext: String = ""
 )
 
+data class TranslationRequest(
+    @SerializedName("text") val text: String,
+)
 data class SessionMetadata(
     @SerializedName("show_simulation") val showSimulation: Boolean? = false,
     @SerializedName("simulation_config") val simulationConfig: Map<String,Any>? = emptyMap(),
@@ -115,6 +121,13 @@ data class ConceptsListResponse(
     val concepts: List<String> = emptyList(),
     val total: Int = 0,
     val message: String? = "Available concepts retrieved successfully"
+)
+
+data class TranslationResponse(
+    @SerializedName("original") val original: String,
+    @SerializedName("translated") val translated: String,
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("error") val error: String? = null
 )
 
 data class HealthResponse(

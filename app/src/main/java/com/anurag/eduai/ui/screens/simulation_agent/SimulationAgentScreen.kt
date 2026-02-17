@@ -17,10 +17,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettings
-import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatHeaderIcons
 import com.anurag.eduai.ui.screens.chatbotscreen.components.InitialAvatarView
 import com.anurag.eduai.ui.screens.chatbotscreen.components.InputSection
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
 import com.anurag.eduai.ui.screens.simulation_agent.components.SimulationConversationView
 import com.anurag.eduai.ui.screens.simulation_agent.components.SimulationWebViewCard

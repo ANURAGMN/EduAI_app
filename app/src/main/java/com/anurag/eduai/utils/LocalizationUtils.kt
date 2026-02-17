@@ -10,18 +10,42 @@ import com.anurag.eduai.data.local.entities.SubjectEntity
  */
 
 fun SubjectEntity.getLocalizedName(): String {
-    return if (isKannada()) subjectNameKannada else subjectName
+    return if (isKannada()) {
+        subjectNameKannada.ifBlank { subjectName }
+    } else {
+        subjectName
+    }
 }
 
 fun ChapterEntity.getLocalizedName(): String {
-    return if (isKannada()) chapterNameKannada else chapterName
+    return if (isKannada()) {
+        chapterNameKannada.ifBlank { chapterName }
+    } else {
+        chapterName
+    }
 }
 
 fun ConceptEntity.getLocalizedName(): String {
-    return if (isKannada()) conceptNameKannada else conceptName
+    return if (isKannada()) {
+        conceptNameKannada.ifBlank { conceptName }
+    } else {
+        conceptName
+    }
 }
 
-private fun isKannada(): Boolean {
+/**
+ * Check if the app is currently in Kannada language
+ */
+fun isKannada(): Boolean {
     val currentLocale = AppCompatDelegate.getApplicationLocales()[0]?.language
     return currentLocale == "kn"
 }
+
+/**
+ * Get current app language code
+ */
+fun getCurrentLanguageCode(): String {
+    val currentLocale = AppCompatDelegate.getApplicationLocales()[0]?.language
+    return currentLocale ?: "en"
+}
+

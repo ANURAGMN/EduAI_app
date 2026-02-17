@@ -10,25 +10,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.components.DropDownMenu
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.IconPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
-
-data class ChatBotSettingsState(
-    val selectedAvatar: String = "disable",
-    val selectedSpeed: String = "0.75x",
-    val selectedStudentLevel: String = "medium",
-    val voiceOptions: List<String> = emptyList(),
-    val displayedVoiceName: String = "",
-    val availableConcepts: List<String> = emptyList(),
-    val selectedConcept: String? = null,
-    val isLoadingConcepts: Boolean = false
-)
 
 @Composable
 fun ChatBotSettings(
@@ -159,11 +148,37 @@ fun ChatBotSettings(
                     style = MaterialTheme.typography.titleSmall
                 )
                 Spacer(Modifier.height(dimens.spaceSmall))
+
+                // Map selected concept to display name
+                val selectedDisplayConcept = if (state.selectedConcept != null) {
+                    val index = state.availableConcepts.indexOf(state.selectedConcept)
+                    if (index >= 0 && index < state.displayConcepts.size) {
+                        state.displayConcepts[index]
+                    } else {
+                        state.selectedConcept
+                    }
+                } else {
+                    null
+                }
+
                 DropDownMenu(
                     label = stringResource(R.string.select_concepts),
-                    options = state.availableConcepts,
-                    selectedValue = state.selectedConcept ?: stringResource(R.string.tap_to_choose_topic),
-                    onValueSelected = onConceptChange
+                    options = state.displayConcepts.ifEmpty { state.availableConcepts },
+                    selectedValue = selectedDisplayConcept ?: stringResource(R.string.tap_to_choose_topic),
+                    onValueSelected = { displayedConcept ->
+                        // Map displayed concept back to original concept
+                        val originalConcept = if (state.displayConcepts.isNotEmpty()) {
+                            val index = state.displayConcepts.indexOf(displayedConcept)
+                            if (index >= 0 && index < state.availableConcepts.size) {
+                                state.availableConcepts[index]
+                            } else {
+                                displayedConcept
+                            }
+                        } else {
+                            displayedConcept
+                        }
+                        onConceptChange(originalConcept)
+                    }
                 )
             }
 

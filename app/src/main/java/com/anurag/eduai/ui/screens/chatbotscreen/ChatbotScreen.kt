@@ -20,7 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -29,7 +28,6 @@ import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.chatbotscreen.components.AppDialog
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettings
-import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatEffects
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatHeaderIcons
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ConversationView
@@ -47,6 +45,7 @@ import com.anurag.eduai.ui.viewModel.TextToSpeech
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.isConversationStarted
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.lastAiMessage
 import com.anurag.eduai.domain.chatbot.usecase.ChatIntent
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 
 @Composable
 fun ChatbotScreen(

@@ -16,6 +16,7 @@ import com.anurag.eduai.domain.chatbot.model.ResourceDecision
 import com.anurag.eduai.domain.chatbot.usecase.ResourceDecisionUseCase
 import com.anurag.eduai.domain.chatbot.usecase.SendMessageUseCase
 import com.anurag.eduai.domain.chatbot.usecase.SessionUseCase
+import com.anurag.eduai.domain.chatbot.usecase.TranslationUseCase
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,7 +38,8 @@ class ChatViewModel @Inject constructor(
     private val resourceController: ResourceController,
     private val sendMessageUseCase: SendMessageUseCase,
     private val handleAgentResponseUseCase: HandleAgentResponseUseCase,
-    private val agenticAIClient: AgenticAIClient
+    private val agenticAIClient: AgenticAIClient,
+    private val translationUseCase: TranslationUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -53,7 +55,10 @@ class ChatViewModel @Inject constructor(
         is ChatIntent.Initialize -> initialize(intent.userId)
         is ChatIntent.UpdateInputText -> updateInput(intent.text)
         is ChatIntent.SetStudentLevel -> _uiState.update { it.copy(studentLevel = intent.level) }
-        is ChatIntent.SetKannada -> _uiState.update { it.copy(isKannada = intent.enabled, currentLanguage = if (intent.enabled) "kn" else "en") }
+        is ChatIntent.SetKannada -> {
+            _uiState.update { it.copy(isKannada = intent.enabled, currentLanguage = if (intent.enabled) "kn" else "en") }
+            refreshConcepts()
+        }
         is ChatIntent.SelectConcept -> selectConcept(intent.concept)
         is ChatIntent.SendMessage -> sendMessage(intent.message, false)
         is ChatIntent.TapAutosuggestion -> sendMessage(intent.suggestion, true)
@@ -87,14 +92,29 @@ class ChatViewModel @Inject constructor(
     /**
      * Fetches the list of available concepts from the backend and updates the UI state.
      * Shows a loading indicator while fetching.
+     * Translates concepts to Kannada if Kannada mode is enabled.
      */
     private fun refreshConcepts() = viewModelScope.launch {
         _uiState.update { it.copy(isLoading = true) }
         val result = agenticAIClient.getConceptsList()
-        if (result.isSuccess) _uiState.update {
-            it.copy(
-                availableConcepts = result.getOrNull()?.concepts ?: emptyList()
-            )
+        if (result.isSuccess) {
+            val concepts = result.getOrNull()?.concepts ?: emptyList()
+
+            // Translate concepts if Kannada mode is enabled
+            val displayConcepts = if (_uiState.value.isKannada) {
+                DebugLogger.debugLog("ChatViewModel", "Translating ${concepts.size} concepts to Kannada...")
+                translationUseCase.translateListToKannada(concepts)
+            } else {
+                concepts
+            }
+
+            _uiState.update {
+                it.copy(
+                    availableConcepts = concepts,
+                    displayConcepts = displayConcepts
+                )
+            }
+            DebugLogger.debugLog("ChatViewModel", "Concepts loaded: ${concepts.size}, Display concepts: ${displayConcepts.size}")
         }
         _uiState.update { it.copy(isLoading = false) }
     }
