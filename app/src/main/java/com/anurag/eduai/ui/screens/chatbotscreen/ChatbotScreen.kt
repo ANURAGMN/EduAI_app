@@ -194,6 +194,7 @@ fun ChatbotScreen(
                                 voiceOptions = voiceOptions,
                                 displayedVoiceName = displayedVoiceName,
                                 availableConcepts = chatState.availableConcepts,
+                                displayConcepts = chatState.displayConcepts,
                                 selectedConcept = chatState.selectedConcept,
                                 isLoadingConcepts = chatState.availableConcepts.isEmpty()
                             ),

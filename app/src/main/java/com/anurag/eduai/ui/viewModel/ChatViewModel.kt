@@ -208,13 +208,22 @@ class ChatViewModel @Inject constructor(
 
     /**
      * Starts a new session for the given concept by calling the SessionUseCase.
+     * Translates autosuggestions if Kannada mode is enabled.
      */
     private suspend fun startSession(concept: String) {
         val result = sessionUseCase.startSession(concept, userId, _uiState.value.isKannada, _uiState.value.studentLevel)
         if (!result.success) return _uiState.update { it.copy(isLoading = false) }
+
+        // Translate autosuggestions if Kannada mode is enabled
+        val translatedSuggestions = if (_uiState.value.isKannada && result.autosuggestions.isNotEmpty()) {
+            translationUseCase.translateListToKannada(result.autosuggestions)
+        } else {
+            result.autosuggestions
+        }
+
         _uiState.update { it.copy(
             isSessionStarted = true,
-            autosuggestions = result.autosuggestions,
+            autosuggestions = translatedSuggestions,
             agentMetadata = result.metadata,
             showAutosuggestions = false,
             isLoading = false) }
@@ -224,12 +233,28 @@ class ChatViewModel @Inject constructor(
     /**
      * Resumes an existing session using the thread ID and session ID.
      * It fetches the session history and updates the UI state with the previous messages and session information.
+     * Translates AI messages to Kannada if Kannada mode is enabled.
      */
     private suspend fun resumeSession(threadId: String, sessionId: String?) {
         val result = sessionUseCase.resumeSession(threadId, sessionId)
+
+        // Translate AI messages if Kannada mode is enabled
+        val translatedMessages = if (_uiState.value.isKannada && result.messages.isNotEmpty()) {
+            result.messages.map { message ->
+                if (message.sender.lowercase() == "ai") {
+                    val translated = translationUseCase.translateToKannada(message.content)
+                    message.copy(content = translated)
+                } else {
+                    message
+                }
+            }
+        } else {
+            result.messages
+        }
+
         _uiState.update { it.copy(
             isSessionStarted = result.success,
-            messages = result.messages,
+            messages = translatedMessages,
             isLoading = false) }
     }
 
@@ -253,6 +278,7 @@ class ChatViewModel @Inject constructor(
      * It updates the UI state with the user's message, shows a loading indicator,
      * and then processes the agent's response to update the chat messages, autosuggestions,
      * and any resources that need to be displayed.
+     * Translates autosuggestions if Kannada mode is enabled.
      */
     private fun sendMessage(message: String, fromSuggestion: Boolean) {
         if (message.isBlank()) return
@@ -270,8 +296,16 @@ class ChatViewModel @Inject constructor(
                 _uiState.value.studentLevel)
 
             if (!response.success) return@launch appendError()
+
+            // Translate autosuggestions if Kannada mode is enabled
+            val translatedSuggestions = if (_uiState.value.isKannada && response.autosuggestions.isNotEmpty()) {
+                translationUseCase.translateListToKannada(response.autosuggestions)
+            } else {
+                response.autosuggestions
+            }
+
             _uiState.update { it.copy(
-                autosuggestions = response.autosuggestions,
+                autosuggestions = translatedSuggestions,
                 agentMetadata = response.metadata,
                 showAutosuggestions = false)
             }
@@ -303,17 +337,29 @@ class ChatViewModel @Inject constructor(
     /**
      * Processes the agent's response text,
      * updates the chat messages with the new response, and starts the typing animation.
+     * Translates the response to Kannada if Kannada mode is enabled.
      */
     private fun handleAgentMessage(text: String, metadata: SessionMetadata?) {
-        val cleaned = handleAgentResponseUseCase.processAgentResponse(text)
-        _uiState.update { it.copy(messages = it.messages + sendMessageUseCase.createAIMessage(cleaned), isTyping = true, typingText = "", fullTextForTTS = cleaned, shouldStartTTS = true, isTypingComplete = false, showAutosuggestions = false) }
-        typingAnimationController.startTypingAnimation(cleaned, viewModelScope) { typingText, complete ->
-            _uiState.update { it.copy(
-                typingText = typingText,
-                isTyping = !complete,
-                isTypingComplete = complete,
-                shouldStartTTS = if (complete) false
-                                else it.shouldStartTTS)
+        viewModelScope.launch {
+            val cleaned = handleAgentResponseUseCase.processAgentResponse(text)
+
+            // Translate to Kannada if enabled
+            val displayText = if (_uiState.value.isKannada) {
+                DebugLogger.debugLog("ChatViewModel", "Translating agent response to Kannada...")
+                translationUseCase.translateToKannada(cleaned)
+            } else {
+                cleaned
+            }
+
+            _uiState.update { it.copy(messages = it.messages + sendMessageUseCase.createAIMessage(displayText), isTyping = true, typingText = "", fullTextForTTS = displayText, shouldStartTTS = true, isTypingComplete = false, showAutosuggestions = false) }
+            typingAnimationController.startTypingAnimation(displayText, viewModelScope) { typingText, complete ->
+                _uiState.update { it.copy(
+                    typingText = typingText,
+                    isTyping = !complete,
+                    isTypingComplete = complete,
+                    shouldStartTTS = if (complete) false
+                                    else it.shouldStartTTS)
+                }
             }
         }
     }

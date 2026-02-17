@@ -11,7 +11,12 @@ import com.anurag.eduai.data.local.entities.SubjectEntity
 
 fun SubjectEntity.getLocalizedName(): String {
     return if (isKannada()) {
-        subjectNameKannada.ifBlank { subjectName }
+        // Hardcoded Kannada name for Science subject as mapping is not done yet
+        if (subjectNameKannada.isBlank() && subjectName.equals("science", ignoreCase = true)) {
+            "ವಿಜ್ಞಾನ"  // Science in Kannada
+        } else {
+            subjectNameKannada.ifBlank { subjectName }
+        }
     } else {
         subjectName
     }
