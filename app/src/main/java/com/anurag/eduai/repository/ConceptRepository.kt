@@ -13,6 +13,14 @@ class ConceptRepository(
     private val progressDao: ProgressDao
 ) {
     /**
+     * Retrieves all concepts from the database.
+     * returns List of ConceptEntity
+     */
+    suspend fun getAllConcepts(): List<ConceptEntity> {
+        return conceptDao.getAllConceptsSync()
+    }
+
+    /**
      * Retrieves a list of concepts for a given chapter.
      * returns List of ConceptEntity
      */

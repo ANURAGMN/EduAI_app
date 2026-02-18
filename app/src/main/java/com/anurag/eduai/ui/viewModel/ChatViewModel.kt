@@ -127,20 +127,24 @@ class ChatViewModel @Inject constructor(
     }
 
     /**
-     * Fetches the list of available concepts from the backend and updates the UI state.
+     * Fetches the list of available concepts from the local database and updates the UI state.
      * Shows a loading indicator while fetching.
-     * Translates concepts to Kannada if Kannada mode is enabled.
+     * Uses Kannada concept names if Kannada mode is enabled.
      */
     private fun refreshConcepts() = viewModelScope.launch {
         _uiState.update { it.copy(isLoading = true) }
-        val result = agenticAIClient.getConceptsList()
-        if (result.isSuccess) {
-            val concepts = result.getOrNull()?.concepts ?: emptyList()
+        try {
+            // Fetch all concepts from the database
+            val conceptEntities = conceptRepository.getAllConcepts()
 
-            // Translate concepts if Kannada mode is enabled
+            // Extract English concept names for internal use (session management)
+            val concepts = conceptEntities.map { it.conceptName }
+
+            // Use Kannada names for display if Kannada mode is enabled
             val displayConcepts = if (_uiState.value.isKannada) {
-                DebugLogger.debugLog("ChatViewModel", "Translating ${concepts.size} concepts to Kannada...")
-                translationUseCase.translateListToKannada(concepts)
+                conceptEntities.map {
+                    it.conceptNameKannada.ifBlank { it.conceptName }
+                }
             } else {
                 concepts
             }
@@ -151,7 +155,9 @@ class ChatViewModel @Inject constructor(
                     displayConcepts = displayConcepts
                 )
             }
-            DebugLogger.debugLog("ChatViewModel", "Concepts loaded: ${concepts.size}, Display concepts: ${displayConcepts.size}")
+            DebugLogger.debugLog("ChatViewModel", "Concepts loaded from DB: ${concepts.size}, Display concepts: ${displayConcepts.size}")
+        } catch (e: Exception) {
+            DebugLogger.errorLog("ChatViewModel", "Error loading concepts from DB: ${e.message}")
         }
         _uiState.update { it.copy(isLoading = false) }
     }
