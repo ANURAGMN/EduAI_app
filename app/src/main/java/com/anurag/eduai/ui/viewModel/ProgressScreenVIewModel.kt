@@ -11,6 +11,7 @@ import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.data.local.entities.SubjectEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.utils.StreakManager
+import com.anurag.eduai.utils.getLocalizedName
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +26,7 @@ import java.time.LocalDate
 class ProgressScreenViewModel(
     private val progressDao: ProgressDao,
     private val subjectDao: SubjectDao,
+    private val chapterDao: com.anurag.eduai.data.local.dao.ChapterDao,
     private val streakManager: StreakManager,
     private val studentDao: StudentDao,
     private val userId: String
@@ -111,12 +113,21 @@ class ProgressScreenViewModel(
     fun getChapterProgressSummary(classLevel: Int, subject: String) {
         viewModelScope.launch {
             val result = progressDao.getChapterWiseProgress(userId, classLevel, subject)
-            _chapterProgressSummary.value = result
-            categorizeChapters(result)
+
+            // Get localized chapter names
+            val localizedResult = result.map { summary ->
+                val chapter = chapterDao.getChapter(summary.chapterId)
+                summary.copy(
+                    chapterName = chapter?.getLocalizedName() ?: summary.chapterName
+                )
+            }
+
+            _chapterProgressSummary.value = localizedResult
+            categorizeChapters(localizedResult)
 
             DebugLogger.debugLog(
                 "ProgressScreenViewModel",
-                "ChapterWiseProgress = $result"
+                "ChapterWiseProgress = $localizedResult"
             )
         }
     }
@@ -124,6 +135,7 @@ class ProgressScreenViewModel(
     fun loadSubjects(classLevel: Int) {
         viewModelScope.launch {
             val subjectList = subjectDao.getSubjectsForClassSync(classLevel)
+            // Subjects already have localized names via getLocalizedName() extension
             _subjects.value = subjectList
 
             // Auto-select first subject if available and none selected

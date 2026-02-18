@@ -54,6 +54,7 @@ fun ProgressScreen(
     val progressDao = db.progressDao()
     val studentDao = db.studentDao()
     val subjectDao = db.subjectDao()
+    val chapterDao = db.chapterDao()
 
     // Initialize ViewModel
     val viewModel: ProgressScreenViewModel =
@@ -62,6 +63,7 @@ fun ProgressScreen(
                 ProgressViewModelFactory(
                     progressDao,
                     subjectDao,
+                    chapterDao,
                     streakManager,
                     studentDao,
                     userId

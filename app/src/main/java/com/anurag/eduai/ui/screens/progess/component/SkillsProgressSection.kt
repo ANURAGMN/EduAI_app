@@ -18,6 +18,7 @@ import com.anurag.eduai.data.local.dao.ChapterProgressSummary
 import com.anurag.eduai.data.local.entities.SubjectEntity
 import com.anurag.eduai.ui.theme.*
 import com.anurag.eduai.ui.viewModel.ProgressColorType
+import com.anurag.eduai.utils.getLocalizedName
 
 /**
  * Skills Progress Section Component
@@ -67,7 +68,7 @@ fun SkillsProgressSection(
             ) {
                 TextField(
                     readOnly = true,
-                    value = selectedSubject?.let { capitalizeSubjectName(it.subjectName) }
+                    value = selectedSubject?.let { capitalizeSubjectName(it.getLocalizedName()) }
                         ?: stringResource(R.string.select_subject),
                     onValueChange = {},
                     modifier = Modifier
@@ -98,7 +99,7 @@ fun SkillsProgressSection(
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    text = subject.subjectName,
+                                    text = subject.getLocalizedName(),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = DropdownTextColor
                                 )
