@@ -24,9 +24,12 @@ import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.viewModel.ConceptDetailViewModel
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.res.stringResource
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.ColorWarning
 import com.anurag.eduai.ui.theme.LocalDimensions
+import com.anurag.eduai.utils.getLocalizedName
+import com.anurag.eduai.R
 
 @Composable
 fun ConceptDetailScreen(
@@ -50,7 +53,7 @@ fun ConceptDetailScreen(
             .background(BackgroundPrimary)
     ) {
         ConceptDetailScreenHeader(
-            title = state.concept?.conceptName ?: "Concept",
+            title = state.concept?.getLocalizedName() ?: stringResource(R.string.concept),
             subtitle = "Concepts",
             onBackClick = onBackClick,
             onGoHome = onGoHome,
@@ -81,7 +84,7 @@ fun ConceptDetailScreen(
             ) {
                 state.concept?.let { concept ->
                     Text(
-                        text = concept.conceptName,
+                        text = concept.getLocalizedName(),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom =dimens.spaceMedium),

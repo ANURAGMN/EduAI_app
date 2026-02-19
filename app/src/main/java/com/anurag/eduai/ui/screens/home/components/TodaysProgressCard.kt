@@ -40,6 +40,7 @@ import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.theme.White
+import com.anurag.eduai.utils.getLocalizedName
 
 @Composable
 fun TodayProgressCard(
@@ -146,7 +147,7 @@ fun TodayProgressCard(
                 val isInProgress = lessonStatus == LessonStatus.IN_PROGRESS
 
                 LessonStatusCard(
-                    title = concept?.conceptName
+                    title = concept?.getLocalizedName()
                         ?: stringResource(R.string.unknown_concept),
                     subtitle = stringResource(R.string.status_label, lessonStatus.value),
                     iconColor = when (lessonStatus) {
