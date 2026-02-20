@@ -45,7 +45,7 @@ data class ChatUiState(
 
     // Metadata
     val agentMetadata: SessionMetadata? = null,
-
+    val currentState: String? = null,
     // Pending Message Queue (for messages received while resource card is showing)
     val pendingAgentResponse: String? = null,
     val waitingForResourceCardDismiss: Boolean = false,

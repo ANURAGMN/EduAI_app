@@ -46,7 +46,7 @@ fun LearningNavigator(
         composable(LearningRoutes.HOME) {
             HomeScreen(
                 onLessonClick = { conceptId ->
-                    navController.navigate("concept_detail/$conceptId")
+                    navController.navigate("chatbot?conceptId=$conceptId")
                 }
             )
         }

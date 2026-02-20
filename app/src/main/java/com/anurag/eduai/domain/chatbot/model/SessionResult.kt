@@ -8,7 +8,8 @@ data class SessionResult(
     val autosuggestions: List<String> = emptyList(),
     val agentResponse: String? = null,
     val metadata: SessionMetadata? = null,
-    val messages: List<ChatMessageModel> = emptyList()
+    val messages: List<ChatMessageModel> = emptyList(),
+    val currentState: String? = null
 )
 
 data class SessionData(

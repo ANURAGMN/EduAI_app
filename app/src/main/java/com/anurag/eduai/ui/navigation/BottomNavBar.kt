@@ -105,7 +105,7 @@ fun BottomNavBar() {
                         navController.navigate("chapters/$subjectId")
                     },
                     onLessonClick = { conceptId ->
-                        navController.navigate("concept_detail/$conceptId")
+                        navController.navigate("chatbot?conceptId=$conceptId")
                     },
                     onSimulationClick = { simulationId ->
                         navController.navigate("simulation_agent/$simulationId")

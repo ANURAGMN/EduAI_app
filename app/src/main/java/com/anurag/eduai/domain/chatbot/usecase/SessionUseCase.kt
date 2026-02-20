@@ -48,7 +48,8 @@ class SessionUseCase @Inject constructor(
                     success = true,
                     autosuggestions = response.autosuggestions,
                     agentResponse = response.agentResponse,
-                    metadata = response.metadata
+                    metadata = response.metadata,
+                    currentState = response.currentState
                 )
             } else {
                 SessionResult(false)
@@ -109,7 +110,8 @@ class SessionUseCase @Inject constructor(
                     success = true,
                     autosuggestions = resp.autosuggestions,
                     agentResponse = resp.agentResponse,
-                    metadata = resp.metadata
+                    metadata = resp.metadata,
+                    currentState = resp.currentState
                 )
             } else {
                 SessionResult(false)

@@ -20,6 +20,7 @@ import com.anurag.eduai.domain.chatbot.usecase.TranslationUseCase
 import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
+import com.anurag.eduai.utils.getLocalizedName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -41,7 +42,8 @@ class ChatViewModel @Inject constructor(
     private val handleAgentResponseUseCase: HandleAgentResponseUseCase,
     private val agenticAIClient: AgenticAIClient,
     private val translationUseCase: TranslationUseCase,
-    private val conceptRepository: ConceptRepository
+    private val conceptRepository: ConceptRepository,
+    private val conceptProgressUseCase: com.anurag.eduai.domain.chatbot.usecase.ConceptProgressUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -300,6 +302,12 @@ class ChatViewModel @Inject constructor(
 
         DebugLogger.debugLog("ChatViewModel", "Session started successfully for concept: $concept")
 
+        // Mark concept as IN_PROGRESS when session starts successfully
+        val conceptEntity = conceptRepository.getAllConcepts().find { it.getLocalizedName() == concept }
+        if (conceptEntity != null && userId.isNotEmpty()) {
+            conceptProgressUseCase.markConceptInProgress(userId, conceptEntity.conceptId)
+        }
+
         // Translate autosuggestions if Kannada mode is enabled
         val translatedSuggestions = if (_uiState.value.isKannada && result.autosuggestions.isNotEmpty()) {
             translationUseCase.translateListToKannada(result.autosuggestions)
@@ -311,6 +319,7 @@ class ChatViewModel @Inject constructor(
             isSessionStarted = true,
             autosuggestions = translatedSuggestions,
             agentMetadata = result.metadata,
+            currentState = result.currentState,
             showAutosuggestions = false,
             isLoading = false) }
         result.agentResponse?.let { handleAgentMessage(it, result.metadata) }
@@ -393,8 +402,21 @@ class ChatViewModel @Inject constructor(
             _uiState.update { it.copy(
                 autosuggestions = translatedSuggestions,
                 agentMetadata = response.metadata,
+                currentState = response.currentState,
                 showAutosuggestions = false)
             }
+
+            // Check if END node is reached and mark concept as completed
+            if (response.currentState?.uppercase() == "END") {
+                val conceptEntity = conceptRepository.getAllConcepts().find {
+                    it.getLocalizedName() == _uiState.value.selectedConcept
+                }
+                if (conceptEntity != null && userId.isNotEmpty()) {
+                    conceptProgressUseCase.markConceptCompleted(userId, conceptEntity.conceptId)
+                    DebugLogger.debugLog("ChatViewModel", "Concept ${conceptEntity.conceptId} marked as COMPLETED - END node reached")
+                }
+            }
+
             val resourceShown = response.metadata?.let { metadata ->
                 response.agentResponse?.let { agentText ->
                     handleResource(metadata, agentText)
