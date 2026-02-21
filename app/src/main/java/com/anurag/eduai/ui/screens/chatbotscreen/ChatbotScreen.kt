@@ -94,6 +94,18 @@ fun ChatbotScreen(
         }
     }
 
+    val shouldDisableSend = remember(
+        chatState.isTyping,
+        chatState.isLoading,
+        ttsState.isSpeaking,
+        chatState.resourceCardState
+    ) {
+        chatState.isTyping ||
+                chatState.isLoading ||
+                ttsState.isSpeaking ||
+                chatState.resourceCardState !is ResourceCardUiState.Hidden
+    }
+
     // Animation values
     val avatarSize by animateDpAsState(
         targetValue = if (isConversationStarted) 100.dp else 180.dp,
@@ -153,7 +165,8 @@ fun ChatbotScreen(
                         chatViewModel.onIntent(ChatIntent.HideAutosuggestions)
                         chatViewModel.onIntent(ChatIntent.MarkUserActive)
                         if (permissionGranted && sttState.isInitialized) {
-                            sttController.startListening("en-IN")
+                            val language = if (chatState.isKannada) "kn-IN" else "en-IN"
+                            sttController.startListening(language)
                         } else if (!permissionGranted) {
                             permissionLauncher.launch(RECORD_AUDIO)
                         }
@@ -163,6 +176,7 @@ fun ChatbotScreen(
                         chatViewModel.onIntent(ChatIntent.TapAutosuggestion(suggestion))
                         chatViewModel.onIntent(ChatIntent.HideAutosuggestions)
                     },
+                    shouldDisableSend = shouldDisableSend,
                     modifier = Modifier
                         .imePadding()
                 )

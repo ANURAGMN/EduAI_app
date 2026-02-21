@@ -50,6 +50,7 @@ fun InputSection(
     onSpeakClick: () -> Unit,
     onStopListening: () -> Unit,
     onSuggestionClick: (String) -> Unit,
+    shouldDisableSend: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -76,7 +77,8 @@ fun InputSection(
                 textValue = chatState.inputText,
                 onTextChange = onTextChange,
                 onSpeakClick = onSpeakClick,
-                onSendClick = onSendClick
+                onSendClick = onSendClick,
+                shouldDisableSend = shouldDisableSend
             )
         } else {
             ListeningOverlay(
@@ -99,6 +101,7 @@ private fun InputField(
     onTextChange: (String) -> Unit,
     onSpeakClick: () -> Unit,
     onSendClick: () -> Unit,
+    shouldDisableSend: Boolean = false,
     modifier: Modifier = Modifier
 ) {
 
@@ -107,11 +110,15 @@ private fun InputField(
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
 
+    // Determine if send should be enabled
+    val canSend = hasText && !shouldDisableSend
+
     // Text Input Field
     TextField(
         value = textValue,
         shape= RoundedCornerShape(dimens.inputRadius),
         onValueChange = onTextChange,
+//        enabled = !shouldDisableSend, // Disable input while AI is responding
         modifier = modifier
             .fillMaxWidth()
             .padding(dimens.inputPadding)
@@ -131,35 +138,39 @@ private fun InputField(
                 // Send Icon
                 IconButton(
                     onClick = {
-                        focusManager.clearFocus()
-                        keyboardController?.hide()
-                        onSendClick()
+                        if (canSend) {
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
+                            onSendClick()
+                        }
                     },
+                    enabled = canSend,
                     modifier = Modifier.size(dimens.iconMedium)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = stringResource(R.string.send_message),
-                        tint = HeaderGradientStart,
+                        tint = if (canSend) HeaderGradientStart else Color.Gray.copy(alpha = 0.5f),
                     )
                 }
             } else {
-                // Mic Icon
+                // Mic Icon - disable mic during AI response
                 IconButton(
                     onClick = onSpeakClick,
+                    enabled = !shouldDisableSend,
                     modifier = Modifier.size(dimens.iconMedium)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Mic,
                         contentDescription = stringResource(R.string.start_listening),
-                        tint = IconPrimary,
+                        tint = if (shouldDisableSend) IconPrimary.copy(alpha = 0.5f) else IconPrimary,
                     )
                 }
             }
         },
         // Better Keyboard Support
         keyboardOptions = KeyboardOptions(
-            imeAction = if (hasText){
+            imeAction = if (canSend){
                 ImeAction.Send
             }else {
                 ImeAction.Default
@@ -167,7 +178,7 @@ private fun InputField(
         ),
         keyboardActions = KeyboardActions(
             onSend = {
-                if (hasText) {
+                if (canSend) {
                     focusManager.clearFocus()
                     keyboardController?.hide()
                     onSendClick()
@@ -178,8 +189,10 @@ private fun InputField(
         colors = TextFieldDefaults.colors(
             focusedContainerColor = White,
             unfocusedContainerColor = White,
+            disabledContainerColor = White.copy(alpha = 0.9f),
             focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent
         )
     )
 }
@@ -192,6 +205,7 @@ fun InputSectionPreview() {
         textValue = "",
         onTextChange = {},
         onSpeakClick = {},
-        onSendClick = {}
+        onSendClick = {},
+        shouldDisableSend = false
     )
 }
