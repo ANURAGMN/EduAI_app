@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#8e44ad">
+<title>Olfactory Indicators – Smell-Based Testing</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+.header {
+  text-align: center;
+  color: #fff;
+  padding: 12px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.95; }
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 8px 4px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.sim-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 12px;
+}
+
+.visual {
+  position: relative;
+  height: 36vh;
+  min-height: 270px;
+  background: linear-gradient(145deg, #ede7f6 0%, #d1c4e9 100%);
+  border-radius: 12px;
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+svg { width: 100%; height: 100%; display: block; }
+
+.static-hint {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 11px;
+  line-height: 1.3;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+  z-index: 10;
+}
+
+.metrics {
+  background: #ede7f6;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 11px;
+  line-height: 1.6;
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+}
+
+.metric-item { display: flex; justify-content: space-between; }
+.metric-label { color: #666; }
+.metric-value { font-weight: 600; color: #007AFF; }
+.metric-value.acidic { color: #e65100; }
+.metric-value.basic { color: #7b1fa2; }
+
+.control-panel {
+  background: #ede7f6;
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 8px;
+}
+
+.control-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.solution-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.solution-btn {
+  padding: 12px 8px;
+  border-radius: 10px;
+  border: 2px solid #d1c4e9;
+  font-size: 11px;
+  background: #fff;
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.3;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 0.1s ease;
+}
+
+.solution-btn:active { transform: scale(0.95); }
+.solution-btn.active { border-color: #8e44ad; background: #ede7f6; }
+.solution-btn .icon { font-size: 24px; display: block; margin-bottom: 4px; }
+
+.test-btn {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(142,68,173,0.3);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease;
+}
+
+.test-btn:active { transform: scale(0.95); }
+
+.smell-indicator {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  padding: 12px;
+  background: #fff;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.smell-item {
+  text-align: center;
+  opacity: 0.4;
+  transition: opacity 0.5s ease;
+}
+
+.smell-item.active { opacity: 1; }
+.smell-icon { font-size: 32px; }
+.smell-label { font-size: 10px; color: #666; margin-top: 4px; }
+
+.insight-box {
+  background: linear-gradient(135deg, #ede7f6 0%, #d1c4e9 100%);
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  border-left: 4px solid #8e44ad;
+}
+
+.insight-title { font-weight: 600; color: #6a1b9a; margin-bottom: 4px; }
+
+.real-world {
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 10px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.real-world .icon { font-size: 36px; }
+.real-world .text { flex: 1; line-height: 1.4; }
+.real-world .highlight { color: #8e44ad; font-weight: 600; }
+
+.takeaway {
+  background: linear-gradient(135deg, #d1c4e9 0%, #b39ddb 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  display: none;
+}
+
+.takeaway.show { display: block; }
+.takeaway-title { font-weight: 600; color: #4a148c; margin-bottom: 4px; }
+
+.how-it-works {
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+.how-title { font-size: 11px; font-weight: 600; color: #6a1b9a; margin-bottom: 8px; }
+
+.steps-row {
+  display: flex;
+  justify-content: space-around;
+  gap: 5px;
+}
+
+.step-item {
+  text-align: center;
+  flex: 1;
+}
+
+.step-icon { font-size: 24px; }
+.step-text { font-size: 9px; color: #666; margin-top: 4px; }
+
+@media screen and (max-width: 380px) {
+  .solution-grid { gap: 6px; }
+  .solution-btn { padding: 10px 6px; font-size: 10px; }
+  .solution-btn .icon { font-size: 20px; }
+}
+
+@supports (padding: max(0px)) {
+  #app {
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+  }
+}
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div class="header">
+  <h1>👃 Olfactory Indicators</h1>
+  <p>Using smell to identify acids and bases!</p>
+</div>
+
+<div class="section-title">Mix onion with different solutions</div>
+<div class="sim-card" id="sim"></div>
+
+<div class="smell-indicator">
+  <div class="smell-item" id="smell-strong">
+    <div class="smell-icon">😤</div>
+    <div class="smell-label">Strong Smell<br>= ACID</div>
+  </div>
+  <div class="smell-item" id="smell-none">
+    <div class="smell-icon">😊</div>
+    <div class="smell-label">No Smell<br>= BASE</div>
+  </div>
+</div>
+
+<div class="insight-box">
+  <div class="insight-title">🔑 Key Insight:</div>
+  Onions contain sulfur compounds that give them a <strong>pungent smell</strong>. When mixed with a <strong style="color:#7b1fa2">BASE</strong>, these compounds are neutralised and the smell disappears! With <strong style="color:#e65100">ACIDS</strong>, the smell remains.
+</div>
+
+<div class="how-it-works">
+  <div class="how-title">🔬 How Olfactory Indicators Work</div>
+  <div class="steps-row">
+    <div class="step-item">
+      <div class="step-icon">🧅</div>
+      <div class="step-text">Chop onion<br>(pungent)</div>
+    </div>
+    <div class="step-item">
+      <div class="step-icon">➕</div>
+      <div class="step-text">Add acid<br>or base</div>
+    </div>
+    <div class="step-item">
+      <div class="step-icon">👃</div>
+      <div class="step-text">Check if<br>smell changes</div>
+    </div>
+    <div class="step-item">
+      <div class="step-icon">✅</div>
+      <div class="step-text">Identify<br>substance</div>
+    </div>
+  </div>
+</div>
+
+<div class="real-world">
+  <div class="icon">👨‍🍳</div>
+  <div class="text">
+    <strong>Kitchen science:</strong> Notice how <span class="highlight">cooking onions with baking soda</span> makes them less pungent? That's because baking soda (base) neutralises the smell!
+  </div>
+</div>
+
+<div class="takeaway" id="takeaway">
+  <div class="takeaway-title">💡 What you discovered:</div>
+  <span id="takeaway-text">Olfactory indicators use smell changes to identify acids and bases!</span>
+</div>
+
+</div>
+
+<script>
+const container = document.getElementById('sim');
+
+const SOLUTIONS = {
+  'tamarind': { name: 'Tamarind Water', icon: '🫙', type: 'acidic', smellRemains: true },
+  'baking': { name: 'Baking Soda', icon: '🥄', type: 'basic', smellRemains: false },
+  'vinegar': { name: 'Vinegar', icon: '🍶', type: 'acidic', smellRemains: true },
+  'soap': { name: 'Soap Solution', icon: '🧼', type: 'basic', smellRemains: false }
+};
+
+container.innerHTML = `
+<div class="visual">
+  <div class="static-hint">
+    👆 Select solution & mix with onion
+  </div>
+
+  <svg viewBox="0 0 400 290">
+    <!-- Lab bench -->
+    <rect x="20" y="210" width="360" height="60" rx="4" fill="#8d6e63"/>
+    <rect x="20" y="210" width="360" height="8" rx="2" fill="#6d4c41"/>
+    
+    <!-- Onion container -->
+    <g transform="translate(120, 60)">
+      <ellipse cx="0" cy="80" rx="50" ry="20" fill="#d7ccc8"/>
+      <rect x="-50" y="0" width="100" height="80" rx="4" fill="#efebe9"/>
+      <ellipse cx="0" cy="0" rx="50" ry="20" fill="#d7ccc8"/>
+      <text x="0" y="10" text-anchor="middle" font-size="40" id="onion-icon">🧅</text>
+      <text x="0" y="110" text-anchor="middle" font-size="9" fill="#666">Chopped Onion</text>
+    </g>
+    
+    <!-- Smell waves -->
+    <g id="smell-waves" transform="translate(120, 30)">
+      <text x="-20" y="0" font-size="16" fill="#9c27b0" opacity="0.8">~</text>
+      <text x="0" y="-10" font-size="16" fill="#9c27b0" opacity="0.6">~</text>
+      <text x="20" y="0" font-size="16" fill="#9c27b0" opacity="0.8">~</text>
+    </g>
+    
+    <!-- No smell indicator -->
+    <g id="no-smell" transform="translate(120, 15)" opacity="0">
+      <text x="0" y="0" text-anchor="middle" font-size="30">❌</text>
+    </g>
+    
+    <!-- Plus sign -->
+    <text x="200" y="100" text-anchor="middle" font-size="30" fill="#455a64">+</text>
+    
+    <!-- Solution beaker -->
+    <g id="solution-beaker" transform="translate(280, 50)">
+      <path d="M-30,15 L-25,85 Q-25,95 -15,95 L15,95 Q25,95 25,85 L30,15 Z" 
+            fill="rgba(255,255,255,0.4)" stroke="rgba(255,255,255,0.6)" stroke-width="2"/>
+      <ellipse cx="0" cy="15" rx="30" ry="7" fill="rgba(255,255,255,0.3)"/>
+      <rect x="-22" y="28" width="44" height="55" rx="2" fill="#a1887f" id="solution-liquid"/>
+      <text x="0" y="-5" text-anchor="middle" font-size="18" id="solution-icon">🫙</text>
+      <text x="0" y="115" text-anchor="middle" font-size="9" fill="#666" id="solution-name">Tamarind Water</text>
+      <text x="0" y="127" text-anchor="middle" font-size="8" fill="#e65100" font-weight="600" id="solution-type">(ACID)</text>
+    </g>
+    
+    <!-- Result indicator -->
+    <g id="result-box" opacity="0" transform="translate(200, 180)">
+      <rect x="-70" y="-15" width="140" height="30" rx="15" fill="#fff" stroke="#4caf50" stroke-width="2"/>
+      <text x="0" y="5" text-anchor="middle" font-size="11" fill="#4caf50" font-weight="600" id="result-text">Result</text>
+    </g>
+  </svg>
+
+  <button class="test-btn" id="mix-btn">🧅 Mix Together</button>
+</div>
+
+<div class="metrics">
+  <div class="metric-item"><span class="metric-label">Solution:</span> <span class="metric-value" id="display-solution">Tamarind Water</span></div>
+  <div class="metric-item"><span class="metric-label">Type:</span> <span class="metric-value acidic" id="display-type">Acidic</span></div>
+  <div class="metric-item"><span class="metric-label">Onion Smell:</span> <span class="metric-value" id="display-smell">?</span></div>
+  <div class="metric-item"><span class="metric-label">Conclusion:</span> <span class="metric-value" id="display-conclusion">?</span></div>
+</div>
+
+<div class="control-panel">
+  <div class="control-label">Select a solution to test:</div>
+  <div class="solution-grid">
+    <button class="solution-btn active" data-solution="tamarind"><span class="icon">🫙</span>Tamarind Water<br><small>(Acid)</small></button>
+    <button class="solution-btn" data-solution="baking"><span class="icon">🥄</span>Baking Soda<br><small>(Base)</small></button>
+    <button class="solution-btn" data-solution="vinegar"><span class="icon">🍶</span>Vinegar<br><small>(Acid)</small></button>
+    <button class="solution-btn" data-solution="soap"><span class="icon">🧼</span>Soap Solution<br><small>(Base)</small></button>
+  </div>
+</div>`;
+
+let state = { solution: 'tamarind', tested: false };
+
+const smellWaves = document.getElementById('smell-waves');
+const noSmell = document.getElementById('no-smell');
+const solutionIcon = document.getElementById('solution-icon');
+const solutionName = document.getElementById('solution-name');
+const solutionType = document.getElementById('solution-type');
+const solutionLiquid = document.getElementById('solution-liquid');
+const resultBox = document.getElementById('result-box');
+const resultText = document.getElementById('result-text');
+const displaySolution = document.getElementById('display-solution');
+const displayType = document.getElementById('display-type');
+const displaySmell = document.getElementById('display-smell');
+const displayConclusion = document.getElementById('display-conclusion');
+const mixBtn = document.getElementById('mix-btn');
+const smellStrong = document.getElementById('smell-strong');
+const smellNone = document.getElementById('smell-none');
+const takeaway = document.getElementById('takeaway');
+const takeawayText = document.getElementById('takeaway-text');
+
+function updateDisplay() {
+  const sol = SOLUTIONS[state.solution];
+  solutionIcon.textContent = sol.icon;
+  solutionName.textContent = sol.name;
+  solutionType.textContent = sol.type === 'acidic' ? '(ACID)' : '(BASE)';
+  solutionType.style.fill = sol.type === 'acidic' ? '#e65100' : '#7b1fa2';
+  solutionLiquid.style.fill = sol.type === 'acidic' ? '#a1887f' : '#b39ddb';
+  displaySolution.textContent = sol.name;
+  displayType.textContent = sol.type.charAt(0).toUpperCase() + sol.type.slice(1);
+  displayType.className = `metric-value ${sol.type}`;
+}
+
+function resetTest() {
+  state.tested = false;
+  smellWaves.style.opacity = '1';
+  noSmell.style.opacity = '0';
+  displaySmell.textContent = '?';
+  displayConclusion.textContent = '?';
+  displayConclusion.className = 'metric-value';
+  resultBox.style.opacity = '0';
+  smellStrong.classList.remove('active');
+  smellNone.classList.remove('active');
+  mixBtn.textContent = '🧅 Mix Together';
+}
+
+mixBtn.onclick = function() {
+  if (state.tested) {
+    resetTest();
+    return;
+  }
+  
+  state.tested = true;
+  mixBtn.textContent = '🔄 Reset';
+  
+  const sol = SOLUTIONS[state.solution];
+  
+  setTimeout(() => {
+    if (sol.smellRemains) {
+      // Acid - smell remains
+      smellWaves.style.transition = 'opacity 0.5s';
+      smellWaves.style.opacity = '1';
+      noSmell.style.opacity = '0';
+      displaySmell.textContent = 'Still pungent! 😤';
+      displayConclusion.textContent = 'ACIDIC';
+      displayConclusion.className = 'metric-value acidic';
+      resultText.textContent = '😤 Smell remains → ACID';
+      resultText.style.fill = '#e65100';
+      resultBox.querySelector('rect').setAttribute('stroke', '#e65100');
+      smellStrong.classList.add('active');
+      smellNone.classList.remove('active');
+      takeawayText.textContent = `The onion smell REMAINS with ${sol.name}. This confirms it's an ACID because acids don't neutralise the sulfur compounds!`;
+    } else {
+      // Base - smell disappears
+      smellWaves.style.transition = 'opacity 0.5s';
+      smellWaves.style.opacity = '0';
+      noSmell.style.transition = 'opacity 0.5s';
+      noSmell.style.opacity = '1';
+      displaySmell.textContent = 'Disappeared! 😊';
+      displayConclusion.textContent = 'BASIC';
+      displayConclusion.className = 'metric-value basic';
+      resultText.textContent = '😊 No smell → BASE';
+      resultText.style.fill = '#7b1fa2';
+      resultBox.querySelector('rect').setAttribute('stroke', '#7b1fa2');
+      smellNone.classList.add('active');
+      smellStrong.classList.remove('active');
+      takeawayText.textContent = `The onion smell DISAPPEARS with ${sol.name}. This confirms it's a BASE because bases neutralise the sulfur compounds!`;
+    }
+    
+    resultBox.style.transition = 'opacity 0.3s';
+    resultBox.style.opacity = '1';
+    takeaway.classList.add('show');
+  }, 500);
+};
+
+container.querySelectorAll('.solution-btn').forEach(btn => {
+  btn.onclick = () => {
+    container.querySelectorAll('.solution-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.solution = btn.dataset.solution;
+    resetTest();
+    updateDisplay();
+  };
+});
+
+updateDisplay();
+</script>
+</body>
+</html>

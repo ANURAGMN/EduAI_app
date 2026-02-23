@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#5d4037">
+<title>Weathering & Erosion – Slow Natural Changes</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #5d4037 0%, #8d6e63 100%);
+  min-height: 100vh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#app {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+}
+
+.header {
+  text-align: center;
+  color: #fff;
+  padding: 12px;
+}
+
+.header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.95; }
+
+.concept-card {
+  background: linear-gradient(135deg, #efebe9 0%, #d7ccc8 100%);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #5d4037;
+}
+
+.concept-title { font-size: 12px; font-weight: 700; color: #5d4037; margin-bottom: 6px; }
+.concept-text { font-size: 12px; color: #37474f; line-height: 1.5; }
+
+.sim-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+}
+
+.mode-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.mode-tab {
+  flex: 1;
+  padding: 10px 6px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.mode-tab.active { border-color: #5d4037; background: #efebe9; color: #5d4037; }
+
+.visual {
+  position: relative;
+  height: 38vh;
+  min-height: 260px;
+  background: linear-gradient(180deg, #87ceeb 0%, #b0e0e6 30%, #87ceeb 100%);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+svg { width: 100%; height: 100%; }
+
+.time-display {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 15px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.controls {
+  margin-top: 10px;
+}
+
+.time-slider {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.time-slider label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #37474f;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.time-slider input[type="range"] {
+  width: 100%;
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #a5d6a7, #fff59d, #ffcc80, #ef9a9a);
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.time-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #5d4037;
+  cursor: pointer;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.time-markers {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.process-panel {
+  background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #00acc1;
+}
+
+.process-title { font-size: 12px; font-weight: 700; color: #00838f; margin-bottom: 6px; }
+.process-text { font-size: 11px; color: #37474f; line-height: 1.6; }
+
+.types-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.type-card {
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.type-card.physical {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border: 2px solid #90caf9;
+}
+
+.type-card.chemical {
+  background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
+  border: 2px solid #f48fb1;
+}
+
+.type-card .title {
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.type-card.physical .title { color: #1565c0; }
+.type-card.chemical .title { color: #c2185b; }
+
+.type-card .items {
+  font-size: 9px;
+  color: #37474f;
+  line-height: 1.5;
+}
+
+.takeaway {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #ff9800;
+}
+
+.takeaway-title { font-size: 12px; font-weight: 700; color: #e65100; margin-bottom: 6px; }
+.takeaway-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div class="header">
+  <h1>🏔️ Weathering & Erosion</h1>
+  <p>Slow changes that shape our Earth</p>
+</div>
+
+<div class="concept-card">
+  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-text">
+    <strong>Weathering</strong> breaks rocks into smaller pieces. <strong>Erosion</strong> moves those pieces to new locations. Together, they shape mountains, valleys, and create soil over thousands of years!
+  </div>
+</div>
+
+<div class="sim-card">
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="selectMode('mountain', this)">🏔️ Mountain</button>
+    <button class="mode-tab" onclick="selectMode('river', this)">🌊 River Rocks</button>
+    <button class="mode-tab" onclick="selectMode('cliff', this)">🪨 Sea Cliff</button>
+  </div>
+  
+  <div class="visual">
+    <div class="time-display" id="time-display">⏳ Present Day</div>
+    <svg viewBox="0 0 400 260" id="scene">
+      <!-- Mountain Scene -->
+      <g id="mountain-scene">
+        <!-- Sky already from background -->
+        
+        <!-- Sun -->
+        <circle cx="350" cy="40" r="25" fill="#ffeb3b"/>
+        
+        <!-- Distant mountains -->
+        <polygon points="0,200 80,120 160,200" fill="#90a4ae"/>
+        <polygon points="300,200 380,130 400,160 400,200" fill="#90a4ae"/>
+        
+        <!-- Main mountain (changes over time) -->
+        <polygon id="main-mountain" points="100,200 200,60 300,200" fill="#795548"/>
+        
+        <!-- Snow cap -->
+        <polygon id="snow-cap" points="170,90 200,60 230,90 220,95 200,75 180,95" fill="#fff"/>
+        
+        <!-- Cracks (appear over time) -->
+        <g id="cracks" style="display:none">
+          <line x1="180" y1="100" x2="175" y2="130" stroke="#5d4037" stroke-width="2"/>
+          <line x1="220" y1="110" x2="230" y2="140" stroke="#5d4037" stroke-width="2"/>
+        </g>
+        
+        <!-- Fallen rocks (appear over time) -->
+        <g id="fallen-rocks" style="display:none">
+          <circle cx="130" cy="190" r="8" fill="#8d6e63"/>
+          <circle cx="150" cy="195" r="6" fill="#a1887f"/>
+          <circle cx="260" cy="192" r="7" fill="#8d6e63"/>
+          <circle cx="280" cy="188" r="5" fill="#a1887f"/>
+        </g>
+        
+        <!-- Sediment at base -->
+        <ellipse id="sediment" cx="200" cy="200" rx="0" ry="0" fill="#d7ccc8"/>
+        
+        <!-- Ground -->
+        <rect x="0" y="200" width="400" height="60" fill="#a5d6a7"/>
+        
+        <!-- Trees -->
+        <g id="trees">
+          <polygon points="50,200 60,160 70,200" fill="#4caf50"/>
+          <polygon points="330,200 340,170 350,200" fill="#4caf50"/>
+        </g>
+      </g>
+      
+      <!-- River Scene -->
+      <g id="river-scene" style="display:none">
+        <!-- River banks -->
+        <rect x="0" y="0" width="400" height="100" fill="#8d6e63"/>
+        <rect x="0" y="180" width="400" height="80" fill="#8d6e63"/>
+        
+        <!-- River water -->
+        <rect x="0" y="100" width="400" height="80" fill="#4fc3f7"/>
+        <path d="M 0 120 Q 100 110 200 120 Q 300 130 400 120" fill="none" stroke="#81d4fa" stroke-width="3"/>
+        <path d="M 0 150 Q 100 160 200 150 Q 300 140 400 150" fill="none" stroke="#81d4fa" stroke-width="3"/>
+        
+        <!-- Rocks that change shape -->
+        <g id="river-rocks">
+          <ellipse id="rock1" cx="100" cy="140" rx="25" ry="20" fill="#757575"/>
+          <ellipse id="rock2" cx="200" cy="130" rx="30" ry="22" fill="#616161"/>
+          <ellipse id="rock3" cx="300" cy="145" rx="22" ry="18" fill="#757575"/>
+        </g>
+        
+        <!-- Pebbles (appear over time) -->
+        <g id="pebbles" style="display:none">
+          <ellipse cx="80" cy="170" rx="6" ry="4" fill="#9e9e9e"/>
+          <ellipse cx="150" cy="165" rx="5" ry="3" fill="#bdbdbd"/>
+          <ellipse cx="220" cy="172" rx="7" ry="4" fill="#9e9e9e"/>
+          <ellipse cx="280" cy="168" rx="4" ry="3" fill="#bdbdbd"/>
+          <ellipse cx="350" cy="170" rx="6" ry="4" fill="#9e9e9e"/>
+        </g>
+        
+        <!-- Sand deposits -->
+        <ellipse id="sand" cx="200" cy="175" rx="0" ry="0" fill="#fff59d"/>
+      </g>
+      
+      <!-- Cliff Scene -->
+      <g id="cliff-scene" style="display:none">
+        <!-- Ocean -->
+        <rect x="0" y="150" width="400" height="110" fill="#0288d1"/>
+        <path d="M 0 160 Q 50 150 100 160 Q 150 170 200 160 Q 250 150 300 160 Q 350 170 400 160" fill="none" stroke="#4fc3f7" stroke-width="3"/>
+        
+        <!-- Cliff face (erodes over time) -->
+        <polygon id="cliff-face" points="0,50 150,50 180,150 0,150" fill="#8d6e63"/>
+        <polygon points="0,50 150,50 150,0 0,0" fill="#4caf50"/>
+        
+        <!-- Waves hitting cliff -->
+        <g id="waves">
+          <ellipse cx="170" cy="155" rx="15" ry="8" fill="#81d4fa" opacity="0.7"/>
+          <ellipse cx="175" cy="145" rx="10" ry="5" fill="#b3e5fc" opacity="0.8"/>
+        </g>
+        
+        <!-- Cave (forms over time) -->
+        <ellipse id="cave" cx="160" cy="130" rx="0" ry="0" fill="#5d4037"/>
+        
+        <!-- Fallen cliff rocks -->
+        <g id="cliff-rocks" style="display:none">
+          <ellipse cx="200" cy="200" rx="20" ry="12" fill="#8d6e63"/>
+          <ellipse cx="240" cy="210" rx="15" ry="10" fill="#a1887f"/>
+          <ellipse cx="180" cy="220" rx="12" ry="8" fill="#8d6e63"/>
+        </g>
+        
+        <!-- Sea stack (forms over time) -->
+        <rect id="sea-stack" x="250" y="180" width="0" height="0" rx="3" fill="#8d6e63" style="display:none"/>
+      </g>
+    </svg>
+  </div>
+  
+  <div class="controls">
+    <div class="time-slider">
+      <label>⏳ Time Travel: Slide to see changes over time</label>
+      <input type="range" id="time-slider" min="0" max="100" value="0" oninput="updateTime(this.value)">
+      <div class="time-markers">
+        <span>Now</span>
+        <span>1,000 yrs</span>
+        <span>10,000 yrs</span>
+        <span>100,000 yrs</span>
+        <span>1 Million yrs</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="process-panel">
+  <div class="process-title">🔬 What's Happening?</div>
+  <div class="process-text" id="process-text">
+    Move the time slider to see how weathering and erosion slowly transform the landscape over thousands to millions of years!
+  </div>
+</div>
+
+<div class="types-panel">
+  <div class="type-card physical">
+    <div class="title">⚒️ Physical Weathering</div>
+    <div class="items">
+      • Temperature changes crack rocks<br>
+      • Ice expands in cracks<br>
+      • Plant roots split rocks<br>
+      • Wind/water wear down surface
+    </div>
+  </div>
+  <div class="type-card chemical">
+    <div class="title">🧪 Chemical Weathering</div>
+    <div class="items">
+      • Water dissolves minerals<br>
+      • Acid rain reacts with rock<br>
+      • Oxygen causes oxidation<br>
+      • Creates new substances
+    </div>
+  </div>
+</div>
+
+<div class="takeaway">
+  <div class="takeaway-title">🎯 Earth's Slow Sculptors</div>
+  <div class="takeaway-text">
+    Weathering and erosion are <strong>extremely slow</strong> but powerful!<br><br>
+    • Grand Canyon: Carved over 5-6 million years<br>
+    • Smooth river pebbles: Thousands of years of tumbling<br>
+    • Soil formation: Centuries of rock breakdown<br><br>
+    These irreversible changes continuously reshape our planet!
+  </div>
+</div>
+
+</div>
+
+<script>
+let currentMode = 'mountain';
+
+const timeDisplay = document.getElementById('time-display');
+const processText = document.getElementById('process-text');
+
+function selectMode(mode, btn) {
+  currentMode = mode;
+  
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  
+  document.getElementById('mountain-scene').style.display = mode === 'mountain' ? 'block' : 'none';
+  document.getElementById('river-scene').style.display = mode === 'river' ? 'block' : 'none';
+  document.getElementById('cliff-scene').style.display = mode === 'cliff' ? 'block' : 'none';
+  
+  document.getElementById('time-slider').value = 0;
+  updateTime(0);
+}
+
+function updateTime(value) {
+  value = parseInt(value);
+  
+  // Update time display
+  if (value === 0) {
+    timeDisplay.textContent = '⏳ Present Day';
+  } else if (value < 25) {
+    timeDisplay.textContent = `⏳ ${Math.round(value * 40)} years`;
+  } else if (value < 50) {
+    timeDisplay.textContent = `⏳ ${Math.round((value - 25) * 400)} years`;
+  } else if (value < 75) {
+    timeDisplay.textContent = `⏳ ${Math.round((value - 50) * 4000)} years`;
+  } else {
+    timeDisplay.textContent = `⏳ ${Math.round((value - 75) * 40000)} years`;
+  }
+  
+  if (currentMode === 'mountain') {
+    updateMountain(value);
+  } else if (currentMode === 'river') {
+    updateRiver(value);
+  } else {
+    updateCliff(value);
+  }
+}
+
+function updateMountain(value) {
+  const mountain = document.getElementById('main-mountain');
+  const snowCap = document.getElementById('snow-cap');
+  const cracks = document.getElementById('cracks');
+  const fallenRocks = document.getElementById('fallen-rocks');
+  const sediment = document.getElementById('sediment');
+  
+  // Mountain erodes over time (peak gets lower, base gets wider)
+  const peakY = 60 + (value * 0.8);
+  const baseLeft = 100 - (value * 0.3);
+  const baseRight = 300 + (value * 0.3);
+  mountain.setAttribute('points', `${baseLeft},200 200,${peakY} ${baseRight},200`);
+  
+  // Snow cap shrinks
+  const snowSize = Math.max(0.01, 1 - (value / 80));
+  if (snowSize > 0.05) {
+    snowCap.style.display = 'block';
+    snowCap.setAttribute('transform', `scale(${snowSize}) translate(${200 * (1 - snowSize) / snowSize}, ${70 * (1 - snowSize) / snowSize})`);
+  } else {
+    snowCap.style.display = 'none';
+  }
+  
+  // Cracks appear
+  cracks.style.display = value > 20 ? 'block' : 'none';
+  
+  // Fallen rocks appear
+  fallenRocks.style.display = value > 40 ? 'block' : 'none';
+  
+  // Sediment builds up at base
+  const sedimentSize = value * 0.8;
+  sediment.setAttribute('rx', sedimentSize);
+  sediment.setAttribute('ry', sedimentSize * 0.3);
+  
+  // Update process text
+  if (value < 25) {
+    processText.innerHTML = `
+      <strong>🏔️ Mountain Weathering Begins</strong><br><br>
+      • Temperature changes cause rocks to expand and contract<br>
+      • Small cracks form in the rock surface<br>
+      • Water seeps into cracks and freezes, expanding them
+    `;
+  } else if (value < 50) {
+    processText.innerHTML = `
+      <strong>⚒️ Physical Weathering Accelerates</strong><br><br>
+      • Cracks widen as ice wedging continues<br>
+      • Rocks begin breaking off the mountain<br>
+      • Plant roots grow into cracks, splitting rocks further
+    `;
+  } else if (value < 75) {
+    processText.innerHTML = `
+      <strong>🪨 Erosion Moves Material Downhill</strong><br><br>
+      • Gravity pulls loose rocks down slopes<br>
+      • Rain washes smaller particles to the base<br>
+      • Sediment accumulates, forming gentler slopes
+    `;
+  } else {
+    processText.innerHTML = `
+      <strong>🌄 Mountain is Much Smaller!</strong><br><br>
+      • Peak has eroded significantly over millions of years<br>
+      • Sediment has spread far from the original mountain<br>
+      • Eventually becomes rolling hills, then flat plains!
+    `;
+  }
+}
+
+function updateRiver(value) {
+  const rock1 = document.getElementById('rock1');
+  const rock2 = document.getElementById('rock2');
+  const rock3 = document.getElementById('rock3');
+  const pebbles = document.getElementById('pebbles');
+  const sand = document.getElementById('sand');
+  
+  // Rocks become rounder and smaller
+  const roundness = 1 - (value * 0.005);
+  const size = 1 - (value * 0.004);
+  
+  rock1.setAttribute('rx', 25 * size);
+  rock1.setAttribute('ry', 20 * size * roundness);
+  rock2.setAttribute('rx', 30 * size);
+  rock2.setAttribute('ry', 22 * size * roundness);
+  rock3.setAttribute('rx', 22 * size);
+  rock3.setAttribute('ry', 18 * size * roundness);
+  
+  // Pebbles appear
+  pebbles.style.display = value > 30 ? 'block' : 'none';
+  
+  // Sand accumulates
+  const sandSize = value * 0.6;
+  sand.setAttribute('rx', sandSize);
+  sand.setAttribute('ry', sandSize * 0.3);
+  
+  if (value < 25) {
+    processText.innerHTML = `
+      <strong>🌊 River Erosion Begins</strong><br><br>
+      • Fast-moving water carries sand and small rocks<br>
+      • These particles scrape against larger rocks<br>
+      • Sharp edges slowly wear down
+    `;
+  } else if (value < 50) {
+    processText.innerHTML = `
+      <strong>💧 Rocks Becoming Smoother</strong><br><br>
+      • Constant tumbling rounds the rocks<br>
+      • Smaller pieces break off and become pebbles<br>
+      • This is called "abrasion"
+    `;
+  } else if (value < 75) {
+    processText.innerHTML = `
+      <strong>🪨 Pebbles and Sand Form</strong><br><br>
+      • Large rocks are now smooth pebbles<br>
+      • Fine particles create sand deposits<br>
+      • River slows, depositing sediment
+    `;
+  } else {
+    processText.innerHTML = `
+      <strong>🏖️ Smooth Pebbles Complete!</strong><br><br>
+      • Angular rocks are now smooth, round pebbles<br>
+      • Sand has accumulated on the riverbed<br>
+      • This is how beaches and riverbeds form!
+    `;
+  }
+}
+
+function updateCliff(value) {
+  const cliffFace = document.getElementById('cliff-face');
+  const cave = document.getElementById('cave');
+  const cliffRocks = document.getElementById('cliff-rocks');
+  const seaStack = document.getElementById('sea-stack');
+  
+  // Cliff erodes backward
+  const erosion = value * 0.5;
+  cliffFace.setAttribute('points', `0,50 ${150 - erosion},50 ${180 - erosion},150 0,150`);
+  
+  // Cave forms
+  const caveSize = Math.max(0, (value - 20) * 0.4);
+  cave.setAttribute('rx', caveSize);
+  cave.setAttribute('ry', caveSize * 0.7);
+  cave.setAttribute('cx', 160 - erosion);
+  
+  // Fallen rocks appear
+  cliffRocks.style.display = value > 40 ? 'block' : 'none';
+  
+  // Sea stack forms (arch collapses)
+  if (value > 70) {
+    seaStack.style.display = 'block';
+    seaStack.setAttribute('width', '20');
+    seaStack.setAttribute('height', (value - 70) * 1.5);
+    seaStack.setAttribute('y', 200 - (value - 70) * 1.5);
+  } else {
+    seaStack.style.display = 'none';
+  }
+  
+  if (value < 25) {
+    processText.innerHTML = `
+      <strong>🌊 Wave Erosion Begins</strong><br><br>
+      • Waves constantly hit the cliff base<br>
+      • Hydraulic action forces water into cracks<br>
+      • Salt and chemicals weaken the rock
+    `;
+  } else if (value < 50) {
+    processText.innerHTML = `
+      <strong>🕳️ Cave Forming</strong><br><br>
+      • Waves carve out a cave at the base<br>
+      • Softer rock erodes faster than hard rock<br>
+      • The cliff above is now unsupported
+    `;
+  } else if (value < 75) {
+    processText.innerHTML = `
+      <strong>💥 Cliff Collapse</strong><br><br>
+      • The cave grows until the roof collapses<br>
+      • Large chunks of cliff fall into the sea<br>
+      • The cliff line retreats inland
+    `;
+  } else {
+    processText.innerHTML = `
+      <strong>🗿 Sea Stack Forms!</strong><br><br>
+      • Part of the cliff is now isolated from land<br>
+      • This pillar of rock is called a "sea stack"<br>
+      • Eventually it will erode completely too!
+    `;
+  }
+}
+
+// Initialize
+updateTime(0);
+</script>
+</body>
+</html>

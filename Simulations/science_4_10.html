@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#00796b">
+<title>Real-World Applications – Metals & Non-metals</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #00796b 0%, #4db6ac 100%);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+.header {
+  text-align: center;
+  color: #fff;
+  padding: 12px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.95; }
+
+.concept-card {
+  background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #00796b;
+}
+
+.concept-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #00695c;
+  margin-bottom: 6px;
+}
+
+.concept-text {
+  font-size: 12px;
+  color: #37474f;
+  line-height: 1.5;
+}
+
+.sim-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+}
+
+.category-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.cat-tab {
+  flex: 1;
+  padding: 10px 8px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+  font-size: 11px;
+  font-weight: 600;
+  color: #37474f;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.cat-tab:active { transform: scale(0.95); }
+.cat-tab.active.metals { border-color: #1976d2; background: #e3f2fd; color: #0d47a1; }
+.cat-tab.active.nonmetals { border-color: #f9a825; background: #fff8e1; color: #f57f17; }
+.cat-tab.active.both { border-color: #00796b; background: #e0f2f1; color: #00695c; }
+
+.applications-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.app-card {
+  background: #f5f5f5;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.app-card:active { transform: scale(0.95); }
+.app-card.expanded { 
+  grid-column: span 2;
+  background: #fff;
+  border-color: #00796b;
+}
+
+.app-card .icon { font-size: 36px; margin-bottom: 8px; }
+.app-card .name { font-size: 12px; font-weight: 600; color: #37474f; }
+.app-card .material { font-size: 9px; color: #666; margin-top: 4px; }
+
+.app-card .detail {
+  display: none;
+  text-align: left;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.app-card.expanded .detail { display: block; }
+
+.detail-property {
+  font-size: 10px;
+  color: #00796b;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.detail-explain {
+  font-size: 10px;
+  color: #37474f;
+  line-height: 1.5;
+}
+
+.match-game {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.match-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e65100;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.match-instruction {
+  font-size: 11px;
+  color: #37474f;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.match-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #fff;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 2px solid #e0e0e0;
+}
+
+.match-item .use { flex: 1; font-size: 11px; font-weight: 600; }
+.match-item .options {
+  display: flex;
+  gap: 6px;
+}
+
+.match-option {
+  padding: 6px 10px;
+  border-radius: 15px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.match-option.metal { background: #e3f2fd; color: #1565c0; }
+.match-option.nonmetal { background: #fff8e1; color: #f57f17; }
+.match-option:active { transform: scale(0.95); }
+.match-option.correct { border-color: #4caf50; background: #e8f5e9; }
+.match-option.wrong { border-color: #f44336; opacity: 0.5; }
+
+.match-result {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 10px;
+  display: none;
+}
+
+.match-result.show { display: block; }
+
+.fun-fact {
+  background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #e91e63;
+}
+
+.fun-fact-title { font-size: 12px; font-weight: 700; color: #c2185b; margin-bottom: 6px; }
+.fun-fact-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+
+.takeaway {
+  background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #00796b;
+}
+
+.takeaway-title { font-size: 12px; font-weight: 700; color: #00695c; margin-bottom: 6px; }
+.takeaway-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div class="header">
+  <h1>🏭 Real-World Applications</h1>
+  <p>Why do we use specific metals & non-metals?</p>
+</div>
+
+<div class="concept-card">
+  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-text">
+    We choose specific materials based on their <strong>properties</strong>. Understanding WHY a material is used helps us remember its properties!
+  </div>
+</div>
+
+<div class="sim-card">
+  <div class="category-tabs">
+    <button class="cat-tab metals active" onclick="showCategory('metals', this)">🔵 Metals</button>
+    <button class="cat-tab nonmetals" onclick="showCategory('nonmetals', this)">🟡 Non-metals</button>
+    <button class="cat-tab both" onclick="showCategory('both', this)">⚖️ Both Used</button>
+  </div>
+  
+  <div class="applications-grid" id="applications-grid">
+    <!-- Metal applications -->
+    <div class="app-card" onclick="toggleCard(this)" data-category="metals">
+      <div class="icon">🔌</div>
+      <div class="name">Electrical Wires</div>
+      <div class="material">Copper, Aluminium</div>
+      <div class="detail">
+        <div class="detail-property">Property Used: Electrical Conductivity + Ductility</div>
+        <div class="detail-explain">Copper and aluminium are used because they conduct electricity well AND can be drawn into thin wires!</div>
+      </div>
+    </div>
+    
+    <div class="app-card" onclick="toggleCard(this)" data-category="metals">
+      <div class="icon">🍳</div>
+      <div class="name">Cooking Utensils</div>
+      <div class="material">Aluminium, Steel</div>
+      <div class="detail">
+        <div class="detail-property">Property Used: Heat Conductivity</div>
+        <div class="detail-explain">Metals transfer heat quickly and evenly, cooking food properly. They're also malleable to shape into pots!</div>
+      </div>
+    </div>
+    
+    <div class="app-card" onclick="toggleCard(this)" data-category="metals">
+      <div class="icon">🔔</div>
+      <div class="name">Bells & Cymbals</div>
+      <div class="material">Bronze, Brass</div>
+      <div class="detail">
+        <div class="detail-property">Property Used: Sonority</div>
+        <div class="detail-explain">Metals produce a beautiful ringing sound when struck! That's why all musical bells are made of metal.</div>
+      </div>
+    </div>
+    
+    <div class="app-card" onclick="toggleCard(this)" data-category="metals">
+      <div class="icon">💍</div>
+      <div class="name">Jewellery</div>
+      <div class="material">Gold, Silver, Platinum</div>
+      <div class="detail">
+        <div class="detail-property">Property Used: Lustre + Malleability + Ductility</div>
+        <div class="detail-explain">Gold is shiny (lustrous), can be beaten into thin sheets (malleable), and drawn into thin wires for intricate designs!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="match-game">
+  <div class="match-title">🎮 Match the Application!</div>
+  <div class="match-instruction">Which type of material is used and why?</div>
+  
+  <div class="match-item" id="match-1">
+    <div class="use">Rubber gloves for electricians</div>
+    <div class="options">
+      <span class="match-option metal" onclick="checkMatch(1, 'metal', this)">Metal</span>
+      <span class="match-option nonmetal" onclick="checkMatch(1, 'nonmetal', this)">Non-metal</span>
+    </div>
+  </div>
+  
+  <div class="match-item" id="match-2">
+    <div class="use">Coins and medals</div>
+    <div class="options">
+      <span class="match-option metal" onclick="checkMatch(2, 'metal', this)">Metal</span>
+      <span class="match-option nonmetal" onclick="checkMatch(2, 'nonmetal', this)">Non-metal</span>
+    </div>
+  </div>
+  
+  <div class="match-item" id="match-3">
+    <div class="use">Wooden spoon handles</div>
+    <div class="options">
+      <span class="match-option metal" onclick="checkMatch(3, 'metal', this)">Metal</span>
+      <span class="match-option nonmetal" onclick="checkMatch(3, 'nonmetal', this)">Non-metal</span>
+    </div>
+  </div>
+  
+  <div class="match-item" id="match-4">
+    <div class="use">Bridge construction</div>
+    <div class="options">
+      <span class="match-option metal" onclick="checkMatch(4, 'metal', this)">Metal</span>
+      <span class="match-option nonmetal" onclick="checkMatch(4, 'nonmetal', this)">Non-metal</span>
+    </div>
+  </div>
+  
+  <div class="match-result" id="match-result">🎉 Great job! All correct!</div>
+</div>
+
+<div class="fun-fact">
+  <div class="fun-fact-title">🏛️ Amazing Fact: Iron Pillar of Delhi</div>
+  <div class="fun-fact-text">
+    The <strong>Iron Pillar of Delhi</strong> is over 1,600 years old but has NOT rusted! This shows the advanced metallurgy skills of ancient India. The pillar has a unique composition that protects it from corrosion.
+  </div>
+</div>
+
+<div class="takeaway">
+  <div class="takeaway-title">♻️ Sustainability Tip</div>
+  <div class="takeaway-text">
+    <strong>Recycling metals</strong> like iron and aluminium saves energy and natural resources!<br><br>
+    • Recycling aluminium uses 95% less energy than making new aluminium<br>
+    • Iron can be recycled infinitely without losing quality<br><br>
+    <strong>Be a responsible citizen - recycle!</strong>
+  </div>
+</div>
+
+</div>
+
+<script>
+const applications = {
+  metals: [
+    { icon: '🔌', name: 'Electrical Wires', material: 'Copper, Aluminium', property: 'Electrical Conductivity + Ductility', explain: 'Copper and aluminium conduct electricity well AND can be drawn into thin wires!' },
+    { icon: '🍳', name: 'Cooking Utensils', material: 'Aluminium, Steel', property: 'Heat Conductivity', explain: 'Metals transfer heat quickly and evenly. Also malleable to shape into pots!' },
+    { icon: '🔔', name: 'Bells & Cymbals', material: 'Bronze, Brass', property: 'Sonority', explain: 'Metals produce a beautiful ringing sound when struck!' },
+    { icon: '💍', name: 'Jewellery', material: 'Gold, Silver', property: 'Lustre + Malleability + Ductility', explain: 'Shiny, can be beaten into sheets and drawn into wires for designs!' }
+  ],
+  nonmetals: [
+    { icon: '🧤', name: 'Electrical Insulation', material: 'Rubber, Plastic', property: 'Poor Electrical Conductivity', explain: 'Rubber and plastic protect us from electric shocks!' },
+    { icon: '🫁', name: 'Breathing', material: 'Oxygen (O₂)', property: 'Essential for Life', explain: 'We breathe oxygen - a non-metal essential for respiration!' },
+    { icon: '💧', name: 'Water Purification', material: 'Chlorine (Cl)', property: 'Disinfectant', explain: 'Chlorine kills germs in drinking water, making it safe!' },
+    { icon: '🩹', name: 'Antiseptic', material: 'Iodine (I)', property: 'Kills Germs', explain: 'Iodine solution (tincture) is used to clean wounds!' }
+  ],
+  both: [
+    { icon: '🔧', name: 'Tools (Hammer)', material: 'Iron head + Wooden handle', property: 'Hardness + Insulation', explain: 'Metal head is hard, wooden handle doesn\'t conduct heat!' },
+    { icon: '🍳', name: 'Frying Pan', material: 'Metal body + Plastic handle', property: 'Heat Conduction + Insulation', explain: 'Metal conducts heat to cook, plastic handle stays cool!' },
+    { icon: '🔌', name: 'Electric Plug', material: 'Metal pins + Plastic body', property: 'Conduction + Insulation', explain: 'Metal pins conduct electricity, plastic protects us!' },
+    { icon: '✏️', name: 'Pencil', material: 'Graphite (C) + Wood', property: 'Marking + Easy to hold', explain: 'Graphite (non-metal) marks paper, wood is easy to grip!' }
+  ]
+};
+
+const matchAnswers = {
+  1: 'nonmetal', // Rubber gloves - insulator
+  2: 'metal',    // Coins - malleable, lustrous
+  3: 'nonmetal', // Wooden handles - poor heat conductor
+  4: 'metal'     // Bridge - strong, hard
+};
+
+let matchScore = 0;
+
+function showCategory(category, btn) {
+  // Update tabs
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  
+  // Update grid
+  const grid = document.getElementById('applications-grid');
+  const apps = applications[category];
+  
+  grid.innerHTML = apps.map(app => `
+    <div class="app-card" onclick="toggleCard(this)">
+      <div class="icon">${app.icon}</div>
+      <div class="name">${app.name}</div>
+      <div class="material">${app.material}</div>
+      <div class="detail">
+        <div class="detail-property">Property Used: ${app.property}</div>
+        <div class="detail-explain">${app.explain}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleCard(card) {
+  // Close other expanded cards
+  document.querySelectorAll('.app-card.expanded').forEach(c => {
+    if (c !== card) c.classList.remove('expanded');
+  });
+  
+  card.classList.toggle('expanded');
+}
+
+function checkMatch(id, answer, btn) {
+  const item = document.getElementById(`match-${id}`);
+  const options = item.querySelectorAll('.match-option');
+  
+  // Disable further clicks
+  options.forEach(o => o.style.pointerEvents = 'none');
+  
+  if (answer === matchAnswers[id]) {
+    btn.classList.add('correct');
+    matchScore++;
+  } else {
+    btn.classList.add('wrong');
+    // Highlight correct answer
+    options.forEach(o => {
+      if ((matchAnswers[id] === 'metal' && o.classList.contains('metal')) ||
+          (matchAnswers[id] === 'nonmetal' && o.classList.contains('nonmetal'))) {
+        o.classList.add('correct');
+      }
+    });
+  }
+  
+  // Check if all answered
+  const allOptions = document.querySelectorAll('.match-option');
+  const answered = Array.from(allOptions).filter(o => o.classList.contains('correct') || o.classList.contains('wrong'));
+  
+  if (answered.length >= 4) {
+    const result = document.getElementById('match-result');
+    if (matchScore === 4) {
+      result.textContent = '🎉 Perfect! All 4 correct!';
+      result.style.color = '#2e7d32';
+    } else {
+      result.textContent = `Good try! ${matchScore}/4 correct`;
+      result.style.color = '#f57f17';
+    }
+    result.classList.add('show');
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#00897b">
+<title>Physical Changes During Puberty</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #00897b 0%, #4db6ac 100%);
+  min-height: 100vh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#app {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+}
+
+.header {
+  text-align: center;
+  color: #fff;
+  padding: 12px;
+}
+
+.header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.95; }
+
+.concept-card {
+  background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #00897b;
+}
+
+.concept-title { font-size: 12px; font-weight: 700; color: #00695c; margin-bottom: 6px; }
+.concept-text { font-size: 12px; color: #37474f; line-height: 1.5; }
+
+.sim-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+}
+
+.category-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.cat-tab {
+  flex: 1;
+  padding: 10px 6px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.cat-tab.active { border-color: #00897b; background: #e0f2f1; color: #00695c; }
+
+.changes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.change-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px;
+  background: #f5f5f5;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.change-item:active { transform: scale(0.98); }
+.change-item.active { background: #e0f2f1; border-color: #00897b; }
+
+.change-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-right: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.change-content { flex: 1; }
+.change-title { font-size: 12px; font-weight: 700; color: #333; margin-bottom: 4px; }
+.change-desc { font-size: 10px; color: #666; line-height: 1.4; }
+
+.detail-panel {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #ff9800;
+}
+
+.detail-title { font-size: 12px; font-weight: 700; color: #e65100; margin-bottom: 8px; }
+.detail-text { font-size: 11px; color: #37474f; line-height: 1.6; }
+
+.normal-badge {
+  display: inline-block;
+  background: #4caf50;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 15px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.secondary-info {
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #7b1fa2;
+}
+
+.secondary-title { font-size: 12px; font-weight: 700; color: #7b1fa2; margin-bottom: 6px; }
+.secondary-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+
+.takeaway {
+  background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #00897b;
+}
+
+.takeaway-title { font-size: 12px; font-weight: 700; color: #00695c; margin-bottom: 6px; }
+.takeaway-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div class="header">
+  <h1>🌱 Physical Changes During Puberty</h1>
+  <p>Understanding the changes in your body</p>
+</div>
+
+<div class="concept-card">
+  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-text">
+    <strong>Puberty</strong> is when your body starts changing from a child's body to an adult's body. These changes are <strong>natural and normal</strong> - they happen to everyone!
+  </div>
+</div>
+
+<div class="sim-card">
+  <div class="category-tabs">
+    <button class="cat-tab active" onclick="selectCategory('common', this)">🔄 Common Changes</button>
+    <button class="cat-tab" onclick="selectCategory('boys', this)">👦 In Boys</button>
+    <button class="cat-tab" onclick="selectCategory('girls', this)">👧 In Girls</button>
+  </div>
+  
+  <div class="changes-list" id="changes-list">
+    <!-- Changes will be populated by JavaScript -->
+  </div>
+</div>
+
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-title" id="detail-title">Tap on any change to learn more</div>
+  <div class="detail-text" id="detail-text">
+    Select a physical change from the list above to understand what causes it and why it's completely normal.
+  </div>
+</div>
+
+<div class="secondary-info">
+  <div class="secondary-title">📖 Secondary Sexual Characteristics</div>
+  <div class="secondary-text">
+    These physical changes are called <strong>secondary sexual characteristics</strong>. They help distinguish males from females but are not directly involved in reproduction.<br><br>
+    <strong>Examples:</strong><br>
+    • Facial hair in boys<br>
+    • Breast development in girls<br>
+    • Voice changes<br>
+    • Body hair growth
+  </div>
+</div>
+
+<div class="takeaway">
+  <div class="takeaway-title">🎯 Remember</div>
+  <div class="takeaway-text">
+    • All these changes are <strong>100% normal</strong><br>
+    • Everyone experiences them at different times<br>
+    • Some changes may start earlier or later - that's okay!<br>
+    • If you have concerns, talk to a parent or doctor
+  </div>
+</div>
+
+</div>
+
+<script>
+const changesData = {
+  common: [
+    { 
+      icon: '📏', 
+      title: 'Growth Spurt', 
+      desc: 'Rapid increase in height and weight',
+      detail: 'During puberty, your body produces growth hormones that make you grow faster. You might grow 8-12 cm in a single year! This is called a "growth spurt." Your hands and feet often grow first, which is why you might feel a bit clumsy sometimes.',
+      normal: 'This happens to everyone during adolescence!'
+    },
+    { 
+      icon: '🌿', 
+      title: 'Body Hair', 
+      desc: 'Hair grows in new places',
+      detail: 'Hair starts growing in your underarms (armpits) and pubic area. This is caused by hormones and is a sign that your body is maturing. The amount and thickness of hair varies from person to person - all variations are normal.',
+      normal: 'Body hair is a natural part of growing up!'
+    },
+    { 
+      icon: '😓', 
+      title: 'Sweating More', 
+      desc: 'Increased perspiration and body odor',
+      detail: 'Your sweat glands become more active during puberty, especially in the armpits. This can cause body odor. This is why regular bathing and using deodorant becomes important during adolescence.',
+      normal: 'Just remember to practice good hygiene!'
+    },
+    { 
+      icon: '🔴', 
+      title: 'Skin Changes', 
+      desc: 'Acne and pimples may appear',
+      detail: 'Hormones cause your skin to produce more oil. When pores get clogged with oil and dead skin cells, pimples (acne) can form. This is very common during puberty. Keeping your face clean and avoiding touching pimples helps.',
+      normal: 'Most teenagers experience acne - it usually improves with time!'
+    }
+  ],
+  boys: [
+    { 
+      icon: '🎤', 
+      title: 'Voice Deepens', 
+      desc: 'Voice becomes lower and deeper',
+      detail: 'The voice box (larynx) grows larger in boys, making the voice deeper. During this change, the voice might "crack" or squeak sometimes - this is temporary and completely normal. You might also notice an "Adam\'s apple" forming in the throat.',
+      normal: 'Voice cracking is just part of the process!'
+    },
+    { 
+      icon: '💪', 
+      title: 'Broader Shoulders', 
+      desc: 'Shoulders become wider',
+      detail: 'Boys develop broader shoulders and a more muscular build during puberty. The chest becomes wider and muscles start developing more easily. This is due to testosterone, the main male hormone.',
+      normal: 'Your body is developing adult proportions!'
+    },
+    { 
+      icon: '🧔', 
+      title: 'Facial Hair', 
+      desc: 'Hair grows on face',
+      detail: 'Hair starts appearing on the upper lip, chin, and cheeks. This usually starts light and becomes thicker over time. Some boys get facial hair early, others later - everyone is different. Eventually, shaving may be needed.',
+      normal: 'Facial hair develops at different rates for everyone!'
+    }
+  ],
+  girls: [
+    { 
+      icon: '📐', 
+      title: 'Body Shape Changes', 
+      desc: 'Hips become wider',
+      detail: 'Girls develop wider hips and a curvier body shape during puberty. This is the body preparing for potential motherhood in the future. Fat distribution changes, with more in the hips and thighs.',
+      normal: 'These changes are a natural part of female development!'
+    },
+    { 
+      icon: '🌸', 
+      title: 'Breast Development', 
+      desc: 'Breasts begin to develop',
+      detail: 'Breast development is usually the first sign of puberty in girls. It starts with breast buds and develops over several years. One breast may grow faster than the other at first - this is normal and they usually even out.',
+      normal: 'Development happens at different rates - all are normal!'
+    },
+    { 
+      icon: '🔄', 
+      title: 'Menstruation Begins', 
+      desc: 'Monthly periods start',
+      detail: 'Menstruation (periods) typically begins 2-3 years after breast development starts. This is when the uterus sheds its lining monthly. It\'s a sign that the reproductive system is maturing. We\'ll learn more about this in another simulation!',
+      normal: 'This is a natural part of becoming a woman!'
+    }
+  ]
+};
+
+let currentCategory = 'common';
+
+const changesList = document.getElementById('changes-list');
+const detailTitle = document.getElementById('detail-title');
+const detailText = document.getElementById('detail-text');
+const detailPanel = document.getElementById('detail-panel');
+
+function selectCategory(category, btn) {
+  currentCategory = category;
+  
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  
+  renderChanges();
+  
+  // Reset detail panel
+  detailTitle.textContent = 'Tap on any change to learn more';
+  detailText.innerHTML = 'Select a physical change from the list above to understand what causes it and why it\'s completely normal.';
+}
+
+function renderChanges() {
+  const changes = changesData[currentCategory];
+  
+  changesList.innerHTML = changes.map((change, index) => `
+    <div class="change-item" onclick="showDetail(${index}, this)">
+      <div class="change-icon">${change.icon}</div>
+      <div class="change-content">
+        <div class="change-title">${change.title}</div>
+        <div class="change-desc">${change.desc}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showDetail(index, element) {
+  const change = changesData[currentCategory][index];
+  
+  document.querySelectorAll('.change-item').forEach(item => item.classList.remove('active'));
+  element.classList.add('active');
+  
+  detailTitle.textContent = `${change.icon} ${change.title}`;
+  detailText.innerHTML = `
+    ${change.detail}<br><br>
+    <span class="normal-badge">✓ ${change.normal}</span>
+  `;
+}
+
+// Initialize
+renderChanges();
+</script>
+</body>
+</html>

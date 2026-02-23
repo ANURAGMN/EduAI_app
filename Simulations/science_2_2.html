@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#11998e">
+<title>Litmus Paper Test – Acid-Base Indicator</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+.header {
+  text-align: center;
+  color: #fff;
+  padding: 12px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.header h1 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.95; }
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 8px 4px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.sim-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 12px;
+}
+
+.visual {
+  position: relative;
+  height: 38vh;
+  min-height: 280px;
+  background: linear-gradient(145deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-radius: 12px;
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+svg { width: 100%; height: 100%; display: block; }
+
+.static-hint {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 11px;
+  line-height: 1.3;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+  z-index: 10;
+}
+
+.metrics {
+  background: #e8f5e9;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 11px;
+  line-height: 1.6;
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+}
+
+.metric-item { display: flex; justify-content: space-between; }
+.metric-label { color: #666; }
+.metric-value { font-weight: 600; color: #007AFF; }
+.metric-value.acidic { color: #d32f2f; }
+.metric-value.basic { color: #1565c0; }
+.metric-value.neutral { color: #2e7d32; }
+
+.control-panel {
+  background: #e8f5e9;
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+.control-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.solution-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.solution-btn {
+  padding: 10px 6px;
+  border-radius: 10px;
+  border: 2px solid #c8e6c9;
+  font-size: 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.3;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 0.1s ease;
+}
+
+.solution-btn:active { transform: scale(0.95); }
+.solution-btn.active { border-color: #11998e; background: #e8f5e9; }
+.solution-btn .icon { font-size: 20px; display: block; margin-bottom: 3px; }
+
+.test-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 25px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(17,153,142,0.3);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease;
+}
+
+.test-btn:active { transform: scale(0.95); }
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  background: #fff;
+  border-radius: 10px;
+  margin-top: 12px;
+  font-size: 11px;
+}
+
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-color { width: 24px; height: 14px; border-radius: 4px; }
+.legend-color.blue { background: #2196f3; }
+.legend-color.red { background: #f44336; }
+.legend-color.no-change { background: #9e9e9e; }
+
+.insight-box {
+  background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-left: 4px solid #11998e;
+}
+
+.insight-title { font-weight: 600; color: #00695c; margin-bottom: 6px; }
+
+.real-world {
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 12px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.real-world .icon { font-size: 40px; }
+.real-world .text { flex: 1; line-height: 1.5; }
+.real-world .highlight-base { color: #1565c0; font-weight: 600; }
+
+.takeaway {
+  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  display: none;
+}
+
+.takeaway.show { display: block; }
+.takeaway-title { font-weight: 600; color: #1b5e20; margin-bottom: 6px; }
+
+@media screen and (max-width: 380px) {
+  .solution-grid { gap: 6px; }
+  .solution-btn { padding: 8px 4px; font-size: 9px; }
+  .solution-btn .icon { font-size: 18px; }
+}
+
+@supports (padding: max(0px)) {
+  #app {
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+  }
+}
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div class="header">
+  <h1>🧪 Litmus Paper Test</h1>
+  <p>The classic indicator for acids and bases!</p>
+</div>
+
+<div class="section-title">Test different solutions with litmus paper</div>
+<div class="sim-card" id="sim"></div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-color blue"></div> Blue Litmus</div>
+  <div class="legend-item"><div class="legend-color red"></div> Red Litmus</div>
+  <div class="legend-item"><div class="legend-color no-change"></div> No Change</div>
+</div>
+
+<div class="insight-box">
+  <div class="insight-title">🔑 Key Insight:</div>
+  <strong>Blue litmus → Red</strong> indicates ACID. <strong>Red litmus → Blue</strong> indicates BASE. If <strong>neither changes</strong>, the substance is NEUTRAL. This makes litmus a complete indicator!
+</div>
+
+<div class="real-world">
+  <div class="icon">🌿</div>
+  <div class="text">
+    <strong>Where does litmus come from?</strong> Litmus is a natural dye extracted from <span class="highlight-base">lichens</span> (organisms that grow on rocks and trees). It's been used for centuries!
+  </div>
+</div>
+
+<div class="takeaway" id="takeaway">
+  <div class="takeaway-title">💡 What you discovered:</div>
+  <span id="takeaway-text">Litmus is a complete indicator that can identify acidic, basic, and neutral substances!</span>
+</div>
+
+</div>
+
+<script>
+const SOLUTIONS = {
+  'lemon': { name: 'Lemon Juice', icon: '🍋', type: 'acidic', blueResult: '#f44336', redResult: '#f44336' },
+  'vinegar': { name: 'Vinegar', icon: '🍶', type: 'acidic', blueResult: '#ef5350', redResult: '#ef5350' },
+  'curd': { name: 'Curd/Yogurt', icon: '🥛', type: 'acidic', blueResult: '#e57373', redResult: '#e57373' },
+  'soap': { name: 'Soap Solution', icon: '🧼', type: 'basic', blueResult: '#2196f3', redResult: '#2196f3' },
+  'baking': { name: 'Baking Soda', icon: '🥄', type: 'basic', blueResult: '#1976d2', redResult: '#1976d2' },
+  'lime': { name: 'Lime Water', icon: '💧', type: 'basic', blueResult: '#1565c0', redResult: '#1565c0' },
+  'water': { name: 'Tap Water', icon: '🚰', type: 'neutral', blueResult: '#2196f3', redResult: '#f44336' },
+  'sugar': { name: 'Sugar Solution', icon: '🍬', type: 'neutral', blueResult: '#2196f3', redResult: '#f44336' },
+  'salt': { name: 'Salt Solution', icon: '🧂', type: 'neutral', blueResult: '#2196f3', redResult: '#f44336' }
+};
+
+const container = document.getElementById('sim');
+const defaultSolution = 'lemon';
+
+container.innerHTML = `
+<div class="visual">
+  <div class="static-hint">👆 Select solution & tap "Dip"</div>
+
+  <svg viewBox="0 0 400 300">
+    <!-- Lab bench -->
+    <rect x="30" y="210" width="340" height="70" rx="4" fill="#8d6e63"/>
+    <rect x="30" y="210" width="340" height="8" rx="2" fill="#6d4c41"/>
+    
+    <!-- Beaker in center -->
+    <g transform="translate(200, 90)">
+      <path d="M-45,25 L-40,95 Q-40,105 -30,105 L30,105 Q40,105 40,95 L45,25 Z" 
+            fill="rgba(255,255,255,0.4)" stroke="rgba(255,255,255,0.6)" stroke-width="2"/>
+      <ellipse cx="0" cy="25" rx="45" ry="9" fill="rgba(255,255,255,0.3)"/>
+      <rect x="-35" y="38" width="70" height="55" rx="2" fill="#81d4fa" id="liquid"/>
+      <text x="0" y="125" text-anchor="middle" font-size="11" fill="#666" id="beaker-label">${SOLUTIONS[defaultSolution].name}</text>
+      <text x="0" y="15" font-size="18" text-anchor="middle" id="beaker-icon">${SOLUTIONS[defaultSolution].icon}</text>
+    </g>
+    
+    <!-- Blue Litmus Paper -->
+    <rect class="litmus-paper" x="60" y="60" width="35" height="90" rx="3" fill="#2196f3" id="blue-paper" stroke="#1976d2" stroke-width="1"/>
+    <text x="77" y="170" text-anchor="middle" font-size="10" fill="#1976d2" font-weight="600">Blue Litmus</text>
+    <text x="77" y="185" text-anchor="middle" font-size="9" fill="#666" id="blue-status">Original</text>
+    
+    <!-- Red Litmus Paper -->
+    <rect class="litmus-paper" x="305" y="60" width="35" height="90" rx="3" fill="#f44336" id="red-paper" stroke="#d32f2f" stroke-width="1"/>
+    <text x="322" y="170" text-anchor="middle" font-size="10" fill="#d32f2f" font-weight="600">Red Litmus</text>
+    <text x="322" y="185" text-anchor="middle" font-size="9" fill="#666" id="red-status">Original</text>
+    
+    <!-- Result indicator -->
+    <g id="result-box" opacity="0">
+      <rect x="140" y="195" width="120" height="28" rx="14" fill="#fff" stroke="#4caf50" stroke-width="2"/>
+      <text x="200" y="214" text-anchor="middle" font-size="12" fill="#4caf50" font-weight="600" id="result-text">Result</text>
+    </g>
+  </svg>
+
+  <button class="test-btn" id="test-btn">💧 Dip Papers</button>
+</div>
+
+<div class="metrics">
+  <div class="metric-item"><span class="metric-label">Solution:</span> <span class="metric-value" id="solution-name">${SOLUTIONS[defaultSolution].name}</span></div>
+  <div class="metric-item"><span class="metric-label">Blue Litmus:</span> <span class="metric-value" id="blue-result">Blue</span></div>
+  <div class="metric-item"><span class="metric-label">Red Litmus:</span> <span class="metric-value" id="red-result">Red</span></div>
+  <div class="metric-item"><span class="metric-label">Conclusion:</span> <span class="metric-value" id="conclusion">?</span></div>
+</div>
+
+<div class="control-panel">
+  <div class="control-label">Select a solution to test:</div>
+  <div class="solution-grid">
+    <button class="solution-btn active" data-solution="lemon"><span class="icon">🍋</span>Lemon</button>
+    <button class="solution-btn" data-solution="vinegar"><span class="icon">🍶</span>Vinegar</button>
+    <button class="solution-btn" data-solution="curd"><span class="icon">🥛</span>Curd</button>
+    <button class="solution-btn" data-solution="soap"><span class="icon">🧼</span>Soap</button>
+    <button class="solution-btn" data-solution="baking"><span class="icon">🥄</span>Baking Soda</button>
+    <button class="solution-btn" data-solution="lime"><span class="icon">💧</span>Lime Water</button>
+    <button class="solution-btn" data-solution="water"><span class="icon">🚰</span>Tap Water</button>
+    <button class="solution-btn" data-solution="sugar"><span class="icon">🍬</span>Sugar</button>
+    <button class="solution-btn" data-solution="salt"><span class="icon">🧂</span>Salt</button>
+  </div>
+</div>`;
+
+let state = { solution: 'lemon', animating: false };
+
+const bluePaper = document.getElementById('blue-paper');
+const redPaper = document.getElementById('red-paper');
+const blueStatus = document.getElementById('blue-status');
+const redStatus = document.getElementById('red-status');
+const liquid = document.getElementById('liquid');
+const beakerLabel = document.getElementById('beaker-label');
+const beakerIcon = document.getElementById('beaker-icon');
+const solutionName = document.getElementById('solution-name');
+const blueResult = document.getElementById('blue-result');
+const redResult = document.getElementById('red-result');
+const conclusion = document.getElementById('conclusion');
+const resultBox = document.getElementById('result-box');
+const resultText = document.getElementById('result-text');
+const testBtn = document.getElementById('test-btn');
+const takeaway = document.getElementById('takeaway');
+const takeawayText = document.getElementById('takeaway-text');
+
+const blueOrigX = 60, blueOrigY = 60;
+const redOrigX = 305, redOrigY = 60;
+const blueDipX = 130, blueDipY = 100;
+const redDipX = 235, redDipY = 100;
+
+function updateDisplay() {
+  const sol = SOLUTIONS[state.solution];
+  beakerLabel.textContent = sol.name;
+  beakerIcon.textContent = sol.icon;
+  solutionName.textContent = sol.name;
+  
+  if (sol.type === 'acidic') liquid.setAttribute('fill', '#ffcdd2');
+  else if (sol.type === 'basic') liquid.setAttribute('fill', '#bbdefb');
+  else liquid.setAttribute('fill', '#b3e5fc');
+}
+
+function animatePaper(paper, startX, startY, endX, endY, duration) {
+  return new Promise(resolve => {
+    const startTime = performance.now();
+    
+    function animate(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+      
+      paper.setAttribute('x', startX + (endX - startX) * eased);
+      paper.setAttribute('y', startY + (endY - startY) * eased);
+      
+      if (progress < 1) requestAnimationFrame(animate);
+      else resolve();
+    }
+    
+    requestAnimationFrame(animate);
+  });
+}
+
+async function runTest() {
+  if (state.animating) return;
+  state.animating = true;
+  
+  const sol = SOLUTIONS[state.solution];
+  
+  await Promise.all([
+    animatePaper(bluePaper, blueOrigX, blueOrigY, blueDipX, blueDipY, 400),
+    animatePaper(redPaper, redOrigX, redOrigY, redDipX, redDipY, 400)
+  ]);
+  
+  await new Promise(r => setTimeout(r, 500));
+  
+  bluePaper.setAttribute('fill', sol.blueResult);
+  redPaper.setAttribute('fill', sol.redResult);
+  
+  await new Promise(r => setTimeout(r, 300));
+  
+  await Promise.all([
+    animatePaper(bluePaper, blueDipX, blueDipY, blueOrigX, blueOrigY, 400),
+    animatePaper(redPaper, redDipX, redDipY, redOrigX, redOrigY, 400)
+  ]);
+  
+  if (sol.type === 'acidic') {
+    blueStatus.textContent = '→ Red!';
+    redStatus.textContent = 'No change';
+    blueResult.textContent = 'Red ⚠️';
+    blueResult.className = 'metric-value acidic';
+    redResult.textContent = 'Red';
+    redResult.className = 'metric-value';
+    conclusion.textContent = 'ACIDIC';
+    conclusion.className = 'metric-value acidic';
+    resultText.textContent = '🔴 ACIDIC';
+    resultText.setAttribute('fill', '#d32f2f');
+    resultBox.querySelector('rect').setAttribute('stroke', '#d32f2f');
+    takeawayText.textContent = `${sol.name} is ACIDIC! Blue litmus turned red because acids release H⁺ ions.`;
+  } else if (sol.type === 'basic') {
+    blueStatus.textContent = 'No change';
+    redStatus.textContent = '→ Blue!';
+    blueResult.textContent = 'Blue';
+    blueResult.className = 'metric-value';
+    redResult.textContent = 'Blue ⚠️';
+    redResult.className = 'metric-value basic';
+    conclusion.textContent = 'BASIC';
+    conclusion.className = 'metric-value basic';
+    resultText.textContent = '🔵 BASIC';
+    resultText.setAttribute('fill', '#1565c0');
+    resultBox.querySelector('rect').setAttribute('stroke', '#1565c0');
+    takeawayText.textContent = `${sol.name} is BASIC! Red litmus turned blue because bases release OH⁻ ions.`;
+  } else {
+    blueStatus.textContent = 'No change';
+    redStatus.textContent = 'No change';
+    blueResult.textContent = 'Blue';
+    blueResult.className = 'metric-value';
+    redResult.textContent = 'Red';
+    redResult.className = 'metric-value';
+    conclusion.textContent = 'NEUTRAL';
+    conclusion.className = 'metric-value neutral';
+    resultText.textContent = '⚪ NEUTRAL';
+    resultText.setAttribute('fill', '#2e7d32');
+    resultBox.querySelector('rect').setAttribute('stroke', '#2e7d32');
+    takeawayText.textContent = `${sol.name} is NEUTRAL! Neither litmus paper changed color because it has balanced pH.`;
+  }
+
+  resultBox.setAttribute('opacity', '1');
+  takeaway.classList.add('show');
+  state.animating = false;
+}
+
+function resetTest() {
+  if (state.animating) return;
+  
+  bluePaper.setAttribute('x', blueOrigX);
+  bluePaper.setAttribute('y', blueOrigY);
+  bluePaper.setAttribute('fill', '#2196f3');
+  
+  redPaper.setAttribute('x', redOrigX);
+  redPaper.setAttribute('y', redOrigY);
+  redPaper.setAttribute('fill', '#f44336');
+  
+  blueStatus.textContent = 'Original';
+  redStatus.textContent = 'Original';
+  blueResult.textContent = 'Blue';
+  blueResult.className = 'metric-value';
+  redResult.textContent = 'Red';
+  redResult.className = 'metric-value';
+  conclusion.textContent = '?';
+  conclusion.className = 'metric-value';
+  resultBox.setAttribute('opacity', '0');
+}
+
+testBtn.onclick = runTest;
+
+container.querySelectorAll('.solution-btn').forEach(btn => {
+  btn.onclick = () => {
+    if (state.animating) return;
+    container.querySelectorAll('.solution-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.solution = btn.dataset.solution;
+    resetTest();
+    updateDisplay();
+  };
+});
+
+updateDisplay();
+</script>
+</body>
+</html>
