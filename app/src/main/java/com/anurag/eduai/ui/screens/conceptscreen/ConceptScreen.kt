@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.R
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.domain.chatbot.usecase.ChatIntent
@@ -30,6 +31,8 @@ import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.viewModel.ChatViewModel
 import com.anurag.eduai.ui.viewModel.ConceptViewModel
+import com.anurag.eduai.ui.viewModel.SimulationAgentViewModel
+import com.anurag.eduai.ui.viewmodel_factory.SimulationAgentViewmodelFactory
 import com.anurag.eduai.utils.StreakManager
 
 /**
@@ -63,12 +66,19 @@ fun ConceptScreen(
     val state by viewModel.state.collectAsState()
     val chatState by chatViewModel.uiState.collectAsState()
 
+    val simulationViewModel: SimulationAgentViewModel = viewModel(
+        factory = SimulationAgentViewmodelFactory()
+    )
+    val availableSimulation by simulationViewModel.availableSimulations.collectAsState()
+
+
     // streak update
     val streakManager = remember { StreakManager(context) }
 
     // updating streak on concept opening
     LaunchedEffect(Unit) {
         streakManager.onConceptOpened()
+        simulationViewModel.loadAvailableSimulations()
     }
     LaunchedEffect(chapterId, type) {
         viewModel.loadConcepts(chapterId, type)
@@ -136,7 +146,9 @@ fun ConceptScreen(
                                     onConceptClick(conceptUiModel.id)
                                 }
                             },
-                            onSimulationAgentClick = { onSimulationAgentClick("simple_pendulum") },//change with id conceptUiModel.id when agent is ready
+                            onSimulationAgentClick = {
+                                onSimulationAgentClick("simple_pendulum") // Pass the hardcoded ID
+                            },
                             onSimulationClick = { title, url ->
                                 // Pass everything back to the navigator
                                 onSimulationClick( title, url)

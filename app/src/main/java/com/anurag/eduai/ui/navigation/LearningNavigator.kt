@@ -15,6 +15,7 @@ import com.anurag.eduai.ui.screens.conceptdetailscreen.ConceptDetailScreen
 import com.anurag.eduai.ui.screens.conceptscreen.ConceptScreen
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptSimulationViewer
 import com.anurag.eduai.ui.screens.home.HomeScreen
+import com.anurag.eduai.ui.screens.simulation_agent.SimulationAgentScreen
 import com.anurag.eduai.ui.screens.simulationscreen.SimulationViewerScreen
 import com.anurag.eduai.ui.screens.subjectscreen.SubjectScreen
 
@@ -89,8 +90,7 @@ fun LearningNavigator(
                 onConceptClick = { conceptId ->
                     navController.navigate("chatbot?conceptId=$conceptId")
                 },
-                onSimulationAgentClick = { simulationId ->
-                    // Assuming you have an agent route defined
+                onSimulationAgentClick = {simulationId->
                     navController.navigate("simulation_agent/$simulationId")
                 },
                 onSimulationClick = { title, url ->
@@ -151,6 +151,14 @@ fun LearningNavigator(
                 simulationUrl = url,
                 simulationTitle = title,
                 onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = "simulation_agent/{simulationId}") { backStackEntry ->
+            val simulationId = backStackEntry.arguments?.getString("simulationId")!!
+            SimulationAgentScreen(
+                simulationId = simulationId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
