@@ -3,6 +3,7 @@ package com.anurag.eduai.ui.screens.conceptscreen.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -10,10 +11,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults.buttonColors
+import androidx.compose.material3.ButtonDefaults.outlinedButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,16 +26,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.models.ConceptStatus
 import com.anurag.eduai.ui.models.ConceptUiModel
+import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.CardBackground
 import com.anurag.eduai.ui.theme.CompleteTextColor
 import com.anurag.eduai.ui.theme.InProgressTextColor
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.NotStartedTextColor
+import com.anurag.eduai.ui.theme.TextOnPrimary
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
+import com.anurag.eduai.ui.theme.White
 
 /**
  * Composable function to display a Concept Card with status badge, title, concept completion status, and an icon.
@@ -41,7 +50,9 @@ import com.anurag.eduai.ui.theme.TextSecondary
 @Composable
 fun ConceptCard(
     concept: ConceptUiModel,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    onSimulationAgentClick: (String) -> Unit = {},
+    onSimulationClick: (String,String) -> Unit = { _,_ -> }
 ) {
     val dimens = LocalDimensions.current
     val isEnabled = concept.status != ConceptStatus.NOT_STARTED
@@ -93,6 +104,59 @@ fun ConceptCard(
                     fontWeight = FontWeight.Medium,
                     color = getStatusColor(concept.status)
                 )
+
+                // Simulation Buttons
+                if (concept.type.equals("SIMULATION", ignoreCase = true)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = dimens.spaceSmall),
+                        horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
+                    ) {
+                        Button(
+                            onClick = { onSimulationAgentClick("simple_pendulum") },
+                            enabled = isEnabled,
+                            modifier = Modifier.weight(1f),
+                            contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
+                            shape = MaterialTheme.shapes.small,
+                            colors = buttonColors(
+                                containerColor = if (isEnabled) AccentBlue else MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                                contentColor = TextPrimary
+                            )
+                        ) {
+                            Text(
+                                text = stringResource(R.string.agent),
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                        val hasValidUrl = !concept.simulationUrl.isNullOrBlank() &&
+                                concept.simulationUrl != "Not found"
+
+                        if (hasValidUrl) {
+                        OutlinedButton(
+                            onClick = {
+                                onSimulationClick(concept.name, concept.simulationUrl)
+                            },
+                            enabled = isEnabled,
+                            modifier = Modifier.weight(1f),
+                            contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
+                            shape = MaterialTheme.shapes.small,
+                            colors = outlinedButtonColors(
+                                containerColor = White,
+                                contentColor = TextPrimary,
+                            )
+                        ) {
+                            Text(
+                                text = stringResource(R.string.simulation),
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }}
+                    }
+                }
             }
 
 

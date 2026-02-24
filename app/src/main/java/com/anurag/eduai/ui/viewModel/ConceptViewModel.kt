@@ -74,7 +74,9 @@ class ConceptViewModel @Inject constructor(
                             "COMPLETED" -> ConceptStatus.COMPLETED
                             "IN_PROGRESS", "STARTED" -> ConceptStatus.IN_PROGRESS
                             else -> ConceptStatus.NOT_STARTED
-                        }
+                        },
+                        type = concept.type,
+                        simulationUrl = concept.simulationUrl
                     )
                 }
 

@@ -140,7 +140,6 @@
     <string name="level_medium">medium</string>
     <string name="level_advanced">advanced</string>
     <string name="student_level">Student Level</string>
-    <string name="agent">Agent</string>
     <string name="no_response">No response</string>
     <string name="sorry_i_couldn_t_process_that_please_try_again">Sorry, I couldn\'t process that. Please try again.</string>
     <string name="close_settings">Close Setting\n</string>
@@ -208,6 +207,7 @@
 
     <!--    Simulation Screen-->
     <string name="sim_title">Simulation AI</string>
+    <string name="agent">Agent</string>
     <string name="sim_type_or_speak">Type or speak...</string>
     <string name="sim_send_message">Send message</string>
     <string name="sim_start_listening">Start listening</string>

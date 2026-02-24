@@ -13,6 +13,7 @@ import com.anurag.eduai.ui.screens.chapterscreen.ChapterScreen
 import com.anurag.eduai.ui.screens.chatbotscreen.ChatbotScreen
 import com.anurag.eduai.ui.screens.conceptdetailscreen.ConceptDetailScreen
 import com.anurag.eduai.ui.screens.conceptscreen.ConceptScreen
+import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptSimulationViewer
 import com.anurag.eduai.ui.screens.home.HomeScreen
 import com.anurag.eduai.ui.screens.simulationscreen.SimulationViewerScreen
 import com.anurag.eduai.ui.screens.subjectscreen.SubjectScreen
@@ -88,6 +89,14 @@ fun LearningNavigator(
                 onConceptClick = { conceptId ->
                     navController.navigate("chatbot?conceptId=$conceptId")
                 },
+                onSimulationAgentClick = { simulationId ->
+                    // Assuming you have an agent route defined
+                    navController.navigate("simulation_agent/$simulationId")
+                },
+                onSimulationClick = { title, url ->
+                    val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
+                    navController.navigate("concept_sim_view/$encodedUrl/$title")
+                },
                 onGoHome = onGoHome,
                 onGoSetting = onGoSetting
             )
@@ -125,6 +134,22 @@ fun LearningNavigator(
                 simulationId = simulationId,
                 htmlFileName = htmlFileName,
                 simulationTitle = simulationTitle,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = "concept_sim_view/{url}/{title}",
+            arguments = listOf(
+                navArgument("url") { type = NavType.StringType },
+                navArgument("title") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val url = backStackEntry.arguments?.getString("url") ?: ""
+            val title = backStackEntry.arguments?.getString("title") ?: "Simulation"
+
+            ConceptSimulationViewer(
+                simulationUrl = url,
+                simulationTitle = title,
                 onBackClick = { navController.popBackStack() }
             )
         }

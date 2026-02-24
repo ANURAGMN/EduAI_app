@@ -24,6 +24,7 @@ import com.anurag.eduai.ui.screens.chapterscreen.ChapterScreen
 import com.anurag.eduai.ui.screens.chatbotscreen.ChatbotScreen
 import com.anurag.eduai.ui.screens.conceptdetailscreen.ConceptDetailScreen
 import com.anurag.eduai.ui.screens.conceptscreen.ConceptScreen
+import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptSimulationViewer
 import com.anurag.eduai.ui.screens.home.HomeScreen
 import com.anurag.eduai.ui.screens.progess.ProgressScreen
 import com.anurag.eduai.ui.screens.setting.SettingScreen
@@ -199,6 +200,14 @@ fun BottomNavBar() {
                             restoreState = true
                         }
                     },
+                    onSimulationAgentClick = { simulationId ->
+                        navController.navigate("simulation_agent/$simulationId")
+                    },
+                    onSimulationClick = { title, url ->
+                        //  Encode the URL to prevent navigation crashes due to '/'
+                        val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
+                        navController.navigate("concept_sim_view/$encodedUrl/$title")
+                    },
                     onGoSetting = {
                         navController.navigate("setting") {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
@@ -282,6 +291,23 @@ fun BottomNavBar() {
                     simulationId = simulationId,
                     htmlFileName = htmlFileName,
                     simulationTitle = simulationTitle,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = "concept_sim_view/{url}/{title}",
+                arguments = listOf(
+                    navArgument("url") { type = NavType.StringType },
+                    navArgument("title") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val url = backStackEntry.arguments?.getString("url") ?: ""
+                val title = backStackEntry.arguments?.getString("title") ?: "Simulation"
+
+                ConceptSimulationViewer(
+                    simulationUrl = url,
+                    simulationTitle = title,
                     onBackClick = { navController.popBackStack() }
                 )
             }

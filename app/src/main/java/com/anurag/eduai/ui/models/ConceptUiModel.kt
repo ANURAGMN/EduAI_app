@@ -7,7 +7,9 @@ data class ConceptUiModel(
     val id: String,
     val name: String,
     val order: Int,
-    val status: ConceptStatus
+    val status: ConceptStatus,
+    val type: String = "study",
+    val simulationUrl: String? = null
 )
 
 /**

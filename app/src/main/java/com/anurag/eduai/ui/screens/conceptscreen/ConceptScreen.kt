@@ -41,16 +41,20 @@ import com.anurag.eduai.utils.StreakManager
  *
  * loads concepts from the database using ConceptViewModel and displays them in a list.
  */
+
+
 @Composable
 fun ConceptScreen(
     chapterId: String,
     type: String,
     onBackClick: () -> Unit = {},
     onConceptClick: (String) -> Unit = {},
+    onSimulationAgentClick: (String) -> Unit = {},
+    onSimulationClick: (String, String) -> Unit = { _, _ -> },
     onGoHome:() -> Unit = {},
     onGoSetting:() -> Unit = {},
     viewModel: ConceptViewModel = hiltViewModel(),
-    chatViewModel: ChatViewModel = hiltViewModel()
+    chatViewModel: ChatViewModel = hiltViewModel(),
 ) {
     TrackScreenEvent(screenName = ScreenName.CONCEPT)
 
@@ -105,7 +109,7 @@ fun ConceptScreen(
                 modifier = Modifier.padding(dimens.spaceMedium),
             ) {
                 Text(
-                    text = if (state.type == stringResource(R.string.simulation))
+                    text = if (state.type.equals("SIMULATION", ignoreCase = true))
                         stringResource(R.string.simulations_to_explore)
                     else
                         stringResource(R.string.lessons_to_master),
@@ -123,7 +127,7 @@ fun ConceptScreen(
                             concept = conceptUiModel,
                             onClick = {
                                 DebugLogger.debugLog("ConceptScreen", "Concept clicked: ${conceptUiModel.id}")
-                                
+
                                 // Use the simplified approach - check and show dialog if session exists
                                 chatViewModel.selectConceptWithDialog(conceptUiModel.name)
 
@@ -131,8 +135,12 @@ fun ConceptScreen(
                                 if (!chatViewModel.hasExistingSession(conceptUiModel.name)) {
                                     onConceptClick(conceptUiModel.id)
                                 }
-                            }
-                        )
+                            },
+                            onSimulationAgentClick = { onSimulationAgentClick("simple_pendulum") },//change with id conceptUiModel.id when agent is ready
+                            onSimulationClick = { title, url ->
+                                // Pass everything back to the navigator
+                                onSimulationClick( title, url)
+                            }                       )
                     }
                 }
             }
