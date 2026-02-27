@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#d32f2f">
+<title>Combustion Examples – Burning Materials</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #d32f2f 0%, #ef5350 100%);
+  min-height: 100vh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#app {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+}
+
+.header {
+  text-align: center;
+  color: #fff;
+  padding: 12px;
+}
+
+.header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.95; }
+
+.concept-card {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #d32f2f;
+}
+
+.concept-title { font-size: 12px; font-weight: 700; color: #c62828; margin-bottom: 6px; }
+.concept-text { font-size: 12px; color: #37474f; line-height: 1.5; }
+
+.sim-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+}
+
+.visual {
+  position: relative;
+  height: 38vh;
+  min-height: 260px;
+  background: linear-gradient(180deg, #263238 0%, #37474f 100%);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+svg { width: 100%; height: 100%; }
+
+.material-label {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.materials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.material-btn {
+  background: #f5f5f5;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 12px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.material-btn:active { transform: scale(0.95); }
+.material-btn.active { border-color: #d32f2f; background: #ffebee; }
+.material-btn.done { border-color: #4caf50; background: #e8f5e9; }
+.material-btn .icon { font-size: 28px; }
+.material-btn .name { font-size: 10px; color: #333; margin-top: 4px; }
+
+.burn-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%);
+  color: white;
+}
+
+.burn-btn:disabled { background: #ccc; }
+
+.equation-box {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  text-align: center;
+  border-left: 4px solid #ff9800;
+}
+
+.equation-title { font-size: 11px; font-weight: 600; color: #e65100; margin-bottom: 6px; }
+.equation { font-size: 12px; font-weight: 700; color: #37474f; }
+.equation-products { font-size: 10px; color: #666; margin-top: 6px; }
+
+.learning-panel {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 3px solid #d32f2f;
+}
+
+.learning-title { font-size: 12px; font-weight: 700; color: #c62828; margin-bottom: 6px; }
+.learning-text { font-size: 11px; color: #37474f; line-height: 1.6; }
+
+.takeaway {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #4caf50;
+}
+
+.takeaway-title { font-size: 12px; font-weight: 700; color: #2e7d32; margin-bottom: 6px; }
+.takeaway-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+
+@keyframes burn {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.1); }
+}
+
+.burning { animation: burn 0.3s ease infinite; }
+
+@keyframes brightFlash {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.flash { animation: brightFlash 0.5s ease; }
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div class="header">
+  <h1>🔥 Combustion Examples</h1>
+  <p>Different materials burn differently!</p>
+</div>
+
+<div class="concept-card">
+  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-text">
+    <strong>Combustion</strong> is a chemical reaction where a substance reacts with oxygen, producing heat, light, and new substances. Different fuels burn with different flames and products!
+  </div>
+</div>
+
+<div class="sim-card">
+  <div class="visual">
+    <div class="material-label" id="material-label">Select a material to burn</div>
+    <svg viewBox="0 0 400 260" id="scene">
+      <!-- Bunsen burner -->
+      <g transform="translate(200, 200)">
+        <rect x="-30" y="0" width="60" height="50" rx="5" fill="#455a64"/>
+        <rect x="-20" y="50" width="40" height="15" rx="3" fill="#37474f"/>
+        <rect x="-40" y="65" width="80" height="8" rx="2" fill="#263238"/>
+        
+        <!-- Flame base -->
+        <g id="burner-flame">
+          <ellipse cx="0" cy="-15" rx="12" ry="25" fill="#2196f3" opacity="0.7"/>
+          <ellipse cx="0" cy="-10" rx="8" ry="18" fill="#64b5f6"/>
+        </g>
+      </g>
+      
+      <!-- Material holder (tongs) -->
+      <g id="tongs" transform="translate(200, 100)">
+        <line x1="-20" y1="0" x2="30" y2="60" stroke="#757575" stroke-width="5" stroke-linecap="round"/>
+        <line x1="20" y1="0" x2="30" y2="60" stroke="#757575" stroke-width="5" stroke-linecap="round"/>
+      </g>
+      
+      <!-- Material samples (shown based on selection) -->
+      <g id="material-display" transform="translate(200, 85)">
+        <!-- Magnesium ribbon -->
+        <g id="mat-magnesium" style="display:none">
+          <rect x="-20" y="0" width="40" height="8" rx="2" fill="#e0e0e0"/>
+          <text x="0" y="25" font-size="10" fill="#90a4ae" text-anchor="middle">Mg ribbon</text>
+        </g>
+        
+        <!-- Paper -->
+        <g id="mat-paper" style="display:none">
+          <rect x="-15" y="-10" width="30" height="35" rx="2" fill="#fff" stroke="#ccc"/>
+          <text x="0" y="40" font-size="10" fill="#90a4ae" text-anchor="middle">Paper</text>
+        </g>
+        
+        <!-- Wood -->
+        <g id="mat-wood" style="display:none">
+          <rect x="-8" y="-5" width="16" height="40" rx="2" fill="#8d6e63"/>
+          <text x="0" y="50" font-size="10" fill="#90a4ae" text-anchor="middle">Wood stick</text>
+        </g>
+        
+        <!-- Charcoal -->
+        <g id="mat-charcoal" style="display:none">
+          <ellipse cx="0" cy="10" rx="15" ry="12" fill="#263238"/>
+          <text x="0" y="40" font-size="10" fill="#90a4ae" text-anchor="middle">Charcoal</text>
+        </g>
+        
+        <!-- Sulfur -->
+        <g id="mat-sulfur" style="display:none">
+          <ellipse cx="0" cy="10" rx="12" ry="10" fill="#fdd835"/>
+          <text x="0" y="35" font-size="10" fill="#90a4ae" text-anchor="middle">Sulfur</text>
+        </g>
+        
+        <!-- Matchstick -->
+        <g id="mat-match" style="display:none">
+          <rect x="-3" y="-5" width="6" height="35" rx="1" fill="#8d6e63"/>
+          <ellipse cx="0" cy="-8" rx="5" ry="6" fill="#d32f2f"/>
+          <text x="0" y="45" font-size="10" fill="#90a4ae" text-anchor="middle">Match</text>
+        </g>
+      </g>
+      
+      <!-- Burning effects (shown when burning) -->
+      <g id="burn-effect" style="display:none" transform="translate(200, 60)">
+        <!-- Generic flame -->
+        <g id="flame-yellow" style="display:none">
+          <ellipse cx="0" cy="0" rx="15" ry="30" fill="#ff9800" class="burning"/>
+          <ellipse cx="0" cy="5" rx="10" ry="20" fill="#ffeb3b" class="burning"/>
+        </g>
+        
+        <!-- Bright white (Mg) -->
+        <g id="flame-white" style="display:none">
+          <circle cx="0" cy="0" r="40" fill="#fff" opacity="0.9"/>
+          <circle cx="0" cy="0" r="25" fill="#fff"/>
+          <text x="0" y="60" font-size="10" fill="#fff" text-anchor="middle">⚠️ Extremely bright!</text>
+        </g>
+        
+        <!-- Blue flame (sulfur) -->
+        <g id="flame-blue" style="display:none">
+          <ellipse cx="0" cy="0" rx="12" ry="25" fill="#42a5f5" class="burning"/>
+          <ellipse cx="0" cy="5" rx="8" ry="18" fill="#90caf9" class="burning"/>
+        </g>
+        
+        <!-- Glowing red (charcoal) -->
+        <g id="glow-red" style="display:none">
+          <ellipse cx="0" cy="20" rx="18" ry="15" fill="#ff5722" opacity="0.8"/>
+          <ellipse cx="0" cy="20" rx="12" ry="10" fill="#ff8a65"/>
+        </g>
+      </g>
+      
+      <!-- Ash/residue -->
+      <g id="ash" style="display:none" transform="translate(200, 90)">
+        <ellipse cx="0" cy="0" rx="15" ry="8" fill="#9e9e9e" opacity="0.7"/>
+        <text x="0" y="25" font-size="9" fill="#90a4ae" text-anchor="middle">Ash</text>
+      </g>
+    </svg>
+  </div>
+  
+  <div class="materials-grid">
+    <div class="material-btn" onclick="selectMaterial('magnesium', this)">
+      <div class="icon">✨</div>
+      <div class="name">Magnesium</div>
+    </div>
+    <div class="material-btn" onclick="selectMaterial('paper', this)">
+      <div class="icon">📄</div>
+      <div class="name">Paper</div>
+    </div>
+    <div class="material-btn" onclick="selectMaterial('wood', this)">
+      <div class="icon">🪵</div>
+      <div class="name">Wood</div>
+    </div>
+    <div class="material-btn" onclick="selectMaterial('charcoal', this)">
+      <div class="icon">⬛</div>
+      <div class="name">Charcoal</div>
+    </div>
+    <div class="material-btn" onclick="selectMaterial('sulfur', this)">
+      <div class="icon">🟡</div>
+      <div class="name">Sulfur</div>
+    </div>
+    <div class="material-btn" onclick="selectMaterial('match', this)">
+      <div class="icon">🔥</div>
+      <div class="name">Matchstick</div>
+    </div>
+  </div>
+  
+  <button class="burn-btn" id="burn-btn" onclick="burnMaterial()" disabled>
+    Select a material first
+  </button>
+</div>
+
+<div class="equation-box" id="equation-box">
+  <div class="equation-title">⚗️ Combustion Reaction</div>
+  <div class="equation" id="equation">Fuel + O₂ → Products + Heat + Light</div>
+  <div class="equation-products" id="equation-products">Select a material to see its specific reaction</div>
+</div>
+
+<div class="learning-panel">
+  <div class="learning-title">🔬 Combustion Properties</div>
+  <div class="learning-text" id="learning-text">
+    Different materials have different:<br>
+    • <strong>Ignition temperatures</strong> (ease of catching fire)<br>
+    • <strong>Flame colors</strong> (depends on elements)<br>
+    • <strong>Products</strong> (what's formed after burning)<br><br>
+    Select a material and burn it to learn more!
+  </div>
+</div>
+
+<div class="takeaway">
+  <div class="takeaway-title">🎯 Key Points</div>
+  <div class="takeaway-text">
+    <strong>All combustion reactions:</strong><br>
+    • Are chemical changes (irreversible)<br>
+    • Need oxygen to occur<br>
+    • Release heat and light<br>
+    • Form new substances (usually CO₂, H₂O, or oxides)
+  </div>
+</div>
+
+</div>
+
+<script>
+const materials = {
+  magnesium: {
+    name: 'Magnesium Ribbon',
+    element: 'mat-magnesium',
+    flame: 'flame-white',
+    equation: '2Mg + O₂ → 2MgO',
+    products: 'Produces: Magnesium Oxide (white ash) + Brilliant white light',
+    learning: `<strong style="color:#9c27b0">✨ Magnesium Burns with Brilliant White Light!</strong><br><br>
+      • <strong>Flame:</strong> Extremely bright white (don't look directly!)<br>
+      • <strong>Product:</strong> White powdery ash (MgO - basic oxide)<br>
+      • <strong>Used in:</strong> Fireworks, flares, photography flash<br><br>
+      The intense white light is why magnesium was used in old camera flashes!`
+  },
+  paper: {
+    name: 'Paper',
+    element: 'mat-paper',
+    flame: 'flame-yellow',
+    equation: 'Paper (C,H,O) + O₂ → CO₂ + H₂O',
+    products: 'Produces: Carbon dioxide + Water vapor + Ash',
+    learning: `<strong style="color:#ff9800">📄 Paper Burns with Yellow Flame!</strong><br><br>
+      • <strong>Flame:</strong> Yellow/orange (typical organic material)<br>
+      • <strong>Products:</strong> CO₂, H₂O, and gray ash<br>
+      • <strong>Ignition temp:</strong> ~233°C (Fahrenheit 451!)<br><br>
+      Paper is made of cellulose (carbon, hydrogen, oxygen) - it burns easily!`
+  },
+  wood: {
+    name: 'Wood',
+    element: 'mat-wood',
+    flame: 'flame-yellow',
+    equation: 'Wood (C,H,O) + O₂ → CO₂ + H₂O + Ash',
+    products: 'Produces: Carbon dioxide + Water vapor + Charcoal/Ash',
+    learning: `<strong style="color:#8d6e63">🪵 Wood Burns with Orange-Yellow Flame!</strong><br><br>
+      • <strong>Flame:</strong> Orange-yellow, crackling<br>
+      • <strong>Products:</strong> CO₂, H₂O, smoke, ash<br>
+      • <strong>Burns slower than paper</strong> (denser material)<br><br>
+      Wood has been humanity's primary fuel for thousands of years!`
+  },
+  charcoal: {
+    name: 'Charcoal',
+    element: 'mat-charcoal',
+    flame: 'glow-red',
+    equation: 'C + O₂ → CO₂',
+    products: 'Produces: Carbon dioxide + Heat (glows red, no visible flame)',
+    learning: `<strong style="color:#ff5722">⬛ Charcoal Glows Red-Hot!</strong><br><br>
+      • <strong>No visible flame</strong> - just glowing embers<br>
+      • <strong>Product:</strong> Mainly CO₂<br>
+      • <strong>Burns very hot</strong> - used for cooking/BBQ<br><br>
+      Charcoal is almost pure carbon - it burns cleaner than wood!`
+  },
+  sulfur: {
+    name: 'Sulfur',
+    element: 'mat-sulfur',
+    flame: 'flame-blue',
+    equation: 'S + O₂ → SO₂',
+    products: 'Produces: Sulfur dioxide (pungent smell) - TOXIC!',
+    learning: `<strong style="color:#2196f3">🟡 Sulfur Burns with Blue Flame!</strong><br><br>
+      • <strong>Flame:</strong> Characteristic blue color<br>
+      • <strong>Product:</strong> SO₂ (sulfur dioxide) - acidic, toxic gas<br>
+      • <strong>Smell:</strong> Pungent, choking (rotten eggs)<br><br>
+      ⚠️ Only burn sulfur in well-ventilated areas or labs!`
+  },
+  match: {
+    name: 'Matchstick',
+    element: 'mat-match',
+    flame: 'flame-yellow',
+    equation: 'Match head + Friction → Fire → Wood burns',
+    products: 'Match head ignites, then wood burns producing CO₂ + H₂O',
+    learning: `<strong style="color:#d32f2f">🔥 Matchstick - Two-Stage Burning!</strong><br><br>
+      • <strong>Stage 1:</strong> Red phosphorus ignites from friction<br>
+      • <strong>Stage 2:</strong> Heat ignites the wooden stick<br>
+      • <strong>Products:</strong> Various oxides, CO₂, H₂O<br><br>
+      The match head has chemicals that ignite at low temperature when rubbed!`
+  }
+};
+
+let selectedMaterial = null;
+let selectedBtn = null;
+
+const materialLabel = document.getElementById('material-label');
+const burnBtn = document.getElementById('burn-btn');
+const equation = document.getElementById('equation');
+const equationProducts = document.getElementById('equation-products');
+const learningText = document.getElementById('learning-text');
+const burnEffect = document.getElementById('burn-effect');
+const ash = document.getElementById('ash');
+
+function hideAllMaterials() {
+  Object.keys(materials).forEach(key => {
+    document.getElementById(materials[key].element).style.display = 'none';
+  });
+  document.getElementById('flame-yellow').style.display = 'none';
+  document.getElementById('flame-white').style.display = 'none';
+  document.getElementById('flame-blue').style.display = 'none';
+  document.getElementById('glow-red').style.display = 'none';
+  burnEffect.style.display = 'none';
+  ash.style.display = 'none';
+}
+
+function selectMaterial(type, btn) {
+  if (btn.classList.contains('done')) return;
+  
+  document.querySelectorAll('.material-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  
+  selectedMaterial = type;
+  selectedBtn = btn;
+  
+  hideAllMaterials();
+  
+  const mat = materials[type];
+  document.getElementById(mat.element).style.display = 'block';
+  
+  materialLabel.textContent = mat.name;
+  burnBtn.disabled = false;
+  burnBtn.textContent = `🔥 Burn ${mat.name}`;
+  
+  equation.textContent = mat.equation;
+  equationProducts.textContent = mat.products;
+}
+
+function burnMaterial() {
+  if (!selectedMaterial) return;
+  
+  burnBtn.disabled = true;
+  const mat = materials[selectedMaterial];
+  
+  materialLabel.textContent = `🔥 Burning ${mat.name}...`;
+  
+  // Show burning effect
+  burnEffect.style.display = 'block';
+  document.getElementById(mat.flame).style.display = 'block';
+  
+  // Hide original material
+  setTimeout(() => {
+    document.getElementById(mat.element).style.display = 'none';
+  }, 500);
+  
+  // Show results after burning
+  setTimeout(() => {
+    document.getElementById(mat.flame).style.display = 'none';
+    burnEffect.style.display = 'none';
+    
+    if (selectedMaterial !== 'sulfur') {
+      ash.style.display = 'block';
+    }
+    
+    materialLabel.textContent = `✅ ${mat.name} burned completely!`;
+    learningText.innerHTML = mat.learning;
+    
+    selectedBtn.classList.add('done');
+    burnBtn.textContent = 'Select another material';
+    selectedMaterial = null;
+  }, 2000);
+}
+</script>
+</body>
+</html>

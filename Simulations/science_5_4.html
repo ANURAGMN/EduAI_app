@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0288d1">
+<title>States of Matter – Water Transitions</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #0288d1 0%, #4fc3f7 100%);
+  min-height: 100vh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#app {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+}
+
+.header {
+  text-align: center;
+  color: #fff;
+  padding: 12px;
+}
+
+.header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.95; }
+
+.concept-card {
+  background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #0288d1;
+}
+
+.concept-title { font-size: 12px; font-weight: 700; color: #0277bd; margin-bottom: 6px; }
+.concept-text { font-size: 12px; color: #37474f; line-height: 1.5; }
+
+.sim-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+}
+
+.visual {
+  position: relative;
+  height: 35vh;
+  min-height: 240px;
+  background: linear-gradient(180deg, #eceff1 0%, #cfd8dc 100%);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+svg { width: 100%; height: 100%; }
+
+.temp-display {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 15px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.state-label {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0288d1;
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.temp-slider {
+  margin: 15px 0;
+}
+
+.temp-slider label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #37474f;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.slider-container {
+  position: relative;
+  padding: 0 10px;
+}
+
+.temp-slider input[type="range"] {
+  width: 100%;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #2196f3 0%, #4caf50 50%, #f44336 100%);
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.temp-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #0288d1;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.temp-markers {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: #666;
+  margin-top: 5px;
+}
+
+.states-diagram {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 15px;
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 10px;
+}
+
+.state-box {
+  text-align: center;
+  padding: 10px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.state-box.active {
+  background: #e1f5fe;
+  transform: scale(1.05);
+}
+
+.state-box .icon { font-size: 28px; }
+.state-box .name { font-size: 10px; font-weight: 600; margin-top: 4px; }
+.state-box .temp { font-size: 8px; color: #666; }
+
+.process-arrows {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  font-size: 10px;
+  color: #666;
+}
+
+.process-arrows .arrow {
+  margin: 0 8px;
+  padding: 4px 8px;
+  background: #e0e0e0;
+  border-radius: 10px;
+  font-size: 9px;
+}
+
+.learning-panel {
+  background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 3px solid #0288d1;
+}
+
+.learning-title { font-size: 12px; font-weight: 700; color: #0277bd; margin-bottom: 6px; }
+.learning-text { font-size: 11px; color: #37474f; line-height: 1.6; }
+
+.takeaway {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #4caf50;
+}
+
+.takeaway-title { font-size: 12px; font-weight: 700; color: #2e7d32; margin-bottom: 6px; }
+.takeaway-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+
+@keyframes steam {
+  0% { transform: translateY(0); opacity: 0.7; }
+  100% { transform: translateY(-30px); opacity: 0; }
+}
+
+.steam { animation: steam 1.5s ease-out infinite; }
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div class="header">
+  <h1>💧 States of Water</h1>
+  <p>Same substance, different forms!</p>
+</div>
+
+<div class="concept-card">
+  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-text">
+    Water exists in three states: <strong>solid (ice)</strong>, <strong>liquid (water)</strong>, and <strong>gas (steam)</strong>. Changing states is a <strong>physical change</strong> - the substance (H₂O) remains the same!
+  </div>
+</div>
+
+<div class="sim-card">
+  <div class="visual">
+    <div class="temp-display" id="temp-display">25°C</div>
+    <div class="state-label" id="state-label">💧 LIQUID</div>
+    <svg viewBox="0 0 400 240" id="scene">
+      <!-- Container -->
+      <rect x="120" y="80" width="160" height="140" rx="10" fill="none" stroke="#90a4ae" stroke-width="3"/>
+      
+      <!-- Ice state -->
+      <g id="ice-state" style="display:none">
+        <rect x="140" y="120" width="50" height="40" rx="5" fill="#b3e5fc" stroke="#4fc3f7" stroke-width="2"/>
+        <rect x="200" y="130" width="40" height="35" rx="5" fill="#b3e5fc" stroke="#4fc3f7" stroke-width="2"/>
+        <rect x="160" y="165" width="55" height="30" rx="5" fill="#b3e5fc" stroke="#4fc3f7" stroke-width="2"/>
+        <!-- Shine on ice -->
+        <rect x="145" y="125" width="15" height="8" rx="2" fill="#e1f5fe" opacity="0.7"/>
+        <rect x="205" y="135" width="12" height="6" rx="2" fill="#e1f5fe" opacity="0.7"/>
+      </g>
+      
+      <!-- Liquid state -->
+      <g id="liquid-state">
+        <rect x="125" y="140" width="150" height="75" rx="5" fill="#4fc3f7" opacity="0.7"/>
+        <ellipse cx="200" cy="145" rx="70" ry="8" fill="#81d4fa" opacity="0.5"/>
+        <!-- Ripples -->
+        <ellipse cx="160" cy="160" rx="15" ry="3" fill="#b3e5fc" opacity="0.4"/>
+        <ellipse cx="220" cy="170" rx="12" ry="2" fill="#b3e5fc" opacity="0.4"/>
+      </g>
+      
+      <!-- Gas state -->
+      <g id="gas-state" style="display:none">
+        <circle cx="150" cy="140" r="15" fill="#e1f5fe" opacity="0.5" class="steam"/>
+        <circle cx="200" cy="120" r="20" fill="#e1f5fe" opacity="0.4" class="steam" style="animation-delay:0.3s"/>
+        <circle cx="250" cy="135" r="12" fill="#e1f5fe" opacity="0.5" class="steam" style="animation-delay:0.6s"/>
+        <circle cx="170" cy="100" r="18" fill="#e1f5fe" opacity="0.3" class="steam" style="animation-delay:0.9s"/>
+        <circle cx="230" cy="90" r="15" fill="#e1f5fe" opacity="0.4" class="steam" style="animation-delay:0.5s"/>
+      </g>
+      
+      <!-- Thermometer -->
+      <g transform="translate(320, 100)">
+        <rect x="-8" y="0" width="16" height="100" rx="8" fill="#fff" stroke="#ccc"/>
+        <rect x="-5" y="70" width="10" height="27" rx="5" fill="#f44336" id="thermo-fill"/>
+        <circle cx="0" cy="110" r="15" fill="#f44336"/>
+      </g>
+      
+      <!-- Labels -->
+      <text x="200" y="235" font-size="10" fill="#666" text-anchor="middle">H₂O in container</text>
+    </svg>
+  </div>
+  
+  <div class="temp-slider">
+    <label>🌡️ Adjust Temperature:</label>
+    <div class="slider-container">
+      <input type="range" id="temp-slider" min="-20" max="120" value="25" oninput="updateTemperature(this.value)">
+    </div>
+    <div class="temp-markers">
+      <span>-20°C (Cold)</span>
+      <span>0°C</span>
+      <span>100°C</span>
+      <span>120°C (Hot)</span>
+    </div>
+  </div>
+  
+  <div class="states-diagram">
+    <div class="state-box" id="box-solid">
+      <div class="icon">🧊</div>
+      <div class="name">SOLID</div>
+      <div class="temp">&lt; 0°C</div>
+    </div>
+    <div class="state-box active" id="box-liquid">
+      <div class="icon">💧</div>
+      <div class="name">LIQUID</div>
+      <div class="temp">0-100°C</div>
+    </div>
+    <div class="state-box" id="box-gas">
+      <div class="icon">💨</div>
+      <div class="name">GAS</div>
+      <div class="temp">&gt; 100°C</div>
+    </div>
+  </div>
+</div>
+
+<div class="process-arrows">
+  <span>🧊 Ice</span>
+  <span class="arrow">Melting →</span>
+  <span>💧 Water</span>
+  <span class="arrow">Boiling →</span>
+  <span>💨 Steam</span>
+</div>
+
+<div class="learning-panel">
+  <div class="learning-title">🔬 What's Happening?</div>
+  <div class="learning-text" id="learning-text">
+    At <strong>25°C</strong>, water is in <strong>liquid</strong> state.<br><br>
+    Move the slider to see how temperature affects the state of water. The substance (H₂O) stays the same - only its form changes!
+  </div>
+</div>
+
+<div class="takeaway">
+  <div class="takeaway-title">🎯 Key Points</div>
+  <div class="takeaway-text">
+    <strong>All three states are H₂O!</strong><br><br>
+    • <strong>0°C</strong> = Melting/Freezing point<br>
+    • <strong>100°C</strong> = Boiling/Condensation point<br><br>
+    State changes are <strong>physical changes</strong> and are <strong>reversible</strong>. Heat ice → water → steam, then cool steam → water → ice!
+  </div>
+</div>
+
+</div>
+
+<script>
+const tempDisplay = document.getElementById('temp-display');
+const stateLabel = document.getElementById('state-label');
+const iceState = document.getElementById('ice-state');
+const liquidState = document.getElementById('liquid-state');
+const gasState = document.getElementById('gas-state');
+const thermoFill = document.getElementById('thermo-fill');
+const boxSolid = document.getElementById('box-solid');
+const boxLiquid = document.getElementById('box-liquid');
+const boxGas = document.getElementById('box-gas');
+const learningText = document.getElementById('learning-text');
+
+function updateTemperature(temp) {
+  temp = parseInt(temp);
+  tempDisplay.textContent = `${temp}°C`;
+  
+  // Update thermometer fill (0-100 maps to height 70-10)
+  const fillHeight = Math.max(5, Math.min(90, 50 - (temp - 50) * 0.4));
+  const fillY = 100 - fillHeight - 3;
+  thermoFill.setAttribute('height', fillHeight);
+  thermoFill.setAttribute('y', fillY);
+  
+  // Change color based on temp
+  if (temp < 0) {
+    thermoFill.setAttribute('fill', '#2196f3');
+  } else if (temp > 100) {
+    thermoFill.setAttribute('fill', '#f44336');
+  } else {
+    thermoFill.setAttribute('fill', '#ff9800');
+  }
+  
+  // Update state display
+  boxSolid.classList.remove('active');
+  boxLiquid.classList.remove('active');
+  boxGas.classList.remove('active');
+  
+  if (temp < 0) {
+    // Solid state
+    iceState.style.display = 'block';
+    liquidState.style.display = 'none';
+    gasState.style.display = 'none';
+    stateLabel.textContent = '🧊 SOLID (ICE)';
+    stateLabel.style.background = '#2196f3';
+    boxSolid.classList.add('active');
+    
+    learningText.innerHTML = `
+      At <strong>${temp}°C</strong>, water is in <strong>solid (ice)</strong> state.<br><br>
+      Below 0°C, water molecules slow down and lock into a fixed structure. The ice is still H₂O - just in solid form!<br><br>
+      <strong>Process:</strong> Freezing (liquid → solid)
+    `;
+  } else if (temp >= 100) {
+    // Gas state
+    iceState.style.display = 'none';
+    liquidState.style.display = 'none';
+    gasState.style.display = 'block';
+    stateLabel.textContent = '💨 GAS (STEAM)';
+    stateLabel.style.background = '#f44336';
+    boxGas.classList.add('active');
+    
+    learningText.innerHTML = `
+      At <strong>${temp}°C</strong>, water is in <strong>gas (steam)</strong> state.<br><br>
+      Above 100°C, water molecules have so much energy they escape as gas. Steam is still H₂O - just spread out and invisible!<br><br>
+      <strong>Process:</strong> Boiling/Evaporation (liquid → gas)
+    `;
+  } else {
+    // Liquid state
+    iceState.style.display = 'none';
+    liquidState.style.display = 'block';
+    gasState.style.display = 'none';
+    stateLabel.textContent = '💧 LIQUID (WATER)';
+    stateLabel.style.background = '#0288d1';
+    boxLiquid.classList.add('active');
+    
+    learningText.innerHTML = `
+      At <strong>${temp}°C</strong>, water is in <strong>liquid</strong> state.<br><br>
+      Between 0°C and 100°C, water molecules move freely but stay together. This is the form we drink and use daily!<br><br>
+      <strong>Key:</strong> Same H₂O, different energy levels = different states
+    `;
+  }
+}
+
+// Initialize
+updateTemperature(25);
+</script>
+</body>
+</html>

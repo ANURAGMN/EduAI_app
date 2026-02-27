@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1565c0">
+<title>Physical Changes – No New Substance</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #1565c0 0%, #42a5f5 100%);
+  min-height: 100vh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#app {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+}
+
+.header {
+  text-align: center;
+  color: #fff;
+  padding: 12px;
+}
+
+.header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.95; }
+
+.concept-card {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #1565c0;
+}
+
+.concept-title { font-size: 12px; font-weight: 700; color: #1565c0; margin-bottom: 6px; }
+.concept-text { font-size: 12px; color: #37474f; line-height: 1.5; }
+
+.sim-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+}
+
+.visual {
+  position: relative;
+  height: 38vh;
+  min-height: 260px;
+  background: linear-gradient(180deg, #eceff1 0%, #cfd8dc 100%);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+svg { width: 100%; height: 100%; }
+
+.action-label {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(21, 101, 192, 0.9);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.examples-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.example-btn {
+  background: #f5f5f5;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 12px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.example-btn:active { transform: scale(0.95); }
+.example-btn.active { border-color: #1565c0; background: #e3f2fd; }
+.example-btn.done { border-color: #4caf50; background: #e8f5e9; }
+.example-btn .icon { font-size: 28px; }
+.example-btn .name { font-size: 10px; color: #333; margin-top: 4px; }
+
+.action-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
+  color: white;
+}
+
+.action-btn:disabled { background: #ccc; }
+
+.result-box {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #4caf50;
+  display: none;
+}
+
+.result-box.show { display: block; }
+.result-title { font-size: 12px; font-weight: 700; color: #2e7d32; margin-bottom: 6px; }
+.result-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+
+.learning-panel {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 3px solid #1565c0;
+}
+
+.learning-title { font-size: 12px; font-weight: 700; color: #1565c0; margin-bottom: 6px; }
+.learning-text { font-size: 11px; color: #37474f; line-height: 1.6; }
+
+.takeaway {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #ff9800;
+}
+
+.takeaway-title { font-size: 12px; font-weight: 700; color: #e65100; margin-bottom: 6px; }
+.takeaway-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div class="header">
+  <h1>🔄 Physical Changes</h1>
+  <p>Changes where NO new substance is formed</p>
+</div>
+
+<div class="concept-card">
+  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-text">
+    In a <strong>physical change</strong>, the substance changes its <strong>appearance</strong> (shape, size, or state) but remains the <strong>same substance</strong>. No new material is created.
+  </div>
+</div>
+
+<div class="sim-card">
+  <div class="visual">
+    <div class="action-label" id="action-label">Select an example below</div>
+    <svg viewBox="0 0 400 260" id="scene">
+      <!-- Paper example -->
+      <g id="paper-scene" style="display:none">
+        <rect id="paper" x="150" y="80" width="100" height="120" rx="3" fill="#fff" stroke="#ccc" stroke-width="2"/>
+        <line x1="160" y1="100" x2="240" y2="100" stroke="#ddd" stroke-width="1"/>
+        <line x1="160" y1="120" x2="240" y2="120" stroke="#ddd" stroke-width="1"/>
+        <line x1="160" y1="140" x2="240" y2="140" stroke="#ddd" stroke-width="1"/>
+        <text x="200" y="220" font-size="11" fill="#666" text-anchor="middle">Paper Sheet</text>
+      </g>
+      
+      <!-- Folded paper (boat) -->
+      <g id="paper-folded" style="display:none">
+        <path d="M 160 180 L 200 100 L 240 180 L 220 180 L 200 140 L 180 180 Z" fill="#fff" stroke="#1565c0" stroke-width="2"/>
+        <text x="200" y="220" font-size="11" fill="#666" text-anchor="middle">Paper Boat</text>
+      </g>
+      
+      <!-- Chalk example -->
+      <g id="chalk-scene" style="display:none">
+        <rect id="chalk" x="170" y="100" width="60" height="20" rx="5" fill="#f5f5f5" stroke="#ccc"/>
+        <text x="200" y="150" font-size="11" fill="#666" text-anchor="middle">Chalk Stick</text>
+      </g>
+      
+      <!-- Crushed chalk -->
+      <g id="chalk-crushed" style="display:none">
+        <circle cx="180" cy="120" r="8" fill="#e0e0e0"/>
+        <circle cx="200" cy="115" r="6" fill="#eeeeee"/>
+        <circle cx="215" cy="125" r="7" fill="#e0e0e0"/>
+        <circle cx="190" cy="130" r="5" fill="#f5f5f5"/>
+        <circle cx="210" cy="135" r="4" fill="#eeeeee"/>
+        <text x="200" y="170" font-size="11" fill="#666" text-anchor="middle">Chalk Powder</text>
+      </g>
+      
+      <!-- Ice example -->
+      <g id="ice-scene" style="display:none">
+        <rect id="ice-cube" x="170" y="100" width="60" height="50" rx="5" fill="#b3e5fc" stroke="#4fc3f7" stroke-width="2"/>
+        <rect x="175" y="105" width="15" height="10" rx="2" fill="#e1f5fe" opacity="0.7"/>
+        <text x="200" y="180" font-size="11" fill="#666" text-anchor="middle">Ice Cube</text>
+      </g>
+      
+      <!-- Melted ice (water) -->
+      <g id="ice-melted" style="display:none">
+        <ellipse cx="200" cy="140" rx="50" ry="15" fill="#4fc3f7" opacity="0.6"/>
+        <ellipse cx="200" cy="138" rx="40" ry="10" fill="#81d4fa" opacity="0.5"/>
+        <text x="200" y="180" font-size="11" fill="#666" text-anchor="middle">Water (melted ice)</text>
+      </g>
+      
+      <!-- Balloon example -->
+      <g id="balloon-scene" style="display:none">
+        <ellipse id="balloon" cx="200" cy="120" rx="30" ry="25" fill="#ef5350" stroke="#c62828" stroke-width="2"/>
+        <path d="M 200 145 L 200 180" stroke="#795548" stroke-width="3"/>
+        <text x="200" y="210" font-size="11" fill="#666" text-anchor="middle">Deflated Balloon</text>
+      </g>
+      
+      <!-- Inflated balloon -->
+      <g id="balloon-inflated" style="display:none">
+        <ellipse cx="200" cy="110" rx="60" ry="50" fill="#ef5350" stroke="#c62828" stroke-width="2"/>
+        <ellipse cx="180" cy="95" rx="15" ry="10" fill="#ff8a80" opacity="0.5"/>
+        <path d="M 200 160 L 200 200" stroke="#795548" stroke-width="3"/>
+        <text x="200" y="230" font-size="11" fill="#666" text-anchor="middle">Inflated Balloon</text>
+      </g>
+      
+      <!-- Rubber band example -->
+      <g id="rubber-scene" style="display:none">
+        <ellipse id="rubber" cx="200" cy="120" rx="40" ry="25" fill="none" stroke="#ff9800" stroke-width="8"/>
+        <text x="200" y="180" font-size="11" fill="#666" text-anchor="middle">Rubber Band</text>
+      </g>
+      
+      <!-- Stretched rubber band -->
+      <g id="rubber-stretched" style="display:none">
+        <ellipse cx="200" cy="120" rx="80" ry="15" fill="none" stroke="#ff9800" stroke-width="5"/>
+        <text x="200" y="170" font-size="11" fill="#666" text-anchor="middle">Stretched Rubber Band</text>
+      </g>
+      
+      <!-- Spring example -->
+      <g id="spring-scene" style="display:none">
+        <path d="M 160 100 Q 180 80 200 100 Q 220 120 240 100 Q 260 80 280 100 Q 300 120 320 100" 
+              fill="none" stroke="#9e9e9e" stroke-width="6" stroke-linecap="round" id="spring-path"/>
+        <text x="240" y="150" font-size="11" fill="#666" text-anchor="middle">Spring (normal)</text>
+      </g>
+      
+      <!-- Compressed spring -->
+      <g id="spring-compressed" style="display:none">
+        <path d="M 180 100 Q 190 85 200 100 Q 210 115 220 100 Q 230 85 240 100 Q 250 115 260 100" 
+              fill="none" stroke="#9e9e9e" stroke-width="8" stroke-linecap="round"/>
+        <text x="220" y="150" font-size="11" fill="#666" text-anchor="middle">Spring (compressed)</text>
+      </g>
+    </svg>
+  </div>
+  
+  <div class="examples-grid">
+    <div class="example-btn" onclick="selectExample('paper', '📄', this)">
+      <div class="icon">📄</div>
+      <div class="name">Fold Paper</div>
+    </div>
+    <div class="example-btn" onclick="selectExample('chalk', '🖍️', this)">
+      <div class="icon">🖍️</div>
+      <div class="name">Crush Chalk</div>
+    </div>
+    <div class="example-btn" onclick="selectExample('ice', '🧊', this)">
+      <div class="icon">🧊</div>
+      <div class="name">Melt Ice</div>
+    </div>
+    <div class="example-btn" onclick="selectExample('balloon', '🎈', this)">
+      <div class="icon">🎈</div>
+      <div class="name">Inflate Balloon</div>
+    </div>
+    <div class="example-btn" onclick="selectExample('rubber', '⭕', this)">
+      <div class="icon">⭕</div>
+      <div class="name">Stretch Band</div>
+    </div>
+    <div class="example-btn" onclick="selectExample('spring', '🔩', this)">
+      <div class="icon">🔩</div>
+      <div class="name">Press Spring</div>
+    </div>
+  </div>
+  
+  <button class="action-btn" id="action-btn" onclick="performChange()" disabled>
+    Select an example first
+  </button>
+</div>
+
+<div class="result-box" id="result-box">
+  <div class="result-title" id="result-title">✅ Physical Change!</div>
+  <div class="result-text" id="result-text"></div>
+</div>
+
+<div class="learning-panel">
+  <div class="learning-title">🔬 Understanding Physical Changes</div>
+  <div class="learning-text" id="learning-text">
+    Select an example above to see a physical change in action!<br><br>
+    In physical changes:<br>
+    • Shape, size, or state may change<br>
+    • The <strong>substance remains the same</strong><br>
+    • No new material is formed
+  </div>
+</div>
+
+<div class="takeaway">
+  <div class="takeaway-title">🎯 Remember!</div>
+  <div class="takeaway-text">
+    <strong>Physical Change = Same Substance, Different Form</strong><br><br>
+    Paper folded is still paper. Crushed chalk is still chalk. Melted ice is still H₂O (water). The material doesn't change - only its appearance does!
+  </div>
+</div>
+
+</div>
+
+<script>
+let selectedExample = null;
+let selectedBtn = null;
+
+const examples = {
+  paper: {
+    before: 'paper-scene',
+    after: 'paper-folded',
+    action: '📄 Fold the Paper',
+    title: '✅ Paper Folded - Physical Change!',
+    result: 'The paper changed <strong>shape</strong> from a flat sheet to a boat. But it\'s still <strong>paper</strong>! You can unfold it and get the original sheet back.',
+    learning: 'Folding paper is a <strong>physical change</strong>. The paper molecules stay the same - only the arrangement changes. This is also a <strong>reversible</strong> change!'
+  },
+  chalk: {
+    before: 'chalk-scene',
+    after: 'chalk-crushed',
+    action: '🔨 Crush the Chalk',
+    title: '✅ Chalk Crushed - Physical Change!',
+    result: 'The chalk changed from a <strong>stick to powder</strong>. But it\'s still <strong>calcium carbite (chalk)</strong>! The chemical composition hasn\'t changed.',
+    learning: 'Crushing chalk is a <strong>physical change</strong>. The pieces are smaller, but each tiny particle is still chalk. This is an <strong>irreversible</strong> physical change - you can\'t easily put it back together!'
+  },
+  ice: {
+    before: 'ice-scene',
+    after: 'ice-melted',
+    action: '🔥 Melt the Ice',
+    title: '✅ Ice Melted - Physical Change!',
+    result: 'The ice changed from <strong>solid to liquid</strong>. But it\'s still <strong>H₂O (water)</strong>! The state changed, not the substance.',
+    learning: 'Melting ice is a <strong>physical change</strong> - a change of state. Ice, water, and steam are all H₂O! This is <strong>reversible</strong> - freeze the water and you get ice again.'
+  },
+  balloon: {
+    before: 'balloon-scene',
+    after: 'balloon-inflated',
+    action: '💨 Inflate the Balloon',
+    title: '✅ Balloon Inflated - Physical Change!',
+    result: 'The balloon changed <strong>size and shape</strong>. But the rubber material is the same! Air was just added inside.',
+    learning: 'Inflating a balloon is a <strong>physical change</strong>. The rubber stretches but doesn\'t become a new substance. This is <strong>reversible</strong> - let the air out and it deflates!'
+  },
+  rubber: {
+    before: 'rubber-scene',
+    after: 'rubber-stretched',
+    action: '↔️ Stretch the Band',
+    title: '✅ Rubber Stretched - Physical Change!',
+    result: 'The rubber band changed <strong>shape</strong> when stretched. But it\'s still the same rubber material!',
+    learning: 'Stretching a rubber band is a <strong>physical change</strong>. The rubber molecules stretch but don\'t change chemically. It\'s <strong>reversible</strong> - release it and it bounces back!'
+  },
+  spring: {
+    before: 'spring-scene',
+    after: 'spring-compressed',
+    action: '⬇️ Compress the Spring',
+    title: '✅ Spring Compressed - Physical Change!',
+    result: 'The spring changed <strong>shape</strong> when compressed. But the metal is still the same material!',
+    learning: 'Compressing a spring is a <strong>physical change</strong>. The metal coils get closer together but no new substance forms. It\'s <strong>reversible</strong> - release and it springs back!'
+  }
+};
+
+const actionLabel = document.getElementById('action-label');
+const actionBtn = document.getElementById('action-btn');
+const resultBox = document.getElementById('result-box');
+const resultTitle = document.getElementById('result-title');
+const resultText = document.getElementById('result-text');
+const learningText = document.getElementById('learning-text');
+
+function hideAllScenes() {
+  const scenes = ['paper-scene', 'paper-folded', 'chalk-scene', 'chalk-crushed', 
+                  'ice-scene', 'ice-melted', 'balloon-scene', 'balloon-inflated',
+                  'rubber-scene', 'rubber-stretched', 'spring-scene', 'spring-compressed'];
+  scenes.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+}
+
+function selectExample(type, icon, btn) {
+  document.querySelectorAll('.example-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  
+  selectedExample = type;
+  selectedBtn = btn;
+  
+  const ex = examples[type];
+  
+  // Show before state
+  hideAllScenes();
+  document.getElementById(ex.before).style.display = 'block';
+  
+  actionLabel.textContent = `${icon} Ready to change!`;
+  actionBtn.disabled = false;
+  actionBtn.textContent = ex.action;
+  
+  resultBox.classList.remove('show');
+  
+  learningText.innerHTML = `
+    <strong>${icon} ${type.charAt(0).toUpperCase() + type.slice(1)} selected</strong><br><br>
+    Tap the button to see what happens when we perform this action. Watch carefully - will a new substance be formed?
+  `;
+}
+
+function performChange() {
+  if (!selectedExample) return;
+  
+  const ex = examples[selectedExample];
+  
+  actionBtn.disabled = true;
+  actionLabel.textContent = '⏳ Changing...';
+  
+  // Animate transition
+  setTimeout(() => {
+    hideAllScenes();
+    document.getElementById(ex.after).style.display = 'block';
+    
+    actionLabel.textContent = '✅ Change Complete!';
+    
+    resultTitle.textContent = ex.title;
+    resultText.innerHTML = ex.result;
+    resultBox.classList.add('show');
+    
+    learningText.innerHTML = ex.learning;
+    
+    selectedBtn.classList.add('done');
+    actionBtn.textContent = 'Select another example';
+    
+    selectedExample = null;
+  }, 500);
+}
+</script>
+</body>
+</html>

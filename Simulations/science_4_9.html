@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#673ab7">
+<title>Metals vs Non-metals – Comparison</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #673ab7 0%, #9575cd 100%);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+.header {
+  text-align: center;
+  color: #fff;
+  padding: 12px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.95; }
+
+.concept-card {
+  background: linear-gradient(135deg, #ede7f6 0%, #d1c4e9 100%);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #673ab7;
+}
+
+.concept-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #512da8;
+  margin-bottom: 6px;
+}
+
+.concept-text {
+  font-size: 12px;
+  color: #37474f;
+  line-height: 1.5;
+}
+
+.sim-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+}
+
+.property-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.prop-btn {
+  flex: 1 1 calc(33% - 6px);
+  min-width: 90px;
+  padding: 10px 6px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+  font-size: 10px;
+  font-weight: 600;
+  color: #37474f;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.prop-btn:active { transform: scale(0.95); }
+.prop-btn.active { border-color: #673ab7; background: #ede7f6; color: #512da8; }
+
+.comparison-display {
+  background: linear-gradient(180deg, #f5f5f5 0%, #eeeeee 100%);
+  border-radius: 12px;
+  padding: 15px;
+  min-height: 200px;
+}
+
+.comparison-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #37474f;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.compare-card {
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.compare-card.metal {
+  background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+  border: 2px solid #1976d2;
+}
+
+.compare-card.nonmetal {
+  background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+  border: 2px solid #f9a825;
+}
+
+.compare-card .type-label {
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.compare-card.metal .type-label { color: #0d47a1; }
+.compare-card.nonmetal .type-label { color: #f57f17; }
+
+.compare-card .icon { font-size: 36px; margin-bottom: 8px; }
+.compare-card .value { font-size: 12px; font-weight: 600; color: #37474f; }
+.compare-card .example { font-size: 9px; color: #666; margin-top: 6px; }
+
+.quiz-section {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.quiz-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2e7d32;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.quiz-question {
+  font-size: 12px;
+  color: #37474f;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.quiz-options {
+  display: flex;
+  gap: 8px;
+}
+
+.quiz-btn {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid #81c784;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quiz-btn:active { transform: scale(0.95); }
+.quiz-btn.correct { border-color: #4caf50; background: #e8f5e9; color: #2e7d32; }
+.quiz-btn.wrong { border-color: #f44336; background: #ffebee; color: #c62828; }
+
+.score-display {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2e7d32;
+}
+
+.summary-table {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  background: #673ab7;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.table-header div {
+  padding: 10px 6px;
+  text-align: center;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 10px;
+}
+
+.table-row:last-child { border-bottom: none; }
+
+.table-row div {
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.table-row div:first-child { text-align: left; font-weight: 600; }
+.table-row .metal-val { color: #1565c0; }
+.table-row .nonmetal-val { color: #f57f17; }
+
+.takeaway {
+  background: linear-gradient(135deg, #ede7f6 0%, #d1c4e9 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #673ab7;
+}
+
+.takeaway-title { font-size: 12px; font-weight: 700; color: #512da8; margin-bottom: 6px; }
+.takeaway-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div class="header">
+  <h1>⚖️ Metals vs Non-metals</h1>
+  <p>Compare properties side by side</p>
+</div>
+
+<div class="concept-card">
+  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-text">
+    <strong>Metals</strong> and <strong>Non-metals</strong> have opposite physical and chemical properties. Understanding these differences helps us use them for the right purposes.
+  </div>
+</div>
+
+<div class="sim-card">
+  <div class="property-selector">
+    <button class="prop-btn active" onclick="showProperty('lustre', this)">✨ Lustre</button>
+    <button class="prop-btn" onclick="showProperty('malleability', this)">🔨 Malleability</button>
+    <button class="prop-btn" onclick="showProperty('ductility', this)">🧵 Ductility</button>
+    <button class="prop-btn" onclick="showProperty('sonority', this)">🔔 Sonority</button>
+    <button class="prop-btn" onclick="showProperty('heat', this)">🔥 Heat Cond.</button>
+    <button class="prop-btn" onclick="showProperty('electricity', this)">⚡ Elec. Cond.</button>
+    <button class="prop-btn" onclick="showProperty('hardness', this)">💪 Hardness</button>
+    <button class="prop-btn" onclick="showProperty('oxide', this)">⚗️ Oxide Nature</button>
+  </div>
+  
+  <div class="comparison-display" id="comparison-display">
+    <div class="comparison-title" id="comparison-title">✨ Lustre (Shine)</div>
+    <div class="comparison-grid">
+      <div class="compare-card metal">
+        <div class="type-label">🔵 METALS</div>
+        <div class="icon" id="metal-icon">✨</div>
+        <div class="value" id="metal-value">Lustrous (Shiny)</div>
+        <div class="example" id="metal-example">e.g., Gold, Silver, Copper</div>
+      </div>
+      <div class="compare-card nonmetal">
+        <div class="type-label">🟡 NON-METALS</div>
+        <div class="icon" id="nonmetal-icon">⚫</div>
+        <div class="value" id="nonmetal-value">Non-lustrous (Dull)</div>
+        <div class="example" id="nonmetal-example">e.g., Coal, Sulfur</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="quiz-section">
+  <div class="quiz-title">🧠 Quick Quiz</div>
+  <div class="quiz-question" id="quiz-question">Which type of material can be beaten into thin sheets?</div>
+  <div class="quiz-options">
+    <button class="quiz-btn" id="quiz-metal" onclick="checkAnswer('metal', this)">🔵 Metals</button>
+    <button class="quiz-btn" id="quiz-nonmetal" onclick="checkAnswer('nonmetal', this)">🟡 Non-metals</button>
+  </div>
+  <div class="score-display" id="score-display">Score: 0/0</div>
+</div>
+
+<div class="summary-table">
+  <div class="table-header">
+    <div>Property</div>
+    <div>🔵 Metals</div>
+    <div>🟡 Non-metals</div>
+  </div>
+  <div class="table-row">
+    <div>Lustre</div>
+    <div class="metal-val">Shiny ✓</div>
+    <div class="nonmetal-val">Dull ✗</div>
+  </div>
+  <div class="table-row">
+    <div>Malleability</div>
+    <div class="metal-val">Yes ✓</div>
+    <div class="nonmetal-val">No (Brittle)</div>
+  </div>
+  <div class="table-row">
+    <div>Ductility</div>
+    <div class="metal-val">Yes ✓</div>
+    <div class="nonmetal-val">No ✗</div>
+  </div>
+  <div class="table-row">
+    <div>Sonority</div>
+    <div class="metal-val">Rings ✓</div>
+    <div class="nonmetal-val">Thuds ✗</div>
+  </div>
+  <div class="table-row">
+    <div>Heat Conduction</div>
+    <div class="metal-val">Good ✓</div>
+    <div class="nonmetal-val">Poor ✗</div>
+  </div>
+  <div class="table-row">
+    <div>Elec. Conduction</div>
+    <div class="metal-val">Good ✓</div>
+    <div class="nonmetal-val">Poor ✗</div>
+  </div>
+  <div class="table-row">
+    <div>Oxide Nature</div>
+    <div class="metal-val">Basic</div>
+    <div class="nonmetal-val">Acidic</div>
+  </div>
+</div>
+
+<div class="takeaway">
+  <div class="takeaway-title">🎯 Remember!</div>
+  <div class="takeaway-text">
+    <strong>Exceptions exist:</strong><br>
+    • Sodium, Potassium - soft metals (can be cut with knife)<br>
+    • Mercury - liquid metal at room temperature<br>
+    • Diamond (carbon) - hardest non-metal<br>
+    • Graphite (carbon) - conducts electricity!
+  </div>
+</div>
+
+</div>
+
+<script>
+const properties = {
+  lustre: {
+    title: '✨ Lustre (Shine)',
+    metal: { icon: '✨', value: 'Lustrous (Shiny)', example: 'e.g., Gold, Silver, Copper' },
+    nonmetal: { icon: '⚫', value: 'Non-lustrous (Dull)', example: 'e.g., Coal, Sulfur' }
+  },
+  malleability: {
+    title: '🔨 Malleability',
+    metal: { icon: '📄', value: 'Malleable (Can be beaten into sheets)', example: 'e.g., Aluminium foil, Silver foil' },
+    nonmetal: { icon: '💥', value: 'Brittle (Break when hammered)', example: 'e.g., Coal, Chalk shatter' }
+  },
+  ductility: {
+    title: '🧵 Ductility',
+    metal: { icon: '〰️', value: 'Ductile (Can be drawn into wires)', example: 'e.g., Copper wire, Gold thread' },
+    nonmetal: { icon: '❌', value: 'Not ductile (Cannot make wires)', example: 'e.g., Sulfur breaks' }
+  },
+  sonority: {
+    title: '🔔 Sonority',
+    metal: { icon: '🔔', value: 'Sonorous (Ring when struck)', example: 'e.g., Bells, Cymbals' },
+    nonmetal: { icon: '🔇', value: 'Not sonorous (Dull thud)', example: 'e.g., Wood, Plastic' }
+  },
+  heat: {
+    title: '🔥 Heat Conduction',
+    metal: { icon: '🌡️', value: 'Good conductors of heat', example: 'e.g., Metal pots conduct heat' },
+    nonmetal: { icon: '❄️', value: 'Poor conductors (Insulators)', example: 'e.g., Wooden handles stay cool' }
+  },
+  electricity: {
+    title: '⚡ Electrical Conductivity',
+    metal: { icon: '💡', value: 'Good conductors of electricity', example: 'e.g., Copper wires in circuits' },
+    nonmetal: { icon: '🚫', value: 'Poor conductors (Insulators)', example: 'e.g., Rubber, Plastic for safety' }
+  },
+  hardness: {
+    title: '💪 Hardness',
+    metal: { icon: '🪨', value: 'Generally hard', example: 'Exception: Na, K are soft' },
+    nonmetal: { icon: '🧽', value: 'Generally soft', example: 'Exception: Diamond is very hard' }
+  },
+  oxide: {
+    title: '⚗️ Nature of Oxide',
+    metal: { icon: '🔵', value: 'Form BASIC oxides', example: 'MgO turns red litmus blue' },
+    nonmetal: { icon: '🔴', value: 'Form ACIDIC oxides', example: 'SO₂ turns blue litmus red' }
+  }
+};
+
+const quizQuestions = [
+  { q: 'Which type can be beaten into thin sheets?', answer: 'metal' },
+  { q: 'Which type produces a ringing sound when struck?', answer: 'metal' },
+  { q: 'Which type forms acidic oxides?', answer: 'nonmetal' },
+  { q: 'Which type is a good conductor of electricity?', answer: 'metal' },
+  { q: 'Which type is generally brittle?', answer: 'nonmetal' },
+  { q: 'Which type can be drawn into wires?', answer: 'metal' },
+  { q: 'Which type has a dull appearance?', answer: 'nonmetal' },
+  { q: 'Which type forms basic oxides?', answer: 'metal' }
+];
+
+let currentQuestion = 0;
+let score = 0;
+let total = 0;
+
+function showProperty(prop, btn) {
+  // Update button states
+  document.querySelectorAll('.prop-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  
+  const data = properties[prop];
+  
+  document.getElementById('comparison-title').textContent = data.title;
+  document.getElementById('metal-icon').textContent = data.metal.icon;
+  document.getElementById('metal-value').textContent = data.metal.value;
+  document.getElementById('metal-example').textContent = data.metal.example;
+  document.getElementById('nonmetal-icon').textContent = data.nonmetal.icon;
+  document.getElementById('nonmetal-value').textContent = data.nonmetal.value;
+  document.getElementById('nonmetal-example').textContent = data.nonmetal.example;
+}
+
+function loadQuestion() {
+  const q = quizQuestions[currentQuestion];
+  document.getElementById('quiz-question').textContent = q.q;
+  document.getElementById('quiz-metal').className = 'quiz-btn';
+  document.getElementById('quiz-nonmetal').className = 'quiz-btn';
+  document.getElementById('quiz-metal').disabled = false;
+  document.getElementById('quiz-nonmetal').disabled = false;
+}
+
+function checkAnswer(answer, btn) {
+  const q = quizQuestions[currentQuestion];
+  total++;
+  
+  document.getElementById('quiz-metal').disabled = true;
+  document.getElementById('quiz-nonmetal').disabled = true;
+  
+  if (answer === q.answer) {
+    btn.classList.add('correct');
+    score++;
+  } else {
+    btn.classList.add('wrong');
+    // Highlight correct answer
+    if (q.answer === 'metal') {
+      document.getElementById('quiz-metal').classList.add('correct');
+    } else {
+      document.getElementById('quiz-nonmetal').classList.add('correct');
+    }
+  }
+  
+  document.getElementById('score-display').textContent = `Score: ${score}/${total}`;
+  
+  // Next question after delay
+  setTimeout(() => {
+    currentQuestion = (currentQuestion + 1) % quizQuestions.length;
+    loadQuestion();
+  }, 1500);
+}
+
+// Initialize
+loadQuestion();
+</script>
+</body>
+</html>

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#7b1fa2">
+<title>Stages of Human Life</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #7b1fa2 0%, #ba68c8 100%);
+  min-height: 100vh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#app {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+}
+
+.header {
+  text-align: center;
+  color: #fff;
+  padding: 12px;
+}
+
+.header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.95; }
+
+.concept-card {
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #7b1fa2;
+}
+
+.concept-title { font-size: 12px; font-weight: 700; color: #7b1fa2; margin-bottom: 6px; }
+.concept-text { font-size: 12px; color: #37474f; line-height: 1.5; }
+
+.sim-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+}
+
+.timeline {
+  position: relative;
+  padding: 10px 0;
+}
+
+.timeline-line {
+  position: absolute;
+  left: 30px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #e1bee7, #7b1fa2, #4a148c);
+  border-radius: 2px;
+}
+
+.stage-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.stage-item:active { transform: scale(0.98); }
+
+.stage-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  margin-right: 15px;
+  margin-left: 18px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.stage-item.active .stage-dot {
+  background: #7b1fa2;
+  transform: scale(1.2);
+}
+
+.stage-content {
+  flex: 1;
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.stage-item.active .stage-content {
+  background: #f3e5f5;
+  border-color: #7b1fa2;
+}
+
+.stage-item.adolescence .stage-content {
+  background: #fff3e0;
+  border-color: #ff9800;
+}
+
+.stage-item.adolescence .stage-dot {
+  background: #ff9800;
+}
+
+.stage-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.stage-age {
+  font-size: 10px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.stage-desc {
+  font-size: 10px;
+  color: #555;
+  line-height: 1.4;
+}
+
+.detail-panel {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #ff9800;
+}
+
+.detail-title { font-size: 13px; font-weight: 700; color: #e65100; margin-bottom: 8px; }
+.detail-text { font-size: 11px; color: #37474f; line-height: 1.6; }
+
+.comparison-box {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #4caf50;
+}
+
+.comparison-title { font-size: 12px; font-weight: 700; color: #2e7d32; margin-bottom: 8px; }
+
+.compare-row {
+  display: flex;
+  gap: 8px;
+}
+
+.compare-item {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.compare-item .icon { font-size: 28px; margin-bottom: 4px; }
+.compare-item .label { font-size: 9px; color: #666; }
+.compare-item .text { font-size: 10px; font-weight: 600; color: #333; margin-top: 4px; }
+
+.takeaway {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #2196f3;
+}
+
+.takeaway-title { font-size: 12px; font-weight: 700; color: #1565c0; margin-bottom: 6px; }
+.takeaway-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div class="header">
+  <h1>🌱 Stages of Human Life</h1>
+  <p>From birth to old age - a journey of growth</p>
+</div>
+
+<div class="concept-card">
+  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-text">
+    Human life progresses through <strong>five main stages</strong>: Infancy, Childhood, Adolescence, Adulthood, and Old Age. Each stage has unique characteristics and changes.
+  </div>
+</div>
+
+<div class="sim-card">
+  <div class="timeline">
+    <div class="timeline-line"></div>
+    
+    <div class="stage-item" onclick="selectStage(0, this)">
+      <div class="stage-dot">👶</div>
+      <div class="stage-content">
+        <div class="stage-name">Infancy</div>
+        <div class="stage-age">0-2 years</div>
+        <div class="stage-desc">Rapid physical growth, learning to walk and talk</div>
+      </div>
+    </div>
+    
+    <div class="stage-item" onclick="selectStage(1, this)">
+      <div class="stage-dot">🧒</div>
+      <div class="stage-content">
+        <div class="stage-name">Childhood</div>
+        <div class="stage-age">3-9 years</div>
+        <div class="stage-desc">Learning, playing, developing social skills</div>
+      </div>
+    </div>
+    
+    <div class="stage-item adolescence" onclick="selectStage(2, this)">
+      <div class="stage-dot">🧑</div>
+      <div class="stage-content">
+        <div class="stage-name">⭐ Adolescence</div>
+        <div class="stage-age">10-19 years</div>
+        <div class="stage-desc">Puberty, rapid changes, preparation for adulthood</div>
+      </div>
+    </div>
+    
+    <div class="stage-item" onclick="selectStage(3, this)">
+      <div class="stage-dot">👨</div>
+      <div class="stage-content">
+        <div class="stage-name">Adulthood</div>
+        <div class="stage-age">20-60 years</div>
+        <div class="stage-desc">Independence, career, family responsibilities</div>
+      </div>
+    </div>
+    
+    <div class="stage-item" onclick="selectStage(4, this)">
+      <div class="stage-dot">👴</div>
+      <div class="stage-content">
+        <div class="stage-name">Old Age</div>
+        <div class="stage-age">60+ years</div>
+        <div class="stage-desc">Wisdom, slower pace, enjoying life experiences</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-title" id="detail-title">⭐ Adolescence - The Focus Stage</div>
+  <div class="detail-text" id="detail-text">
+    <strong>Adolescence (10-19 years)</strong> is the transition period between childhood and adulthood.<br><br>
+    <strong>Key characteristics:</strong><br>
+    • Rapid physical growth (height, weight)<br>
+    • Development of reproductive capability<br>
+    • Emotional and psychological changes<br>
+    • Development of identity and independence<br><br>
+    This is the stage YOU are in right now! It's a time of exciting changes and growth.
+  </div>
+</div>
+
+<div class="comparison-box">
+  <div class="comparison-title">🌿 Growth in Nature - Same Pattern!</div>
+  <div class="compare-row">
+    <div class="compare-item">
+      <div class="icon">🌱</div>
+      <div class="label">Seed → Seedling</div>
+      <div class="text">Like Infancy</div>
+    </div>
+    <div class="compare-item">
+      <div class="icon">🌿</div>
+      <div class="label">Growing Plant</div>
+      <div class="text">Like Childhood</div>
+    </div>
+    <div class="compare-item">
+      <div class="icon">🌸</div>
+      <div class="label">Flowering</div>
+      <div class="text">Like Adolescence</div>
+    </div>
+    <div class="compare-item">
+      <div class="icon">🌳</div>
+      <div class="label">Mature Tree</div>
+      <div class="text">Like Adulthood</div>
+    </div>
+  </div>
+</div>
+
+<div class="takeaway">
+  <div class="takeaway-title">🎯 Remember</div>
+  <div class="takeaway-text">
+    Just like plants need to grow and mature before producing seeds, and animals need to grow before they can reproduce, <strong>humans go through adolescence</strong> to prepare the body for adulthood.<br><br>
+    Every stage of life is important and brings new experiences!
+  </div>
+</div>
+
+</div>
+
+<script>
+const stages = [
+  {
+    title: '👶 Infancy (0-2 years)',
+    text: `<strong>The beginning of life!</strong><br><br>
+      <strong>Physical:</strong> Fastest growth period, tripling birth weight<br>
+      <strong>Motor skills:</strong> Learning to crawl, walk, grasp objects<br>
+      <strong>Communication:</strong> First words, babbling, crying<br>
+      <strong>Dependence:</strong> Completely dependent on caregivers<br><br>
+      Babies learn about the world through their senses!`
+  },
+  {
+    title: '🧒 Childhood (3-9 years)',
+    text: `<strong>Learning and exploring!</strong><br><br>
+      <strong>Physical:</strong> Steady growth, developing coordination<br>
+      <strong>Mental:</strong> Learning to read, write, and solve problems<br>
+      <strong>Social:</strong> Making friends, learning to share<br>
+      <strong>Emotional:</strong> Developing empathy and understanding<br><br>
+      Children are curious and absorb knowledge like sponges!`
+  },
+  {
+    title: '⭐ Adolescence (10-19 years)',
+    text: `<strong>The transformation stage - YOU are here!</strong><br><br>
+      <strong>Physical:</strong> Rapid growth, puberty changes<br>
+      <strong>Emotional:</strong> Mood swings, stronger feelings<br>
+      <strong>Social:</strong> Identity formation, peer relationships<br>
+      <strong>Cognitive:</strong> Abstract thinking develops<br><br>
+      This is a special time of growth - embrace the changes!`
+  },
+  {
+    title: '👨 Adulthood (20-60 years)',
+    text: `<strong>Independence and responsibility!</strong><br><br>
+      <strong>Physical:</strong> Body fully developed, peak fitness<br>
+      <strong>Career:</strong> Working, contributing to society<br>
+      <strong>Family:</strong> May have children, responsibilities<br>
+      <strong>Growth:</strong> Continued learning and development<br><br>
+      Adults use skills learned in earlier stages!`
+  },
+  {
+    title: '👴 Old Age (60+ years)',
+    text: `<strong>Wisdom and reflection!</strong><br><br>
+      <strong>Physical:</strong> Gradual slowing, may need support<br>
+      <strong>Mental:</strong> Wisdom from life experiences<br>
+      <strong>Social:</strong> Grandparents, mentors to younger generations<br>
+      <strong>Legacy:</strong> Sharing knowledge and stories<br><br>
+      Elders are treasures of experience and wisdom!`
+  }
+];
+
+const detailTitle = document.getElementById('detail-title');
+const detailText = document.getElementById('detail-text');
+
+function selectStage(index, element) {
+  document.querySelectorAll('.stage-item').forEach(item => item.classList.remove('active'));
+  element.classList.add('active');
+  
+  detailTitle.textContent = stages[index].title;
+  detailText.innerHTML = stages[index].text;
+}
+
+// Initialize with adolescence selected
+document.querySelectorAll('.stage-item')[2].classList.add('active');
+</script>
+</body>
+</html>

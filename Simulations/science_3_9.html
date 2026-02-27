@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#37474f">
+<title>Circuit Symbols – Reading Circuit Diagrams</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #37474f 0%, #607d8b 100%);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+.header {
+  text-align: center;
+  color: #fff;
+  padding: 12px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.95; }
+
+.concept-card {
+  background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #f9a825;
+}
+
+.concept-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f57f17;
+  margin-bottom: 6px;
+}
+
+.concept-text {
+  font-size: 12px;
+  color: #5d4037;
+  line-height: 1.5;
+}
+
+.sim-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+}
+
+.symbols-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.symbol-card {
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.symbol-card:active { transform: scale(0.98); }
+.symbol-card.active { border-color: #1976d2; background: #e3f2fd; }
+
+.symbol-visual {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.symbol-visual svg { max-width: 100%; max-height: 100%; }
+
+.symbol-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #333;
+}
+
+.symbol-desc {
+  font-size: 9px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.detail-panel {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 3px solid #1976d2;
+}
+
+.detail-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1565c0;
+  margin-bottom: 8px;
+}
+
+.detail-content {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.detail-symbol {
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px;
+  min-width: 80px;
+  text-align: center;
+}
+
+.detail-text {
+  font-size: 11px;
+  color: #37474f;
+  line-height: 1.6;
+  flex: 1;
+}
+
+.quiz-section {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+}
+
+.quiz-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.quiz-circuit {
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 12px;
+}
+
+.quiz-circuit svg { width: 100%; height: auto; }
+
+.quiz-question {
+  font-size: 11px;
+  color: #333;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.quiz-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.quiz-btn {
+  padding: 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quiz-btn:active { transform: scale(0.95); }
+.quiz-btn.correct { border-color: #4caf50; background: #e8f5e9; }
+.quiz-btn.wrong { border-color: #f44336; background: #ffebee; }
+
+.quiz-feedback {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  text-align: center;
+  display: none;
+}
+
+.quiz-feedback.show { display: block; }
+.quiz-feedback.correct { background: #e8f5e9; color: #2e7d32; }
+.quiz-feedback.wrong { background: #ffebee; color: #c62828; }
+
+.circuit-example {
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.example-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.example-compare {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.example-box {
+  flex: 1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+
+.example-box .label {
+  font-size: 9px;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.example-arrow {
+  font-size: 20px;
+  color: #1976d2;
+}
+
+.takeaway {
+  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #2e7d32;
+}
+
+.takeaway-title { font-size: 12px; font-weight: 700; color: #1b5e20; margin-bottom: 6px; }
+.takeaway-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div class="header">
+  <h1>📊 Circuit Symbols</h1>
+  <p>Learn to read and draw circuit diagrams</p>
+</div>
+
+<div class="concept-card">
+  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-text">
+    Electrical components are represented by <strong>standard symbols</strong> in circuit diagrams. These symbols are used worldwide, making circuits easy to understand and draw.
+  </div>
+</div>
+
+<div class="sim-card">
+  <div class="symbols-grid">
+    <div class="symbol-card active" onclick="showSymbol('cell', this)">
+      <div class="symbol-visual">
+        <svg viewBox="0 0 80 40">
+          <line x1="30" y1="10" x2="30" y2="30" stroke="#333" stroke-width="3"/>
+          <line x1="50" y1="15" x2="50" y2="25" stroke="#333" stroke-width="3"/>
+          <line x1="10" y1="20" x2="30" y2="20" stroke="#333" stroke-width="2"/>
+          <line x1="50" y1="20" x2="70" y2="20" stroke="#333" stroke-width="2"/>
+          <text x="25" y="38" font-size="8" fill="#e65100">+</text>
+          <text x="52" y="38" font-size="8" fill="#1565c0">−</text>
+        </svg>
+      </div>
+      <div class="symbol-name">Cell</div>
+      <div class="symbol-desc">Single power source</div>
+    </div>
+    
+    <div class="symbol-card" onclick="showSymbol('battery', this)">
+      <div class="symbol-visual">
+        <svg viewBox="0 0 80 40">
+          <line x1="15" y1="10" x2="15" y2="30" stroke="#333" stroke-width="3"/>
+          <line x1="25" y1="15" x2="25" y2="25" stroke="#333" stroke-width="3"/>
+          <line x1="35" y1="10" x2="35" y2="30" stroke="#333" stroke-width="3"/>
+          <line x1="45" y1="15" x2="45" y2="25" stroke="#333" stroke-width="3"/>
+          <line x1="55" y1="10" x2="55" y2="30" stroke="#333" stroke-width="3"/>
+          <line x1="65" y1="15" x2="65" y2="25" stroke="#333" stroke-width="3"/>
+          <line x1="5" y1="20" x2="15" y2="20" stroke="#333" stroke-width="2"/>
+          <line x1="65" y1="20" x2="75" y2="20" stroke="#333" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="symbol-name">Battery</div>
+      <div class="symbol-desc">Multiple cells</div>
+    </div>
+    
+    <div class="symbol-card" onclick="showSymbol('bulb', this)">
+      <div class="symbol-visual">
+        <svg viewBox="0 0 80 50">
+          <circle cx="40" cy="25" r="15" fill="none" stroke="#333" stroke-width="2"/>
+          <line x1="30" y1="15" x2="50" y2="35" stroke="#333" stroke-width="2"/>
+          <line x1="50" y1="15" x2="30" y2="35" stroke="#333" stroke-width="2"/>
+          <line x1="10" y1="25" x2="25" y2="25" stroke="#333" stroke-width="2"/>
+          <line x1="55" y1="25" x2="70" y2="25" stroke="#333" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="symbol-name">Lamp/Bulb</div>
+      <div class="symbol-desc">Light source</div>
+    </div>
+    
+    <div class="symbol-card" onclick="showSymbol('led', this)">
+      <div class="symbol-visual">
+        <svg viewBox="0 0 80 50">
+          <polygon points="25,15 25,35 45,25" fill="none" stroke="#333" stroke-width="2"/>
+          <line x1="45" y1="15" x2="45" y2="35" stroke="#333" stroke-width="2"/>
+          <line x1="10" y1="25" x2="25" y2="25" stroke="#333" stroke-width="2"/>
+          <line x1="45" y1="25" x2="60" y2="25" stroke="#333" stroke-width="2"/>
+          <line x1="50" y1="10" x2="60" y2="5" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <line x1="55" y1="15" x2="65" y2="10" stroke="#333" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="symbol-name">LED</div>
+      <div class="symbol-desc">Light Emitting Diode</div>
+    </div>
+    
+    <div class="symbol-card" onclick="showSymbol('switch-open', this)">
+      <div class="symbol-visual">
+        <svg viewBox="0 0 80 40">
+          <circle cx="20" cy="25" r="4" fill="#333"/>
+          <circle cx="60" cy="25" r="4" fill="#333"/>
+          <line x1="24" y1="25" x2="50" y2="10" stroke="#333" stroke-width="2"/>
+          <line x1="5" y1="25" x2="16" y2="25" stroke="#333" stroke-width="2"/>
+          <line x1="64" y1="25" x2="75" y2="25" stroke="#333" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="symbol-name">Switch (Open)</div>
+      <div class="symbol-desc">Circuit OFF</div>
+    </div>
+    
+    <div class="symbol-card" onclick="showSymbol('switch-closed', this)">
+      <div class="symbol-visual">
+        <svg viewBox="0 0 80 40">
+          <circle cx="20" cy="25" r="4" fill="#333"/>
+          <circle cx="60" cy="25" r="4" fill="#333"/>
+          <line x1="24" y1="25" x2="56" y2="25" stroke="#333" stroke-width="2"/>
+          <line x1="5" y1="25" x2="16" y2="25" stroke="#333" stroke-width="2"/>
+          <line x1="64" y1="25" x2="75" y2="25" stroke="#333" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="symbol-name">Switch (Closed)</div>
+      <div class="symbol-desc">Circuit ON</div>
+    </div>
+    
+    <div class="symbol-card" onclick="showSymbol('wire', this)">
+      <div class="symbol-visual">
+        <svg viewBox="0 0 80 40">
+          <line x1="10" y1="20" x2="70" y2="20" stroke="#333" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="symbol-name">Wire</div>
+      <div class="symbol-desc">Conductor</div>
+    </div>
+    
+    <div class="symbol-card" onclick="showSymbol('wire-cross', this)">
+      <div class="symbol-visual">
+        <svg viewBox="0 0 80 50">
+          <line x1="10" y1="25" x2="70" y2="25" stroke="#333" stroke-width="2"/>
+          <path d="M 40 10 L 40 20 Q 40 25 45 25" stroke="#333" stroke-width="2" fill="none"/>
+          <line x1="40" y1="30" x2="40" y2="40" stroke="#333" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="symbol-name">Wires Crossing</div>
+      <div class="symbol-desc">Not connected</div>
+    </div>
+  </div>
+</div>
+
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-title" id="detail-title">🔋 Cell Symbol</div>
+  <div class="detail-content">
+    <div class="detail-symbol" id="detail-symbol">
+      <svg viewBox="0 0 60 40" width="60" height="40">
+        <line x1="20" y1="5" x2="20" y2="35" stroke="#333" stroke-width="4"/>
+        <line x1="40" y1="12" x2="40" y2="28" stroke="#333" stroke-width="4"/>
+        <line x1="5" y1="20" x2="20" y2="20" stroke="#333" stroke-width="2"/>
+        <line x1="40" y1="20" x2="55" y2="20" stroke="#333" stroke-width="2"/>
+      </svg>
+    </div>
+    <div class="detail-text" id="detail-text">
+      The cell symbol has two vertical lines:<br>
+      • <strong>Longer line = Positive (+)</strong><br>
+      • <strong>Shorter line = Negative (−)</strong><br><br>
+      Remember: "Long = Plus, Short = Minus"
+    </div>
+  </div>
+</div>
+
+<div class="quiz-section">
+  <div class="quiz-title">🧠 Quick Quiz: Identify the Circuit</div>
+  <div class="quiz-circuit">
+    <svg viewBox="0 0 200 100">
+      <!-- Simple circuit with cell, switch, and bulb -->
+      <line x1="30" y1="30" x2="170" y2="30" stroke="#333" stroke-width="2"/>
+      <line x1="170" y1="30" x2="170" y2="70" stroke="#333" stroke-width="2"/>
+      <line x1="170" y1="70" x2="30" y2="70" stroke="#333" stroke-width="2"/>
+      <line x1="30" y1="70" x2="30" y2="30" stroke="#333" stroke-width="2"/>
+      
+      <!-- Cell -->
+      <line x1="20" y1="40" x2="20" y2="60" stroke="#333" stroke-width="3"/>
+      <line x1="40" y1="45" x2="40" y2="55" stroke="#333" stroke-width="3"/>
+      
+      <!-- Switch (open) -->
+      <circle cx="80" cy="30" r="3" fill="#333"/>
+      <circle cx="120" cy="30" r="3" fill="#333"/>
+      <line x1="83" y1="30" x2="110" y2="18" stroke="#333" stroke-width="2"/>
+      
+      <!-- Bulb -->
+      <circle cx="170" cy="50" r="12" fill="none" stroke="#333" stroke-width="2"/>
+      <line x1="162" y1="42" x2="178" y2="58" stroke="#333" stroke-width="2"/>
+      <line x1="178" y1="42" x2="162" y2="58" stroke="#333" stroke-width="2"/>
+    </svg>
+  </div>
+  <div class="quiz-question">What will happen if the switch is closed?</div>
+  <div class="quiz-options">
+    <button class="quiz-btn" onclick="checkQuiz(this, true)">Bulb will glow</button>
+    <button class="quiz-btn" onclick="checkQuiz(this, false)">Nothing happens</button>
+    <button class="quiz-btn" onclick="checkQuiz(this, false)">Cell will break</button>
+    <button class="quiz-btn" onclick="checkQuiz(this, false)">Switch will melt</button>
+  </div>
+  <div class="quiz-feedback" id="quiz-feedback"></div>
+</div>
+
+<div class="circuit-example">
+  <div class="example-title">Real vs Symbol Comparison</div>
+  <div class="example-compare">
+    <div class="example-box">
+      <div class="label">Real Component</div>
+      <div style="font-size:30px">🔋</div>
+    </div>
+    <div class="example-arrow">→</div>
+    <div class="example-box">
+      <div class="label">Circuit Symbol</div>
+      <svg viewBox="0 0 50 30" width="50" height="30">
+        <line x1="15" y1="5" x2="15" y2="25" stroke="#333" stroke-width="3"/>
+        <line x1="35" y1="10" x2="35" y2="20" stroke="#333" stroke-width="3"/>
+        <line x1="5" y1="15" x2="15" y2="15" stroke="#333" stroke-width="2"/>
+        <line x1="35" y1="15" x2="45" y2="15" stroke="#333" stroke-width="2"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div class="takeaway">
+  <div class="takeaway-title">🎯 What You Learned</div>
+  <div class="takeaway-text">
+    Standard circuit symbols are used worldwide to represent electrical components. Key symbols: <strong>Cell</strong> (long line = +), <strong>Battery</strong> (multiple cells), <strong>Bulb</strong> (circle with X), <strong>Switch</strong> (gap for open, line for closed), <strong>Wire</strong> (straight line).
+  </div>
+</div>
+
+</div>
+
+<script>
+const symbolData = {
+  'cell': {
+    title: '🔋 Cell Symbol',
+    svg: `<svg viewBox="0 0 60 40" width="60" height="40">
+      <line x1="20" y1="5" x2="20" y2="35" stroke="#333" stroke-width="4"/>
+      <line x1="40" y1="12" x2="40" y2="28" stroke="#333" stroke-width="4"/>
+      <line x1="5" y1="20" x2="20" y2="20" stroke="#333" stroke-width="2"/>
+      <line x1="40" y1="20" x2="55" y2="20" stroke="#333" stroke-width="2"/>
+    </svg>`,
+    text: `The cell symbol has two vertical lines:<br>
+      • <strong>Longer line = Positive (+)</strong><br>
+      • <strong>Shorter line = Negative (−)</strong><br><br>
+      Remember: "Long = Plus, Short = Minus"`
+  },
+  'battery': {
+    title: '🔋🔋 Battery Symbol',
+    svg: `<svg viewBox="0 0 80 40" width="80" height="40">
+      <line x1="15" y1="5" x2="15" y2="35" stroke="#333" stroke-width="3"/>
+      <line x1="25" y1="12" x2="25" y2="28" stroke="#333" stroke-width="3"/>
+      <line x1="35" y1="5" x2="35" y2="35" stroke="#333" stroke-width="3"/>
+      <line x1="45" y1="12" x2="45" y2="28" stroke="#333" stroke-width="3"/>
+      <line x1="55" y1="5" x2="55" y2="35" stroke="#333" stroke-width="3"/>
+      <line x1="65" y1="12" x2="65" y2="28" stroke="#333" stroke-width="3"/>
+    </svg>`,
+    text: `A battery is multiple cells connected together.<br><br>
+      The symbol shows repeated cell symbols (long-short pairs).<br><br>
+      More cells = more voltage!`
+  },
+  'bulb': {
+    title: '💡 Lamp/Bulb Symbol',
+    svg: `<svg viewBox="0 0 60 50" width="60" height="50">
+      <circle cx="30" cy="25" r="15" fill="none" stroke="#333" stroke-width="2"/>
+      <line x1="20" y1="15" x2="40" y2="35" stroke="#333" stroke-width="2"/>
+      <line x1="40" y1="15" x2="20" y2="35" stroke="#333" stroke-width="2"/>
+      <line x1="5" y1="25" x2="15" y2="25" stroke="#333" stroke-width="2"/>
+      <line x1="45" y1="25" x2="55" y2="25" stroke="#333" stroke-width="2"/>
+    </svg>`,
+    text: `The bulb symbol is a circle with an X inside.<br><br>
+      • Circle = glass bulb<br>
+      • X = filament (crossing wires)<br><br>
+      The bulb converts electrical energy to light.`
+  },
+  'led': {
+    title: '🔆 LED Symbol',
+    svg: `<svg viewBox="0 0 60 50" width="60" height="50">
+      <polygon points="15,10 15,40 40,25" fill="none" stroke="#333" stroke-width="2"/>
+      <line x1="40" y1="10" x2="40" y2="40" stroke="#333" stroke-width="2"/>
+      <line x1="5" y1="25" x2="15" y2="25" stroke="#333" stroke-width="2"/>
+      <line x1="40" y1="25" x2="55" y2="25" stroke="#333" stroke-width="2"/>
+    </svg>`,
+    text: `LED has a triangle and line symbol with arrows showing light.<br><br>
+      • Triangle points to current direction<br>
+      • Arrows = light emitted<br><br>
+      <strong>Important:</strong> LEDs need correct polarity!`
+  },
+  'switch-open': {
+    title: '🔓 Switch (Open/OFF)',
+    svg: `<svg viewBox="0 0 60 40" width="60" height="40">
+      <circle cx="15" cy="25" r="4" fill="#333"/>
+      <circle cx="45" cy="25" r="4" fill="#333"/>
+      <line x1="19" y1="25" x2="38" y2="10" stroke="#333" stroke-width="2"/>
+      <line x1="5" y1="25" x2="11" y2="25" stroke="#333" stroke-width="2"/>
+      <line x1="49" y1="25" x2="55" y2="25" stroke="#333" stroke-width="2"/>
+    </svg>`,
+    text: `Open switch shows a gap in the circuit.<br><br>
+      • The lever is lifted up<br>
+      • Current cannot flow<br>
+      • Circuit is OFF<br><br>
+      This breaks the circuit path.`
+  },
+  'switch-closed': {
+    title: '🔒 Switch (Closed/ON)',
+    svg: `<svg viewBox="0 0 60 40" width="60" height="40">
+      <circle cx="15" cy="25" r="4" fill="#333"/>
+      <circle cx="45" cy="25" r="4" fill="#333"/>
+      <line x1="19" y1="25" x2="41" y2="25" stroke="#333" stroke-width="2"/>
+      <line x1="5" y1="25" x2="11" y2="25" stroke="#333" stroke-width="2"/>
+      <line x1="49" y1="25" x2="55" y2="25" stroke="#333" stroke-width="2"/>
+    </svg>`,
+    text: `Closed switch shows connection between contacts.<br><br>
+      • The lever connects both points<br>
+      • Current can flow<br>
+      • Circuit is ON<br><br>
+      This completes the circuit path.`
+  },
+  'wire': {
+    title: '〰️ Wire Symbol',
+    svg: `<svg viewBox="0 0 60 30" width="60" height="30">
+      <line x1="5" y1="15" x2="55" y2="15" stroke="#333" stroke-width="2"/>
+    </svg>`,
+    text: `A simple straight line represents a wire.<br><br>
+      • Wires are conductors<br>
+      • They carry current between components<br>
+      • Draw them as straight lines with right angles`
+  },
+  'wire-cross': {
+    title: '✖️ Wires Crossing (Not Connected)',
+    svg: `<svg viewBox="0 0 60 50" width="60" height="50">
+      <line x1="5" y1="25" x2="55" y2="25" stroke="#333" stroke-width="2"/>
+      <path d="M 30 5 L 30 20 Q 30 25 35 25" stroke="#333" stroke-width="2" fill="none"/>
+      <line x1="30" y1="30" x2="30" y2="45" stroke="#333" stroke-width="2"/>
+    </svg>`,
+    text: `When wires cross but don't connect, one "jumps" over the other.<br><br>
+      • The bump shows no electrical connection<br>
+      • Current continues in each wire separately<br><br>
+      If connected, they would show a dot at the junction.`
+  }
+};
+
+function showSymbol(type, element) {
+  document.querySelectorAll('.symbol-card').forEach(card => card.classList.remove('active'));
+  element.classList.add('active');
+  
+  const data = symbolData[type];
+  document.getElementById('detail-title').textContent = data.title;
+  document.getElementById('detail-symbol').innerHTML = data.svg;
+  document.getElementById('detail-text').innerHTML = data.text;
+}
+
+function checkQuiz(btn, isCorrect) {
+  const feedback = document.getElementById('quiz-feedback');
+  document.querySelectorAll('.quiz-btn').forEach(b => {
+    b.classList.remove('correct', 'wrong');
+    b.disabled = true;
+  });
+  
+  if (isCorrect) {
+    btn.classList.add('correct');
+    feedback.className = 'quiz-feedback show correct';
+    feedback.innerHTML = '✅ Correct! When the switch closes, the circuit is complete and current flows through the bulb, making it glow.';
+  } else {
+    btn.classList.add('wrong');
+    document.querySelector('.quiz-btn:first-child').classList.add('correct');
+    feedback.className = 'quiz-feedback show wrong';
+    feedback.innerHTML = '❌ Not quite. When the switch closes, it completes the circuit, allowing current to flow and the bulb to glow.';
+  }
+}
+</script>
+</body>
+</html>

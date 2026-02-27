@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#5e35b1">
+<title>Healthy Habits for Adolescents</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #5e35b1 0%, #7e57c2 100%);
+  min-height: 100vh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#app {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+}
+
+.header {
+  text-align: center;
+  color: #fff;
+  padding: 12px;
+}
+
+.header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.95; }
+
+.concept-card {
+  background: linear-gradient(135deg, #ede7f6 0%, #d1c4e9 100%);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #5e35b1;
+}
+
+.concept-title { font-size: 12px; font-weight: 700; color: #4527a0; margin-bottom: 6px; }
+.concept-text { font-size: 12px; color: #37474f; line-height: 1.5; }
+
+.sim-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+}
+
+.habits-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.habit-tab {
+  padding: 10px 4px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+  text-align: center;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.habit-tab:active { transform: scale(0.95); }
+.habit-tab.active { border-color: #5e35b1; background: #ede7f6; color: #4527a0; }
+
+.habit-tab .emoji { font-size: 20px; display: block; margin-bottom: 4px; }
+
+.habit-visual {
+  height: 180px;
+  background: linear-gradient(180deg, #ede7f6 0%, #fff 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+}
+
+.habit-icon-large {
+  font-size: 80px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.habit-info {
+  background: linear-gradient(135deg, #ede7f6 0%, #d1c4e9 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #5e35b1;
+}
+
+.habit-title { font-size: 13px; font-weight: 700; color: #4527a0; margin-bottom: 8px; }
+.habit-text { font-size: 11px; color: #37474f; line-height: 1.6; }
+
+.benefits-list {
+  margin-top: 10px;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  background: #fff;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.benefit-item .icon { font-size: 16px; margin-right: 10px; }
+.benefit-item .text { font-size: 10px; color: #333; }
+
+.online-safety {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #ff9800;
+}
+
+.online-title { font-size: 12px; font-weight: 700; color: #e65100; margin-bottom: 8px; }
+.online-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+
+.tips-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tip-card {
+  padding: 10px;
+  background: #fff;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.tip-card .emoji { font-size: 24px; margin-bottom: 4px; }
+.tip-card .text { font-size: 9px; color: #333; }
+
+.takeaway {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #4caf50;
+}
+
+.takeaway-title { font-size: 12px; font-weight: 700; color: #2e7d32; margin-bottom: 6px; }
+.takeaway-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div class="header">
+  <h1>🌟 Healthy Habits</h1>
+  <p>Build a strong body and mind!</p>
+</div>
+
+<div class="concept-card">
+  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-text">
+    Adolescence is the perfect time to build <strong>healthy habits</strong> that will benefit you throughout life. Physical activity, proper sleep, social connections, and safe online behavior all contribute to your wellbeing.
+  </div>
+</div>
+
+<div class="sim-card">
+  <div class="habits-tabs">
+    <div class="habit-tab active" onclick="selectHabit('exercise', this)">
+      <span class="emoji">⚽</span>
+      Exercise
+    </div>
+    <div class="habit-tab" onclick="selectHabit('sleep', this)">
+      <span class="emoji">😴</span>
+      Sleep
+    </div>
+    <div class="habit-tab" onclick="selectHabit('social', this)">
+      <span class="emoji">👥</span>
+      Social
+    </div>
+    <div class="habit-tab" onclick="selectHabit('mental', this)">
+      <span class="emoji">🧘</span>
+      Mental
+    </div>
+  </div>
+  
+  <div class="habit-visual">
+    <div class="habit-icon-large" id="habit-icon">⚽</div>
+  </div>
+</div>
+
+<div class="habit-info" id="habit-info">
+  <div class="habit-title" id="habit-title">⚽ Physical Activity & Exercise</div>
+  <div class="habit-text" id="habit-text">
+    Regular physical activity is essential during adolescence. It helps your body grow strong, improves mood, and builds stamina for daily activities.
+  </div>
+  <div class="benefits-list" id="benefits-list">
+    <div class="benefit-item">
+      <div class="icon">💪</div>
+      <div class="text">Builds strong muscles and bones</div>
+    </div>
+    <div class="benefit-item">
+      <div class="icon">😊</div>
+      <div class="text">Improves mood and reduces stress</div>
+    </div>
+    <div class="benefit-item">
+      <div class="icon">🧠</div>
+      <div class="text">Enhances concentration and memory</div>
+    </div>
+    <div class="benefit-item">
+      <div class="icon">⚡</div>
+      <div class="text">Increases energy levels</div>
+    </div>
+  </div>
+</div>
+
+<div class="online-safety">
+  <div class="online-title">📱 Online Safety Tips</div>
+  <div class="online-text">
+    The internet is useful but needs responsible use:
+  </div>
+  <div class="tips-grid">
+    <div class="tip-card">
+      <div class="emoji">🔒</div>
+      <div class="text">Keep personal info private</div>
+    </div>
+    <div class="tip-card">
+      <div class="emoji">🚫</div>
+      <div class="text">Don't talk to strangers online</div>
+    </div>
+    <div class="tip-card">
+      <div class="emoji">💬</div>
+      <div class="text">Be respectful in messages</div>
+    </div>
+    <div class="tip-card">
+      <div class="emoji">🆘</div>
+      <div class="text">Report cyberbullying</div>
+    </div>
+  </div>
+</div>
+
+<div class="takeaway">
+  <div class="takeaway-title">🎯 Daily Goals</div>
+  <div class="takeaway-text">
+    • <strong>60 minutes</strong> of physical activity daily<br>
+    • <strong>8-10 hours</strong> of sleep each night<br>
+    • <strong>Balance</strong> screen time with outdoor play<br>
+    • <strong>Connect</strong> with family and friends<br>
+    • <strong>Take breaks</strong> to relax and recharge
+  </div>
+</div>
+
+</div>
+
+<script>
+const habits = {
+  exercise: {
+    icon: '⚽',
+    title: '⚽ Physical Activity & Exercise',
+    text: 'Regular physical activity is essential during adolescence. It helps your body grow strong, improves mood, and builds stamina for daily activities.',
+    benefits: [
+      { icon: '💪', text: 'Builds strong muscles and bones' },
+      { icon: '😊', text: 'Improves mood and reduces stress' },
+      { icon: '🧠', text: 'Enhances concentration and memory' },
+      { icon: '⚡', text: 'Increases energy levels' }
+    ]
+  },
+  sleep: {
+    icon: '😴',
+    title: '😴 Quality Sleep',
+    text: 'Adolescents need 8-10 hours of sleep per night. During sleep, your body repairs itself, and your brain processes what you learned during the day.',
+    benefits: [
+      { icon: '📈', text: 'Supports growth hormone release' },
+      { icon: '🎓', text: 'Improves learning and memory' },
+      { icon: '💪', text: 'Boosts immune system' },
+      { icon: '😌', text: 'Better emotional regulation' }
+    ]
+  },
+  social: {
+    icon: '👥',
+    title: '👥 Healthy Social Life',
+    text: 'Building positive relationships with family and friends is important. Good social connections provide support, fun, and help you develop communication skills.',
+    benefits: [
+      { icon: '🤝', text: 'Builds trust and teamwork skills' },
+      { icon: '💬', text: 'Improves communication abilities' },
+      { icon: '❤️', text: 'Provides emotional support' },
+      { icon: '🎉', text: 'Creates happy memories' }
+    ]
+  },
+  mental: {
+    icon: '🧘',
+    title: '🧘 Mental Wellness',
+    text: 'Taking care of your mental health is just as important as physical health. Practice stress management, mindfulness, and seek help when needed.',
+    benefits: [
+      { icon: '🧘', text: 'Reduces anxiety and stress' },
+      { icon: '🎯', text: 'Improves focus and clarity' },
+      { icon: '😊', text: 'Increases self-confidence' },
+      { icon: '💭', text: 'Better decision making' }
+    ]
+  }
+};
+
+const habitIcon = document.getElementById('habit-icon');
+const habitTitle = document.getElementById('habit-title');
+const habitText = document.getElementById('habit-text');
+const benefitsList = document.getElementById('benefits-list');
+
+function selectHabit(type, btn) {
+  document.querySelectorAll('.habit-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  
+  const habit = habits[type];
+  
+  habitIcon.textContent = habit.icon;
+  habitTitle.textContent = habit.title;
+  habitText.textContent = habit.text;
+  
+  benefitsList.innerHTML = habit.benefits.map(b => `
+    <div class="benefit-item">
+      <div class="icon">${b.icon}</div>
+      <div class="text">${b.text}</div>
+    </div>
+  `).join('');
+}
+</script>
+</body>
+</html>

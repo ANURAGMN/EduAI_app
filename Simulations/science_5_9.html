@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#388e3c">
+<title>Desirable vs Undesirable Changes</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #388e3c 0%, #66bb6a 100%);
+  min-height: 100vh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#app {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+}
+
+.header {
+  text-align: center;
+  color: #fff;
+  padding: 12px;
+}
+
+.header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.95; }
+
+.concept-card {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #388e3c;
+}
+
+.concept-title { font-size: 12px; font-weight: 700; color: #2e7d32; margin-bottom: 6px; }
+.concept-text { font-size: 12px; color: #37474f; line-height: 1.5; }
+
+.sim-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+}
+
+.question-card {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+.question-icon { font-size: 40px; margin-right: 15px; }
+.question-info { flex: 1; }
+.question-title { font-size: 13px; font-weight: 600; color: #333; }
+.question-desc { font-size: 11px; color: #666; margin-top: 4px; }
+
+.choice-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.choice-btn {
+  flex: 1;
+  padding: 14px;
+  border: 3px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #fafafa;
+  transition: all 0.2s ease;
+}
+
+.choice-btn:active { transform: scale(0.95); }
+.choice-btn.desirable { border-color: #4caf50; background: #e8f5e9; color: #2e7d32; }
+.choice-btn.undesirable { border-color: #f44336; background: #ffebee; color: #c62828; }
+.choice-btn:disabled { opacity: 0.6; }
+
+.feedback-panel {
+  padding: 12px;
+  border-radius: 10px;
+  margin-top: 10px;
+  display: none;
+}
+
+.feedback-panel.show { display: block; }
+.feedback-panel.correct { background: #e8f5e9; border-left: 4px solid #4caf50; }
+.feedback-panel.wrong { background: #ffebee; border-left: 4px solid #f44336; }
+.feedback-title { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+.feedback-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+
+.score-bar {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.score-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.score-dot.correct { background: #4caf50; color: white; }
+.score-dot.wrong { background: #f44336; color: white; }
+
+.progress-text {
+  font-size: 11px;
+  color: #666;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.context-panel {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #ff9800;
+}
+
+.context-title { font-size: 12px; font-weight: 700; color: #e65100; margin-bottom: 6px; }
+.context-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+
+.takeaway {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #2196f3;
+}
+
+.takeaway-title { font-size: 12px; font-weight: 700; color: #1565c0; margin-bottom: 6px; }
+.takeaway-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div class="header">
+  <h1>👍 Desirable vs Undesirable</h1>
+  <p>Are all changes good for us?</p>
+</div>
+
+<div class="concept-card">
+  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-text">
+    Changes can be <strong>desirable</strong> (useful, beneficial) or <strong>undesirable</strong> (harmful, unwanted). The same change can be desirable in one situation and undesirable in another!
+  </div>
+</div>
+
+<div class="sim-card">
+  <div class="question-card" id="question-card">
+    <div class="question-icon" id="q-icon">🥛</div>
+    <div class="question-info">
+      <div class="question-title" id="q-title">Milk turning into Curd</div>
+      <div class="question-desc" id="q-desc">Bacteria convert milk to curd overnight</div>
+    </div>
+  </div>
+  
+  <div class="choice-btns">
+    <button class="choice-btn" id="btn-desirable" onclick="checkAnswer(true)">
+      ✅ Desirable<br><span style="font-size:9px">Useful/Beneficial</span>
+    </button>
+    <button class="choice-btn" id="btn-undesirable" onclick="checkAnswer(false)">
+      ❌ Undesirable<br><span style="font-size:9px">Harmful/Unwanted</span>
+    </button>
+  </div>
+  
+  <div class="feedback-panel" id="feedback-panel">
+    <div class="feedback-title" id="feedback-title">Correct!</div>
+    <div class="feedback-text" id="feedback-text"></div>
+  </div>
+  
+  <div class="score-bar" id="score-bar"></div>
+  <div class="progress-text" id="progress-text">Question 1 of 10</div>
+</div>
+
+<div class="context-panel">
+  <div class="context-title">🤔 Context Matters!</div>
+  <div class="context-text" id="context-text">
+    The same change can be viewed differently based on the situation:<br><br>
+    • <strong>Fire:</strong> Desirable for cooking, undesirable in a forest<br>
+    • <strong>Decomposition:</strong> Desirable in composting, undesirable for food<br>
+    • <strong>Rain:</strong> Desirable for crops, undesirable during floods
+  </div>
+</div>
+
+<div class="takeaway">
+  <div class="takeaway-title">🎯 Key Understanding</div>
+  <div class="takeaway-text">
+    <strong>Desirable changes</strong> help us or nature in some way.<br>
+    <strong>Undesirable changes</strong> cause harm or loss.<br><br>
+    Many changes that seem undesirable (like decay) are actually essential for nature's balance!
+  </div>
+</div>
+
+</div>
+
+<script>
+const questions = [
+  { 
+    icon: '🥛', 
+    title: 'Milk turning into Curd', 
+    desc: 'Bacteria convert milk to curd overnight',
+    desirable: true,
+    feedback: 'Curd is nutritious and delicious! Making curd from milk is a beneficial chemical change that gives us yogurt, lassi, and other dairy products.'
+  },
+  { 
+    icon: '🔩', 
+    title: 'Rusting of Iron', 
+    desc: 'Iron objects develop brown rust over time',
+    desirable: false,
+    feedback: 'Rusting weakens iron structures, damages tools, and costs billions in repairs. It\'s an undesirable chemical change we try to prevent.'
+  },
+  { 
+    icon: '🍳', 
+    title: 'Cooking Food', 
+    desc: 'Raw ingredients become cooked meals',
+    desirable: true,
+    feedback: 'Cooking makes food safer, tastier, and easier to digest. It\'s a desirable change that humans have used for thousands of years!'
+  },
+  { 
+    icon: '🍌', 
+    title: 'Fruit Rotting', 
+    desc: 'Fresh fruits become spoiled and inedible',
+    desirable: false,
+    feedback: 'Rotting fruit wastes food and can cause illness. However, in nature, this decomposition returns nutrients to soil!'
+  },
+  { 
+    icon: '🌱', 
+    title: 'Seed Germination', 
+    desc: 'Seeds sprout into young plants',
+    desirable: true,
+    feedback: 'Germination is how plants reproduce! This desirable change is essential for agriculture and maintaining ecosystems.'
+  },
+  { 
+    icon: '🏭', 
+    title: 'Air Pollution', 
+    desc: 'Factories release smoke into the air',
+    desirable: false,
+    feedback: 'Air pollution causes health problems and climate change. It\'s an undesirable byproduct we must reduce.'
+  },
+  { 
+    icon: '🥬', 
+    title: 'Composting', 
+    desc: 'Kitchen waste turns into fertilizer',
+    desirable: true,
+    feedback: 'Composting converts waste into valuable fertilizer! It\'s a desirable way to recycle organic matter.'
+  },
+  { 
+    icon: '🦷', 
+    title: 'Tooth Decay', 
+    desc: 'Bacteria damage teeth over time',
+    desirable: false,
+    feedback: 'Tooth decay causes pain and health issues. It\'s an undesirable change we prevent with brushing and dental care.'
+  },
+  { 
+    icon: '🍞', 
+    title: 'Making Bread', 
+    desc: 'Yeast makes dough rise and bake into bread',
+    desirable: true,
+    feedback: 'Bread-making uses fermentation (yeast producing CO₂) to create fluffy, delicious bread. A very desirable change!'
+  },
+  { 
+    icon: '🌡️', 
+    title: 'Global Warming', 
+    desc: 'Earth\'s temperature is rising',
+    desirable: false,
+    feedback: 'Global warming causes extreme weather, rising seas, and ecosystem damage. It\'s a major undesirable change facing our planet.'
+  }
+];
+
+let currentIndex = 0;
+let score = 0;
+let answered = false;
+
+const qIcon = document.getElementById('q-icon');
+const qTitle = document.getElementById('q-title');
+const qDesc = document.getElementById('q-desc');
+const btnDesirable = document.getElementById('btn-desirable');
+const btnUndesirable = document.getElementById('btn-undesirable');
+const feedbackPanel = document.getElementById('feedback-panel');
+const feedbackTitle = document.getElementById('feedback-title');
+const feedbackText = document.getElementById('feedback-text');
+const scoreBar = document.getElementById('score-bar');
+const progressText = document.getElementById('progress-text');
+
+function loadQuestion() {
+  if (currentIndex >= questions.length) {
+    qIcon.textContent = '🎉';
+    qTitle.textContent = 'Quiz Complete!';
+    qDesc.textContent = `You got ${score} out of ${questions.length} correct!`;
+    btnDesirable.style.display = 'none';
+    btnUndesirable.style.display = 'none';
+    feedbackPanel.classList.remove('show');
+    return;
+  }
+  
+  const q = questions[currentIndex];
+  qIcon.textContent = q.icon;
+  qTitle.textContent = q.title;
+  qDesc.textContent = q.desc;
+  
+  btnDesirable.disabled = false;
+  btnUndesirable.disabled = false;
+  btnDesirable.classList.remove('desirable', 'undesirable');
+  btnUndesirable.classList.remove('desirable', 'undesirable');
+  
+  feedbackPanel.classList.remove('show', 'correct', 'wrong');
+  answered = false;
+  
+  progressText.textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+}
+
+function checkAnswer(isDesirable) {
+  if (answered) return;
+  answered = true;
+  
+  const q = questions[currentIndex];
+  const correct = q.desirable === isDesirable;
+  
+  btnDesirable.disabled = true;
+  btnUndesirable.disabled = true;
+  
+  // Mark correct answer
+  if (q.desirable) {
+    btnDesirable.classList.add('desirable');
+  } else {
+    btnUndesirable.classList.add('undesirable');
+  }
+  
+  // Show feedback
+  if (correct) {
+    feedbackPanel.classList.add('correct');
+    feedbackTitle.textContent = '✅ Correct!';
+    score++;
+  } else {
+    feedbackPanel.classList.add('wrong');
+    feedbackTitle.textContent = '❌ Not quite!';
+  }
+  
+  feedbackText.textContent = q.feedback;
+  feedbackPanel.classList.add('show');
+  
+  // Update score bar
+  const dot = document.createElement('div');
+  dot.className = `score-dot ${correct ? 'correct' : 'wrong'}`;
+  dot.textContent = correct ? '✓' : '✗';
+  scoreBar.appendChild(dot);
+  
+  // Next question after delay
+  setTimeout(() => {
+    currentIndex++;
+    loadQuestion();
+  }, 2500);
+}
+
+// Initialize
+loadQuestion();
+</script>
+</body>
+</html>

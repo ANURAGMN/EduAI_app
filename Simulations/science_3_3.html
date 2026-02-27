@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#ff6f00">
+<title>Inside a Torch – Components Exploration</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #ff6f00 0%, #ffab00 100%);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+.header {
+  text-align: center;
+  color: #fff;
+  padding: 12px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.95; }
+
+.concept-card {
+  background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #f9a825;
+}
+
+.concept-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f57f17;
+  margin-bottom: 6px;
+}
+
+.concept-text {
+  font-size: 12px;
+  color: #5d4037;
+  line-height: 1.5;
+}
+
+.sim-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+}
+
+.visual {
+  position: relative;
+  height: 35vh;
+  min-height: 240px;
+  background: linear-gradient(180deg, #263238 0%, #37474f 100%);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+svg { width: 100%; height: 100%; }
+
+.mode-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mode-btn {
+  flex: 1;
+  background: #f5f5f5;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 12px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mode-btn:active { transform: scale(0.95); }
+.mode-btn.active { border-color: #ff6f00; background: #fff3e0; }
+.mode-btn .icon { font-size: 24px; }
+.mode-btn .name { font-size: 11px; font-weight: 600; color: #333; margin-top: 4px; }
+
+.components-list {
+  margin-top: 12px;
+}
+
+.component-item {
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.component-item:active { transform: scale(0.98); }
+.component-item.active { border-color: #ff6f00; background: #fff3e0; }
+.component-item .icon { font-size: 24px; }
+.component-item .info { flex: 1; }
+.component-item .name { font-size: 12px; font-weight: 600; color: #333; }
+.component-item .desc { font-size: 10px; color: #666; margin-top: 2px; }
+
+.detail-panel {
+  background: #e3f2fd;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 3px solid #1976d2;
+  display: none;
+}
+
+.detail-panel.show { display: block; }
+.detail-title { font-size: 13px; font-weight: 700; color: #1565c0; margin-bottom: 6px; }
+.detail-text { font-size: 11px; color: #37474f; line-height: 1.6; }
+
+.switch-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 12px;
+  padding: 12px;
+  background: #f5f5f5;
+  border-radius: 10px;
+}
+
+.switch-label { font-size: 12px; font-weight: 600; color: #666; }
+.switch-label.on { color: #4caf50; }
+
+.switch-toggle {
+  width: 60px;
+  height: 32px;
+  background: #e0e0e0;
+  border-radius: 16px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.switch-toggle.on { background: #4caf50; }
+
+.switch-knob {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  background: #fff;
+  border-radius: 50%;
+  transition: left 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.switch-toggle.on .switch-knob { left: 32px; }
+
+.takeaway {
+  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #2e7d32;
+}
+
+.takeaway-title { font-size: 12px; font-weight: 700; color: #1b5e20; margin-bottom: 6px; }
+.takeaway-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+
+@keyframes glow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+.lamp-glow { animation: glow 1s ease-in-out infinite; }
+
+@keyframes beam {
+  0% { opacity: 0.6; }
+  50% { opacity: 0.9; }
+  100% { opacity: 0.6; }
+}
+
+.light-beam { animation: beam 0.8s ease-in-out infinite; }
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div class="header">
+  <h1>🔦 Inside a Torch</h1>
+  <p>Explore the components that make a torch work</p>
+</div>
+
+<div class="concept-card">
+  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-text">
+    A torch has three main components: <strong>Electric Cells</strong> (provide energy), a <strong>Lamp</strong> (produces light), and a <strong>Switch</strong> (controls the circuit). Understanding these helps us learn about electrical circuits!
+  </div>
+</div>
+
+<div class="sim-card">
+  <div class="visual">
+    <svg viewBox="0 0 400 240" id="torch-svg">
+      <!-- Torch body -->
+      <defs>
+        <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#ffab00"/>
+          <stop offset="100%" style="stop-color:#ff6f00"/>
+        </linearGradient>
+        <radialGradient id="lightGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" style="stop-color:#ffff00;stop-opacity:1"/>
+          <stop offset="100%" style="stop-color:#ffff00;stop-opacity:0"/>
+        </radialGradient>
+      </defs>
+      
+      <!-- Light beam (when ON) -->
+      <g id="light-beam" style="display:none;">
+        <polygon points="80,100 0,40 0,200 80,140" fill="url(#lightGrad)" class="light-beam"/>
+      </g>
+      
+      <!-- Torch head -->
+      <ellipse cx="80" cy="120" rx="20" ry="50" fill="#546e7a"/>
+      <ellipse cx="85" cy="120" rx="15" ry="40" fill="#78909c"/>
+      
+      <!-- Lamp/LED -->
+      <g id="lamp-component" class="component-highlight">
+        <circle cx="85" cy="120" r="12" fill="#e0e0e0" id="lamp-bulb"/>
+        <circle cx="85" cy="120" r="8" fill="#bdbdbd" id="lamp-filament"/>
+      </g>
+      
+      <!-- Torch body tube -->
+      <rect x="95" y="80" width="200" height="80" rx="5" fill="url(#bodyGrad)"/>
+      
+      <!-- Switch area -->
+      <g id="switch-component" class="component-highlight">
+        <rect x="180" y="75" width="40" height="20" rx="5" fill="#455a64" id="switch-body"/>
+        <rect x="185" y="78" width="15" height="14" rx="3" fill="#78909c" id="switch-slider"/>
+      </g>
+      
+      <!-- Internal cells (shown when exploded) -->
+      <g id="cells-internal" style="display:none;">
+        <rect x="110" y="95" width="60" height="50" rx="3" fill="#1565c0"/>
+        <rect x="170" y="95" width="60" height="50" rx="3" fill="#1565c0"/>
+        <rect x="108" y="110" width="5" height="20" fill="#ffd600"/>
+        <rect x="167" y="110" width="6" height="20" fill="#9e9e9e"/>
+        <rect x="168" y="110" width="5" height="20" fill="#ffd600"/>
+        <rect x="227" y="110" width="6" height="20" fill="#9e9e9e"/>
+        <text x="140" y="125" font-size="8" fill="#fff" text-anchor="middle">CELL 1</text>
+        <text x="200" y="125" font-size="8" fill="#fff" text-anchor="middle">CELL 2</text>
+      </g>
+      
+      <!-- End cap -->
+      <rect x="295" y="90" width="20" height="60" rx="5" fill="#ff6f00"/>
+      
+      <!-- Component labels -->
+      <g id="labels" style="display:none;">
+        <line x1="85" y1="75" x2="85" y2="50" stroke="#fff" stroke-width="1"/>
+        <text x="85" y="45" font-size="10" fill="#fff" text-anchor="middle">LAMP</text>
+        
+        <line x1="200" y1="75" x2="200" y2="50" stroke="#fff" stroke-width="1"/>
+        <text x="200" y="45" font-size="10" fill="#fff" text-anchor="middle">SWITCH</text>
+        
+        <line x1="200" y1="165" x2="200" y2="190" stroke="#fff" stroke-width="1"/>
+        <text x="200" y="205" font-size="10" fill="#fff" text-anchor="middle">CELLS (inside)</text>
+      </g>
+      
+      <!-- Status text -->
+      <text x="200" y="225" font-size="12" fill="#fff" text-anchor="middle" font-weight="600" id="status-text">Tap components below to learn</text>
+    </svg>
+  </div>
+  
+  <div class="mode-btns">
+    <button class="mode-btn active" id="btn-assembled" onclick="setMode('assembled')">
+      <div class="icon">🔦</div>
+      <div class="name">Assembled</div>
+    </button>
+    <button class="mode-btn" id="btn-exploded" onclick="setMode('exploded')">
+      <div class="icon">🔧</div>
+      <div class="name">See Inside</div>
+    </button>
+  </div>
+  
+  <div class="switch-control">
+    <span class="switch-label">OFF</span>
+    <div class="switch-toggle" id="switch-toggle" onclick="toggleSwitch()">
+      <div class="switch-knob"></div>
+    </div>
+    <span class="switch-label on">ON</span>
+  </div>
+</div>
+
+<div class="components-list">
+  <div class="component-item" onclick="showComponent('lamp', this)">
+    <div class="icon">💡</div>
+    <div class="info">
+      <div class="name">Lamp (Bulb/LED)</div>
+      <div class="desc">Produces light when current flows</div>
+    </div>
+  </div>
+  <div class="component-item" onclick="showComponent('cells', this)">
+    <div class="icon">🔋</div>
+    <div class="info">
+      <div class="name">Electric Cells</div>
+      <div class="desc">Provide electrical energy</div>
+    </div>
+  </div>
+  <div class="component-item" onclick="showComponent('switch', this)">
+    <div class="icon">🔘</div>
+    <div class="info">
+      <div class="name">Switch</div>
+      <div class="desc">Controls ON/OFF of the circuit</div>
+    </div>
+  </div>
+</div>
+
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-title" id="detail-title">Component Details</div>
+  <div class="detail-text" id="detail-text"></div>
+</div>
+
+<div class="takeaway">
+  <div class="takeaway-title">🎯 What You Learned</div>
+  <div class="takeaway-text">
+    A torch is a simple electrical circuit! The <strong>cells</strong> provide energy, the <strong>switch</strong> controls the flow of current, and the <strong>lamp</strong> converts electrical energy into light. When the switch is ON, current flows in a complete path (circuit) and the lamp glows.
+  </div>
+</div>
+
+</div>
+
+<script>
+let isOn = false;
+let currentMode = 'assembled';
+
+const lightBeam = document.getElementById('light-beam');
+const lampBulb = document.getElementById('lamp-bulb');
+const lampFilament = document.getElementById('lamp-filament');
+const switchToggle = document.getElementById('switch-toggle');
+const switchSlider = document.getElementById('switch-slider');
+const cellsInternal = document.getElementById('cells-internal');
+const labels = document.getElementById('labels');
+const statusText = document.getElementById('status-text');
+const detailPanel = document.getElementById('detail-panel');
+const detailTitle = document.getElementById('detail-title');
+const detailText = document.getElementById('detail-text');
+
+const componentDetails = {
+  lamp: {
+    title: '💡 Lamp (Light Source)',
+    text: 'The lamp is the component that produces light. It can be an <strong>incandescent bulb</strong> (with a thin wire filament that glows when heated) or an <strong>LED</strong> (Light Emitting Diode - more efficient, no filament). When electric current flows through it, electrical energy is converted to light energy.'
+  },
+  cells: {
+    title: '🔋 Electric Cells (Power Source)',
+    text: 'Electric cells are the source of electrical energy in a torch. Each cell has two terminals: <strong>positive (+)</strong> shown by a metal cap, and <strong>negative (-)</strong> shown by a flat metal disc. When two or more cells are connected together (+ of one to - of next), they form a <strong>battery</strong> that provides more power.'
+  },
+  switch: {
+    title: '🔘 Switch (Circuit Controller)',
+    text: 'The switch controls whether the circuit is complete or broken. In <strong>ON position</strong>, it closes the gap and allows current to flow - the lamp glows. In <strong>OFF position</strong>, it creates a gap that breaks the circuit - no current flows, lamp stays off. It\'s like a gate for electricity!'
+  }
+};
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('btn-assembled').classList.toggle('active', mode === 'assembled');
+  document.getElementById('btn-exploded').classList.toggle('active', mode === 'exploded');
+  
+  if (mode === 'exploded') {
+    cellsInternal.style.display = 'block';
+    labels.style.display = 'block';
+    statusText.textContent = 'Components visible - tap to learn more';
+  } else {
+    cellsInternal.style.display = 'none';
+    labels.style.display = 'none';
+    statusText.textContent = isOn ? 'Switch is ON - Current flowing!' : 'Try the switch below';
+  }
+}
+
+function toggleSwitch() {
+  isOn = !isOn;
+  switchToggle.classList.toggle('on', isOn);
+  
+  // Move switch slider in SVG
+  switchSlider.setAttribute('x', isOn ? '200' : '185');
+  
+  if (isOn) {
+    lightBeam.style.display = 'block';
+    lampBulb.setAttribute('fill', '#ffff00');
+    lampFilament.setAttribute('fill', '#ffffff');
+    lampBulb.classList.add('lamp-glow');
+    statusText.textContent = 'Switch ON - Circuit complete - Lamp glows!';
+  } else {
+    lightBeam.style.display = 'none';
+    lampBulb.setAttribute('fill', '#e0e0e0');
+    lampFilament.setAttribute('fill', '#bdbdbd');
+    lampBulb.classList.remove('lamp-glow');
+    statusText.textContent = 'Switch OFF - Circuit broken - No light';
+  }
+}
+
+function showComponent(type, element) {
+  const details = componentDetails[type];
+  detailTitle.innerHTML = details.title;
+  detailText.innerHTML = details.text;
+  detailPanel.classList.add('show');
+  
+  // Highlight component item
+  document.querySelectorAll('.component-item').forEach(item => item.classList.remove('active'));
+  element.classList.add('active');
+  
+  // Show exploded view for cells
+  if (type === 'cells' && currentMode !== 'exploded') {
+    setMode('exploded');
+  }
+}
+</script>
+</body>
+</html>

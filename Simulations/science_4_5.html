@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1976d2">
+<title>Electrical Conductivity – Circuit Tester</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+.header {
+  text-align: center;
+  color: #fff;
+  padding: 12px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.header p { font-size: 12px; opacity: 0.95; }
+
+.concept-card {
+  background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #f9a825;
+}
+
+.concept-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f57f17;
+  margin-bottom: 6px;
+}
+
+.concept-text {
+  font-size: 12px;
+  color: #5d4037;
+  line-height: 1.5;
+}
+
+.sim-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+}
+
+.visual {
+  position: relative;
+  height: 40vh;
+  min-height: 280px;
+  background: linear-gradient(180deg, #37474f 0%, #455a64 100%);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+svg { width: 100%; height: 100%; }
+
+.result-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.result-badge.conductor { background: #e8f5e9; color: #2e7d32; }
+.result-badge.insulator { background: #ffebee; color: #c62828; }
+
+.materials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.material-btn {
+  background: #f5f5f5;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 12px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.material-btn:active { transform: scale(0.95); }
+.material-btn.active { border-color: #1976d2; background: #e3f2fd; }
+.material-btn.tested.conductor { border-color: #4caf50; background: #e8f5e9; }
+.material-btn.tested.insulator { border-color: #f44336; background: #ffebee; }
+.material-btn .icon { font-size: 28px; }
+.material-btn .name { font-size: 10px; color: #333; margin-top: 4px; }
+.material-btn .type { font-size: 8px; color: #888; margin-top: 2px; }
+
+.test-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%);
+  color: white;
+  transition: transform 0.1s ease;
+}
+
+.test-btn:active { transform: scale(0.98); }
+.test-btn:disabled { background: #ccc; }
+
+.results-panel {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.result-card {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.result-card.conductor { background: #e8f5e9; border: 2px solid #a5d6a7; }
+.result-card.insulator { background: #ffebee; border: 2px solid #ef9a9a; }
+
+.result-card .label { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+.result-card.conductor .label { color: #2e7d32; }
+.result-card.insulator .label { color: #c62828; }
+.result-card .items { font-size: 9px; color: #666; min-height: 30px; }
+
+.learning-panel {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 3px solid #1976d2;
+}
+
+.learning-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1565c0;
+  margin-bottom: 6px;
+}
+
+.learning-text {
+  font-size: 11px;
+  color: #37474f;
+  line-height: 1.6;
+}
+
+.takeaway {
+  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  border-left: 4px solid #2e7d32;
+}
+
+.takeaway-title { font-size: 12px; font-weight: 700; color: #1b5e20; margin-bottom: 6px; }
+.takeaway-text { font-size: 11px; color: #37474f; line-height: 1.5; }
+
+@keyframes glow {
+  0%, 100% { filter: drop-shadow(0 0 5px #ffeb3b); }
+  50% { filter: drop-shadow(0 0 20px #ffeb3b); }
+}
+
+.bulb-on { animation: glow 1s ease-in-out infinite; }
+
+@keyframes spark {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div class="header">
+  <h1>⚡ Electrical Conductivity</h1>
+  <p>Test which materials conduct electricity</p>
+</div>
+
+<div class="concept-card">
+  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-text">
+    <strong>Electrical conductivity</strong> is the ability to allow electric current to flow. <strong>Metals</strong> are good conductors; <strong>non-metals</strong> are poor conductors (insulators).
+  </div>
+</div>
+
+<div class="sim-card">
+  <div class="visual">
+    <div class="result-badge" id="result-badge" style="display:none"></div>
+    <svg viewBox="0 0 400 280" id="scene">
+      <!-- Battery -->
+      <g transform="translate(50, 100)">
+        <rect x="0" y="20" width="50" height="80" rx="5" fill="#37474f"/>
+        <rect x="15" y="10" width="20" height="15" rx="2" fill="#616161"/>
+        <text x="25" y="65" font-size="14" fill="#fff" text-anchor="middle">🔋</text>
+        <text x="25" y="120" font-size="9" fill="#90a4ae" text-anchor="middle">Battery</text>
+      </g>
+      
+      <!-- Wires -->
+      <path d="M 100 140 L 140 140 L 140 100 L 180 100" stroke="#ff5722" stroke-width="4" fill="none" id="wire1"/>
+      <path d="M 220 100 L 260 100 L 260 140 L 300 140" stroke="#ff5722" stroke-width="4" fill="none" id="wire2"/>
+      
+      <!-- Test material gap -->
+      <g transform="translate(180, 80)">
+        <rect x="0" y="0" width="40" height="40" rx="5" fill="#263238" stroke="#607d8b" stroke-width="2"/>
+        <rect id="test-material" x="5" y="5" width="30" height="30" rx="3" fill="#bdbdbd"/>
+        <text id="material-icon" x="20" y="28" font-size="18" text-anchor="middle">?</text>
+      </g>
+      
+      <!-- Wire to bulb -->
+      <path d="M 300 140 L 300 180 L 200 180" stroke="#ff5722" stroke-width="4" fill="none"/>
+      <path d="M 100 140 L 100 180 L 200 180" stroke="#ff5722" stroke-width="4" fill="none"/>
+      
+      <!-- Bulb -->
+      <g transform="translate(200, 200)" id="bulb-group">
+        <circle cx="0" cy="0" r="25" fill="#616161" id="bulb-base"/>
+        <circle cx="0" cy="-10" r="20" fill="#9e9e9e" id="bulb-glass"/>
+        <path d="M -5 -15 Q 0 -25 5 -15" stroke="#666" stroke-width="2" fill="none" id="filament"/>
+        <text x="0" y="45" font-size="9" fill="#90a4ae" text-anchor="middle">Bulb</text>
+      </g>
+      
+      <!-- Current flow indicators (hidden) -->
+      <g id="current-flow" style="display:none">
+        <circle cx="120" cy="140" r="4" fill="#ffeb3b"/>
+        <circle cx="280" cy="140" r="4" fill="#ffeb3b"/>
+        <text x="200" y="150" font-size="10" fill="#ffeb3b" text-anchor="middle">⚡ Current flowing ⚡</text>
+      </g>
+      
+      <!-- Instructions -->
+      <text x="200" y="35" font-size="12" fill="#fff" text-anchor="middle" id="instruction">Select a material to test in the circuit</text>
+    </svg>
+  </div>
+  
+  <div class="materials-grid">
+    <div class="material-btn" onclick="selectMaterial('copper', '🥉', true, '#b87333', this)">
+      <div class="icon">🥉</div>
+      <div class="name">Copper</div>
+      <div class="type">Metal</div>
+    </div>
+    <div class="material-btn" onclick="selectMaterial('iron', '⚙️', true, '#616161', this)">
+      <div class="icon">⚙️</div>
+      <div class="name">Iron</div>
+      <div class="type">Metal</div>
+    </div>
+    <div class="material-btn" onclick="selectMaterial('aluminium', '🔘', true, '#bdbdbd', this)">
+      <div class="icon">🔘</div>
+      <div class="name">Aluminium</div>
+      <div class="type">Metal</div>
+    </div>
+    <div class="material-btn" onclick="selectMaterial('rubber', '⚫', false, '#37474f', this)">
+      <div class="icon">⚫</div>
+      <div class="name">Rubber</div>
+      <div class="type">Non-metal</div>
+    </div>
+    <div class="material-btn" onclick="selectMaterial('plastic', '🧊', false, '#90caf9', this)">
+      <div class="icon">🧊</div>
+      <div class="name">Plastic</div>
+      <div class="type">Non-metal</div>
+    </div>
+    <div class="material-btn" onclick="selectMaterial('wood', '🪵', false, '#8d6e63', this)">
+      <div class="icon">🪵</div>
+      <div class="name">Wood</div>
+      <div class="type">Non-metal</div>
+    </div>
+  </div>
+  
+  <button class="test-btn" id="test-btn" onclick="testMaterial()" disabled>
+    ⚡ Test Conductivity
+  </button>
+</div>
+
+<div class="results-panel">
+  <div class="result-card conductor">
+    <div class="label">💡 CONDUCTORS</div>
+    <div class="items" id="conductor-items">-</div>
+  </div>
+  <div class="result-card insulator">
+    <div class="label">🚫 INSULATORS</div>
+    <div class="items" id="insulator-items">-</div>
+  </div>
+</div>
+
+<div class="learning-panel">
+  <div class="learning-title">🔬 Circuit Tester Experiment</div>
+  <div class="learning-text" id="learning-text">
+    We'll use a simple circuit with a battery and bulb to test if materials conduct electricity.<br><br>
+    If the bulb glows → <strong>Conductor</strong> (electricity flows)<br>
+    If the bulb stays off → <strong>Insulator</strong> (electricity blocked)
+  </div>
+</div>
+
+<div class="takeaway">
+  <div class="takeaway-title">🎯 What You'll Learn</div>
+  <div class="takeaway-text">
+    <strong>Metals</strong> have free electrons that carry electric current - they're good conductors!<br><br>
+    <strong>Non-metals</strong> don't have free electrons - they're insulators that protect us from electric shocks.<br><br>
+    That's why wires are copper (conductor) with rubber coating (insulator)!
+  </div>
+</div>
+
+</div>
+
+<script>
+let selectedMaterial = null;
+let selectedBtn = null;
+let isConductor = false;
+let materialColor = '#bdbdbd';
+
+const conductorList = [];
+const insulatorList = [];
+
+const testMaterialBox = document.getElementById('test-material');
+const materialIcon = document.getElementById('material-icon');
+const bulbGlass = document.getElementById('bulb-glass');
+const filament = document.getElementById('filament');
+const bulbGroup = document.getElementById('bulb-group');
+const currentFlow = document.getElementById('current-flow');
+const testBtn = document.getElementById('test-btn');
+const resultBadge = document.getElementById('result-badge');
+const instruction = document.getElementById('instruction');
+const learningText = document.getElementById('learning-text');
+
+function selectMaterial(name, icon, conductor, color, btn) {
+  if (btn.classList.contains('tested')) return;
+  
+  // Reset previous selection
+  document.querySelectorAll('.material-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  
+  selectedMaterial = name;
+  selectedBtn = btn;
+  isConductor = conductor;
+  materialColor = color;
+  
+  // Reset visual
+  testMaterialBox.setAttribute('fill', color);
+  materialIcon.textContent = icon;
+  bulbGlass.setAttribute('fill', '#9e9e9e');
+  filament.setAttribute('stroke', '#666');
+  bulbGroup.classList.remove('bulb-on');
+  currentFlow.style.display = 'none';
+  resultBadge.style.display = 'none';
+  
+  // Enable test button
+  testBtn.disabled = false;
+  testBtn.textContent = `⚡ Test ${name.charAt(0).toUpperCase() + name.slice(1)}`;
+  
+  instruction.textContent = `${icon} ${name.charAt(0).toUpperCase() + name.slice(1)} placed in circuit - test it!`;
+  
+  learningText.innerHTML = `
+    <strong>${name.charAt(0).toUpperCase() + name.slice(1)}</strong> is a <strong>${conductor ? 'METAL' : 'NON-METAL'}</strong>.<br><br>
+    Will it allow electricity to flow and light up the bulb? Let's find out!
+  `;
+}
+
+function testMaterial() {
+  if (!selectedMaterial) return;
+  
+  testBtn.disabled = true;
+  
+  setTimeout(() => {
+    if (isConductor) {
+      // Metal - conducts electricity
+      bulbGlass.setAttribute('fill', '#ffeb3b');
+      filament.setAttribute('stroke', '#ff9800');
+      bulbGroup.classList.add('bulb-on');
+      currentFlow.style.display = 'block';
+      
+      resultBadge.textContent = '💡 CONDUCTOR - Bulb glows!';
+      resultBadge.className = 'result-badge conductor';
+      resultBadge.style.display = 'block';
+      
+      selectedBtn.classList.add('tested', 'conductor');
+      conductorList.push(selectedMaterial);
+      
+      instruction.textContent = '💡 Current flows - bulb lights up!';
+      
+      learningText.innerHTML = `
+        <strong style="color:#2e7d32">💡 ${selectedMaterial.toUpperCase()} is a CONDUCTOR!</strong><br><br>
+        The bulb lights up because <strong>electricity flows through</strong> this metal.<br><br>
+        Metals have <strong>free electrons</strong> that can move and carry electric current from the battery to the bulb.
+      `;
+    } else {
+      // Non-metal - insulator
+      bulbGlass.setAttribute('fill', '#757575');
+      
+      resultBadge.textContent = '🚫 INSULATOR - No current!';
+      resultBadge.className = 'result-badge insulator';
+      resultBadge.style.display = 'block';
+      
+      selectedBtn.classList.add('tested', 'insulator');
+      insulatorList.push(selectedMaterial);
+      
+      instruction.textContent = '🚫 No current - bulb stays off!';
+      
+      learningText.innerHTML = `
+        <strong style="color:#c62828">🚫 ${selectedMaterial.toUpperCase()} is an INSULATOR!</strong><br><br>
+        The bulb stays off because <strong>electricity cannot flow through</strong> this non-metal.<br><br>
+        Non-metals don't have free electrons, so they <strong>block electric current</strong>. This makes them useful for safety!
+      `;
+    }
+    
+    // Update results
+    document.getElementById('conductor-items').textContent = conductorList.length ? conductorList.join(', ') : '-';
+    document.getElementById('insulator-items').textContent = insulatorList.length ? insulatorList.join(', ') : '-';
+    
+    testBtn.textContent = '⚡ Select another material';
+    selectedMaterial = null;
+  }, 500);
+}
+</script>
+</body>
+</html>
