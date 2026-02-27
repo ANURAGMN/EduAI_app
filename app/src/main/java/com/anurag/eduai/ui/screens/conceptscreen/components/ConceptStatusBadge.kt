@@ -22,6 +22,7 @@ import com.anurag.eduai.ui.theme.InProgressIconBackground
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.NotStartedIconBackground
 import com.anurag.eduai.ui.theme.NotStartedTextColor
+import com.anurag.eduai.ui.theme.White
 
 /**
  * Composable function to display a badge indicating the status of a concept.
@@ -42,11 +43,7 @@ fun ConceptStatusBadge(
         modifier = Modifier
             .size(dimens.boxSizeSmall)
             .background(
-                color = when (status) {
-                    ConceptStatus.COMPLETED -> CompleteIconBackground
-                    ConceptStatus.IN_PROGRESS -> InProgressIconBackground
-                    ConceptStatus.NOT_STARTED -> NotStartedIconBackground
-                },
+                color =  InProgressIconBackground,
                 shape = RoundedCornerShape(dimens.cornerRadiusRound)
             ),
         contentAlignment = Alignment.Center
@@ -64,14 +61,14 @@ fun ConceptStatusBadge(
                 Text(
                     text = conceptOrder,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White
+                    color = White
                 )
             }
             ConceptStatus.NOT_STARTED -> {
                 Text(
                     text = conceptOrder,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = NotStartedTextColor
+                    color = White
                 )
             }
         }

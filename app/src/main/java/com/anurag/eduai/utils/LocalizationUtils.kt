@@ -38,6 +38,16 @@ fun ConceptEntity.getLocalizedName(): String {
     }
 }
 
+//temporary function to get localized subject name for hardcoded cases where mapping is not done yet
+fun getLocalizedSubjectName(subjectName: String): String {
+    if (!isKannada()) return subjectName
+
+    return when (subjectName.lowercase()) {
+        "science" -> "ವಿಜ್ಞಾನ"
+        else -> subjectName
+    }
+}
+
 /**
  * Check if the app is currently in Kannada language
  */

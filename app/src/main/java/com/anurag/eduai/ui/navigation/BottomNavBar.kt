@@ -110,6 +110,11 @@ fun BottomNavBar() {
                     },
                     onSimulationClick = { simulationId ->
                         navController.navigate("simulation_agent/$simulationId")
+                    },
+                    onSimulationUrlClick = { title, url ->
+                        // Encoded the URL to prevent navigation crashes due to '/'
+                        val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
+                        navController.navigate("concept_sim_view/$encodedUrl/$title")
                     }
                 )
             }

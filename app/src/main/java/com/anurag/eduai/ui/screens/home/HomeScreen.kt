@@ -29,7 +29,6 @@ import com.anurag.eduai.ui.screens.home.components.TodayProgressCard
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.HomeViewModel
-import com.anurag.eduai.ui.viewModel.SimulationInfo
 import com.anurag.eduai.ui.viewmodel_factory.HomeViewModelFactory
 import com.anurag.eduai.utils.StreakManager
 
@@ -38,14 +37,14 @@ fun HomeScreen(
     onNavigateToLearning: () -> Unit = {},
     onNavigateToChapters: (String) -> Unit = {},
     onLessonClick: (String) -> Unit = {},
-    onSimulationClick: (String) -> Unit = {}
+    onSimulationClick: (String) -> Unit = {},
+    onSimulationUrlClick: (String, String) -> Unit = { _, _ -> }
 ) {
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.HOME)
 
     val dimes = LocalDimensions.current
     val scrollState = rememberScrollState()
-
     val context = LocalContext.current
 
     val db = remember { EduAiDatabase.getInstance(context) }
@@ -73,6 +72,8 @@ fun HomeScreen(
         )
 
     val progressConcepts by viewModel.progressConcepts.collectAsState()
+    val progressSimulations by viewModel.progressSimulations.collectAsState()
+
     val streakCount by viewModel.streakCount.collectAsState()
     val todayCompletedConceptCount by viewModel.todayConceptCount.collectAsState()
     val todayCompletedSimulationCount by viewModel.todaySimulationCount.collectAsState()
@@ -89,7 +90,8 @@ fun HomeScreen(
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier =
-                Modifier.fillMaxSize()
+                Modifier
+                    .fillMaxSize()
                     .background(BackgroundSecondary)
                     .verticalScroll(scrollState)
         ) {
@@ -122,8 +124,12 @@ fun HomeScreen(
                 )
                 Spacer(modifier = Modifier.height(dimes.spaceSmall))
                 PracticeSimulationCard(
-                    onSimulationClick = { simulationInfo ->
-                        onSimulationClick(simulationInfo.id)
+                    progressSimulations = progressSimulations,
+                    onSimulationClick = { simulationId ->
+                        onSimulationClick(simulationId)
+                    },
+                    onSimulationUrlClick = { title, url ->
+                        onSimulationUrlClick(title, url)
                     }
                 )
             }

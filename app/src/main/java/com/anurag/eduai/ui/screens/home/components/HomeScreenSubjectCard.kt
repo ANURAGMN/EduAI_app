@@ -27,6 +27,7 @@ import com.anurag.eduai.ui.theme.SubjectCardGradientCenter
 import com.anurag.eduai.ui.theme.SubjectCardGradientEnd
 import com.anurag.eduai.ui.theme.SubjectCardGradientStart
 import com.anurag.eduai.ui.theme.White
+import com.anurag.eduai.utils.getLocalizedSubjectName
 
 @Composable
 fun HomeScreenSubjectCard(
@@ -67,7 +68,7 @@ fun HomeScreenSubjectCard(
                 color = White.copy(alpha = 0.7f)
             )
             Text(
-                text = subject,
+                text = getLocalizedSubjectName(subject),
                 style = MaterialTheme.typography.titleLarge,
                 color = White
             )

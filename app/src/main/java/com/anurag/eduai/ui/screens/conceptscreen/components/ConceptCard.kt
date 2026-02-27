@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.material3.ButtonDefaults.outlinedButtonColors
@@ -36,7 +35,6 @@ import com.anurag.eduai.ui.theme.CompleteTextColor
 import com.anurag.eduai.ui.theme.InProgressTextColor
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.NotStartedTextColor
-import com.anurag.eduai.ui.theme.TextOnPrimary
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.theme.White
@@ -55,12 +53,11 @@ fun ConceptCard(
     onSimulationClick: (String,String) -> Unit = { _,_ -> }
 ) {
     val dimens = LocalDimensions.current
-    val isEnabled = concept.status != ConceptStatus.NOT_STARTED
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = isEnabled, onClick = onClick),
+            .clickable(onClick = onClick),
         shape = CardDefaults.shape,
         colors =CardDefaults.cardColors(
             containerColor = CardBackground,
@@ -94,7 +91,7 @@ fun ConceptCard(
                     text = concept.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (isEnabled) TextPrimary else TextSecondary
+                    color = TextPrimary
                 )
 
                 // Concept Completion status
@@ -115,12 +112,11 @@ fun ConceptCard(
                     ) {
                         Button(
                             onClick = { onSimulationAgentClick("simple_pendulum") },
-                            enabled = isEnabled,
                             modifier = Modifier.weight(1f),
                             contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
                             shape = MaterialTheme.shapes.small,
                             colors = buttonColors(
-                                containerColor = if (isEnabled) AccentBlue else MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                                containerColor =AccentBlue ,
                                 contentColor = TextPrimary
                             )
                         ) {
@@ -128,7 +124,8 @@ fun ConceptCard(
                                 text = stringResource(R.string.agent),
                                 textAlign = TextAlign.Center,
                                 style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                color = White
                             )
                         }
                         val hasValidUrl = !concept.simulationUrl.isNullOrBlank() &&
@@ -139,7 +136,6 @@ fun ConceptCard(
                             onClick = {
                                 onSimulationClick(concept.name, concept.simulationUrl)
                             },
-                            enabled = isEnabled,
                             modifier = Modifier.weight(1f),
                             contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
                             shape = MaterialTheme.shapes.small,
@@ -162,11 +158,9 @@ fun ConceptCard(
 
             // Right side: Chevron or Lock icon
             Icon(
-                imageVector = if (isEnabled) Icons.Default.ChevronRight else Icons.Default.Lock,
-                contentDescription =
-                    if (isEnabled) stringResource(R.string.open_concept)
-                    else stringResource(R.string.locked),
-                tint = if (isEnabled) TextSecondary else NotStartedTextColor,
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = stringResource(R.string.open_concept),
+                tint = TextSecondary ,
                 modifier = Modifier.size(dimens.iconLarge)
             )
         }

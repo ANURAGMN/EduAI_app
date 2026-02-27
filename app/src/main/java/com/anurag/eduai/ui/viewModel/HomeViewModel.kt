@@ -28,6 +28,7 @@ class HomeViewModel(
 
     // Pair of ProgressEntity and its corresponding ConceptEntity
     var progressConcepts = MutableStateFlow<List<Pair<ProgressEntity?, ConceptEntity?>>>(emptyList())
+    var progressSimulations = MutableStateFlow<List<Pair<ProgressEntity?, ConceptEntity?>>>(emptyList())
 
     private val _streakCount = MutableStateFlow(0)
     val streakCount: StateFlow<Int> = _streakCount
@@ -62,8 +63,8 @@ class HomeViewModel(
         getGreeting()
         getStreak()
 
+        // Load CONCEPTS
         viewModelScope.launch {
-
             progressDao.getHomeScreenConcepts(userId, "CONCEPT")
                 .collect { progressList ->
 
@@ -93,9 +94,9 @@ class HomeViewModel(
                         )
                     }
 
-                    // FIRST LOGIN FALLBACK: No progress at all
+                    //  No progress at all
                     if (curatedProgress.isEmpty()) {
-                        val firstUnitConcepts = conceptDao.getFirstConceptsOfChapter("1", 4)
+                        val firstUnitConcepts = conceptDao.getFirstConceptsOfChapter("1", "STUDY", 4)
 
                         // Show concepts without progress entries
                         val combined = firstUnitConcepts.map { concept ->
@@ -133,8 +134,68 @@ class HomeViewModel(
                         }
                 }
         }
-    }
 
+        // Load SIMULATIONS
+        viewModelScope.launch {
+            progressDao.getHomeScreenConcepts(userId, "SIMULATION")
+                .collect { progressList ->
+                    val allProgress = progressDao.getAllProgressSync(userId, "SIMULATION")
+
+                    val completedList = allProgress
+                        .filter { it.status == "COMPLETED" }
+                        .sortedByDescending { it.completedAt ?: 0L }
+
+                    val inProgressList = allProgress
+                        .filter { it.status == "IN_PROGRESS" }
+                        .sortedByDescending { it.lastAccessedAt }
+
+                    val curatedProgress = mutableListOf<ProgressEntity>()
+                    curatedProgress.addAll(inProgressList)
+
+                    val remainingSlots = (4 - curatedProgress.size).coerceAtLeast(0)
+                    if (remainingSlots > 0) {
+                        curatedProgress.addAll(completedList.take(remainingSlots))
+                    }
+
+                    // FIRST LOGIN FALLBACK: No progress at all
+                    if (curatedProgress.isEmpty()) {
+                        val firstUnitSimulations = conceptDao.getFirstConceptsOfChapter("1", "SIMULATION", 4)
+
+                        val combined = firstUnitSimulations.map { concept ->
+                            val localizedConcept = concept.copy(
+                                conceptName = concept.getLocalizedName()
+                            )
+                            null to localizedConcept
+                        }
+
+                        progressSimulations.value = combined
+                        DebugLogger.debugLog("HomeViewModel", "First login - showing ${combined.size} default simulations")
+                        return@collect
+                    }
+
+                    // fetch simulations for progress entries
+                    val conceptIds = curatedProgress.map { it.itemId }
+
+                    conceptDao.getConceptsByIds(conceptIds)
+                        .collect { concepts ->
+                            val combined = curatedProgress.map { progress ->
+                                val concept = concepts.find { it.conceptId == progress.itemId }
+                                val localizedConcept = concept?.copy(
+                                    conceptName = concept.getLocalizedName()
+                                )
+
+                                progress to localizedConcept
+                            }
+
+                            progressSimulations.value = combined
+                            DebugLogger.debugLog(
+                                "HomeViewModel",
+                                "Loaded ${combined.size} simulations: ${inProgressList.size} in-progress, ${completedList.size} completed"
+                            )
+                        }
+                }
+        }
+    }
     fun getStreak() {
         val result = streakManager.getCurrentStreak()
         _streakCount.value = result
