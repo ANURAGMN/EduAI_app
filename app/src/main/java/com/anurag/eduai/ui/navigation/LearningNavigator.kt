@@ -11,7 +11,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.anurag.eduai.ui.screens.chapterscreen.ChapterScreen
 import com.anurag.eduai.ui.screens.chatbotscreen.ChatbotScreen
-import com.anurag.eduai.ui.screens.conceptdetailscreen.ConceptDetailScreen
 import com.anurag.eduai.ui.screens.conceptscreen.ConceptScreen
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptSimulationViewer
 import com.anurag.eduai.ui.screens.home.HomeScreen
@@ -97,16 +96,6 @@ fun LearningNavigator(
                     val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
                     navController.navigate("concept_sim_view/$encodedUrl/$title")
                 },
-                onGoHome = onGoHome,
-                onGoSetting = onGoSetting
-            )
-        }
-
-        composable(LearningRoutes.CONCEPT_DETAIL) { backStackEntry ->
-            val conceptId = backStackEntry.arguments?.getString("conceptId") ?: return@composable
-            ConceptDetailScreen(
-                conceptId = conceptId,
-                onBackClick = { navController.popBackStack() },
                 onGoHome = onGoHome,
                 onGoSetting = onGoSetting
             )

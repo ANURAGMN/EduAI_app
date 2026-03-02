@@ -146,6 +146,7 @@ fun TodayProgressCard(
                 val isCompleted = lessonStatus == LessonStatus.COMPLETED
                 val isInProgress = lessonStatus == LessonStatus.IN_PROGRESS
 
+                val progressPercentage = progress?.progressPercentage ?: 0
                 LessonStatusCard(
                     title = concept?.getLocalizedName()
                         ?: stringResource(R.string.unknown_concept),
@@ -171,6 +172,7 @@ fun TodayProgressCard(
                         )
                     },
                     lessonStatus = lessonStatus,
+                    progressPercentage = progressPercentage,
                     onClick = {
                         DebugLogger.debugLog("TodayProgressCard", "Concept Clicked id ${concept?.conceptId}")
                         concept?.let { onLessonClick(it.conceptId) }

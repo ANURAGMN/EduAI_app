@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -36,35 +37,37 @@ fun LessonStatusCard(
     title: String,
     subtitle: String,
     iconColor: Color,
+    progressPercentage: Int = 0,
     backgroundColor: Color,
     lessonStatus: LessonStatus,
     icon: @Composable () -> Unit,
     onClick: () -> Unit = {},
 ) {
-    val dimes = LocalDimensions.current
+    val dimens = LocalDimensions.current
     val isCompleted = lessonStatus == LessonStatus.COMPLETED
+    val isInProgress = lessonStatus == LessonStatus.IN_PROGRESS
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(dimes.cornerRadiusRound))
+            .clip(RoundedCornerShape(dimens.cornerRadiusRound))
             .background(backgroundColor)
             .clickable(onClick = onClick)
-            .padding(dimes.screenPadding),
+            .padding(dimens.screenPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
 
         Box(
             modifier = Modifier
-                .size(dimes.iconExtraLarge)
-                .clip(RoundedCornerShape(dimes.cornerRadiusRound))
+                .size(dimens.iconExtraLarge)
+                .clip(RoundedCornerShape(dimens.cornerRadiusRound))
                 .background(iconColor),
             contentAlignment = Alignment.Center,
         ) {
             icon()
         }
 
-        Spacer(modifier = Modifier.width(dimes.spaceMedium))
+        Spacer(modifier = Modifier.width(dimens.spaceMedium))
 
         Column(
             modifier = Modifier.weight(1f)
@@ -74,6 +77,15 @@ fun LessonStatusCard(
                 style = MaterialTheme.typography.bodyLarge,
                 color = Black
             )
+            // Show progress percentage for in-progress concepts
+            if (isInProgress && progressPercentage > 0) {
+                Spacer(modifier = Modifier.height(dimens.spaceSmall))
+                Text(
+                    text = "$progressPercentage%",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = AccentBlue
+                )
+            }
             Text(
                 text = if (isCompleted) subtitle else stringResource(R.string.pending),
                 style = MaterialTheme.typography.bodyMedium,

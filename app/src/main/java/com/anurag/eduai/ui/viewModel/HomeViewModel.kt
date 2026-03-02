@@ -13,6 +13,8 @@ import com.anurag.eduai.utils.StreakManager
 import com.anurag.eduai.utils.getLocalizedName
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
@@ -66,9 +68,9 @@ class HomeViewModel(
         // Load CONCEPTS
         viewModelScope.launch {
             progressDao.getHomeScreenConcepts(userId, "CONCEPT")
-                .collect { progressList ->
+                .collectLatest {
 
-                    // Get all progress for the user
+                    // Get all progress for the user (synchronous snapshot)
                     val allProgress = progressDao.getAllProgressSync(userId, "CONCEPT")
 
                     // Separate by status
@@ -109,36 +111,36 @@ class HomeViewModel(
 
                         progressConcepts.value = combined
                         DebugLogger.debugLog("HomeViewModel", "First login - showing ${combined.size} default concepts")
-                        return@collect
+                        return@collectLatest
                     }
 
                     // Normal path: fetch concepts for progress entries
                     val conceptIds = curatedProgress.map { it.itemId }
 
-                    conceptDao.getConceptsByIds(conceptIds)
-                        .collect { concepts ->
-                            val combined = curatedProgress.map { progress ->
-                                val concept = concepts.find { it.conceptId == progress.itemId }
-                                val localizedConcept = concept?.copy(
-                                    conceptName = concept.getLocalizedName()
-                                )
+                    // Fetch concepts once for this snapshot to avoid nested long-lived collectors
+                    val concepts = conceptDao.getConceptsByIds(conceptIds).first()
 
-                                progress to localizedConcept
-                            }
+                    val combined = curatedProgress.map { progress ->
+                        val concept = concepts.find { it.conceptId == progress.itemId }
+                        val localizedConcept = concept?.copy(
+                            conceptName = concept.getLocalizedName()
+                        )
 
-                            progressConcepts.value = combined
-                            DebugLogger.debugLog(
-                                "HomeViewModel",
-                                "Loaded ${combined.size} concepts: ${inProgressList.size} in-progress, ${completedList.size} completed"
-                            )
-                        }
+                        progress to localizedConcept
+                    }
+
+                    progressConcepts.value = combined
+                    DebugLogger.debugLog(
+                        "HomeViewModel",
+                        "Loaded ${combined.size} concepts: ${inProgressList.size} in-progress, ${completedList.size} completed"
+                    )
                 }
         }
 
         // Load SIMULATIONS
         viewModelScope.launch {
             progressDao.getHomeScreenConcepts(userId, "SIMULATION")
-                .collect { progressList ->
+                .collectLatest {
                     val allProgress = progressDao.getAllProgressSync(userId, "SIMULATION")
 
                     val completedList = allProgress
@@ -170,29 +172,28 @@ class HomeViewModel(
 
                         progressSimulations.value = combined
                         DebugLogger.debugLog("HomeViewModel", "First login - showing ${combined.size} default simulations")
-                        return@collect
+                        return@collectLatest
                     }
 
                     // fetch simulations for progress entries
                     val conceptIds = curatedProgress.map { it.itemId }
 
-                    conceptDao.getConceptsByIds(conceptIds)
-                        .collect { concepts ->
-                            val combined = curatedProgress.map { progress ->
-                                val concept = concepts.find { it.conceptId == progress.itemId }
-                                val localizedConcept = concept?.copy(
-                                    conceptName = concept.getLocalizedName()
-                                )
+                    val concepts = conceptDao.getConceptsByIds(conceptIds).first()
 
-                                progress to localizedConcept
-                            }
+                    val combined = curatedProgress.map { progress ->
+                        val concept = concepts.find { it.conceptId == progress.itemId }
+                        val localizedConcept = concept?.copy(
+                            conceptName = concept.getLocalizedName()
+                        )
 
-                            progressSimulations.value = combined
-                            DebugLogger.debugLog(
-                                "HomeViewModel",
-                                "Loaded ${combined.size} simulations: ${inProgressList.size} in-progress, ${completedList.size} completed"
-                            )
-                        }
+                        progress to localizedConcept
+                    }
+
+                    progressSimulations.value = combined
+                    DebugLogger.debugLog(
+                        "HomeViewModel",
+                        "Loaded ${combined.size} simulations: ${inProgressList.size} in-progress, ${completedList.size} completed"
+                    )
                 }
         }
     }

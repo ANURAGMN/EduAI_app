@@ -2,7 +2,6 @@ package com.anurag.eduai.ui.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.anurag.eduai.data.remote.AgenticAIClient
 import com.anurag.eduai.data.remote.SessionMetadata
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.domain.chatbot.controller.IdleTimerController
@@ -40,7 +39,6 @@ class ChatViewModel @Inject constructor(
     private val resourceController: ResourceController,
     private val sendMessageUseCase: SendMessageUseCase,
     private val handleAgentResponseUseCase: HandleAgentResponseUseCase,
-    private val agenticAIClient: AgenticAIClient,
     private val translationUseCase: TranslationUseCase,
     private val conceptRepository: ConceptRepository,
     private val conceptProgressUseCase: com.anurag.eduai.domain.chatbot.usecase.ConceptProgressUseCase
@@ -282,9 +280,24 @@ class ChatViewModel @Inject constructor(
                 resourceCardState = ResourceCardUiState.Hidden,
                 pendingAgentResponse = null,
                 loadingResourceMessage = null,
-                isLoading = true
+                isLoading = true,
+                currentProgressPercentage = 0
             )
         }
+    }
+
+    /**
+     * Helper method to get current progress
+     */
+    fun getCurrentProgress(): Int {
+        return _uiState.value.currentProgressPercentage
+    }
+
+    /**
+     * Helper method to get visited states from metadata
+     */
+    fun getVisitedStates(): Set<String> {
+        return conceptProgressUseCase.getVisitedStates(_uiState.value.agentMetadata)
     }
 
     /**
@@ -322,6 +335,11 @@ class ChatViewModel @Inject constructor(
             currentState = result.currentState,
             showAutosuggestions = false,
             isLoading = false) }
+
+        // Update progress based on explicit currentState from API
+        val progress = conceptProgressUseCase.calculateProgressPercentage(result.currentState, result.metadata)
+        _uiState.update { it.copy(currentProgressPercentage = progress) }
+
         result.agentResponse?.let { handleAgentMessage(it, result.metadata) }
     }
 
@@ -350,7 +368,14 @@ class ChatViewModel @Inject constructor(
         _uiState.update { it.copy(
             isSessionStarted = result.success,
             messages = translatedMessages,
-            isLoading = false) }
+            isLoading = false,
+            agentMetadata = result.metadata,
+            currentState = result.currentState
+        ) }
+
+        // Update progress using explicit currentState from resume response
+        val resumedProgress = conceptProgressUseCase.calculateProgressPercentage(result.currentState, result.metadata)
+        _uiState.update { it.copy(currentProgressPercentage = resumedProgress) }
     }
 
     /**
@@ -406,11 +431,30 @@ class ChatViewModel @Inject constructor(
                 showAutosuggestions = false)
             }
 
-            // Check if END node is reached and mark concept as completed
+            // Calculate and update progress in database
+            val continuedProgress = conceptProgressUseCase.calculateProgressPercentage(
+                response.currentState,
+                response.metadata
+            )
+            _uiState.update { it.copy(currentProgressPercentage = continuedProgress) }
+
+            // Update progress in database for persistence
+            val conceptEntity = conceptRepository.getAllConcepts().find {
+                it.getLocalizedName() == _uiState.value.selectedConcept
+            }
+            if (conceptEntity != null && userId.isNotEmpty()) {
+                conceptRepository.updateProgressStatus(
+                    studentId = userId,
+                    itemType = "CONCEPT",
+                    itemId = conceptEntity.conceptId,
+                    newStatus = if (continuedProgress == 100) "COMPLETED" else "IN_PROGRESS",
+                    progressPercentage = continuedProgress,
+                    timestamp = System.currentTimeMillis()
+                )
+            }
+
+            // Check if END node and mark as completed
             if (response.currentState?.uppercase() == "END") {
-                val conceptEntity = conceptRepository.getAllConcepts().find {
-                    it.getLocalizedName() == _uiState.value.selectedConcept
-                }
                 if (conceptEntity != null && userId.isNotEmpty()) {
                     conceptProgressUseCase.markConceptCompleted(userId, conceptEntity.conceptId)
                     DebugLogger.debugLog("ChatViewModel", "Concept ${conceptEntity.conceptId} marked as COMPLETED - END node reached")

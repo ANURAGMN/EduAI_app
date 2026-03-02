@@ -1,5 +1,6 @@
 package com.anurag.eduai.data.local.dao
 
+import android.health.connect.datatypes.units.Percentage
 import androidx.room.*
 import com.anurag.eduai.data.local.entities.ProgressEntity
 import kotlinx.coroutines.flow.Flow
@@ -59,6 +60,7 @@ interface ProgressDao {
         itemType: String,
         itemId: String,
         newStatus: String,
+        progressPercentage: Int,
         timestamp: Long = System.currentTimeMillis()
     ) {
         val existing = getProgress(studentId, itemType, itemId)
@@ -71,10 +73,9 @@ interface ProgressDao {
                         else existing.completedAt,
                     startedAt = existing.startedAt ?:
                         if (newStatus == "IN_PROGRESS") timestamp else null,
-                    openedAt = existing.openedAt ?:
-                        if (newStatus in listOf("STARTED", "IN_PROGRESS")) timestamp else null,
                     lastAccessedAt = timestamp,
                     updatedAt = timestamp,
+                    progressPercentage = progressPercentage.coerceIn(0, 100),
                     isSynced = false
                 )
             updateProgress(updated)
@@ -85,8 +86,8 @@ interface ProgressDao {
                     itemType = itemType,
                     itemId = itemId,
                     status = newStatus,
+                    progressPercentage = progressPercentage.coerceIn(0, 100),
                     startedAt = if (newStatus == "IN_PROGRESS") timestamp else null,
-                    openedAt = if (newStatus in listOf("STARTED", "IN_PROGRESS")) timestamp else null,
                     completedAt = if (newStatus == "COMPLETED") timestamp else null,
                     lastAccessedAt = timestamp,
                     updatedAt = timestamp
@@ -242,7 +243,7 @@ data class DailyConceptCount(
 )
 
 /**
- * Data class to hold the chapter wise progresss
+ * Data class to hold the chapter wise progress
  */
 data class ChapterProgressSummary(
     val chapterId: String,

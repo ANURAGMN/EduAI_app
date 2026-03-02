@@ -32,8 +32,8 @@ data class ProgressEntity(
     val itemType: String, // "CONCEPT" or "SIMULATION"
     val itemId: String,
     val status: String, // "NOT_STARTED", "IN_PROGRESS", "COMPLETED"
+    val progressPercentage: Int, //percentage
     val startedAt: Long? = null,
-    val openedAt: Long? = null,
     val completedAt: Long? = null,
     val lastAccessedAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),

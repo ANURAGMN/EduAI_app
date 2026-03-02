@@ -150,6 +150,7 @@ class ConceptViewModel @Inject constructor(
                 itemType = "CONCEPT",
                 itemId = conceptId,
                 newStatus = "IN_PROGRESS",
+                progressPercentage = 0,
                 timestamp = System.currentTimeMillis()
             )
             DebugLogger.debugLog("ConceptViewModel", "First concept unlocked: $conceptId")

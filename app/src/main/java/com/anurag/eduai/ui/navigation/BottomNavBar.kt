@@ -22,7 +22,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.anurag.eduai.ui.screens.chapterscreen.ChapterScreen
 import com.anurag.eduai.ui.screens.chatbotscreen.ChatbotScreen
-import com.anurag.eduai.ui.screens.conceptdetailscreen.ConceptDetailScreen
 import com.anurag.eduai.ui.screens.conceptscreen.ConceptScreen
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptSimulationViewer
 import com.anurag.eduai.ui.screens.home.HomeScreen
@@ -221,26 +220,7 @@ fun BottomNavBar() {
                     }
                 )
             }
-            composable("concept_detail/{conceptId}") { backStackEntry ->
-                val conceptId =
-                    backStackEntry.arguments?.getString("conceptId") ?: return@composable
-                ConceptDetailScreen(
-                    conceptId = conceptId,
-                    onBackClick = { navController.popBackStack() },
-                    onGoHome = {
-                        navController.navigate("home") {
-                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    },
-                    onGoSetting = {
-                        navController.navigate("setting") {
-                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    }
-                )
-            }
+
             composable("subjects") {
                 SubjectScreen(
                     onBackClick = {

@@ -24,6 +24,7 @@ import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptCard
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
+import com.anurag.eduai.utils.getLocalizedName
 
 @Composable
 fun PracticeSimulationCard(
@@ -59,7 +60,7 @@ fun PracticeSimulationCard(
                     concept?.let { sim ->
                         val conceptUiModel = ConceptUiModel(
                             id = sim.conceptId,
-                            name = sim.conceptName,
+                            name = sim.getLocalizedName(),
                             order = sim.orderIndex,
                             status = when (progress?.status) {
                                 "COMPLETED" -> ConceptStatus.COMPLETED
