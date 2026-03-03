@@ -543,7 +543,7 @@ class ChatViewModel @Inject constructor(
     /**
      * Starts a timer to show an image resource for a certain duration.
      */
-    private fun startImageResource(url: String, description: String?, duration: Int=120) = startResource(duration) { remaining ->
+    private fun startImageResource(url: String, description: String?, duration: Int=10) = startResource(duration) { remaining ->
         ResourceCardUiState.Image(url, description, remaining, duration)
     }
 
@@ -594,7 +594,7 @@ class ChatViewModel @Inject constructor(
     /**
      * Starts a timer to show a concept map resource for a certain duration, using the provided JSON data.
      */
-    private fun startConceptMap(json: String, duration: Int = 120) = startResource(duration) { remaining ->
+    private fun startConceptMap(json: String, duration: Int = 10) = startResource(duration) { remaining ->
         ResourceCardUiState.ConceptMap(json, 0f, false, remaining, duration)
     }
 
