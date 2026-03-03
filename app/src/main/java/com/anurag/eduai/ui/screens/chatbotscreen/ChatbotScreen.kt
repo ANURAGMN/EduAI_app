@@ -136,7 +136,12 @@ fun ChatbotScreen(
         onPermissionGranted = { permissionGranted = it },
         onSpeechTextProcessed =  {lastProcessedSpeechText = it} ,
         lastProcessedSpeechText = lastProcessedSpeechText,
-        conceptId = conceptId
+        conceptId = conceptId,
+        settingsState = settingsState,
+        onSettingsStateUpdate = { settingsState = it },
+        avatarBoyDisplayName = stringResource(R.string.boy),
+        avatarGirlDisplayName = stringResource(R.string.girl),
+        avatarDisableDisplayName = stringResource(R.string.disable)
     )
 
     // Background
@@ -206,6 +211,9 @@ fun ChatbotScreen(
                     },
                     onSettingsClick = { showSettingsMenu = !showSettingsMenu },
                     settingsContent = {
+                        val boyDisplayName = stringResource(R.string.boy)
+                        val girlDisplayName = stringResource(R.string.girl)
+
                         ChatBotSettings(
                             expanded = true,
                             onDismiss = { showSettingsMenu = false },
@@ -217,14 +225,15 @@ fun ChatbotScreen(
                                 selectedConcept = chatState.selectedConcept,
                                 isLoadingConcepts = chatState.availableConcepts.isEmpty()
                             ),
-                            onAvatarChange = { avatarCode ->
-                                settingsState = settingsState.copy(selectedAvatar = avatarCode)
-                                ttsController.switchCharacter(avatarCode)
-                                if (avatarCode != "disable") {
-                                    ttsController.applyDefaultsForAvatarLanguage(avatarCode, chatState.currentLanguage)
-                                } else if (ttsState.isSpeaking) {
-                                    ttsController.stop()
-                                }
+                            onAvatarChange = { displayName ->
+                                // Handle avatar change through ViewModel - receives display name
+                                settingsState = chatViewModel.handleAvatarChange(
+                                    displayName = displayName,
+                                    boyDisplayName = boyDisplayName,
+                                    girlDisplayName = girlDisplayName,
+                                    ttsController = ttsController,
+                                    currentState = settingsState
+                                )
                             },
                             onVoiceChange = { selectedDisplayName ->
                                 handleVoiceChange(selectedDisplayName, ttsState, ttsController, aiMessageOutput)
@@ -250,11 +259,12 @@ fun ChatbotScreen(
                     }
                 )
                 if (!isConversationStarted) {
-                    // Initial centered avatar
+                    // Initial centered avatar with loading indicator
                     InitialAvatarView(
                         avatarSize = avatarSize,
                         ttsController = ttsController,
-                        modifier = Modifier.weight(0.1f).background(White)
+                        modifier = Modifier.weight(0.1f).background(White),
+                        isLoading = chatState.isLoading
                     )
                 } else {
                     // Conversation view with avatar and scrollable content

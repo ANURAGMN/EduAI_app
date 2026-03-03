@@ -8,15 +8,18 @@ import com.anurag.eduai.domain.chatbot.controller.IdleTimerController
 import com.anurag.eduai.domain.chatbot.controller.ResourceController
 import com.anurag.eduai.domain.chatbot.controller.TypingAnimationController
 import com.anurag.eduai.domain.chatbot.usecase.AutoSuggestionUseCase
+import com.anurag.eduai.domain.chatbot.usecase.AvatarChangeUseCase
 import com.anurag.eduai.domain.chatbot.usecase.ChatIntent
 import com.anurag.eduai.domain.chatbot.usecase.ConceptMapUseCase
 import com.anurag.eduai.domain.chatbot.usecase.HandleAgentResponseUseCase
 import com.anurag.eduai.domain.chatbot.model.ResourceDecision
+import com.anurag.eduai.domain.chatbot.usecase.ConceptProgressUseCase
 import com.anurag.eduai.domain.chatbot.usecase.ResourceDecisionUseCase
 import com.anurag.eduai.domain.chatbot.usecase.SendMessageUseCase
 import com.anurag.eduai.domain.chatbot.usecase.SessionUseCase
 import com.anurag.eduai.domain.chatbot.usecase.TranslationUseCase
 import com.anurag.eduai.repository.ConceptRepository
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
 import com.anurag.eduai.utils.getLocalizedName
@@ -41,7 +44,8 @@ class ChatViewModel @Inject constructor(
     private val handleAgentResponseUseCase: HandleAgentResponseUseCase,
     private val translationUseCase: TranslationUseCase,
     private val conceptRepository: ConceptRepository,
-    private val conceptProgressUseCase: com.anurag.eduai.domain.chatbot.usecase.ConceptProgressUseCase
+    private val conceptProgressUseCase: ConceptProgressUseCase,
+    private val avatarChangeUseCase: AvatarChangeUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -640,4 +644,70 @@ class ChatViewModel @Inject constructor(
      * This is called when a resource is dismissed to allow the agent's response to be read aloud again.
      */
     private fun resumeTTS() = _uiState.update { it.copy(ttsPausedForResource = false) }
+
+    /**
+     * Handles avatar change with proper validation and delegation to use case
+     * Returns updated ChatBotSettingsState with both code and display name
+     * @param displayName The localized display name from UI
+     * @param boyDisplayName The localized "boy" string
+     * @param girlDisplayName The localized "girl" string
+     * @param ttsController The TTS controller to apply voice changes
+     * @param currentState The current settings state
+     * @return Updated ChatBotSettingsState with normalized code and display name
+     */
+    fun handleAvatarChange(
+        displayName: String,
+        boyDisplayName: String,
+        girlDisplayName: String,
+        ttsController: TextToSpeech,
+        currentState: ChatBotSettingsState
+    ): ChatBotSettingsState {
+        // Convert display name to code
+        val avatarCode = avatarChangeUseCase.getAvatarCodeFromDisplayName(
+            displayName = displayName,
+            boyDisplayName = boyDisplayName,
+            girlDisplayName = girlDisplayName
+        )
+
+        // Apply avatar change through use case
+        val normalizedCode = avatarChangeUseCase.changeAvatar(
+            avatarCode = avatarCode,
+            ttsController = ttsController,
+            currentLanguage = _uiState.value.currentLanguage
+        )
+
+        // Return updated state with both code and display name
+        return currentState.copy(
+            selectedAvatar = normalizedCode,
+            selectedAvatarDisplayName = displayName
+        )
+    }
+
+    /**
+     * Initialize settings state with proper display name for current avatar
+     * @param avatarCode Current avatar code
+     * @param boyDisplayName Localized "boy" string
+     * @param girlDisplayName Localized "girl" string
+     * @param disableDisplayName Localized "disable" string
+     * @param currentState Current settings state
+     * @return Updated state with display name
+     */
+    fun initializeAvatarDisplayName(
+        avatarCode: String,
+        boyDisplayName: String,
+        girlDisplayName: String,
+        disableDisplayName: String,
+        currentState: ChatBotSettingsState
+    ): ChatBotSettingsState {
+        val displayName = avatarChangeUseCase.getDisplayNameFromCode(
+            avatarCode = avatarCode,
+            boyDisplayName = boyDisplayName,
+            girlDisplayName = girlDisplayName,
+            disableDisplayName = disableDisplayName
+        )
+        return currentState.copy(
+            selectedAvatar = avatarCode,
+            selectedAvatarDisplayName = displayName
+        )
+    }
 }

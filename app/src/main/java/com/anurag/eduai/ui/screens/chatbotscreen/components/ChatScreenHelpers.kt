@@ -4,16 +4,20 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.webkit.WebView
 import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -28,15 +32,16 @@ import androidx.core.content.ContextCompat
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.domain.chatbot.usecase.ChatIntent
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
 import com.anurag.eduai.ui.theme.LocalDimensions
+import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
 import com.anurag.eduai.ui.viewModel.ChatViewModel
 import com.anurag.eduai.ui.viewModel.SpeechToText
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 import kotlinx.coroutines.delay
-
 /**
  * Initial avatar view shown before conversation starts
  */
@@ -44,28 +49,47 @@ import kotlinx.coroutines.delay
 fun InitialAvatarView(
     avatarSize: Dp,
     ttsController: TextToSpeech,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false
 ) {
+    val dimens = LocalDimensions.current
+
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Card(
-            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
-            shape = CircleShape,
-            modifier = Modifier
-                .size(avatarSize)
-                .clip(CircleShape)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            AndroidView(
-                factory = {
-                    WebView(it).apply {
-                        setBackgroundColor(0)
-                        ttsController.setupWebView(this)
-                    }
-                },
-                modifier = Modifier.fillMaxSize()
-            )
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                shape = CircleShape,
+                modifier = Modifier
+                    .size(avatarSize)
+                    .clip(CircleShape)
+            ) {
+                AndroidView(
+                    factory = {
+                        WebView(it).apply {
+                            setBackgroundColor(0)
+                            ttsController.setupWebView(this)
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            // Show "Teacher is thinking..." when loading
+            if (isLoading) {
+                Spacer(Modifier.height(dimens.spaceMedium))
+                Text(
+                    text = "Teacher is thinking...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary,
+                    modifier = Modifier.padding(horizontal = dimens.cardPadding)
+                )
+            }
         }
     }
 }
@@ -141,7 +165,12 @@ fun ChatEffects(
     onPermissionGranted: (Boolean) -> Unit,
     onSpeechTextProcessed: (String) -> Unit,
     lastProcessedSpeechText: String,
-    conceptId: String? = null
+    conceptId: String? = null,
+    settingsState: ChatBotSettingsState,
+    onSettingsStateUpdate: (ChatBotSettingsState) -> Unit,
+    avatarBoyDisplayName: String,
+    avatarGirlDisplayName: String,
+    avatarDisableDisplayName: String
 ){
     val context = LocalContext.current
 
@@ -167,6 +196,18 @@ fun ChatEffects(
             DebugLogger.debugLog("ChatEffects", "Auto-starting with conceptId: $it")
             chatViewModel.onIntent(ChatIntent.AutoStartWithConcept(it))
         }
+    }
+
+    // Initialize avatar display name once using pre-loaded string resources
+    LaunchedEffect(Unit) {
+        val updatedState = chatViewModel.initializeAvatarDisplayName(
+            avatarCode = settingsState.selectedAvatar,
+            boyDisplayName = avatarBoyDisplayName,
+            girlDisplayName = avatarGirlDisplayName,
+            disableDisplayName = avatarDisableDisplayName,
+            currentState = settingsState
+        )
+        onSettingsStateUpdate(updatedState)
     }
 
     // TTS trigger - monitor chatState.shouldStartTTS changes

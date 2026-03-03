@@ -50,32 +50,38 @@ class AgenticAIClient(
                             // App returned success=false
                             val message = getServerMessage(body)
                             lastEx = IOException("Server error: ${message ?: "Unknown error"}")
+                            break
                         }
                     }
 
                     resp.isSuccessful -> {
                         lastEx = IOException("Empty response body (HTTP ${resp.code()})")
+                        break
                     }
 
                     resp.code() in 500..599 -> {
                         val errBody = safeGetErrorBody(resp)
-                        lastEx = IOException("${resp.code()}: ${errBody ?: resp.message()}")
+                        lastEx = IOException("HTTP ${resp.code()}: ${errBody ?: resp.message()}")
 
-                        // Log and break immediately
+                        // Log server error - will retry if network/timeout
                         ErrorHandler.logError(
                             "AgenticAIClient",
                             resp.code(),
-                            "Server error - failing immediately"
+                            "Server error - will retry if transient"
                         )
-                        break
+                        // Don't break - allow retry for 5xx errors as they may be transient
                     }
 
                     resp.code() in 400..499 -> {
                         val errBody = safeGetErrorBody(resp)
-                        lastEx = IOException("${resp.code()}: ${errBody ?: resp.message()}")
+                        lastEx = IOException("HTTP ${resp.code()}: ${errBody ?: resp.message()}")
 
                         // Don't retry 401, 403, 404
                         if (resp.code() in listOf(401, 403, 404)) {
+                            DebugLogger.errorLog(
+                                "AgenticAIClient",
+                                "Client error ${resp.code()} - not retrying"
+                            )
                             break
                         }
                         // Retry other 4xx errors (429, etc.)
@@ -147,10 +153,19 @@ class AgenticAIClient(
 
     private fun shouldRetry(exception: Exception?): Boolean {
         return when {
-            exception == null -> true
-            exception.message?.contains("HTTP 5") == true -> false  // 5xx: no retry
-            exception.message?.contains("HTTP 4") == true -> false  // 4xx: no retry
-            else -> true  // Network errors: retry
+            exception == null -> false  // No exception means success path was taken
+            // Check for 5xx server errors - these should be retried
+            exception.message?.contains("HTTP 5") == true -> true
+            // Check for 4xx client errors - don't retry these
+            exception.message?.contains("HTTP 4") == true -> false
+            // Check for application-level errors (success=false) - don't retry
+            exception.message?.contains("Server error:") == true -> false
+            // Network/IO errors (timeout, connection failed, etc.) - should retry
+            exception is java.net.SocketTimeoutException -> true
+            exception is java.net.ConnectException -> true
+            exception is java.net.UnknownHostException -> true
+            exception is IOException -> true
+            else -> false  // Unknown exceptions - don't retry by default
         }
     }
 

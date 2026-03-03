@@ -1,5 +1,6 @@
 package com.anurag.eduai.ui.screens.home
 
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -80,11 +81,23 @@ fun HomeScreen(
     val student by viewModel.student.collectAsState()
     val greeting by viewModel.greeting.collectAsState()
 
+    // Observe language change trigger to force recomposition
+    val languageChangeTrigger by viewModel.languageChangeTrigger.collectAsState()
+
     // Testing if user is added to LocalDB or not
     LaunchedEffect(Unit) { DebugLogger.debugLog("HomeScreen", "CurrentUser:\n $student") }
 
     LaunchedEffect(progressConcepts) {
         DebugLogger.debugLog("HomeScreen", "Concept:\n $progressConcepts")
+    }
+
+    // Detect language changes by observing configuration changes
+    val currentLanguage = AppCompatDelegate.getApplicationLocales()[0]?.language ?: "en"
+
+    LaunchedEffect(currentLanguage, languageChangeTrigger) {
+        // Trigger refresh when configuration locale or app language changes
+        viewModel.onLanguageChanged()
+        DebugLogger.debugLog("HomeScreen", "Language changed: $currentLanguage - refreshing names")
     }
 
     Surface(modifier = Modifier.fillMaxSize()) {

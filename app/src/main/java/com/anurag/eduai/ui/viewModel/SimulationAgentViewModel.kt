@@ -8,6 +8,8 @@ import com.anurag.eduai.data.model.SimStartSessionRequest
 import com.anurag.eduai.data.model.SimStudentResponseRequest
 import com.anurag.eduai.data.remote.SimulationAgentAPI
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.domain.chatbot.usecase.AvatarChangeUseCase
+import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +24,8 @@ import java.net.UnknownHostException
  * Contains ALL business logic - UI is purely presentational
  */
 class SimulationAgentViewModel(
-    private val api: SimulationAgentAPI = SimulationAgentAPI()
+    private val api: SimulationAgentAPI = SimulationAgentAPI(),
+    private val avatarChangeUseCase: AvatarChangeUseCase = AvatarChangeUseCase()
 ) : ViewModel() {
 
     // API/Session State
@@ -541,9 +544,58 @@ class SimulationAgentViewModel(
         resetSessionForNavigation()
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        webViewDelayJob?.cancel()
+    /**
+     * Handles avatar change with proper validation and delegation to use case
+     * Returns updated ChatBotSettingsState with both code and display name
+     */
+    fun handleAvatarChange(
+        displayName: String,
+        boyDisplayName: String,
+        girlDisplayName: String,
+        ttsController: TextToSpeech,
+        currentState: ChatBotSettingsState
+    ): ChatBotSettingsState {
+        // Convert display name to code
+        val avatarCode = avatarChangeUseCase.getAvatarCodeFromDisplayName(
+            displayName = displayName,
+            boyDisplayName = boyDisplayName,
+            girlDisplayName = girlDisplayName
+        )
+
+        // Apply avatar change through use case (simulation always uses "en" language)
+        val normalizedCode = avatarChangeUseCase.changeAvatar(
+            avatarCode = avatarCode,
+            ttsController = ttsController,
+            currentLanguage = "en"
+        )
+
+        // Return updated state with both code and display name
+        return currentState.copy(
+            selectedAvatar = normalizedCode,
+            selectedAvatarDisplayName = displayName
+        )
+    }
+
+    /**
+     * Initialize settings state with proper display name for current avatar
+     */
+    fun initializeAvatarDisplayName(
+        avatarCode: String,
+        boyDisplayName: String,
+        girlDisplayName: String,
+        disableDisplayName: String,
+        currentState: ChatBotSettingsState
+    ): ChatBotSettingsState {
+        val displayName = avatarChangeUseCase.getDisplayNameFromCode(
+            avatarCode = avatarCode,
+            boyDisplayName = boyDisplayName,
+            girlDisplayName = girlDisplayName,
+            disableDisplayName = disableDisplayName
+        )
+        return currentState.copy(
+            selectedAvatar = avatarCode,
+            selectedAvatarDisplayName = displayName
+        )
     }
 }
 

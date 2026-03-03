@@ -2,6 +2,7 @@ package com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass
 
 data class ChatBotSettingsState(
     val selectedAvatar: String = "disable",
+    val selectedAvatarDisplayName: String = "", // Localized display name for avatar
     val selectedSpeed: String = "0.75x",
     val selectedStudentLevel: String = "medium",
     val voiceOptions: List<String> = emptyList(),

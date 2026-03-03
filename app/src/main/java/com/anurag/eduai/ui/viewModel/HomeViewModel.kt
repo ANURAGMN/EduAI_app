@@ -10,7 +10,6 @@ import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.utils.StreakManager
-import com.anurag.eduai.utils.getLocalizedName
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -47,6 +46,10 @@ class HomeViewModel(
     private val _greeting = MutableStateFlow("")
     val greeting: StateFlow<String> = _greeting
 
+    // Trigger for language changes - incrementing this will cause UI to recompose
+    private val _languageChangeTrigger = MutableStateFlow(0)
+    val languageChangeTrigger: StateFlow<Int> = _languageChangeTrigger
+
     val startOfDay = LocalDate.now()
         .atStartOfDay(ZoneId.systemDefault())
         .toInstant()
@@ -67,11 +70,10 @@ class HomeViewModel(
 
         // Load CONCEPTS
         viewModelScope.launch {
-            progressDao.getHomeScreenConcepts(userId, "CONCEPT")
-                .collectLatest {
-
-                    // Get all progress for the user (synchronous snapshot)
-                    val allProgress = progressDao.getAllProgressSync(userId, "CONCEPT")
+            progressDao.getAllProgress(userId)
+                .collectLatest { allProgressList ->
+                    // Filter by CONCEPT type in memory
+                    val allProgress = allProgressList.filter { it.itemType == "CONCEPT" }
 
                     // Separate by status
                     val completedList = allProgress
@@ -102,11 +104,7 @@ class HomeViewModel(
 
                         // Show concepts without progress entries
                         val combined = firstUnitConcepts.map { concept ->
-                            // copy with localized name
-                            val localizedConcept = concept.copy(
-                                conceptName = concept.getLocalizedName()
-                            )
-                            null to localizedConcept
+                            null to concept
                         }
 
                         progressConcepts.value = combined
@@ -122,11 +120,7 @@ class HomeViewModel(
 
                     val combined = curatedProgress.map { progress ->
                         val concept = concepts.find { it.conceptId == progress.itemId }
-                        val localizedConcept = concept?.copy(
-                            conceptName = concept.getLocalizedName()
-                        )
-
-                        progress to localizedConcept
+                        progress to concept
                     }
 
                     progressConcepts.value = combined
@@ -139,9 +133,10 @@ class HomeViewModel(
 
         // Load SIMULATIONS
         viewModelScope.launch {
-            progressDao.getHomeScreenConcepts(userId, "SIMULATION")
-                .collectLatest {
-                    val allProgress = progressDao.getAllProgressSync(userId, "SIMULATION")
+            progressDao.getAllProgress(userId)
+                .collectLatest { allProgressList ->
+                    // Filter by SIMULATION type in memory
+                    val allProgress = allProgressList.filter { it.itemType == "SIMULATION" }
 
                     val completedList = allProgress
                         .filter { it.status == "COMPLETED" }
@@ -164,10 +159,7 @@ class HomeViewModel(
                         val firstUnitSimulations = conceptDao.getFirstConceptsOfChapter("1", "SIMULATION", 4)
 
                         val combined = firstUnitSimulations.map { concept ->
-                            val localizedConcept = concept.copy(
-                                conceptName = concept.getLocalizedName()
-                            )
-                            null to localizedConcept
+                            null to concept
                         }
 
                         progressSimulations.value = combined
@@ -182,11 +174,7 @@ class HomeViewModel(
 
                     val combined = curatedProgress.map { progress ->
                         val concept = concepts.find { it.conceptId == progress.itemId }
-                        val localizedConcept = concept?.copy(
-                            conceptName = concept.getLocalizedName()
-                        )
-
-                        progress to localizedConcept
+                        progress to concept
                     }
 
                     progressSimulations.value = combined
@@ -243,5 +231,13 @@ class HomeViewModel(
             _student.value = result
             DebugLogger.debugLog("HomeViewModel", "Student loaded: ${result?.studentName}")
         }
+    }
+
+    /**
+     * Called when app language changes to trigger UI recomposition with new localized names
+     */
+    fun onLanguageChanged() {
+        _languageChangeTrigger.value += 1
+        DebugLogger.debugLog("HomeViewModel", "Language changed - triggering recomposition")
     }
 }

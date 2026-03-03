@@ -14,8 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.anurag.eduai.R
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettings
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatHeaderIcons
 import com.anurag.eduai.ui.screens.chatbotscreen.components.InitialAvatarView
@@ -69,6 +71,22 @@ fun SimulationAgentScreen(
     var settingsState by remember { mutableStateOf(ChatBotSettingsState()) }
     var permissionGranted by remember { mutableStateOf(false) }
     var lastProcessedSpeechText by remember { mutableStateOf("") }
+
+    // Initialize avatar display name only once when string resources are available
+    val boyDisplayName = stringResource(R.string.boy)
+    val girlDisplayName = stringResource(R.string.girl)
+    val disableDisplayName = stringResource(R.string.disable)
+
+    // Initialize settings state with proper display name on first composition
+    LaunchedEffect(Unit) {
+        settingsState = viewModel.initializeAvatarDisplayName(
+            avatarCode = settingsState.selectedAvatar,
+            boyDisplayName = boyDisplayName,
+            girlDisplayName = girlDisplayName,
+            disableDisplayName = disableDisplayName,
+            currentState = settingsState
+        )
+    }
 
     val context = LocalContext.current
 
@@ -216,14 +234,15 @@ fun SimulationAgentScreen(
                             selectedConcept = simulationId,
                             isLoadingConcepts = viewModel.simulationsLoading.collectAsState().value
                         ),
-                        onAvatarChange = { avatarCode ->
-                            settingsState = settingsState.copy(selectedAvatar = avatarCode)
-                            ttsController.switchCharacter(avatarCode)
-                            if (avatarCode != "disable") {
-                                ttsController.applyDefaultsForAvatarLanguage(avatarCode, "en")
-                            } else if (ttsState.isSpeaking) {
-                                ttsController.stop()
-                            }
+                        onAvatarChange = { displayName ->
+                            // Handle avatar change through ViewModel
+                            settingsState = viewModel.handleAvatarChange(
+                                displayName = displayName,
+                                boyDisplayName = boyDisplayName,
+                                girlDisplayName = girlDisplayName,
+                                ttsController = ttsController,
+                                currentState = settingsState
+                            )
                             viewModel.onAvatarChanged()
                         },
                         onVoiceChange = { selectedDisplayName ->
@@ -309,7 +328,8 @@ fun SimulationAgentScreen(
                 InitialAvatarView(
                     avatarSize = avatarSize,
                     ttsController = ttsController,
-                    modifier = Modifier.weight(0.1f).background(White)
+                    modifier = Modifier.weight(0.1f).background(White),
+                    isLoading = uiState is SimAgentUiState.Loading
                 )
             } else {
                 SimulationConversationView(

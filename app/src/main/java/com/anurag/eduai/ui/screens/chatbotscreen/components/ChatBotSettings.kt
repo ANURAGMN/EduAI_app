@@ -76,6 +76,7 @@ fun ChatBotSettings(
                 style = MaterialTheme.typography.titleSmall
             )
             Spacer(Modifier.height(dimens.spaceSmall))
+
             DropDownMenu(
                 label = stringResource(R.string.avatar),
                 options = listOf(
@@ -83,19 +84,8 @@ fun ChatBotSettings(
                     stringResource(R.string.boy),
                     stringResource(R.string.girl)
                 ),
-                selectedValue = when (state.selectedAvatar) {
-                    "boy" -> stringResource(R.string.boy)
-                    "girl" -> stringResource(R.string.girl)
-                    else -> stringResource(R.string.disable)
-                },
-                onValueSelected = { displayName ->
-                    val code = when (displayName) {
-                        "boy" -> "boy"
-                        "girl" -> "girl"
-                        else -> "disable"
-                    }
-                    onAvatarChange(code)
-                }
+                selectedValue = state.selectedAvatarDisplayName,
+                onValueSelected = onAvatarChange
             )
 
             Spacer(Modifier.height(dimens.spaceMedium))
