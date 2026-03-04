@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#dc2626">
+<title>Are They Equal? — Compare Expressions</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#dc2626 0%,#7c3aed 100%);min-height:100vh;-webkit-font-smoothing:antialiased}
+#app{max-width:420px;margin:auto;padding:10px;padding-top:max(10px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom))}
+.header{text-align:center;color:#fff;padding:14px}
+.header h1{font-size:20px;font-weight:800;margin-bottom:4px}
+.header p{font-size:13px;opacity:.9}
+.sim-card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.12);margin-bottom:14px}
+.pair-title{font-size:14px;font-weight:700;text-align:center;color:#333;margin-bottom:10px}
+.vs-boxes{display:flex;gap:10px;margin-bottom:12px}
+.vs-box{flex:1;background:linear-gradient(135deg,#1e1b4b,#312e81);border-radius:14px;padding:14px;text-align:center}
+.vs-expr{font-size:18px;font-weight:800;color:#fff}
+.vs-label{font-size:10px;color:rgba(255,255,255,.5);margin-top:4px}
+/* Table */
+.val-table{width:100%;border-collapse:separate;border-spacing:0 4px;margin-bottom:12px}
+.val-table th{font-size:10px;padding:6px;background:#f5f3ff;border-radius:6px;color:#6d28d9;font-weight:700}
+.val-table td{padding:8px;text-align:center;border-radius:6px;font-size:14px;font-weight:700}
+.val-table td.var{background:#f1f5f9;color:#334155}
+.val-table td.val-a{background:#dbeafe;color:#1d4ed8}
+.val-table td.val-b{background:#fce7f3;color:#be185d}
+.val-table td.match{background:#dcfce7;color:#166534}
+.val-table td.diff{background:#fef2f2;color:#991b1b}
+/* Verdict */
+.verdict{text-align:center;padding:12px;border-radius:12px;font-size:14px;font-weight:700;margin-bottom:12px}
+.verdict.equal{background:#dcfce7;color:#166534;border:2px solid #86efac}
+.verdict.not-equal{background:#fef2f2;color:#991b1b;border:2px solid #fca5a5}
+/* Slider */
+.slider-group{margin-bottom:12px}
+.slider-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.slider-label .name{color:#555}
+.slider-label .val{font-weight:700;color:#dc2626}
+input[type="range"]{width:100%;height:8px;border-radius:4px;background:#e5e7eb;-webkit-appearance:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.preset-btn{padding:7px 10px;border-radius:20px;border:2px solid #fca5a5;background:#fff;font-size:10px;font-weight:600;cursor:pointer;color:#991b1b}
+.preset-btn:active{transform:scale(.95)}
+.preset-btn.active{background:#dc2626;color:#fff;border-color:#dc2626}
+.insight-box{background:linear-gradient(135deg,#fef2f2,#fce7f3);border-radius:12px;padding:14px;margin-top:14px;border-left:4px solid #dc2626;font-size:13px;line-height:1.5}
+.insight-title{font-weight:700;color:#991b1b;margin-bottom:6px}
+.help-btn{position:fixed;bottom:20px;right:20px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#dc2626,#7c3aed);color:#fff;border:3px solid #fff;box-shadow:0 4px 15px rgba(220,38,38,.4);font-size:20px;font-weight:700;cursor:pointer;z-index:100;display:flex;align-items:center;justify-content:center}
+.help-btn:active{transform:scale(.9)}
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.help-overlay.open{display:flex}
+.help-panel{background:#fff;border-radius:20px 20px 0 0;max-width:420px;width:100%;max-height:75vh;overflow-y:auto;padding:20px 16px;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.help-close{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.help-close h2{font-size:16px;font-weight:700}
+.help-close button{width:32px;height:32px;border-radius:50%;border:none;background:#f1f5f9;font-size:18px;cursor:pointer}
+.help-section{margin-bottom:14px}
+.help-section-title{font-size:12px;font-weight:700;color:#dc2626;margin-bottom:6px}
+.help-step{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px;line-height:1.5;color:#475569}
+.help-step:last-child{border-bottom:none}
+.help-step .sn{width:22px;height:22px;border-radius:50%;background:#dc2626;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.help-key{background:#fef3c7;border-radius:8px;padding:8px 10px;font-size:11px;color:#92400e;line-height:1.5;margin-top:4px}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="header"><h1>Are They Equal?</h1><p>Compare two expressions — plug in values and see!</p></div>
+<div class="sim-card" id="sim"></div>
+<div class="insight-box">
+  <div class="insight-title">Looks Similar ≠ Equal!</div>
+  <b>5u</b> (5 times u) and <b>5 + u</b> (5 plus u) look similar but give different values for almost every u. <b>10y − 3</b> and <b>10(y − 3)</b> also look related but are fundamentally different operations. Always <b>test with numbers</b> to check!
+</div>
+<button class="help-btn" id="helpBtn">?</button>
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-panel">
+    <div class="help-close"><h2>How to Use</h2><button id="helpClose">&times;</button></div>
+    <div class="help-section">
+      <div class="help-section-title">What To Do</div>
+      <div class="help-step"><span class="sn">1</span><span>Two expressions are shown side by side. Both use the same variable.</span></div>
+      <div class="help-step"><span class="sn">2</span><span>The <b>table</b> shows both expressions evaluated for 4 different values of the variable.</span></div>
+      <div class="help-step"><span class="sn">3</span><span>Green rows mean both expressions gave the <b>same</b> value. Red rows mean they're <b>different</b>.</span></div>
+      <div class="help-step"><span class="sn">4</span><span>If ANY row is red, the expressions are <b>NOT equal</b> in general.</span></div>
+    </div>
+    <div class="help-section">
+      <div class="help-section-title">Key Concept</div>
+      <div class="help-key">Two expressions are equal only if they give the <b>same value for EVERY possible</b> number. Even one mismatch proves they're different!</div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+document.getElementById('helpBtn').onclick=()=>document.getElementById('helpOverlay').classList.add('open');
+document.getElementById('helpClose').onclick=()=>document.getElementById('helpOverlay').classList.remove('open');
+document.getElementById('helpOverlay').onclick=e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open')};
+
+const PAIRS=[
+  {nameA:"5u",nameB:"5 + u",var:"u",evalA:v=>5*v,evalB:v=>5+v,testVals:[0,1,2,5,8,11],desc:"5 times u vs 5 plus u"},
+  {nameA:"10y − 3",nameB:"10(y − 3)",var:"y",evalA:v=>10*v-3,evalB:v=>10*(v-3),testVals:[0,2,3,5,7,10],desc:"3 less than 10y vs 10 times (y minus 3)"},
+  {nameA:"2x + 1",nameB:"2(x + 1)",var:"x",evalA:v=>2*v+1,evalB:v=>2*(v+1),testVals:[0,1,3,5,10],desc:"2x plus 1 vs 2 times (x plus 1)"},
+  {nameA:"3a − a",nameB:"2a",var:"a",evalA:v=>3*v-v,evalB:v=>2*v,testVals:[0,1,4,7,10],desc:"3a minus a vs 2a — are these always equal?"},
+  {nameA:"a + b",nameB:"a × b",var:"a (b=3)",evalA:v=>v+3,evalB:v=>v*3,testVals:[0,1,2,3,5,10],desc:"Sum vs Product (with b fixed at 3)"},
+  {nameA:"(a+b)²",nameB:"a²+b²",var:"a (b=2)",evalA:v=>(v+2)**2,evalB:v=>v**2+4,testVals:[0,1,2,3,5],desc:"Square of sum vs Sum of squares (b=2)"}
+];
+
+const ct=document.getElementById("sim");
+let pIdx=0;
+
+function render(){
+  const p=PAIRS[pIdx];
+  let rows=p.testVals.map(v=>{
+    const vA=p.evalA(v),vB=p.evalB(v);
+    const eq=vA===vB;
+    return`<tr><td class="var">${v}</td><td class="val-a">${vA}</td><td class="val-b">${vB}</td><td class="${eq?'match':'diff'}">${eq?'=':'≠'}</td></tr>`;
+  }).join('');
+  const allEqual=p.testVals.every(v=>p.evalA(v)===p.evalB(v));
+
+  let presets=PAIRS.map((pr,i)=>`<button class="preset-btn${i===pIdx?' active':''}" data-i="${i}">${pr.nameA} vs ${pr.nameB}</button>`).join('');
+
+  ct.innerHTML=`
+  <div class="pair-title">${p.desc}</div>
+  <div class="vs-boxes">
+    <div class="vs-box"><div class="vs-expr">${p.nameA}</div><div class="vs-label">Expression A</div></div>
+    <div class="vs-box" style="background:linear-gradient(135deg,#4a1d96,#6d28d9)"><div class="vs-expr">${p.nameB}</div><div class="vs-label">Expression B</div></div>
+  </div>
+  <table class="val-table">
+    <tr><th>${p.var}</th><th style="color:#1d4ed8">${p.nameA}</th><th style="color:#be185d">${p.nameB}</th><th>Equal?</th></tr>
+    ${rows}
+  </table>
+  <div class="verdict ${allEqual?'equal':'not-equal'}">${allEqual?'✓ These expressions ARE equal — they give the same value for every input!':'✗ These expressions are NOT equal — they differ for at least one value.'}</div>
+  <div style="font-size:11px;color:#888;margin-bottom:4px">Compare different pairs:</div>
+  <div class="presets">${presets}</div>`;
+
+  ct.querySelectorAll('.preset-btn').forEach(b=>b.onclick=()=>{pIdx=parseInt(b.dataset.i);render()});
+}
+render();
+</script>
+</body>
+</html>

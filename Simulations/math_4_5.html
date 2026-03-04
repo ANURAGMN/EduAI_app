@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0369a1">
+<title>Words to Algebra — Build Formulas</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0369a1 0%,#059669 100%);min-height:100vh;-webkit-font-smoothing:antialiased}
+#app{max-width:420px;margin:auto;padding:10px;padding-top:max(10px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom))}
+.header{text-align:center;color:#fff;padding:14px}
+.header h1{font-size:20px;font-weight:800;margin-bottom:4px}
+.header p{font-size:13px;opacity:.9}
+.sim-card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.12);margin-bottom:14px}
+.quiz-q{font-size:14px;font-weight:700;color:#1e293b;text-align:center;padding:16px;background:#f0f9ff;border-radius:12px;margin-bottom:12px;line-height:1.6}
+.quiz-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.quiz-opt{padding:14px;border-radius:12px;border:2px solid #e5e7eb;font-size:14px;font-weight:600;cursor:pointer;background:#fff;text-align:center}
+.quiz-opt:active{transform:scale(.97)}
+.quiz-opt.correct{border-color:#16a34a;background:#dcfce7;color:#166534}
+.quiz-opt.wrong{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.feedback-box{text-align:center;font-size:13px;padding:12px;border-radius:10px;min-height:20px;margin-bottom:10px}
+.next-btn{display:block;margin:0 auto;padding:14px 32px;border-radius:12px;border:none;background:linear-gradient(135deg,#0369a1,#059669);color:#fff;font-weight:700;font-size:14px;cursor:pointer}
+.score-bar{text-align:center;font-size:13px;font-weight:600;color:#555;margin-bottom:12px}
+.score-bar b{color:#0369a1}
+.insight-box{background:linear-gradient(135deg,#f0f9ff,#ecfdf5);border-radius:12px;padding:14px;margin-top:14px;border-left:4px solid #0369a1;font-size:13px;line-height:1.5}
+.insight-title{font-weight:700;color:#0369a1;margin-bottom:6px}
+.help-btn{position:fixed;bottom:20px;right:20px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#0369a1,#059669);color:#fff;border:3px solid #fff;box-shadow:0 4px 15px rgba(3,105,161,.4);font-size:20px;font-weight:700;cursor:pointer;z-index:100;display:flex;align-items:center;justify-content:center}
+.help-btn:active{transform:scale(.9)}
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.help-overlay.open{display:flex}
+.help-panel{background:#fff;border-radius:20px 20px 0 0;max-width:420px;width:100%;max-height:75vh;overflow-y:auto;padding:20px 16px;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.help-close{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.help-close h2{font-size:16px;font-weight:700}
+.help-close button{width:32px;height:32px;border-radius:50%;border:none;background:#f1f5f9;font-size:18px;cursor:pointer}
+.help-section{margin-bottom:14px}
+.help-section-title{font-size:12px;font-weight:700;color:#0369a1;margin-bottom:6px}
+.help-step{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px;line-height:1.5;color:#475569}
+.help-step:last-child{border-bottom:none}
+.help-step .sn{width:22px;height:22px;border-radius:50%;background:#0369a1;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.help-key{background:#fef3c7;border-radius:8px;padding:8px 10px;font-size:11px;color:#92400e;line-height:1.5;margin-top:4px}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="header"><h1>Words → Algebra</h1><p>Translate situations into algebraic expressions</p></div>
+<div class="sim-card" id="sim"></div>
+<div class="insight-box">
+  <div class="insight-title">From Words to Symbols</div>
+  "5 more than a number" → <b>n + 5</b>. "2 less than 13 times a number" → <b>13n − 2</b>. "Perimeter of a regular hexagon with side a" → <b>6a</b>. Algebra is just a shorter way to write what you already understand in words!
+</div>
+<button class="help-btn" id="helpBtn">?</button>
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-panel">
+    <div class="help-close"><h2>How to Use</h2><button id="helpClose">&times;</button></div>
+    <div class="help-section">
+      <div class="help-section-title">What To Do</div>
+      <div class="help-step"><span class="sn">1</span><span>Read the <b>situation</b> described in words.</span></div>
+      <div class="help-step"><span class="sn">2</span><span>Pick the <b>correct algebraic expression</b> that matches it.</span></div>
+      <div class="help-step"><span class="sn">3</span><span>Think about: what's the <b>variable</b> (unknown)? What <b>operation</b> is described?</span></div>
+    </div>
+    <div class="help-section">
+      <div class="help-section-title">Key Concept</div>
+      <div class="help-key">"More than" → addition. "Less than" → subtraction. "Times" → multiplication. "Each" or "per" → multiplication. "Total" → addition of parts.</div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+document.getElementById('helpBtn').onclick=()=>document.getElementById('helpOverlay').classList.add('open');
+document.getElementById('helpClose').onclick=()=>document.getElementById('helpOverlay').classList.remove('open');
+document.getElementById('helpOverlay').onclick=e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open')};
+
+const QUIZ=[
+  {q:"Perimeter of an equilateral triangle with side <b>a</b>",opts:["3a","3 + a","a³","a + a + a + a"],ans:"3a",ex:"3 equal sides, each length a: a + a + a = 3a"},
+  {q:"Perimeter of a regular hexagon with side <b>a</b>",opts:["6a","6 + a","a⁶","3a"],ans:"6a",ex:"6 equal sides: 6 × a = 6a"},
+  {q:"Pipe of 20m joined with pipe of <b>k</b> meters. Total length?",opts:["20 + k","20k","20 − k","k − 20"],ans:"20 + k",ex:"Joining = adding lengths: 20 + k meters"},
+  {q:"Flour mill: 10s to start, then 8s per kg for <b>y</b> kg. Total time?",opts:["10 + 8y","18y","10 × 8y","(10 + 8) × y"],ans:"10 + 8y",ex:"Fixed 10s startup + 8 seconds for each of y kg = 10 + 8y"},
+  {q:"x plates Jowar roti (₹30 each) + y plates Pulao (₹20 each). Total?",opts:["30x + 20y","50(x + y)","30x − 20y","(30 + 20)(x + y)"],ans:"30x + 20y",ex:"Each roti costs 30, each pulao costs 20. Total = 30x + 20y"},
+  {q:"\"5 more than a number d\"",opts:["d + 5","5d","d − 5","5 − d"],ans:"d + 5",ex:"5 MORE than d → d + 5"},
+  {q:"\"4 less than a number d\"",opts:["d − 4","4 − d","4d","d + 4"],ans:"d − 4",ex:"4 LESS than d → d − 4 (not 4 − d!)"},
+  {q:"\"2 less than 13 times a number d\"",opts:["13d − 2","2d − 13","13 − 2d","2 − 13d"],ans:"13d − 2",ex:"13 times d = 13d, then 2 less → 13d − 2"},
+  {q:"\"13 less than 2 times a number d\"",opts:["2d − 13","13d − 2","13 − 2d","2 + 13d"],ans:"2d − 13",ex:"2 times d = 2d, then 13 less → 2d − 13"},
+  {q:"p customers buy champak, q buy marigold, r buy both. Total flags given (1 per customer)?",opts:["p + q + r","p + q + 2r","2(p + q + r)","pqr"],ans:"p + q + r",ex:"Each person gets 1 flag. Total people = p + q + r"},
+  {q:"Snail climbs u cm/day, slips d cm/night. After 10 days, distance from start?",opts:["10(u − d)","10u − d","u − 10d","10u + 10d"],ans:"10(u − d)",ex:"Net daily progress: u − d. Over 10 days: 10(u − d)"},
+  {q:"Rope folded r times then cut. Number of pieces?",opts:["r + 2","2r","r + 1","2r + 1"],ans:"r + 2",ex:"Fold 0→2 pieces, fold 1→3, fold 2→4. Pattern: r + 2"}
+];
+
+const ct=document.getElementById("sim");
+let qIdx=0,qScore=0,qTotal=0,qAns=false;
+// Shuffle
+for(let i=QUIZ.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[QUIZ[i],QUIZ[j]]=[QUIZ[j],QUIZ[i]]}
+
+function render(){
+  if(qIdx>=QUIZ.length)qIdx=0;const q=QUIZ[qIdx];
+  ct.innerHTML=`
+  <div class="score-bar">Score: <b>${qScore}/${qTotal}</b> &bull; Question <b>${qIdx+1}/${QUIZ.length}</b></div>
+  <div class="quiz-q">${q.q}</div>
+  <div class="quiz-opts" id="qo">${q.opts.map(o=>`<button class="quiz-opt" data-v="${o}">${o}</button>`).join('')}</div>
+  <div class="feedback-box" id="fb"></div>
+  <button class="next-btn" id="nxt" style="display:none">Next Question</button>`;
+  qAns=false;
+  ct.querySelector('#qo').addEventListener('click',e=>{const b=e.target.closest('.quiz-opt');if(!b||qAns)return;qAns=true;qTotal++;
+    if(b.dataset.v===q.ans){b.classList.add('correct');qScore++;ct.querySelector('#fb').innerHTML=`<div style="background:#dcfce7;color:#166534;padding:12px;border-radius:10px"><b>Correct!</b> ${q.ex}</div>`}
+    else{b.classList.add('wrong');ct.querySelectorAll('.quiz-opt').forEach(x=>{if(x.dataset.v===q.ans)x.classList.add('correct')});ct.querySelector('#fb').innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px"><b>${q.ans}</b> — ${q.ex}</div>`}
+    ct.querySelector('#nxt').style.display='block';});
+  ct.querySelector('#nxt').onclick=()=>{qIdx++;render()};
+}
+render();
+</script>
+</body>
+</html>
