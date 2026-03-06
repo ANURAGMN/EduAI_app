@@ -20,7 +20,7 @@ object FirebaseSubjectMapper {
             subjectName = document.getString("subject_id").toString()
                 .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
                 ?: error("Unable to extract subject from document id ${document.id}"),
-            subjectNameKannada = "",
+            subjectNameKannada = document.getString("subject_name_kn")?:error("Unable to extract subject from document id ${document.id}"),
             classLevel = classLevel,
             iconUrl = null,
             orderIndex = 0,

@@ -22,7 +22,6 @@ import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
-import com.anurag.eduai.utils.getLocalizedName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -320,7 +319,8 @@ class ChatViewModel @Inject constructor(
         DebugLogger.debugLog("ChatViewModel", "Session started successfully for concept: $concept")
 
         // Mark concept as IN_PROGRESS when session starts successfully
-        val conceptEntity = conceptRepository.getAllConcepts().find { it.getLocalizedName() == concept }
+        // Match by English concept name since concept parameter is always in English
+        val conceptEntity = conceptRepository.getAllConcepts().find { it.conceptName == concept }
         if (conceptEntity != null && userId.isNotEmpty()) {
             conceptProgressUseCase.markConceptInProgress(userId, conceptEntity.conceptId)
         }
@@ -350,22 +350,36 @@ class ChatViewModel @Inject constructor(
     /**
      * Resumes an existing session using the thread ID and session ID.
      * It fetches the session history and updates the UI state with the previous messages and session information.
-     * Translates AI messages to Kannada if Kannada mode is enabled.
+     * Translates only the last AI message to Kannada if Kannada mode is enabled (since only last message is displayed).
      */
     private suspend fun resumeSession(threadId: String, sessionId: String?) {
         val result = sessionUseCase.resumeSession(threadId, sessionId)
 
-        // Translate AI messages if Kannada mode is enabled
+        DebugLogger.debugLog("ChatViewModel", "resumeSession - isKannada=${_uiState.value.isKannada}, messages count=${result.messages.size}")
+
+        // Translate only the last AI message if Kannada mode is enabled (optimization - only last message is displayed)
         val translatedMessages = if (_uiState.value.isKannada && result.messages.isNotEmpty()) {
-            result.messages.map { message ->
-                if (message.sender.lowercase() == "ai") {
-                    val translated = translationUseCase.translateToKannada(message.content)
-                    message.copy(content = translated)
-                } else {
-                    message
+            val lastAiMessageIndex = result.messages.indexOfLast { it.sender.lowercase() == "ai" }
+
+            DebugLogger.debugLog("ChatViewModel", "resumeSession - Last AI message index: $lastAiMessageIndex")
+
+            if (lastAiMessageIndex >= 0) {
+                result.messages.mapIndexed { index, message ->
+                    if (index == lastAiMessageIndex) {
+                        DebugLogger.debugLog("ChatViewModel", "resumeSession - Translating last AI message: ${message.content.take(50)}...")
+                        val translated = translationUseCase.translateToKannada(message.content)
+                        DebugLogger.debugLog("ChatViewModel", "resumeSession - Translation result: ${translated.take(50)}...")
+                        message.copy(content = translated)
+                    } else {
+                        message
+                    }
                 }
+            } else {
+                DebugLogger.debugLog("ChatViewModel", "resumeSession - No AI messages found")
+                result.messages
             }
         } else {
+            DebugLogger.debugLog("ChatViewModel", "resumeSession - Skipping translation (isKannada=${_uiState.value.isKannada}, messages empty=${result.messages.isEmpty()})")
             result.messages
         }
 
@@ -443,8 +457,9 @@ class ChatViewModel @Inject constructor(
             _uiState.update { it.copy(currentProgressPercentage = continuedProgress) }
 
             // Update progress in database for persistence
+            // Match by English concept name since selectedConcept is always in English
             val conceptEntity = conceptRepository.getAllConcepts().find {
-                it.getLocalizedName() == _uiState.value.selectedConcept
+                it.conceptName == _uiState.value.selectedConcept
             }
             if (conceptEntity != null && userId.isNotEmpty()) {
                 conceptRepository.updateProgressStatus(

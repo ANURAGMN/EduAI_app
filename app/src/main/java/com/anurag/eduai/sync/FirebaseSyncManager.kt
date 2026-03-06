@@ -54,9 +54,8 @@ class FirebaseSyncManager(
                         subjects[subjectId] = subject
                     }
 
-                    // Extract and store unique chapters
-                    val chapterId = document.get("chapter_id").toString()
-                    if (!chapters.containsKey(chapterId)) {
+                    val chapterId = document.getString("chapter_id")
+                    if (chapterId != null && !chapters.containsKey(chapterId)) {
                         val chapter = FirebaseChapterMapper.map(document)
                         chapters[chapterId] = chapter
                     }
@@ -113,9 +112,9 @@ class FirebaseSyncManager(
 
             for (document in snapshot.documents) {
                 try {
-                    // Extract unique chapters
-                    val chapterId = document.get("chapter_id").toString()
-                    if (!chapters.containsKey(chapterId)) {
+                    // Extract unique chapters (chapter_id is now unique string)
+                    val chapterId = document.getString("chapter_id")
+                    if (chapterId != null && !chapters.containsKey(chapterId)) {
                         val chapter = FirebaseChapterMapper.map(document)
                         chapters[chapterId] = chapter
                     }

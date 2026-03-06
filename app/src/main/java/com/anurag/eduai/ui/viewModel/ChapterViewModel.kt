@@ -63,6 +63,7 @@ class ChapterViewModel @Inject constructor(
 
                     ChapterUiModel(
                         id = chapter.chapterId,
+                        orderIndex =chapter.orderIndex,
                         name = chapter.getLocalizedName(),
                         totalConcepts = totalConcepts,
                         completedConcepts = completedConcepts,

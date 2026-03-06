@@ -53,13 +53,13 @@ interface ConceptDao {
     @Query(
         """
     SELECT * FROM concepts
-    WHERE chapterId = :chapterId AND type = :type
+    WHERE orderIndex = :orderIndex AND type = :type
     ORDER BY orderIndex ASC
     LIMIT :limit
     """
     )
     suspend fun getFirstConceptsOfChapter(
-        chapterId: String,
+        orderIndex: String,
         type: String,
         limit: Int
     ): List<ConceptEntity>

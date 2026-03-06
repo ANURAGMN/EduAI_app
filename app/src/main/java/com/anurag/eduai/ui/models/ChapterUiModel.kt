@@ -6,6 +6,7 @@ package com.anurag.eduai.ui.models
 data class ChapterUiModel(
     val id: String,
     val name: String,
+    val orderIndex:Int,
     val totalConcepts: Int,
     val completedConcepts: Int,
     val status: ChapterStatus

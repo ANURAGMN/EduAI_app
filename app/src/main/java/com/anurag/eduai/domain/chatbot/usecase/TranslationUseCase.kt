@@ -19,6 +19,8 @@ class TranslationUseCase @Inject constructor(
 
             if (result.isSuccess) {
                 val response = result.getOrNull()
+                DebugLogger.debugLog("TranslationUseCase", "API Response - success: ${response?.success}, original: ${response?.original?.take(30)}, translated: ${response?.translated?.take(30)}, error: ${response?.error}")
+
                 if (response?.success == true && response.translated.isNotBlank()) {
                     DebugLogger.debugLog("TranslationUseCase", "Translation successful: ${response.translated}")
                     response.translated

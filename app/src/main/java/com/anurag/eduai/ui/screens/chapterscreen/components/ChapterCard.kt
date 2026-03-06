@@ -121,7 +121,7 @@ fun ChapterCard(
                 ) {
                     // Chapter number
                     Text(
-                        text = chapter.id,
+                        text = chapter.orderIndex.toString(),
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Bold,
                         color = TextSecondary.copy(alpha = 0.5f)
@@ -252,6 +252,7 @@ fun ChapterCardPreview() {
     ChapterCard(
         chapter = ChapterUiModel(
             id = "1",
+            orderIndex =1,
             name = "Number Systems",
             totalConcepts = 8,
             completedConcepts = 5,
