@@ -76,7 +76,8 @@ class ConceptViewModel @Inject constructor(
                             else -> ConceptStatus.NOT_STARTED
                         },
                         type = concept.type,
-                        simulationUrl = concept.simulationUrl
+                        simulationUrl = concept.simulationUrl,
+                        simulationUrlKannada = concept.simulationUrlKannada
                     )
                 }
 

@@ -22,6 +22,8 @@ import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
+import com.anurag.eduai.utils.getCurrentLanguageCode
+import com.anurag.eduai.utils.isKannada
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -93,15 +95,17 @@ class ChatViewModel @Inject constructor(
         initialized = true
         userId = id
 
-        val appLanguage = sessionUseCase.getAppLanguage()
-        val isKannada = appLanguage == "kn"
+        // Use LocalizationUtils for language detection
+        val appLanguage = getCurrentLanguageCode()
+        val isKannadaMode = isKannada()
+
         _uiState.update {
             it.copy(
-                isKannada = isKannada,
+                isKannada = isKannadaMode,
                 currentLanguage = appLanguage
             )
         }
-        DebugLogger.debugLog("ChatViewModel", "Initialized with app language: $appLanguage, isKannada: $isKannada")
+        DebugLogger.debugLog("ChatViewModel", "Initialized with app language: $appLanguage, isKannada: $isKannadaMode")
 
         refreshConcepts()
     }
@@ -355,10 +359,11 @@ class ChatViewModel @Inject constructor(
     private suspend fun resumeSession(threadId: String, sessionId: String?) {
         val result = sessionUseCase.resumeSession(threadId, sessionId)
 
-        DebugLogger.debugLog("ChatViewModel", "resumeSession - isKannada=${_uiState.value.isKannada}, messages count=${result.messages.size}")
+        val currentIsKannada = _uiState.value.isKannada
+        DebugLogger.debugLog("ChatViewModel", "resumeSession - isKannada=$currentIsKannada, messages count=${result.messages.size}")
 
-        // Translate only the last AI message if Kannada mode is enabled (optimization - only last message is displayed)
-        val translatedMessages = if (_uiState.value.isKannada && result.messages.isNotEmpty()) {
+        // Smart translate only the last AI message based on current app language
+        val translatedMessages = if (result.messages.isNotEmpty()) {
             val lastAiMessageIndex = result.messages.indexOfLast { it.sender.lowercase() == "ai" }
 
             DebugLogger.debugLog("ChatViewModel", "resumeSession - Last AI message index: $lastAiMessageIndex")
@@ -366,8 +371,25 @@ class ChatViewModel @Inject constructor(
             if (lastAiMessageIndex >= 0) {
                 result.messages.mapIndexed { index, message ->
                     if (index == lastAiMessageIndex) {
-                        DebugLogger.debugLog("ChatViewModel", "resumeSession - Translating last AI message: ${message.content.take(50)}...")
-                        val translated = translationUseCase.translateToKannada(message.content)
+                        val content = message.content
+                        DebugLogger.debugLog("ChatViewModel", "resumeSession - Translating last AI message: ${content.take(50)}...")
+
+                        val translated = if (currentIsKannada) {
+                            // App in Kannada - translate if message is in English
+                            if (isTextInKannada(content)) {
+                                content // Already Kannada
+                            } else {
+                                translationUseCase.translateToKannada(content)
+                            }
+                        } else {
+                            // App in English - translate if message is in Kannada
+                            if (isTextInKannada(content)) {
+                                translationUseCase.translateToEnglish(content)
+                            } else {
+                                content // Already English
+                            }
+                        }
+
                         DebugLogger.debugLog("ChatViewModel", "resumeSession - Translation result: ${translated.take(50)}...")
                         message.copy(content = translated)
                     } else {
@@ -416,7 +438,7 @@ class ChatViewModel @Inject constructor(
      * It updates the UI state with the user's message, shows a loading indicator,
      * and then processes the agent's response to update the chat messages, autosuggestions,
      * and any resources that need to be displayed.
-     * Translates autosuggestions if Kannada mode is enabled.
+     * Translates autosuggestions based on current app language (bidirectional).
      */
     private fun sendMessage(message: String, fromSuggestion: Boolean) {
         if (message.isBlank()) return
@@ -428,16 +450,32 @@ class ChatViewModel @Inject constructor(
             }
             if (!_uiState.value.isSessionStarted)
                 _uiState.value.selectedConcept?.let { startSession(it) }
+
+            val currentIsKannada = _uiState.value.isKannada
             val response = sessionUseCase.continueSession(
                 message,
                 fromSuggestion,
-                _uiState.value.studentLevel)
+                _uiState.value.studentLevel,
+                currentIsKannada
+            )
 
             if (!response.success) return@launch appendError()
 
-            // Translate autosuggestions if Kannada mode is enabled
-            val translatedSuggestions = if (_uiState.value.isKannada && response.autosuggestions.isNotEmpty()) {
-                translationUseCase.translateListToKannada(response.autosuggestions)
+            // Smart translate autosuggestions based on current app language
+            val translatedSuggestions = if (response.autosuggestions.isNotEmpty()) {
+                if (currentIsKannada) {
+                    // App in Kannada - translate suggestions if they're in English
+                    translationUseCase.translateListToKannada(response.autosuggestions)
+                } else {
+                    // App in English - translate suggestions if they're in Kannada
+                    response.autosuggestions.map { suggestion ->
+                        if (isTextInKannada(suggestion)) {
+                            translationUseCase.translateToEnglish(suggestion)
+                        } else {
+                            suggestion
+                        }
+                    }
+                }
             } else {
                 response.autosuggestions
             }
@@ -508,18 +546,30 @@ class ChatViewModel @Inject constructor(
     /**
      * Processes the agent's response text,
      * updates the chat messages with the new response, and starts the typing animation.
-     * Translates the response to Kannada if Kannada mode is enabled.
+     * Smart translation: translates based on current app language (bidirectional).
      */
     private fun handleAgentMessage(text: String, metadata: SessionMetadata?) {
         viewModelScope.launch {
             val cleaned = handleAgentResponseUseCase.processAgentResponse(text)
 
-            // Translate to Kannada if enabled
-            val displayText = if (_uiState.value.isKannada) {
-                DebugLogger.debugLog("ChatViewModel", "Translating agent response to Kannada...")
-                translationUseCase.translateToKannada(cleaned)
+            // Smart translation based on current app language
+            val currentIsKannada = _uiState.value.isKannada
+            val displayText = if (currentIsKannada) {
+                // App in Kannada - translate if response is in English
+                if (isTextInKannada(cleaned)) {
+                    cleaned // Already in Kannada
+                } else {
+                    DebugLogger.debugLog("ChatViewModel", "Translating agent response to Kannada...")
+                    translationUseCase.translateToKannada(cleaned)
+                }
             } else {
-                cleaned
+                // App in English - translate if response is in Kannada
+                if (isTextInKannada(cleaned)) {
+                    DebugLogger.debugLog("ChatViewModel", "Translating agent response to English...")
+                    translationUseCase.translateToEnglish(cleaned)
+                } else {
+                    cleaned // Already in English
+                }
             }
 
             _uiState.update { it.copy(messages = it.messages + sendMessageUseCase.createAIMessage(displayText), isTyping = true, typingText = "", fullTextForTTS = displayText, shouldStartTTS = true, isTypingComplete = false, showAutosuggestions = false) }
@@ -724,5 +774,13 @@ class ChatViewModel @Inject constructor(
             selectedAvatar = avatarCode,
             selectedAvatarDisplayName = displayName
         )
+    }
+
+    /**
+     * Helper function to detect if text contains Kannada characters
+     * Kannada Unicode range: \u0C80-\u0CFF
+     */
+    private fun isTextInKannada(text: String): Boolean {
+        return text.any { it in '\u0C80'..'\u0CFF' }
     }
 }

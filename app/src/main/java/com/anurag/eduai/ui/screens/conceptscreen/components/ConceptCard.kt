@@ -38,6 +38,7 @@ import com.anurag.eduai.ui.theme.NotStartedTextColor
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.theme.White
+ import com.anurag.eduai.utils.isKannada
 
 /**
  * Composable function to display a Concept Card with status badge, title, concept completion status, and an icon.
@@ -128,13 +129,23 @@ fun ConceptCard(
                                 color = White
                             )
                         }
-                        val hasValidUrl = !concept.simulationUrl.isNullOrBlank() &&
-                                concept.simulationUrl != "Not found"
+
+                        // Select URL based on current app language
+                        val selectedUrl = if (isKannada()) {
+                            // Use Kannada URL if available, fallback to English URL
+                            concept.simulationUrlKannada?.takeIf { it.isNotBlank() }
+                                ?: concept.simulationUrl
+                        } else {
+                            // Use English URL
+                            concept.simulationUrl
+                        }
+
+                        val hasValidUrl = !selectedUrl.isNullOrBlank() && selectedUrl != "Not found"
 
                         if (hasValidUrl) {
                         OutlinedButton(
                             onClick = {
-                                onSimulationClick(concept.name, concept.simulationUrl)
+                                onSimulationClick(concept.name, selectedUrl)
                             },
                             modifier = Modifier.weight(1f),
                             contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),

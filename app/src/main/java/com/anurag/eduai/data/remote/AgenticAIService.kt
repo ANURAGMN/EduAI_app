@@ -4,6 +4,7 @@ package com.anurag.eduai.data.remote
 import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -36,9 +37,31 @@ interface AgenticAIService {
     @POST("/test/image")
     suspend fun getTestImage(@Body request: TestImageRequest): Response<TestImageResponse>
 
-    //translation
-    @POST("/translate")
-    suspend fun translateText(@Body request: TranslationRequest): Response<TranslationResponse>
+    //translation endpoints
+    @POST("/translate/to-kannada")
+    suspend fun translateToKannada(@Body request: TranslationRequest): Response<TranslationResponse>
+
+    @POST("/translate/to-english")
+    suspend fun translateToEnglish(@Body request: TranslationRequest): Response<TranslationResponse>
+
+    //revision endpoints
+    @GET("/revision/chapters")
+    suspend fun getRevisionChapters(): Response<RevisionChaptersResponse>
+
+    @POST("/revision/session/start")
+    suspend fun startRevisionSession(@Body request: RevStartSessionRequest): Response<RevStartSessionResponse>
+
+    @POST("/revision/session/continue")
+    suspend fun continueRevisionSession(@Body request: RevContinueSessionRequest): Response<RevContinueSessionResponse>
+
+    @GET("/revision/session/status/{thread_id}")
+    suspend fun getRevisionSessionStatus(@Path("thread_id") threadId: String): Response<RevSessionStatusResponse>
+
+    @GET("/revision/session/history/{thread_id}")
+    suspend fun getRevisionSessionHistory(@Path("thread_id") threadId: String): Response<RevSessionHistoryResponse>
+
+    @DELETE("/revision/session/{thread_id}")
+    suspend fun deleteRevisionSession(@Path("thread_id") threadId: String): Response<String>
 }
 
 //All Data Classes
@@ -55,6 +78,7 @@ data class ContinueSessionRequest(
     @SerializedName("thread_id") val threadId: String,
     @SerializedName("user_message") val userMessage: String,
     @SerializedName("clicked_autosuggestion") val clickedAutosuggestion: Boolean? = false,
+    @SerializedName("is_kannada") val isKannada: Boolean = false,
     @SerializedName("student_level") val studentLevel: String? = null
 )
 
@@ -166,3 +190,63 @@ data class SessionSummaryResponse(
     @SerializedName("misconception_detected") val misconceptionDetected: Boolean? = null,
     @SerializedName("definition_echoed") val definitionEchoed: Boolean? = null,
     val message: String? = "Summary retrieved successfully")
+
+// Revision endpoints data classes
+data class RevisionChaptersResponse(
+    val success: Boolean = true,
+    val chapters: List<String> = emptyList(),
+    val total: Int = 0,
+    val message: String? = "Available chapters retrieved successfully."
+)
+
+data class RevStartSessionRequest(
+    @SerializedName("chapter") val chapter: String,
+    @SerializedName("student_id") val studentId: String? = null,
+    @SerializedName("is_kannada") val isKannada: Boolean = false,
+    @SerializedName("session_label") val sessionLabel: String? = null
+)
+
+data class RevStartSessionResponse(
+    val success: Boolean = false,
+    @SerializedName("thread_id") val threadId: String,
+    @SerializedName("session_id") val sessionId: String,
+    @SerializedName("student_id") val studentId: String,
+    @SerializedName("chapter") val chapter: String,
+    @SerializedName("agent_response") val agentResponse: String,
+    @SerializedName("current_state") val currentState: String,
+    val message: String? = "Revision session started successfully"
+)
+
+data class RevContinueSessionRequest(
+    @SerializedName("thread_id") val threadId: String,
+    @SerializedName("user_message") val userMessage: String,
+    @SerializedName("is_kannada") val isKannada: Boolean? = null
+)
+
+data class RevContinueSessionResponse(
+    val success: Boolean = false,
+    @SerializedName("thread_id") val threadId: String,
+    @SerializedName("agent_response") val agentResponse: String,
+    @SerializedName("current_state") val currentState: String,
+    val message: String? = "Revision response generated successfully"
+)
+
+data class RevSessionStatusResponse(
+    val success: Boolean = false,
+    @SerializedName("thread_id") val threadId: String,
+    val exists: Boolean = false,
+    @SerializedName("current_state") val currentState: String? = null,
+    @SerializedName("chapter") val chapter: String? = null,
+    val progress: Map<String, Any>? = null,
+    val message: String? = "Revision status retrieved successfully"
+)
+
+data class RevSessionHistoryResponse(
+    val success: Boolean = false,
+    @SerializedName("thread_id") val threadId: String,
+    val exists: Boolean = false,
+    val messages: List<Map<String, Any>>? = null,
+    @SerializedName("node_transitions") val nodeTransitions: List<Map<String, Any>>? = null,
+    @SerializedName("chapter") val chapter: String? = null,
+    val message: String? = "Revision history retrieved successfully"
+)

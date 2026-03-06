@@ -125,6 +125,12 @@ class AgenticAIClient(
             is SessionSummaryResponse -> body.success
             is ConceptsListResponse -> body.success
             is TestImageResponse -> body.success
+            is TranslationResponse -> body.success
+            is RevisionChaptersResponse -> body.success
+            is RevStartSessionResponse -> body.success
+            is RevContinueSessionResponse -> body.success
+            is RevSessionStatusResponse -> body.success
+            is RevSessionHistoryResponse -> body.success
             is HealthResponse -> true
             else -> true
         }
@@ -139,6 +145,12 @@ class AgenticAIClient(
             is SessionSummaryResponse -> body.message
             is ConceptsListResponse -> body.message
             is TestImageResponse -> body.message
+            is TranslationResponse -> body.error
+            is RevisionChaptersResponse -> body.message
+            is RevStartSessionResponse -> body.message
+            is RevContinueSessionResponse -> body.message
+            is RevSessionStatusResponse -> body.message
+            is RevSessionHistoryResponse -> body.message
             else -> null
         }
     }
@@ -205,7 +217,8 @@ class AgenticAIClient(
     suspend fun continueSession(
         userMessage: String,
         clickedAutosuggestion: Boolean,
-        studentLevel: String
+        studentLevel: String,
+        isKannada: Boolean
     ): Result<ContinueSessionResponse> =
         withContext(Dispatchers.IO) {
             val thread = _currentThreadId.value
@@ -215,7 +228,8 @@ class AgenticAIClient(
                 threadId = thread,
                 userMessage = userMessage,
                 clickedAutosuggestion = clickedAutosuggestion,
-                studentLevel = studentLevel
+                studentLevel = studentLevel,
+                isKannada = isKannada
             )
 
             val res = callWithRetry { service.continueSession(req) }
@@ -260,9 +274,105 @@ class AgenticAIClient(
             callWithRetry { service.getAvailableConcepts() }
         }
 
-    suspend fun getTranslatedText(text: String): Result<TranslationResponse> =
+    // Translation methods
+    suspend fun translateToKannada(text: String): Result<TranslationResponse> =
         withContext(Dispatchers.IO) {
             val req = TranslationRequest(text)
-            callWithRetry { service.translateText(req) }
+            callWithRetry { service.translateToKannada(req) }
+        }
+
+    suspend fun translateToEnglish(text: String): Result<TranslationResponse> =
+        withContext(Dispatchers.IO) {
+            val req = TranslationRequest(text)
+            callWithRetry { service.translateToEnglish(req) }
+        }
+
+    // Revision methods
+    suspend fun getRevisionChapters(): Result<RevisionChaptersResponse> =
+        withContext(Dispatchers.IO) {
+            callWithRetry { service.getRevisionChapters() }
+        }
+
+    suspend fun startRevisionSession(
+        chapter: String,
+        studentId: String? = null,
+        isKannada: Boolean = false,
+        sessionLabel: String? = null
+    ): Result<RevStartSessionResponse> = withContext(Dispatchers.IO) {
+        val req = RevStartSessionRequest(
+            chapter = chapter,
+            studentId = studentId,
+            isKannada = isKannada,
+            sessionLabel = sessionLabel
+        )
+
+        val res = callWithRetry { service.startRevisionSession(req) }
+
+        // Update state only on success
+        if (res.isSuccess) {
+            val body = res.getOrNull()
+            body?.threadId?.let { _currentThreadId.value = it }
+            body?.sessionId?.let { _currentSessionId.value = it }
+            DebugLogger.debugLog(
+                "AgenticAIClient",
+                "Revision session started: threadId=${body?.threadId}, sessionId=${body?.sessionId}"
+            )
+        }
+        res
+    }
+
+    suspend fun continueRevisionSession(
+        threadId: String,
+        userMessage: String,
+        isKannada: Boolean? = null
+    ): Result<RevContinueSessionResponse> = withContext(Dispatchers.IO) {
+        val req = RevContinueSessionRequest(
+            threadId = threadId,
+            userMessage = userMessage,
+            isKannada = isKannada
+        )
+
+        val res = callWithRetry { service.continueRevisionSession(req) }
+
+        // Update threadId if it changed
+        if (res.isSuccess) {
+            val body = res.getOrNull()
+            body?.threadId?.let {
+                if (it != _currentThreadId.value) {
+                    DebugLogger.debugLog(
+                        "AgenticAIClient",
+                        "Revision ThreadId updated: ${_currentThreadId.value} -> $it"
+                    )
+                    _currentThreadId.value = it
+                }
+            }
+        }
+
+        res
+    }
+
+    suspend fun getRevisionSessionStatus(threadId: String): Result<RevSessionStatusResponse> =
+        withContext(Dispatchers.IO) {
+            callWithRetry { service.getRevisionSessionStatus(threadId) }
+        }
+
+    suspend fun getRevisionSessionHistory(threadId: String): Result<RevSessionHistoryResponse> =
+        withContext(Dispatchers.IO) {
+            callWithRetry { service.getRevisionSessionHistory(threadId) }
+        }
+
+    suspend fun deleteRevisionSession(threadId: String): Result<String> =
+        withContext(Dispatchers.IO) {
+            try {
+                val response = service.deleteRevisionSession(threadId)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    val errBody = safeGetErrorBody(response)
+                    Result.failure(IOException("HTTP ${response.code()}: ${errBody ?: response.message()}"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
 }

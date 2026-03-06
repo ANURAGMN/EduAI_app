@@ -74,6 +74,12 @@ fun LearningNavigator(
                 onSimulationClick = { chapterId, type ->
                     navController.navigate("concepts/$chapterId/$type")
                 },
+                onRevisionClick = { chapterName ->
+                    com.anurag.eduai.debug.DebugLogger.debugLog("LearningNavigator", "Navigating to revision with chapter: $chapterName")
+                    val encodedChapter = java.net.URLEncoder.encode(chapterName, "UTF-8")
+                    com.anurag.eduai.debug.DebugLogger.debugLog("LearningNavigator", "Encoded chapter name: $encodedChapter")
+                    navController.navigate("revision/$encodedChapter")
+                },
                 onGoHome = onGoHome,
                 onGoSetting = onGoSetting
             )
@@ -150,5 +156,16 @@ fun LearningNavigator(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+
+        composable("revision/{chapterName}") { backStackEntry ->
+            val encodedChapterName = backStackEntry.arguments?.getString("chapterName") ?: return@composable
+            val chapterName = java.net.URLDecoder.decode(encodedChapterName, "UTF-8")
+            com.anurag.eduai.debug.DebugLogger.debugLog("LearningNavigator", "Revision route - Encoded: $encodedChapterName, Decoded: $chapterName")
+            com.anurag.eduai.ui.screens.revisionscreen.RevisionScreen(
+                chapterName = chapterName,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
     }
 }
+

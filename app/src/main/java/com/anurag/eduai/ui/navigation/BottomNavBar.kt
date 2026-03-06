@@ -172,6 +172,12 @@ fun BottomNavBar() {
                     onSimulationClick = { chapterId, type ->
                         navController.navigate("concepts/$chapterId/$type")
                     },
+                    onRevisionClick = { chapterName ->
+                        com.anurag.eduai.debug.DebugLogger.debugLog("BottomNavBar", "Navigating to revision with chapter: $chapterName")
+                        val encodedChapter = java.net.URLEncoder.encode(chapterName, "UTF-8")
+                        com.anurag.eduai.debug.DebugLogger.debugLog("BottomNavBar", "Encoded chapter name: $encodedChapter")
+                        navController.navigate("revision/$encodedChapter")
+                    },
                     onGoHome = {
                         navController.navigate("home") {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
@@ -259,6 +265,17 @@ fun BottomNavBar() {
                 val conceptId = backStackEntry.arguments?.getString("conceptId")
                 ChatbotScreen(conceptId = conceptId)
             }
+
+            composable("revision/{chapterName}") { backStackEntry ->
+                val encodedChapterName = backStackEntry.arguments?.getString("chapterName") ?: return@composable
+                val chapterName = java.net.URLDecoder.decode(encodedChapterName, "UTF-8")
+                com.anurag.eduai.debug.DebugLogger.debugLog("BottomNavBar", "Revision route - Encoded: $encodedChapterName, Decoded: $chapterName")
+                com.anurag.eduai.ui.screens.revisionscreen.RevisionScreen(
+                    chapterName = chapterName,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
             composable(route = "simulation_agent/{simulationId}") { backStackEntry ->
                 val simulationId = backStackEntry.arguments?.getString("simulationId")!!
                 SimulationAgentScreen(

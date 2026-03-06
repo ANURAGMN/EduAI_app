@@ -14,7 +14,8 @@ enum class ScreenName(val displayName: String) {
     CHATBOT("CHATBOT"),
     SIMULATIONLIST("SIMULATION_LIST"),
     SIMULATIONVIEWER("SIMULATION_VIEWER"),
-    SIMULATIONAGENT("SIMULATION_AGENT")
+    SIMULATIONAGENT("SIMULATION_AGENT"),
+    REVISION("REVISION")
 }
 
 enum class EventType(val type: String) {

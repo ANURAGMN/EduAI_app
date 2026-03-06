@@ -94,6 +94,7 @@
     <string name="complete_previous_concepts">Complete previous concepts</string>
     <string name="open_concept">Open concept</string>
     <string name="locked">Locked</string>
+    <string name="revision">revision</string>
     <string name="in_progress">In Progress</string>
     <string name="not_started">Not Started</string>
     <string name="back">Back</string>
@@ -192,6 +193,9 @@
     <string name="progress_status">%1$d of %2$d • %3$d left</string>
     <string name="progress">Progress</string>
     <string name="study">Study</string>
+    <string name="select_chapter">Select Chapter</string>
+    <string name="chapter">Chapter</string>
+    <string name="loading_chapters">Loading chapters…</string>
     <string name="status_completed">Completed</string>
     <string name="status_in_progress">In Progress</string>
     <string name="status_not_started">Not Started</string>

@@ -50,11 +50,12 @@ import com.anurag.eduai.ui.theme.TextSecondary
  * 1. Chapter ID and Name
  * 2. Status Badge (Completed, In Progress)
  * 3. Progress Bar showing completion percentage
- * 4. Action Buttons: Study, Simulations
+ * 4. Action Buttons: Study, Simulations, Revision
  *
  * @param chapter The chapter UI model to display.
  * @param onStudyClick Callback when the "Study" button is clicked.
  * @param onSimulationClick Callback when the "Simulation" button is clicked.
+ * @param onRevisionClick Callback when the "Revision" button is clicked.
  * @param modifier Optional modifier for styling the card.
  */
 @Composable
@@ -62,7 +63,9 @@ fun ChapterCard(
     modifier: Modifier = Modifier,
     chapter: ChapterUiModel,
     onStudyClick: () -> Unit = {},
-    onSimulationClick: () -> Unit = {}
+    onSimulationClick: () -> Unit = {},
+    onRevisionClick: () -> Unit = {},
+    subjectName: String = "" // Added to check subject type
 ) {
     val dimens = LocalDimensions.current
     val progress = if (chapter.totalConcepts > 0) {
@@ -155,40 +158,47 @@ fun ChapterCard(
 
                         Spacer(modifier = Modifier.height(dimens.spaceMedium))
 
-                        // Progress label and percentage
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = stringResource(R.string.progress),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Medium,
-                                color = TextPrimary
+                        // TODO: TEMPORARY - Hide progress and some buttons for Math. Remove this check when needed.
+                        val isMathSubject = subjectName.contains("Math", ignoreCase = true) ||
+                                          subjectName.contains("ಗಣಿತ", ignoreCase = true)
+
+                        // Progress section - hidden for Math
+                        if (!isMathSubject) {
+                            // Progress label and percentage
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.progress),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = TextPrimary
+                                )
+                                Text(
+                                    text = "${(progress * 100).toInt()}%",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(dimens.spaceSmall))
+
+                            // Progress bar
+                            LinearProgressIndicator(
+                                progress = { progress },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(dimens.spaceSmall)
+                                    .clip(RoundedCornerShape(dimens.cornerRadiusRound)),
+                                color = HeaderGradientStart,
+                                trackColor = ColorHint,
                             )
-                            Text(
-                                text = "${(progress * 100).toInt()}%",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
+
+                            Spacer(modifier = Modifier.height(dimens.spaceMedium))
                         }
-
-                        Spacer(modifier = Modifier.height(dimens.spaceSmall))
-
-                        // Progress bar
-                        LinearProgressIndicator(
-                            progress = { progress },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(dimens.spaceSmall)
-                                .clip(RoundedCornerShape(dimens.cornerRadiusRound)),
-                            color = HeaderGradientStart,
-                            trackColor = ColorHint,
-                        )
-
-                        Spacer(modifier = Modifier.height(dimens.spaceMedium))
 
                         Column(
                             modifier = Modifier.fillMaxWidth(),
@@ -199,18 +209,21 @@ fun ChapterCard(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
                             ) {
-                                ChapterActionButton(
-                                    label = stringResource(R.string.study),
-                                    icon = {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                                            contentDescription = stringResource(R.string.study),
-                                            tint = TextPrimary
-                                        )
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    onClick = onStudyClick
-                                )
+                                // Study button - hidden for Math
+                                if (!isMathSubject) {
+                                    ChapterActionButton(
+                                        label = stringResource(R.string.study),
+                                        icon = {
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                                                contentDescription = stringResource(R.string.study),
+                                                tint = TextPrimary
+                                            )
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        onClick = onStudyClick
+                                    )
+                                }
                                 ChapterActionButton(
                                     label = stringResource(R.string.simulation),
                                     icon = {
@@ -220,8 +233,24 @@ fun ChapterCard(
                                             tint = TextPrimary
                                         )
                                     },
-                                    modifier = Modifier.weight(1f),
+                                    modifier = if (isMathSubject) Modifier.fillMaxWidth() else Modifier.weight(1f),
                                     onClick = onSimulationClick
+                                )
+                            }
+
+                            // Second row - Revision button (full width) - hidden for Math
+                            if (!isMathSubject) {
+                                ChapterActionButton(
+                                    label = stringResource(R.string.revision),
+                                    icon = {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                                            contentDescription = stringResource(R.string.revision),
+                                            tint = TextPrimary
+                                        )
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onClick = onRevisionClick
                                 )
                             }
                         }

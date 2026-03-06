@@ -68,7 +68,8 @@ fun PracticeSimulationCard(
                                 else -> ConceptStatus.NOT_STARTED
                             },
                             type = sim.type,
-                            simulationUrl = sim.simulationUrl
+                            simulationUrl = sim.simulationUrl,
+                            simulationUrlKannada = sim.simulationUrlKannada
                         )
 
                         ConceptCard(

@@ -95,13 +95,15 @@ class SessionUseCase @Inject constructor(
     suspend fun continueSession(
         userMessage: String,
         clickedAutosuggestion: Boolean,
-        studentLevel: String
+        studentLevel: String,
+        isKannada: Boolean
     ): SessionResult {
         return try {
             val response = agenticAIClient.continueSession(
                 userMessage = userMessage,
                 clickedAutosuggestion = clickedAutosuggestion,
-                studentLevel = studentLevel
+                studentLevel = studentLevel,
+                isKannada = isKannada
             )
 
             if (response.isSuccess) {

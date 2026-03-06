@@ -28,7 +28,8 @@ fun ChatBotSettings(
     onVoiceChange: (String) -> Unit,
     onConceptChange: (String) -> Unit,
     onLevelChange: (String) -> Unit,
-    onSpeedChange: (String) -> Unit
+    onSpeedChange: (String) -> Unit,
+    isRevisionMode: Boolean = false
 ) {
     val dimens = LocalDimensions.current
 
@@ -133,7 +134,7 @@ fun ChatBotSettings(
                 }
             } else {
                 Text(
-                    text = stringResource(R.string.select_concepts),
+                    text = if (isRevisionMode) stringResource(R.string.select_chapter) else stringResource(R.string.select_concepts),
                     color = TextPrimary,
                     style = MaterialTheme.typography.titleSmall
                 )
@@ -152,7 +153,7 @@ fun ChatBotSettings(
                 }
 
                 DropDownMenu(
-                    label = stringResource(R.string.select_concepts),
+                    label = if (isRevisionMode) stringResource(R.string.chapter) else stringResource(R.string.select_concepts),
                     options = state.displayConcepts.ifEmpty { state.availableConcepts },
                     selectedValue = selectedDisplayConcept ?: stringResource(R.string.tap_to_choose_topic),
                     onValueSelected = { displayedConcept ->
