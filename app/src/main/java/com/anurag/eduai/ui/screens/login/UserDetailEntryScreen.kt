@@ -74,18 +74,23 @@ import com.anurag.eduai.ui.viewmodel_factory.UserViewModelFactory
 
 @Composable
 fun UserDetailEntryScreen(
-    navController: NavController
+    navController: NavController,
+    userViewModel: UserViewModel
 ) {
     val dimens = LocalDimensions.current
     val context = LocalContext.current
 
-    // Get ViewModel using factory
-    val userViewModel: UserViewModel = viewModel(
-        factory = UserViewModelFactory(context)
-    )
 
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.USER_DETAIL_ENTRY)
+
+    // Debug logging to verify user data is available
+    val currentUser by userViewModel.user.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) {
+        DebugLogger.debugLog("UserDetailEntryScreen", "User ID: ${currentUser.id}")
+        DebugLogger.debugLog("UserDetailEntryScreen", "User Email: ${currentUser.email}")
+        DebugLogger.debugLog("UserDetailEntryScreen", "User Name: ${currentUser.displayName}")
+    }
 
     var fullName by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }

@@ -97,7 +97,6 @@ fun HomeScreen(
     LaunchedEffect(currentLanguage, languageChangeTrigger) {
         // Trigger refresh when configuration locale or app language changes
         viewModel.onLanguageChanged()
-        DebugLogger.debugLog("HomeScreen", "Language changed: $currentLanguage - refreshing names")
     }
 
     Surface(modifier = Modifier.fillMaxSize()) {

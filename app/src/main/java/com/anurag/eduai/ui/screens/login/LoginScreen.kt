@@ -51,7 +51,8 @@ import com.anurag.eduai.ui.viewmodel_factory.UserViewModelFactory
 
 @Composable
 fun LoginScreen(
-    navController: NavController
+    navController: NavController,
+    userViewModel: UserViewModel
 ) {
     val dimens = LocalDimensions.current
     val context = LocalContext.current
@@ -60,10 +61,6 @@ fun LoginScreen(
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.LOGIN)
 
-    // Get ViewModel
-    val userViewModel: UserViewModel = viewModel(
-        factory = UserViewModelFactory(context)
-    )
 
     val selectedLanguage by userViewModel.selectedLanguage.collectAsState()
     var errorMessage by remember { mutableStateOf<String?>(null) }

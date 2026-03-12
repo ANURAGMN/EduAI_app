@@ -131,6 +131,7 @@ class UserViewModel(
 
                     is UserCheckResult.NotFound -> {
                         _user.value = firebaseUser.copy(language = currentLanguage)
+                        DebugLogger.debugLog("UserViewModel", "New user detected - ID: ${firebaseUser.id}, Email: ${firebaseUser.email}")
                         _loginState.value = LoginState.NewUser
                     }
 
@@ -212,6 +213,11 @@ class UserViewModel(
             _userSaveState.value = UserSaveState.Saving
             try {
                 val currentUser = _user.value
+
+                // Debug logging to verify user ID
+                DebugLogger.debugLog("UserViewModel", "Submitting new user with ID: ${currentUser.id}")
+                DebugLogger.debugLog("UserViewModel", "User email: ${currentUser.email}")
+                DebugLogger.debugLog("UserViewModel", "User name: ${currentUser.displayName}")
 
                 // Create user in Firebase
                 val success = repo.createNewUser(currentUser)

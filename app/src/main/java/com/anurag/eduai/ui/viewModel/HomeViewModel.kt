@@ -238,6 +238,5 @@ class HomeViewModel(
      */
     fun onLanguageChanged() {
         _languageChangeTrigger.value += 1
-        DebugLogger.debugLog("HomeViewModel", "Language changed - triggering recomposition")
     }
 }

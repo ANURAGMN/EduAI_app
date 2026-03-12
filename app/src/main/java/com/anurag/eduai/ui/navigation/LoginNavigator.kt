@@ -30,12 +30,14 @@ fun LoginNavigator() {
     ) {
         composable("login") {
             LoginScreen(
-                navController = navController
+                navController = navController,
+                userViewModel = userViewModel
             )
         }
         composable("userDetailEntry") {
             UserDetailEntryScreen(
-                navController = navController
+                navController = navController,
+                userViewModel = userViewModel
             )
         }
         composable("main") {
