@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="kn" dir="ltr">
+<head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#ea580c">
+<title>ಮಾದರಿ ಮತ್ತು ಸೂತ್ರ ಡಿಟೆಕ್ಟಿವ್ — ಅಧ್ಯಾಯ ೪</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans Kannada',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#ea580c 0%,#b45309 100%);min-height:100vh;-webkit-font-smoothing:antialiased}#app{max-width:420px;margin:auto;padding:10px;padding-top:max(10px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom))}
+.header{text-align:center;color:#fff;padding:14px}
+.header h1{font-size:20px;font-weight:800;margin-bottom:4px}
+.header p{font-size:13px;opacity:.9}
+.sim-card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.12);margin-bottom:14px}
+.mode-tabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap}
+.mode-tab{flex:1;min-width:70px;padding:10px 2px;border:2px solid #e5e7eb;border-radius:10px;background:#fafafa;font-size:9px;font-weight:600;text-align:center;cursor:pointer}
+.mode-tab.active{border-color:#ea580c;background:#fff7ed;color:#9a3412}
+/* Pattern display */
+.pattern-box{background:linear-gradient(135deg,#fff7ed,#fed7aa);border-radius:14px;padding:14px;margin-bottom:12px}
+.pattern-title{font-size:14px;font-weight:700;color:#9a3412;margin-bottom:8px}
+/* Table */
+.p-table{width:100%;border-collapse:separate;border-spacing:0 3px;margin:8px 0}
+.p-table th{font-size:10px;padding:6px;background:#fff7ed;border-radius:6px;color:#9a3412}
+.p-table td{padding:8px;text-align:center;border-radius:6px;font-size:13px;font-weight:700;background:#f8fafc;color:#334155}
+.p-table td.formula{background:#dcfce7;color:#166534}
+/* Formula reveal */
+.formula-box{background:linear-gradient(135deg,#7c2d12,#9a3412);border-radius:14px;padding:16px;text-align:center;margin:12px 0}
+.formula-text{font-size:22px;font-weight:800;color:#fff}
+.formula-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:4px}
+/* Matchstick visual */
+.match-visual{background:#f8fafc;border-radius:12px;padding:10px;margin-bottom:10px;text-align:center}
+/* Slider */
+.slider-group{margin-bottom:12px}
+.slider-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.slider-label .name{color:#555}
+.slider-label .val{font-weight:700;color:#ea580c}
+input[type="range"]{width:100%;height:8px;border-radius:4px;background:#e5e7eb;-webkit-appearance:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#ea580c;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
+/* Quiz */
+.quiz-q{font-size:15px;font-weight:700;color:#1e293b;text-align:center;padding:16px;background:#fff7ed;border-radius:12px;margin-bottom:12px;line-height:1.5}
+.quiz-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.quiz-opt{padding:14px;border-radius:12px;border:2px solid #e5e7eb;font-size:14px;font-weight:600;cursor:pointer;background:#fff;text-align:center}
+.quiz-opt:active{transform:scale(.97)}
+.quiz-opt.correct{border-color:#16a34a;background:#dcfce7;color:#166534}
+.quiz-opt.wrong{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.feedback-box{text-align:center;font-size:13px;padding:12px;border-radius:10px;min-height:20px;margin-bottom:10px}
+.next-btn{display:block;margin:0 auto;padding:14px 32px;border-radius:12px;border:none;background:linear-gradient(135deg,#ea580c,#b45309);color:#fff;font-weight:700;font-size:14px;cursor:pointer}
+.score-bar{text-align:center;font-size:13px;font-weight:600;color:#555;margin-bottom:12px}
+.score-bar b{color:#ea580c}
+.insight-box{background:linear-gradient(135deg,#fff7ed,#fed7aa);border-radius:12px;padding:14px;margin-top:14px;border-left:4px solid #ea580c;font-size:13px;line-height:1.5}
+.insight-title{font-weight:700;color:#9a3412;margin-bottom:6px}
+.help-btn{position:fixed;bottom:20px;right:20px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#ea580c,#b45309);color:#fff;border:3px solid #fff;box-shadow:0 4px 15px rgba(234,88,12,.4);font-size:20px;font-weight:700;cursor:pointer;z-index:100;display:flex;align-items:center;justify-content:center}
+.help-btn:active{transform:scale(.9)}
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.help-overlay.open{display:flex}
+.help-panel{background:#fff;border-radius:20px 20px 0 0;max-width:420px;width:100%;max-height:75vh;overflow-y:auto;padding:20px 16px;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.help-close{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.help-close h2{font-size:16px;font-weight:700}
+.help-close button{width:32px;height:32px;border-radius:50%;border:none;background:#f1f5f9;font-size:18px;cursor:pointer}
+.help-section{margin-bottom:14px}
+.help-section-title{font-size:12px;font-weight:700;color:#ea580c;margin-bottom:6px}
+.help-step{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px;line-height:1.5;color:#475569}
+.help-step:last-child{border-bottom:none}
+.help-step .sn{width:22px;height:22px;border-radius:50%;background:#ea580c;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.help-key{background:#fef3c7;border-radius:8px;padding:8px 10px;font-size:11px;color:#92400e;line-height:1.5;margin-top:4px}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="header"><h1>ಮಾದರಿ ಡಿಟೆಕ್ಟಿವ್</h1><p>ಮಾದರಿಗಳಲ್ಲಿ ಅಡಗಿರುವ ಸೂತ್ರಗಳನ್ನು ಕಂಡುಹಿಡಿಯಿರಿ!</p></div>
+<div class="sim-card" id="sim"></div>
+<div class="insight-box">
+  <div class="insight-title">ಬೀಜಗಣಿತದ ಶಕ್ತಿ</div>
+  ಸಂಖ್ಯೆಗಳ ಮಾದರಿಗಳನ್ನು ಬೀಜಗಣಿತ ಸೂತ್ರಗಳಿಂದ ವಿವರಿಸಬಹುದು. ಸೂತ್ರ ಸಿಕ್ಕ ನಂತರ ಯಾವುದೇ ಪದ — 100ನೇ, 1000ನೇ — ಒಂದೊಂದಾಗಿ ಎಣಿಸದೆ ತಕ್ಷಣ ಊಹಿಸಬಹುದು!
+</div>
+<button class="help-btn" id="helpBtn">?</button>
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-panel">
+    <div class="help-close"><h2>ಈ ಸಿಮ್ಯುಲೇಶನ್ ಹೇಗೆ ಬಳಸುವುದು</h2><button id="helpClose">&times;</button></div>
+    <div class="help-section">
+      <div class="help-section-title">ಏನು ಮಾಡಬೇಕು</div>
+      <div class="help-step"><span class="sn">1</span><span><b>ಒಲೆ ಸೌಟು:</b> ತ್ರಿಕೋಣ ಮಾದರಿಗಳು ಹೇಗೆ ಬೆಳೆಯುತ್ತವೆ ನೋಡಿ. ಸೂತ್ರ 2y+1 ಯಾವುದೇ ಹಂತದಲ್ಲಿ ಒಲೆ ಸೌಟುಗಳನ್ನು ಊಹಿಸುತ್ತದೆ.</span></div>
+      <div class="help-step"><span class="sn">2</span><span><b>ಕ್ಯಾಲೆಂಡರ್:</b> 2×2 ಚೌಕ ಕರ್ಣೀಯ ಮೊತ್ತಗಳು ಯಾವಾಗಲೂ ಸಮ (2a+8) ಏಕೆ ಎಂಬುದನ್ನು ಕಂಡುಹಿಡಿಯಿರಿ.</span></div>
+      <div class="help-step"><span class="sn">3</span><span><b>ರಸಪ್ರಶ್ನೆ:</b> ಮಾದರಿಗಳಿಂದ ಸೂತ್ರಗಳನ್ನು ಕಂಡು ಮೌಲ್ಯಗಳನ್ನು ಊಹಿಸಿ.</span></div>
+    </div>
+    <div class="help-section">
+      <div class="help-section-title">ಮುಖ್ಯ ಕಲ್ಪನೆ</div>
+      <div class="help-key">ಹುಡುಕಿ: ಮಾದರಿಯಲ್ಲಿ <b>ಒಂದೇ ಉಳಿಯುವುದು</b> (ಸ್ಥಿರ) ಮತ್ತು <b>ಬದಲಾಗುವುದು</b> (ಚರ). ಸ್ಥಾನ ಮತ್ತು ಮೌಲ್ಯದ ನಡುವಿನ ಸಂಬಂಧವೇ ಸೂತ್ರ.</div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+document.getElementById('helpBtn').onclick=()=>document.getElementById('helpOverlay').classList.add('open');
+document.getElementById('helpClose').onclick=()=>document.getElementById('helpOverlay').classList.remove('open');
+document.getElementById('helpOverlay').onclick=e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open')};
+
+const T={match:"ಒಲೆ ಸೌಟು",calendar:"ಕ್ಯಾಲೆಂಡರ್",quiz:"ರಸಪ್ರಶ್ನೆ",matchstickTriangles:"ಒಲೆ ಸೌಟು ತ್ರಿಕೋಣಗಳು",step1Desc:"ಹಂತ 1: 3 ಸೌಟು. ಪ್ರತಿ ಹೊಸ ಹಂತ 2 ಸೌಟು ಸೇರಿಸುತ್ತದೆ.",stepY:"ಹಂತ (y)",matchsticks:"ಒಲೆ ಸೌಟುಗಳು",formulaLabel:"ಸೂತ್ರ: 3+2(y−1)",generalFormula:"ಸಾಮಾನ್ಯ ಸೂತ್ರ",stepNumber:"ಹಂತ ಸಂಖ್ಯೆ",score:"ಸ್ಕೋರ್",question:"ಪ್ರಶ್ನೆ",next:"ಮುಂದೆ",correct:"ಸರಿ!",calendar2x2:"ಕ್ಯಾಲೆಂಡರ್ 2×2 ಚೌಕ",topLeft:"ಮೇಲಿನ-ಎಡ ಸಂಖ್ಯೆ (a)"};
+const ct=document.getElementById("sim");
+let mode="match",step=6;
+
+function renderMatch(){
+  let rows='';for(let i=1;i<=Math.min(step,8);i++){rows+=`<tr><td>${i}</td><td>${2*i+1}</td><td class="formula">3 + 2×${i-1} = ${3+2*(i-1)}</td></tr>`}
+  ct.innerHTML=`
+  <div class="mode-tabs">${tabs('match')}</div>
+  <div class="pattern-box"><div class="pattern-title">${T.matchstickTriangles}</div>
+  <div style="font-size:12px;color:#7c2d12">${T.step1Desc}</div></div>
+  <table class="p-table"><tr><th>${T.stepY}</th><th>${T.matchsticks}</th><th>${T.formulaLabel}</th></tr>${rows}</table>
+  <div class="formula-box"><div class="formula-sub">${T.generalFormula}</div><div class="formula-text">2y + 1</div><div class="formula-sub">ಅಥವಾ: 3 + 2(y − 1)</div></div>
+  <div style="background:#ecfdf5;border-radius:10px;padding:10px;text-align:center;font-size:13px;color:#065f46;font-weight:600">ಹಂತ ${step}: <b>${2*step+1} ಒಲೆ ಸೌಟುಗಳು</b></div>
+  <div class="slider-group" style="margin-top:10px"><div class="slider-label"><span class="name">${T.stepNumber}</span><span class="val">${step}</span></div><input type="range" id="step-sl" min="1" max="100" step="1" value="${step}"></div>`;
+  wireMode();
+  ct.querySelector('#step-sl').oninput=function(){step=parseInt(this.value);renderMatch()};
+}
+
+let calA=12;
+function renderCalendar(){
+  const a=calA;
+  ct.innerHTML=`
+  <div class="mode-tabs">${tabs('calendar')}</div>
+  <div class="pattern-box"><div class="pattern-title">${T.calendar2x2}</div>
+  <div style="font-size:12px;color:#7c2d12">ಕ್ಯಾಲೆಂಡರ್ನಿಂದ ಯಾವುದೇ 2×2 ಚೌಕ ಆಯ್ಕೆಮಾಡಿ. ಕರ್ಣೀಯ ಮೊತ್ತಗಳು ಸಮನೇ?</div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;max-width:200px;margin:0 auto 12px">
+    <div style="padding:12px;background:#dbeafe;border-radius:8px;text-align:center;font-size:18px;font-weight:800;color:#1d4ed8">${a}</div>
+    <div style="padding:12px;background:#fce7f3;border-radius:8px;text-align:center;font-size:18px;font-weight:800;color:#be185d">${a+1}</div>
+    <div style="padding:12px;background:#fce7f3;border-radius:8px;text-align:center;font-size:18px;font-weight:800;color:#be185d">${a+7}</div>
+    <div style="padding:12px;background:#dbeafe;border-radius:8px;text-align:center;font-size:18px;font-weight:800;color:#1d4ed8">${a+8}</div>
+  </div>
+  <div style="display:flex;gap:10px;justify-content:center;margin-bottom:12px">
+    <div style="background:#dbeafe;border-radius:10px;padding:10px;text-align:center;font-size:13px;color:#1d4ed8;font-weight:700">↘ Diagonal: ${a} + ${a+8} = <b>${2*a+8}</b></div>
+    <div style="background:#fce7f3;border-radius:10px;padding:10px;text-align:center;font-size:13px;color:#be185d;font-weight:700">↗ Diagonal: ${a+1} + ${a+7} = <b>${2*a+8}</b></div>
+  </div>
+  <div style="background:#dcfce7;border-radius:10px;padding:10px;text-align:center;font-size:14px;color:#166534;font-weight:700">Both diagonals = 2a + 8 = <b>${2*a+8}</b>. Always equal!</div>
+  <div class="formula-box"><div class="formula-sub">Using algebra: a, a+1, a+7, a+8</div><div class="formula-text">Both diagonals = 2a + 8</div></div>
+  <div class="slider-group" style="margin-top:10px"><div class="slider-label"><span class="name">${T.topLeft}</span><span class="val">${a}</span></div><input type="range" id="cal-sl" min="1" max="25" step="1" value="${a}"></div>`;
+  wireMode();
+  ct.querySelector('#cal-sl').oninput=function(){calA=parseInt(this.value);renderCalendar()};
+}
+
+const QUIZ=[
+  {q:"ಒಲೆ ಸೌಟು ತ್ರಿಕೋಣ: ಹಂತ 33 ರಲ್ಲಿ ಎಷ್ಟು ಸೌಟು?",opts:["67","66","65","68"],ans:"67",ex:"2×33 + 1 = 67"},
+  {q:"ಚೌಕ ಮಾದರಿ: w ಚೌಕಗಳಿಗೆ 4+3(w−1) ಸೌಟು. w=10 ಆದರೆ?",opts:["31","30","34","28"],ans:"31",ex:"4 + 3×9 = 4 + 27 = 31"},
+  {q:"ಕ್ಯಾಲೆಂಡರ್ 2×2: ಮೇಲಿನ-ಎಡ 5. ಕರ್ಣೀಯ ಮೊತ್ತ?",opts:["18","16","20","14"],ans:"18",ex:"2×5 + 8 = 18"},
+  {q:"ಹಗ್ಗ r ಬಾರಿ ಮಡಿಸಿ ಕತ್ತರಿಸಿದರೆ ಎಷ್ಟು ತುಂಡು?",opts:["r + 2","2r","r + 1","2r + 1"],ans:"r + 2",ex:"ಮಡಿಕೆ 0→2, 1→3, 2→4. ಮಾದರಿ: r + 2"},
+  {q:"4-ಕಾಲಂ ಜಾಲ: ಸಾಲು 5, ಕಾಲಂ 3 ರಲ್ಲಿ ಏನು?",opts:["19","18","20","17"],ans:"19",ex:"4(r−1)+c = 4×4+3 = 19"},
+  {q:"ಸೀರೆ ಮಾದರಿ ABC ಪುನರಾವರ್ತನೆ. ಸ್ಥಾನ 122 ರಲ್ಲಿ ಡಿಸೈನ್ B?",opts:["ಹೌದು","ಇಲ್ಲ"],ans:"ಹೌದು",ex:"122 ÷ 3 = 40 ಶೇಷ 2. ಶೇಷ 2 → ಡಿಸೈನ್ B (ಸ್ಥಾನ 3n−1)"},
+  {q:"4 ರ ಗುಣಕಗಳು: 29ನೇ ಪದ ಏನು?",opts:["116","112","120","118"],ans:"116",ex:"4 × 29 = 116"},
+  {q:"ಟ್ರಾಫಿಕ್ ಲೈಟ್: Red, Yellow, Green, Yellow ಪುನರಾವರ್ತನೆ. ಸ್ಥಾನ 90?",opts:["Red","Yellow","Green"],ans:"Yellow",ex:"90 ÷ 4 = 22 ಶೇಷ 2. ಸ್ಥಾನ 2 → Yellow"}
+];
+let qIdx=0,qScore=0,qTotal=0,qAns=false;
+
+function renderQuiz(){
+  if(qIdx>=QUIZ.length)qIdx=0;const q=QUIZ[qIdx];
+  ct.innerHTML=`
+  <div class="mode-tabs">${tabs('quiz')}</div>
+  <div class="score-bar">${T.score}: <b>${qScore}/${qTotal}</b> &bull; ${T.question} <b>${qIdx+1}/${QUIZ.length}</b></div>
+  <div class="quiz-q">${q.q}</div>
+  <div class="quiz-opts" id="qo">${q.opts.map(o=>`<button class="quiz-opt" data-v="${o}">${o}</button>`).join('')}</div>
+  <div class="feedback-box" id="fb"></div>
+  <button class="next-btn" id="nxt" style="display:none">${T.next}</button>`;
+  qAns=false;wireMode();
+  ct.querySelector('#qo').addEventListener('click',e=>{const b=e.target.closest('.quiz-opt');if(!b||qAns)return;qAns=true;qTotal++;
+    if(b.dataset.v===q.ans){b.classList.add('correct');qScore++;ct.querySelector('#fb').innerHTML=`<div style="background:#dcfce7;color:#166534;padding:12px;border-radius:10px"><b>${T.correct}</b> ${q.ex}</div>`}
+    else{b.classList.add('wrong');ct.querySelectorAll('.quiz-opt').forEach(x=>{if(x.dataset.v===q.ans)x.classList.add('correct')});ct.querySelector('#fb').innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px"><b>${q.ans}</b> — ${q.ex}</div>`}
+    ct.querySelector('#nxt').style.display='block';});
+  ct.querySelector('#nxt').onclick=()=>{qIdx++;renderQuiz()};
+}
+
+function tabs(a){return['match','calendar','quiz'].map(m=>`<button class="mode-tab${m===a?' active':''}" data-m="${m}">${T[m]||m}</button>`).join('')}
+function wireMode(){ct.querySelectorAll('.mode-tab').forEach(b=>b.onclick=()=>{mode=b.dataset.m;if(mode==='match')renderMatch();else if(mode==='calendar')renderCalendar();else{qIdx=0;qScore=0;qTotal=0;renderQuiz()}})}
+
+renderMatch();
+</script>
+</body>
+</html>
