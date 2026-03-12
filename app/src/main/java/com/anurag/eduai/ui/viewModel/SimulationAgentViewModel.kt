@@ -10,6 +10,7 @@ import com.anurag.eduai.data.remote.SimulationAgentAPI
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.domain.chatbot.usecase.AvatarChangeUseCase
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
+import com.anurag.eduai.utils.isKannada
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -261,11 +262,16 @@ class SimulationAgentViewModel(
             // Process simulation URLs
             val paramChange = response.simulation.paramChange
             if (paramChange != null) {
-                // Use the URL properties, not the numeric values
-                _simulationUrls.value = listOf(
-                    paramChange.beforeUrl,
-                    paramChange.afterUrl
-                )
+                // Use the URL properties if available, otherwise use the main URL
+                _simulationUrls.value = if (paramChange.beforeUrl != null && paramChange.afterUrl != null) {
+                    listOf(
+                        paramChange.beforeUrl,
+                        paramChange.afterUrl
+                    )
+                } else {
+                    // If URLs are not provided, just use the main simulation URL
+                    listOf(response.simulation.htmlUrl)
+                }
             } else {
                 _simulationUrls.value = listOf(response.simulation.htmlUrl)
             }
@@ -401,9 +407,14 @@ class SimulationAgentViewModel(
                 _uiState.value = SimAgentUiState.Loading
                 DebugLogger.debugLog(TAG, "Starting new session for simulation: $simulationId")
 
+                // Get current app language
+                val currentLanguage = if (isKannada()) "kannada" else "english"
+                DebugLogger.debugLog(TAG, "Starting session with language: $currentLanguage")
+
                 val response = api.startSession(
                     SimStartSessionRequest(
                         simulationId = simulationId,
+                        language = currentLanguage,
                         studentId = null
                     )
                 )

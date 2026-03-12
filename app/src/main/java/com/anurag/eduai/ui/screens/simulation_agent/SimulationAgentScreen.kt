@@ -257,7 +257,16 @@ fun SimulationAgentScreen(
                                 viewModel.onVoiceChanged()
                             }
                         },
-                        onConceptChange = { /* Not used */ },
+                        onConceptChange = { selectedTitle ->
+                            // Find the simulation ID from the title
+                            val selectedSimulation = viewModel.availableSimulations.value.find { it.title == selectedTitle }
+                            selectedSimulation?.let { simulation ->
+                                // Close settings menu
+                                showSettingsMenu = false
+                                // Start the selected simulation
+                                viewModel.startNewSession(simulation.id)
+                            }
+                        },
                         onLevelChange = { levelCode ->
                             settingsState = settingsState.copy(selectedStudentLevel = levelCode)
                         },
