@@ -2,6 +2,9 @@ package com.anurag.eduai.ui.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.model.SimQuizAnswerRequest
 import com.anurag.eduai.data.model.SimSessionResponse
 import com.anurag.eduai.data.model.SimStartSessionRequest
@@ -24,9 +27,11 @@ import java.net.UnknownHostException
  * ViewModel for the Simulation Agent screen
  * Contains ALL business logic - UI is purely presentational
  */
-class SimulationAgentViewModel(
-    private val api: SimulationAgentAPI = SimulationAgentAPI(),
-    private val avatarChangeUseCase: AvatarChangeUseCase = AvatarChangeUseCase()
+@HiltViewModel
+class SimulationAgentViewModel @Inject constructor(
+    private val api: SimulationAgentAPI,
+    private val sharedPrefs: SharedPreferenceUtils,
+    private val avatarChangeUseCase: AvatarChangeUseCase
 ) : ViewModel() {
 
     // API/Session State
@@ -411,11 +416,15 @@ class SimulationAgentViewModel(
                 val currentLanguage = if (isKannada()) "kannada" else "english"
                 DebugLogger.debugLog(TAG, "Starting session with language: $currentLanguage")
 
+                // Get logged-in user ID from shared preferences
+                val studentId = sharedPrefs.getUserId()
+                DebugLogger.debugLog(TAG, "Starting session with student ID: $studentId")
+
                 val response = api.startSession(
                     SimStartSessionRequest(
                         simulationId = simulationId,
                         language = currentLanguage,
-                        studentId = null
+                        studentId = studentId
                     )
                 )
 
@@ -466,8 +475,11 @@ class SimulationAgentViewModel(
                 apiResponse.simulation.paramChange?.let { change ->
                     DebugLogger.debugLog(TAG, "📊 Parameter Changed!")
                     DebugLogger.debugLog(TAG, "  Parameter: ${change.parameter}")
-                    DebugLogger.debugLog(TAG, "  Before Value: ${change.before}")
-                    DebugLogger.debugLog(TAG, "  After Value: ${change.after}")
+                    // Safely stringify JsonElement values
+                    val beforeVal = change.before?.toString() ?: "null"
+                    val afterVal = change.after?.toString() ?: "null"
+                    DebugLogger.debugLog(TAG, "  Before Value: $beforeVal")
+                    DebugLogger.debugLog(TAG, "  After Value: $afterVal")
                     DebugLogger.debugLog(TAG, "  Before URL: ${change.beforeUrl}")
                     DebugLogger.debugLog(TAG, "  After URL: ${change.afterUrl}")
                 }

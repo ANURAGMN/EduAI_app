@@ -3,7 +3,6 @@ package com.anurag.eduai.data.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
-import org.intellij.lang.annotations.Language
 
 // ==================== REQUEST MODELS ====================
 
@@ -67,9 +66,9 @@ data class SimSimulationState(
 @Serializable
 data class SimParameterChange(
     val parameter: String,
-    val before: Double,
-    val after: Double,
-    val reason: String,
+    val before: JsonElement? = null,
+    val after: JsonElement? = null,
+    val reason: String? = null,
     @SerialName("before_url") val beforeUrl: String? = null,
     @SerialName("after_url") val afterUrl: String? = null
 )

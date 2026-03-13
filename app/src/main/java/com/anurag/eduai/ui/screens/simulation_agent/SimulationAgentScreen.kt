@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettings
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatHeaderIcons
@@ -31,7 +32,6 @@ import com.anurag.eduai.ui.viewModel.SimAgentUiState
 import com.anurag.eduai.ui.viewModel.SimulationAgentViewModel
 import com.anurag.eduai.ui.viewModel.SpeechToText
 import com.anurag.eduai.ui.viewModel.TextToSpeech
-import com.anurag.eduai.ui.viewmodel_factory.SimulationAgentViewmodelFactory
 
 /**
  * Simulation Agent Screen - PURELY PRESENTATIONAL
@@ -49,7 +49,8 @@ fun SimulationAgentScreen(
     sttController: SpeechToText = viewModel()
 ) {
     val dimens = LocalDimensions.current
-    val viewModel: SimulationAgentViewModel = viewModel(factory = SimulationAgentViewmodelFactory())
+    val context = LocalContext.current
+    val viewModel: SimulationAgentViewModel = hiltViewModel()
 
     // Observe ALL state from ViewModel - no local state management
     val uiState by viewModel.uiState.collectAsState()
@@ -88,7 +89,6 @@ fun SimulationAgentScreen(
         )
     }
 
-    val context = LocalContext.current
 
     /**
      * Animation values (UI-only)
@@ -129,6 +129,13 @@ fun SimulationAgentScreen(
      */
     LaunchedEffect(simulationId) {
         viewModel.startNewSession(simulationId)
+    }
+
+    LaunchedEffect(uiState) {
+        if (uiState is SimAgentUiState.Loading) {
+            ttsController.stop()
+            viewModel.onTtsStopped()
+        }
     }
 
     /**
@@ -360,7 +367,10 @@ fun SimulationAgentScreen(
                 ),
                 sttState = sttState,
                 onTextChange = { viewModel.onUserInputChanged(it) },
-                onSendClick = { viewModel.onSendClick() },
+                onSendClick = {
+                    ttsController.stop()
+                    viewModel.onSendClick()
+                },
                 onSpeakClick = {
                     if (ttsState.isSpeaking) {
                         ttsController.stop()

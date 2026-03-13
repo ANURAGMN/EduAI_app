@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anurag.eduai.R
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.domain.chatbot.usecase.ChatIntent
@@ -32,7 +31,6 @@ import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.viewModel.ChatViewModel
 import com.anurag.eduai.ui.viewModel.ConceptViewModel
 import com.anurag.eduai.ui.viewModel.SimulationAgentViewModel
-import com.anurag.eduai.ui.viewmodel_factory.SimulationAgentViewmodelFactory
 import com.anurag.eduai.utils.StreakManager
 
 /**
@@ -66,11 +64,9 @@ fun ConceptScreen(
     val state by viewModel.state.collectAsState()
     val chatState by chatViewModel.uiState.collectAsState()
 
-    val simulationViewModel: SimulationAgentViewModel = viewModel(
-        factory = SimulationAgentViewmodelFactory()
-    )
-    val availableSimulation by simulationViewModel.availableSimulations.collectAsState()
+    val simulationViewModel: SimulationAgentViewModel = hiltViewModel()
 
+    // available simulations are exposed by the SimulationAgentViewModel when needed
 
     // streak update
     val streakManager = remember { StreakManager(context) }

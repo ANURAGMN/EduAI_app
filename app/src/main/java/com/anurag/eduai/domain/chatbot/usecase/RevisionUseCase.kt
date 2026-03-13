@@ -1,14 +1,11 @@
 package com.anurag.eduai.domain.chatbot.usecase
 
-import android.content.Context
-import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.remote.AgenticAIClient
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.domain.chatbot.model.SessionResult
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
 import com.anurag.eduai.utils.getCurrentLanguageCode
 import com.anurag.eduai.utils.isKannada
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import javax.inject.Inject
@@ -18,9 +15,7 @@ import javax.inject.Inject
  * Similar to SessionUseCase but for revision endpoints.
  */
 class RevisionUseCase @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val agenticAIClient: AgenticAIClient,
-    private val sharedPrefs: SharedPreferenceUtils
 ) {
     private val revisionThreadMap = mutableMapOf<String, String>()
     private val revisionSessionMap = mutableMapOf<String, String>()

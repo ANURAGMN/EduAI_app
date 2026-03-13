@@ -21,6 +21,12 @@ class FirebaseRepository(
      */
     suspend fun checkUserExists(userId: String): UserCheckResult {
         return try {
+            // Validate user ID is not empty
+            if (userId.isBlank()) {
+                DebugLogger.errorLog("FirebaseRepository", "Cannot check user: User ID is empty")
+                return UserCheckResult.Error(IllegalArgumentException("User ID cannot be empty"))
+            }
+
             val snapshot = usersCollection.document(userId).get().await()
 
             if (!snapshot.exists()) {
@@ -64,6 +70,12 @@ class FirebaseRepository(
 
     suspend fun createNewUser(user: User): Boolean {
         return try {
+            // Validate user ID is not empty
+            if (user.id.isBlank()) {
+                DebugLogger.errorLog("FirebaseRepository", "Cannot create user: User ID is empty")
+                throw IllegalArgumentException("User ID cannot be empty")
+            }
+
             val data = mapOf(
                 "id" to user.id,
                 "email" to user.email,
