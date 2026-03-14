@@ -69,7 +69,8 @@ fun PracticeSimulationCard(
                             },
                             type = sim.type,
                             simulationUrl = sim.simulationUrl,
-                            simulationUrlKannada = sim.simulationUrlKannada
+                            simulationUrlKannada = sim.simulationUrlKannada,
+                            simulationId = sim.simulationId
                         )
 
                         ConceptCard(

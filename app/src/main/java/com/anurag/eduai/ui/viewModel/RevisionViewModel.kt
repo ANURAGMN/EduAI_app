@@ -46,13 +46,42 @@ class RevisionViewModel @Inject constructor(
     private var currentChapter = ""
 
     /**
+     * Normalize chapter name to match API format.
+     * Converts "Light: Shadows And Reflections" to "Light Shadows And Reflections"
+     * - Removes emojis and special characters
+     * - Removes dashes/hyphens
+     * - Removes colons
+     * - Normalizes spacing and handles "and" capitalization
+     */
+    private fun normalizeChapterName(chapterName: String): String {
+        var normalized = chapterName
+
+        // Remove emojis and special Unicode characters (keep only ASCII and common text)
+        normalized = normalized.replace(Regex("[^\\p{L}\\p{N}\\s,&]"), " ")
+
+        // Remove commas and normalize spacing
+        normalized = normalized.replace(", ", " ").replace(",", " ")
+
+        // Remove dashes/hyphens and normalize spacing
+        normalized = normalized.replace("-", " ")
+
+        // Handle "and" capitalization: "and" should be "And" when it's a word separator
+        normalized = normalized.replace(Regex("\\band\\b"), "And")
+
+        // Clean up extra spaces
+        normalized = normalized.replace(Regex("\\s+"), " ").trim()
+
+        return normalized
+    }
+
+    /**
      * Initialize the ViewModel with userId and auto-start revision session
      */
     fun initialize(userId: String, chapterName: String) {
         if (initialized) return
         initialized = true
         this.userId = userId
-        this.currentChapter = chapterName
+        this.currentChapter = normalizeChapterName(chapterName)
 
         // Use LocalizationUtils for language detection
         val appLanguage = getCurrentLanguageCode()
@@ -71,8 +100,8 @@ class RevisionViewModel @Inject constructor(
         // Fetch available chapters from backend
         fetchAvailableChapters()
 
-        // Auto-start the revision session
-        autoStartRevision(chapterName)
+        // Auto-start the revision session with normalized chapter name
+        autoStartRevision(currentChapter)
     }
 
     /**
@@ -114,15 +143,17 @@ class RevisionViewModel @Inject constructor(
      * Change to a different chapter
      */
     fun changeChapter(newChapter: String) = viewModelScope.launch {
-        if (newChapter == currentChapter) return@launch
+        val normalizedNewChapter = normalizeChapterName(newChapter)
 
-        DebugLogger.debugLog("RevisionViewModel", "Changing chapter from '$currentChapter' to '$newChapter'")
+        if (normalizedNewChapter == currentChapter) return@launch
+
+        DebugLogger.debugLog("RevisionViewModel", "Changing chapter from '$currentChapter' to '$normalizedNewChapter'")
 
         // Delete old session
         revisionUseCase.deleteRevisionSessionMapping(currentChapter)
 
         // Reset state
-        currentChapter = newChapter
+        currentChapter = normalizedNewChapter
         _uiState.update {
             ChatUiState(
                 selectedConcept = newChapter,
@@ -132,7 +163,7 @@ class RevisionViewModel @Inject constructor(
         }
 
         // Start new session with new chapter
-        autoStartRevision(newChapter)
+        autoStartRevision(normalizedNewChapter)
     }
 
     /**

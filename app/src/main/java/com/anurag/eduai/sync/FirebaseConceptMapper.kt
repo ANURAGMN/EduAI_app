@@ -19,6 +19,7 @@ import com.google.firebase.firestore.DocumentSnapshot
  *  - subject_id: Subject identifier
  *  - class_id: Class level
  *  - type: either "SIMULATION" or "STUDY"
+ *  - simulation_id: if type == simulation then the simulation ID (used for API calls)
  *  - simulation_url: if type == simulation then webpage url else empty or null
  */
 object FirebaseConceptMapper {
@@ -48,6 +49,7 @@ object FirebaseConceptMapper {
             description = combinedDescription,
             hasSimulation = conceptType is ConceptType.Simulation,
             type = conceptType.raw,
+            simulationId = document.getString("simulation_id") ?: "",
             simulationUrl = document.getString("simulation_url") ?: "",
             simulationUrlKannada = document.getString("simulation_url_kannada") ?: "",
             syncAt = System.currentTimeMillis(),

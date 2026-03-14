@@ -142,8 +142,8 @@ fun ConceptScreen(
                                     onConceptClick(conceptUiModel.id)
                                 }
                             },
-                            onSimulationAgentClick = {
-                                onSimulationAgentClick("simple_pendulum") // Pass the hardcoded ID
+                            onSimulationAgentClick = { simId ->
+                                onSimulationAgentClick(simId)
                             },
                             onSimulationClick = { title, url ->
                                 // Pass everything back to the navigator

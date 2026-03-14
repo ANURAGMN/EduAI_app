@@ -29,6 +29,38 @@ import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.ChapterViewModel
 import com.anurag.eduai.ui.viewModel.RevisionViewModel
 
+/**
+ * Mapping of chapter display names to their API-compatible names.
+ * Format: Display Name (from UI) -> API Name (for revision endpoint)
+ * Add the real API names as values here.
+ */
+private val chapterNameMapping = mapOf(
+    "Adolescence: A Stage of Growth and Change" to "Adolescence",
+    "Earth, Moon, and the Sun" to "Earth Moon And Sum",
+    "Electricity: Circuits and their components" to "Electricity",
+    "Evolving world of Science" to "Evolving World Of Science",
+    "Exploring Substances Acids, Bases and Neutral" to "Exploring Substances Acids Bases And Neutral",
+    "Heat Transfer in Nature" to "Heat Transfer In Nature",
+    "Life Processes in Animals" to "Life Processes In Animals",
+    "Life Processes in Plants" to "Life Processes In Plants",
+    "Light: Shadows and Reflections" to "Light Shadows And Reflection",
+    "Measurement of Time and Motion" to "Measurement Of Time And Motion",
+    "The World of Metals and Non-Metals" to "Metals And Non Metals",
+    "Changes Around Us: Physical and Chemical" to "Physical And Chemical Changes"
+)
+
+/**
+ * Get the API-compatible chapter name based on the display name.
+ * If no mapping exists, returns the display name with "and" -> "And" conversion.
+ */
+private fun String.getRevisionChapterName(): String {
+    return chapterNameMapping[this]?.let { mappedName ->
+        mappedName
+    } ?: run {
+        // Fallback: Simple conversion - replace "and" with "And" if no mapping exists
+        this.replace(Regex("\\band\\b"), "And")
+    }
+}
 
 /**
  * ChapterScreen displays a list of chapters for a given subject.
@@ -114,9 +146,8 @@ fun ChapterScreen(
                         onStudyClick = { onStudyClick(chapterUiModel.id, "STUDY") },
                         onSimulationClick = { onSimulationClick(chapterUiModel.id, "SIMULATION") },
                         onRevisionClick = {
-                            // Hardcoded for testing - will be replaced with dynamic chapter mapping
-                            val chapterName = "Measurement Of Time And Motion"
-                            DebugLogger.debugLog("ChapterScreen", "Revision button clicked for chapter: ${chapterUiModel.name}, using: $chapterName")
+                            val chapterName = chapterUiModel.name.getRevisionChapterName()
+                            DebugLogger.debugLog("ChapterScreen", "Revision button clicked for chapter: ${chapterUiModel.name}, mapped: $chapterName")
 
                             // Check if session exists
                             if (revisionViewModel.hasExistingSession(chapterName)) {

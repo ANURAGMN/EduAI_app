@@ -112,7 +112,11 @@ fun ConceptCard(
                         horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
                     ) {
                         Button(
-                            onClick = { onSimulationAgentClick("simple_pendulum") },
+                            onClick = {
+                                concept.simulationId?.let { simId ->
+                                    onSimulationAgentClick(simId)
+                                }
+                            },
                             modifier = Modifier.weight(1f),
                             contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
                             shape = MaterialTheme.shapes.small,

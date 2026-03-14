@@ -77,7 +77,8 @@ class ConceptViewModel @Inject constructor(
                         },
                         type = concept.type,
                         simulationUrl = concept.simulationUrl,
-                        simulationUrlKannada = concept.simulationUrlKannada
+                        simulationUrlKannada = concept.simulationUrlKannada,
+                        simulationId = concept.simulationId
                     )
                 }
 
