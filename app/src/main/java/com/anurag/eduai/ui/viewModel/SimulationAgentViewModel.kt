@@ -88,12 +88,19 @@ class SimulationAgentViewModel @Inject constructor(
     // NEW: Track current simulation ID to prevent re-starting on config change
     private var currentSimulationId: String? = null
 
+    // Language State for STT
+    private val _currentLanguage = MutableStateFlow("")
+    val currentLanguage: StateFlow<String> = _currentLanguage.asStateFlow()
+
     companion object {
         private const val TAG = "SimulationAgentVM"
         private const val WEBVIEW_DELAY_MS = 300L
     }
 
     init {
+        // Initialize language state
+        _currentLanguage.value = if (isKannada()) "kn-IN" else "en-IN"
+
         // Update input enabled state whenever TTS or loading state changes
         viewModelScope.launch {
             uiState.collect { state ->
@@ -283,7 +290,7 @@ class SimulationAgentViewModel @Inject constructor(
 
             _isSessionStarted.value = true
 
-            DebugLogger.debugLog(TAG, "📝 New teacher message processed:")
+            DebugLogger.debugLog(TAG, " New teacher message processed:")
             DebugLogger.debugLog(TAG, "  Message: ${response.teacherMessage.text}")
             DebugLogger.debugLog(TAG, "  Has param change: ${paramChange != null}")
             DebugLogger.debugLog(TAG, "  URL count: ${_simulationUrls.value.size}")
@@ -347,7 +354,7 @@ class SimulationAgentViewModel @Inject constructor(
             }
         }
 
-        DebugLogger.errorLog(TAG, "❌ $operation failed: ${e.javaClass.simpleName} - ${e.message}")
+        DebugLogger.errorLog(TAG, " $operation failed: ${e.javaClass.simpleName} - ${e.message}")
         return errorMessage
     }
 
@@ -375,13 +382,13 @@ class SimulationAgentViewModel @Inject constructor(
                 }
 
                 _availableSimulations.value = simulations
-                DebugLogger.debugLog(TAG, "✅ Loaded ${simulations.size} simulations")
+                DebugLogger.debugLog(TAG, "Loaded ${simulations.size} simulations")
                 simulations.forEach {
                     DebugLogger.debugLog(TAG, "  - ${it.title} (${it.id})")
                 }
 
             } catch (e: Exception) {
-                DebugLogger.errorLog(TAG, "❌ Failed to load simulations: ${e.message}")
+                DebugLogger.errorLog(TAG, " Failed to load simulations: ${e.message}")
                 // Fallback to default simulations
                 _availableSimulations.value = listOf(
                     SimulationInfo("simple_pendulum", "Simple Pendulum", ""),
@@ -428,7 +435,7 @@ class SimulationAgentViewModel @Inject constructor(
                     )
                 )
 
-                DebugLogger.debugLog(TAG, "✅ Session started successfully")
+                DebugLogger.debugLog(TAG, "Session started successfully")
                 DebugLogger.debugLog(TAG, "Session ID: ${response.sessionId}")
                 DebugLogger.debugLog(TAG, "Teacher Message: ${response.teacherMessage.text}")
                 DebugLogger.debugLog(TAG, "Simulation URL: ${response.simulation.htmlUrl}")
@@ -452,7 +459,7 @@ class SimulationAgentViewModel @Inject constructor(
         val currentSessionId = _sessionData.value?.sessionId
         if (currentSessionId == null) {
             val errorMsg = "No active session. Please restart the simulation."
-            DebugLogger.errorLog(TAG, "❌ No active session")
+            DebugLogger.errorLog(TAG, "No active session")
             _errorMessage.value = errorMsg
             _uiState.value = SimAgentUiState.Error(errorMsg)
             return
@@ -468,12 +475,12 @@ class SimulationAgentViewModel @Inject constructor(
                     request = SimStudentResponseRequest(studentResponse = response)
                 )
 
-                DebugLogger.debugLog(TAG, "✅ Response received successfully")
+                DebugLogger.debugLog(TAG, " Response received successfully")
                 DebugLogger.debugLog(TAG, "Teacher Message: ${apiResponse.teacherMessage.text}")
                 DebugLogger.debugLog(TAG, "Understanding Level: ${apiResponse.learningState.understandingLevel}")
 
                 apiResponse.simulation.paramChange?.let { change ->
-                    DebugLogger.debugLog(TAG, "📊 Parameter Changed!")
+                    DebugLogger.debugLog(TAG, " Parameter Changed!")
                     DebugLogger.debugLog(TAG, "  Parameter: ${change.parameter}")
                     // Safely stringify JsonElement values
                     val beforeVal = change.before?.toString() ?: "null"
@@ -503,7 +510,7 @@ class SimulationAgentViewModel @Inject constructor(
         val currentSessionId = _sessionData.value?.sessionId
         if (currentSessionId == null) {
             val errorMsg = "No active session. Please restart the simulation."
-            DebugLogger.errorLog(TAG, "❌ No active session")
+            DebugLogger.errorLog(TAG, " No active session")
             _errorMessage.value = errorMsg
             _uiState.value = SimAgentUiState.Error(errorMsg)
             return
@@ -519,7 +526,7 @@ class SimulationAgentViewModel @Inject constructor(
                     request = SimQuizAnswerRequest(answer = answer)
                 )
 
-                DebugLogger.debugLog(TAG, "✅ Quiz answer submitted successfully")
+                DebugLogger.debugLog(TAG, " Quiz answer submitted successfully")
                 DebugLogger.debugLog(TAG, "Teacher Message: ${apiResponse.teacherMessage.text}")
 
                 _sessionData.value = apiResponse
@@ -545,7 +552,7 @@ class SimulationAgentViewModel @Inject constructor(
 
                 val response = api.getSession(sessionId)
 
-                DebugLogger.debugLog(TAG, "✅ Session state retrieved")
+                DebugLogger.debugLog(TAG, "Session state retrieved")
                 DebugLogger.debugLog(TAG, "Exchange Count: ${response.learningState.exchangeCount}")
 
                 _sessionData.value = response

@@ -62,6 +62,7 @@ fun SimulationAgentScreen(
     val userInput by viewModel.userInput.collectAsState()
     val isInputEnabled by viewModel.isInputEnabled.collectAsState()
     val shouldTriggerTts by viewModel.shouldTriggerTts.collectAsState()
+    val currentLanguage by viewModel.currentLanguage.collectAsState()
 
     // TTS/STT states
     val ttsState by ttsController.state.collectAsState()
@@ -376,7 +377,7 @@ fun SimulationAgentScreen(
                         ttsController.stop()
                     }
                     if (permissionGranted && sttState.isInitialized) {
-                        sttController.startListening("en-IN")
+                        sttController.startListening(currentLanguage)
                     } else if (!permissionGranted) {
                         permissionLauncher.launch(RECORD_AUDIO)
                     }
