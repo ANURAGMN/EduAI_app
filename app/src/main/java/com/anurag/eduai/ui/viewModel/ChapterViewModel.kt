@@ -64,7 +64,8 @@ class ChapterViewModel @Inject constructor(
                     ChapterUiModel(
                         id = chapter.chapterId,
                         orderIndex =chapter.orderIndex,
-                        name = chapter.getLocalizedName(),
+                        name = chapter.getLocalizedName(),  // Display name (localized)
+                        englishName = chapter.chapterName,  // API name (always English)
                         totalConcepts = totalConcepts,
                         completedConcepts = completedConcepts,
                         status = status

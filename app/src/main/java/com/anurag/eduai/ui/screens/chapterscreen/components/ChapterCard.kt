@@ -283,6 +283,7 @@ fun ChapterCardPreview() {
             id = "1",
             orderIndex =1,
             name = "Number Systems",
+            englishName = "Number Systems",
             totalConcepts = 8,
             completedConcepts = 5,
             status = ChapterStatus.IN_PROGRESS

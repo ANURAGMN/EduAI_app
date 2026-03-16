@@ -146,8 +146,9 @@ fun ChapterScreen(
                         onStudyClick = { onStudyClick(chapterUiModel.id, "STUDY") },
                         onSimulationClick = { onSimulationClick(chapterUiModel.id, "SIMULATION") },
                         onRevisionClick = {
-                            val chapterName = chapterUiModel.name.getRevisionChapterName()
-                            DebugLogger.debugLog("ChapterScreen", "Revision button clicked for chapter: ${chapterUiModel.name}, mapped: $chapterName")
+                            // Use the English name from the model to get the API-compatible name
+                            val chapterName = chapterUiModel.englishName.getRevisionChapterName()
+                            DebugLogger.debugLog("ChapterScreen", "Revision button clicked for chapter: ${chapterUiModel.name}, english name: ${chapterUiModel.englishName}, mapped: $chapterName")
 
                             // Check if session exists
                             if (revisionViewModel.hasExistingSession(chapterName)) {
