@@ -1,6 +1,5 @@
 package com.anurag.eduai.repository
 
-import android.health.connect.datatypes.units.Percentage
 import com.anurag.eduai.data.local.dao.ConceptDao
 import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.data.local.entities.ConceptEntity

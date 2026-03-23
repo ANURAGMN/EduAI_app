@@ -1,7 +1,6 @@
 package com.anurag.eduai.debug
 
 import android.util.Log
-import com.anurag.eduai.BuildConfig
 
 
 object DebugLogger {

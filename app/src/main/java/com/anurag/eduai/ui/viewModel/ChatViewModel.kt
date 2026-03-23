@@ -56,6 +56,30 @@ class ChatViewModel @Inject constructor(
     private var initialized = false
 
     /**
+     * Syncs the ViewModel's isKannada flag with the current app locale.
+     * This should be called at critical points to ensure the UI state matches the actual system language.
+     */
+    private fun syncLanguageState() {
+        val currentAppLanguage = getCurrentLanguageCode()
+        val currentIsKannada = isKannada()
+
+        _uiState.update {
+            if (it.currentLanguage != currentAppLanguage || it.isKannada != currentIsKannada) {
+                DebugLogger.debugLog(
+                    "ChatViewModel",
+                    "Language state sync: currentLanguage: ${it.currentLanguage} -> $currentAppLanguage, isKannada: ${it.isKannada} -> $currentIsKannada"
+                )
+                it.copy(
+                    currentLanguage = currentAppLanguage,
+                    isKannada = currentIsKannada
+                )
+            } else {
+                it
+            }
+        }
+    }
+
+    /**
      * handles all intents from the UI and routes them to appropriate functions
      */
     fun onIntent(intent: ChatIntent) = when (intent) {
@@ -228,6 +252,9 @@ class ChatViewModel @Inject constructor(
      * If from ConceptScreen and session exists, shows dialog. Otherwise proceeds directly.
      */
     private fun selectConcept(concept: String, showDialogIfExists: Boolean = false) = viewModelScope.launch {
+        // Sync language state with current locale before selecting concept
+        syncLanguageState()
+
         DebugLogger.debugLog("ChatViewModel", "selectConcept called with concept: $concept, showDialog: $showDialogIfExists")
 
         // Check if session exists
@@ -312,6 +339,9 @@ class ChatViewModel @Inject constructor(
      * Translates autosuggestions if Kannada mode is enabled.
      */
     private suspend fun startSession(concept: String) {
+        // Sync language state with current locale before starting session
+        syncLanguageState()
+
         DebugLogger.debugLog("ChatViewModel", "startSession called for concept: $concept, userId: $userId, studentLevel: ${_uiState.value.studentLevel}")
         val result = sessionUseCase.startSession(concept, userId, _uiState.value.isKannada, _uiState.value.studentLevel)
 
@@ -357,6 +387,9 @@ class ChatViewModel @Inject constructor(
      * Translates only the last AI message to Kannada if Kannada mode is enabled (since only last message is displayed).
      */
     private suspend fun resumeSession(threadId: String, sessionId: String?) {
+        // Sync language state with current locale before resuming
+        syncLanguageState()
+
         val result = sessionUseCase.resumeSession(threadId, sessionId)
 
         val currentIsKannada = _uiState.value.isKannada
@@ -443,6 +476,9 @@ class ChatViewModel @Inject constructor(
     private fun sendMessage(message: String, fromSuggestion: Boolean) {
         if (message.isBlank()) return
         viewModelScope.launch {
+            // Sync language state before processing message
+            syncLanguageState()
+
             hideAutosuggestions(); markUserActive()
             _uiState.update { it.copy(
                 messages = it.messages + sendMessageUseCase.createUserMessage(message),

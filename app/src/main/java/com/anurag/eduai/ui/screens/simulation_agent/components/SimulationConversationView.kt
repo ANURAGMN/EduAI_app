@@ -1,12 +1,17 @@
 package com.anurag.eduai.ui.screens.simulation_agent.components
 
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,10 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.anurag.eduai.R
 import com.anurag.eduai.ui.screens.chatbotscreen.components.AgentMessage
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.TextToSpeech
@@ -30,6 +37,9 @@ fun SimulationConversationView(
     currentMessage: String,
     isLoading: Boolean,
     ttsController: TextToSpeech,
+    showWebView: Boolean = false,
+    simulationUrls: List<String> = emptyList(),
+    onCloseWebView: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val dimens = LocalDimensions.current
@@ -92,6 +102,57 @@ fun SimulationConversationView(
                         textAlign = TextAlign.Center
                     )
                 }
+            } else if (showWebView && simulationUrls.isNotEmpty()) {
+                // WebView content displayed inline in conversation
+                Box(modifier = Modifier.fillMaxSize()) {
+                    when (simulationUrls.size) {
+                        1 -> {
+                            // Single simulation view
+                            InlineSimulationWebView(url = simulationUrls[0])
+                        }
+                        2 -> {
+                            // Before/After comparison
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                Text(
+                                    text = stringResource(R.string.sim_before_label),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    modifier = Modifier.padding(dimens.spaceMedium)
+                                )
+                                Box(modifier = Modifier.weight(1f)) {
+                                    InlineSimulationWebView(url = simulationUrls[0])
+                                }
+                                Text(
+                                    text = stringResource(R.string.sim_after_label),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    modifier = Modifier.padding(dimens.spaceMedium)
+                                )
+                                Box(modifier = Modifier.weight(1f)) {
+                                    InlineSimulationWebView(url = simulationUrls[1])
+                                }
+                            }
+                        }
+                    }
+
+                    // Close button
+                    Card(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(dimens.spaceMedium),
+                        shape = MaterialTheme.shapes.small,
+                        elevation = CardDefaults.cardElevation(defaultElevation = dimens.cardElevation),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        IconButton(onClick = onCloseWebView) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = stringResource(R.string.sim_close_simulation),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
             } else {
                 // AgentMessage content
                 AgentMessage(
@@ -136,4 +197,24 @@ fun SimulationConversationView(
             }
         }
     }
+}
+
+/** WebView component for rendering simulation HTML inline */
+@Composable
+fun InlineSimulationWebView(url: String, modifier: Modifier = Modifier) {
+    AndroidView(
+        factory = { context ->
+            WebView(context).apply {
+                settings.apply {
+                    javaScriptEnabled = true
+                    domStorageEnabled = true
+                    loadWithOverviewMode = true
+                    useWideViewPort = true
+                }
+                webViewClient = WebViewClient()
+                loadUrl(url)
+            }
+        },
+        modifier = modifier.fillMaxSize()
+    )
 }

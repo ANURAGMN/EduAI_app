@@ -26,7 +26,6 @@ import com.anurag.eduai.ui.screens.chatbotscreen.components.InputSection
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
 import com.anurag.eduai.ui.screens.simulation_agent.components.SimulationConversationView
-import com.anurag.eduai.ui.screens.simulation_agent.components.SimulationWebViewCard
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.SimAgentUiState
 import com.anurag.eduai.ui.viewModel.SimulationAgentViewModel
@@ -213,9 +212,6 @@ fun SimulationAgentScreen(
      */
     Box(modifier = Modifier.fillMaxSize().background(White)) {
         Column(modifier = Modifier.fillMaxSize().imePadding()) {
-            /**
-             * Header
-             */
             ChatHeaderIcons(
                 isKannada = false,
                 isSpeaking = ttsState.isSpeaking,
@@ -354,6 +350,9 @@ fun SimulationAgentScreen(
                     currentMessage = currentTeacherMessage,
                     isLoading = uiState is SimAgentUiState.Loading,
                     ttsController = ttsController,
+                    showWebView = showWebView,
+                    simulationUrls = simulationUrls,
+                    onCloseWebView = { viewModel.onWebViewClose() },
                     modifier = Modifier.weight(0.1f).background(White)
                 )
             }
@@ -383,18 +382,9 @@ fun SimulationAgentScreen(
                     }
                 },
                 onStopListening = { sttController.stopListening() },
-                onSuggestionClick = { /* Not used */ }
+                onSuggestionClick = { /* Not used */ },
+                shouldDisableSend = !isInputEnabled
             )
         }
-
-        /**
-         * WebView Overlay
-         */
-        SimulationWebViewCard(
-            visible = showWebView,
-            simulationUrls = simulationUrls,
-            onClose = { viewModel.onWebViewClose() },
-            blurBackground = true
-        )
     }
 }

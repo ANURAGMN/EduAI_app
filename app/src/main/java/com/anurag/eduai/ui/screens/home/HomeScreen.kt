@@ -44,7 +44,7 @@ fun HomeScreen(
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.HOME)
 
-    val dimes = LocalDimensions.current
+    val dimens = LocalDimensions.current
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
@@ -123,7 +123,7 @@ fun HomeScreen(
                 )
             }
 
-            Column(modifier = Modifier.padding(dimes.screenPadding)) {
+            Column(modifier = Modifier.padding(dimens.screenPadding)) {
                 TodayProgressCard(
                     progressConcepts = progressConcepts,
                     onLessonClick = onLessonClick,
@@ -134,7 +134,7 @@ fun HomeScreen(
                         onNavigateToChapters(subjectId)
                     }
                 )
-                Spacer(modifier = Modifier.height(dimes.spaceSmall))
+                Spacer(modifier = Modifier.height(dimens.spaceSmall))
                 PracticeSimulationCard(
                     progressSimulations = progressSimulations,
                     onSimulationClick = { simulationId ->
