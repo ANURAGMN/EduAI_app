@@ -27,7 +27,8 @@ fun TextWithHighlights(
     isTyping: Boolean = false,
     fullText: String = text,
     ttsController: TextToSpeech = viewModel(),
-    onTextLayout: (TextLayoutResult) -> Unit = {}
+    onTextLayout: (TextLayoutResult) -> Unit = {},
+    reduceTextSize: Boolean = false
 ) {
     val currentWordIndex by ttsController.currentWordIndex.collectAsState()
     val ttsState by ttsController.state.collectAsState()
@@ -66,8 +67,8 @@ fun TextWithHighlights(
 
     Text(
         text = styledText,
-        fontSize = 40.sp,
-        lineHeight = 60.sp,
+        fontSize = if (reduceTextSize) 16.sp else 40.sp,
+        lineHeight = if (reduceTextSize) 16.sp else 60.sp,
         color = TextPrimary,
         style = MaterialTheme.typography.bodyLarge,
         modifier = modifier,

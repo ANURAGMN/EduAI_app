@@ -13,9 +13,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color.Companion.White
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.anurag.eduai.R
@@ -49,7 +52,10 @@ fun SimulationAgentScreen(
 ) {
     val dimens = LocalDimensions.current
     val context = LocalContext.current
+    val density = LocalDensity.current
     val viewModel: SimulationAgentViewModel = hiltViewModel()
+
+    var errorCardHeightDp by remember { mutableStateOf(0.dp) }
 
     // Observe ALL state from ViewModel - no local state management
     val uiState by viewModel.uiState.collectAsState()
@@ -299,7 +305,12 @@ fun SimulationAgentScreen(
              */
             if (errorMessage != null) {
                 Card(
-                    modifier = Modifier.fillMaxWidth().padding(dimens.spaceMedium),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(dimens.spaceMedium)
+                        .onGloballyPositioned { coords ->
+                            errorCardHeightDp = with(density) { coords.size.height.toDp() }
+                        },
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     )
@@ -353,7 +364,8 @@ fun SimulationAgentScreen(
                     showWebView = showWebView,
                     simulationUrls = simulationUrls,
                     onCloseWebView = { viewModel.onWebViewClose() },
-                    modifier = Modifier.weight(0.1f).background(White)
+                    modifier = Modifier.weight(1f).background(White),
+                    errorCardHeight = errorCardHeightDp
                 )
             }
 

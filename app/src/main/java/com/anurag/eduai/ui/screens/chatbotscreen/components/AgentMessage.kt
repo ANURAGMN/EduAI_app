@@ -41,7 +41,8 @@ fun AgentMessage(
     isTyping: Boolean = false,
     typingText: String = "",
     fullText: String = text,
-    ttsController: TextToSpeech = viewModel()
+    ttsController: TextToSpeech = viewModel(),
+    reduceTextSize: Boolean = false
 ) {
     val scrollState = rememberScrollState()
     val ttsState by ttsController.state.collectAsState()
@@ -97,16 +98,17 @@ fun AgentMessage(
             .verticalScroll(scrollState)
     ) {
         Column {
-            Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.height(if (reduceTextSize) 12.dp else 50.dp))
             // TextWithHighlights final display
             TextWithHighlights(
                 text = if (isTyping) typingText else fullText,
                 isTyping = isTyping,
                 fullText = fullText,
                 ttsController = ttsController,
-                onTextLayout = { textLayout = it }
+                onTextLayout = { textLayout = it },
+                reduceTextSize = reduceTextSize
             )
-            Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.height(if (reduceTextSize) 12.dp else 50.dp))
         }
     }
 }
