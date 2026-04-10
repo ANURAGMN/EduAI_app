@@ -9,6 +9,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import retrofit2.Response
 import java.io.IOException
+import okhttp3.Headers
 
 class AgenticAIClient(
     agenticAIBaseUrl: String
@@ -37,7 +38,26 @@ class AgenticAIClient(
         while (attempt < maxAttempts) {
             attempt++
             try {
+                DebugLogger.debugLog("AgenticAIClient", "Call attempt=$attempt for call (starting)")
                 val resp = call()
+                try {
+                    // Log response basic info
+                    val urlStr = resp.raw().request.url.toString()
+                    val code = resp.code()
+                    DebugLogger.debugLog("AgenticAIClient", "Response received: attempt=$attempt url=$urlStr code=$code")
+                    // Check whether header exists in the request (mask it if present)
+                    val reqHeaders: Headers = resp.raw().request.headers
+                    val headerName = com.anurag.eduai.BuildConfig.API_KEY_HEADER_NAME.trim().ifEmpty { "X-API-Key" }
+                    val hv = reqHeaders[headerName]
+                    if (hv != null) {
+                        val masked = if (hv.length <= 6) "****" else "****" + hv.takeLast(4)
+                        DebugLogger.debugLog("AgenticAIClient", "Request contained header $headerName with value=$masked")
+                    } else {
+                        DebugLogger.debugLog("AgenticAIClient", "Request did not contain header $headerName")
+                    }
+                } catch (inner: Exception) {
+                    DebugLogger.errorLog("AgenticAIClient", "Error logging response metadata: ${inner.message}")
+                }
 
                 when {
                     resp.isSuccessful && resp.body() != null -> {

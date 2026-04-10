@@ -33,6 +33,9 @@ android {
         buildConfigField("String", "GEMINI_API_KEY", "\"${prop("GEMINI_API_KEY")}\"")
         buildConfigField("String", "GROQ_API_KEY", "\"${prop("GROQ_API_KEY")}\"")
         buildConfigField("String", "SIMULATION_BASE_URL", "\"${prop("SIMULATION_BASE_URL")}\"")
+        // API key and header name for backend authentication (from local.properties)
+        buildConfigField("String", "API_KEYS", "\"${prop("API_KEYS")}\"")
+        buildConfigField("String", "API_KEY_HEADER_NAME", "\"${prop("API_KEY_HEADER_NAME")}\"")
 
     }
     buildFeatures {

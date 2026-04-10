@@ -27,6 +27,18 @@ object RetrofitProvider {
         }
         logging.level = HttpLoggingInterceptor.Level.BASIC
 
+        // API Key interceptor - centralized implementation
+        val apiKeyInterceptor = ApiKeyInterceptor()
+        // Log configured header and masked key for diagnostics
+        try {
+            val headerName = BuildConfig.API_KEY_HEADER_NAME.trim().ifEmpty { "X-API-Key" }
+            val keyVal = BuildConfig.API_KEYS.trim()
+            val masked = if (keyVal.isEmpty()) "<empty>" else "****" + keyVal.takeLast(4)
+            DebugLogger.debugLog("RetrofitProvider", "Configured API header=$headerName, key=$masked")
+        } catch (e: Exception) {
+            DebugLogger.errorLog("RetrofitProvider", "Failed to read API key config: ${e.message}")
+        }
+
         val errorLoggingInterceptor = Interceptor { chain ->
             val request = chain.request()
             val response = chain.proceed(request)
@@ -45,6 +57,7 @@ object RetrofitProvider {
         }
 
         val client = OkHttpClient.Builder()
+            .addInterceptor(apiKeyInterceptor)
             .addInterceptor(logging)
             .addNetworkInterceptor(errorLoggingInterceptor)
             .connectTimeout(20, TimeUnit.SECONDS)
@@ -58,6 +71,15 @@ object RetrofitProvider {
             .create()
 
         DebugLogger.debugLog("RetrofitProvider", "Retrofit base url: $normalized")
+
+        // After client built, log attached interceptors for easier troubleshooting
+        try {
+            val interceptorNames = client.interceptors.map { it.javaClass.simpleName }
+            val networkInterceptorNames = client.networkInterceptors.map { it.javaClass.simpleName }
+            DebugLogger.debugLog("RetrofitProvider", "OkHttp interceptors=${interceptorNames}, networkInterceptors=${networkInterceptorNames}")
+        } catch (e: Exception) {
+            DebugLogger.errorLog("RetrofitProvider", "Error enumerating interceptors: ${e.message}")
+        }
 
         return Retrofit.Builder()
             .baseUrl(normalized)
