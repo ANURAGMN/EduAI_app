@@ -1,6 +1,7 @@
 package com.anurag.eduai.data.remote
 
 
+import android.content.Context
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.utils.ErrorHandler
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +13,8 @@ import java.io.IOException
 import okhttp3.Headers
 
 class AgenticAIClient(
-    agenticAIBaseUrl: String
+    agenticAIBaseUrl: String,
+    context: Context
 ) {
     val service: AgenticAIService
 
@@ -21,7 +23,7 @@ class AgenticAIClient(
     private val _currentSessionId = MutableStateFlow<String?>(null)
 
     init {
-        val retrofit = RetrofitProvider.buildRetrofit(agenticAIBaseUrl)
+        val retrofit = RetrofitProvider.buildRetrofit(agenticAIBaseUrl, context)
         service = retrofit.create(AgenticAIService::class.java)
     }
 

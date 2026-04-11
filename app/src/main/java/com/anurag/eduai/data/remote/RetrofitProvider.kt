@@ -1,6 +1,7 @@
 package com.anurag.eduai.data.remote
 
 
+import android.content.Context
 import com.anurag.eduai.BuildConfig
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.utils.ErrorHandler
@@ -13,7 +14,7 @@ import java.util.concurrent.TimeUnit
 import com.google.gson.GsonBuilder
 
 object RetrofitProvider {
-    fun buildRetrofit(agenticAIBaseUrl: String): Retrofit {
+    fun buildRetrofit(agenticAIBaseUrl: String, context: Context): Retrofit {
         val buildConfigUrl = BuildConfig.AGENTIC_AI_BASE_URL.trim()
         val base = buildConfigUrl.ifEmpty { agenticAIBaseUrl.trim() }
         val normalized = base.trimEnd('/').ifEmpty {
@@ -27,17 +28,9 @@ object RetrofitProvider {
         }
         logging.level = HttpLoggingInterceptor.Level.BASIC
 
-        // API Key interceptor - centralized implementation
-        val apiKeyInterceptor = ApiKeyInterceptor()
-        // Log configured header and masked key for diagnostics
-        try {
-            val headerName = BuildConfig.API_KEY_HEADER_NAME.trim().ifEmpty { "X-API-Key" }
-            val keyVal = BuildConfig.API_KEYS.trim()
-            val masked = if (keyVal.isEmpty()) "<empty>" else "****" + keyVal.takeLast(4)
-            DebugLogger.debugLog("RetrofitProvider", "Configured API header=$headerName, key=$masked")
-        } catch (e: Exception) {
-            DebugLogger.errorLog("RetrofitProvider", "Failed to read API key config: ${e.message}")
-        }
+        // Bearer token interceptor for JWT authentication
+        val bearerTokenInterceptor = BearerTokenInterceptor(context)
+        DebugLogger.debugLog("RetrofitProvider", "Bearer token interceptor configured for JWT authentication")
 
         val errorLoggingInterceptor = Interceptor { chain ->
             val request = chain.request()
@@ -56,9 +49,13 @@ object RetrofitProvider {
             response
         }
 
+        // Token refresh interceptor to handle 401 errors
+        val tokenRefreshInterceptor = TokenRefreshInterceptor(context)
+
         val client = OkHttpClient.Builder()
-            .addInterceptor(apiKeyInterceptor)
+            .addInterceptor(bearerTokenInterceptor)
             .addInterceptor(logging)
+            .addNetworkInterceptor(tokenRefreshInterceptor)
             .addNetworkInterceptor(errorLoggingInterceptor)
             .connectTimeout(20, TimeUnit.SECONDS)
             .readTimeout(20, TimeUnit.SECONDS)

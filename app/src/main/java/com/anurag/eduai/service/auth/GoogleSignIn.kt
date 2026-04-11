@@ -15,6 +15,7 @@ import com.anurag.eduai.BuildConfig
 import com.anurag.eduai.data.firebase.User
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.utils.GoogleInfoExtractor
+import com.anurag.eduai.utils.TokenManager
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.CoroutineScope
@@ -52,6 +53,10 @@ class GoogleSignIn {
 
                                 val user: User =
                                     GoogleInfoExtractor.extractAndLogUserInfo(googleIdTokenCredential)
+
+                                // Store JWT token
+                                TokenManager.saveToken(context, user.jwtToken)
+                                DebugLogger.debugLog("GoogleSignIn", "JWT token stored successfully")
 
                                 onLoginSuccess(user)
                             } else {

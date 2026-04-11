@@ -15,7 +15,8 @@ data class User(
     val studentClass: Int= 7, // input from user
     val language: String = "en", // default english
     val createdAt: Long = System.currentTimeMillis(),
-    val lastLogin: Long = System.currentTimeMillis()
+    val lastLogin: Long = System.currentTimeMillis(),
+    val jwtToken: String = "" // JWT token from auth provider
 ) : Parcelable {
     fun toStudentEntity(): StudentEntity {
         return StudentEntity(

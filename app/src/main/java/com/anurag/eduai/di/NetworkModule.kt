@@ -1,5 +1,6 @@
 package com.anurag.eduai.di
 
+import android.content.Context
 import com.anurag.eduai.BuildConfig
 import com.anurag.eduai.data.remote.AgenticAIClient
 import com.anurag.eduai.data.remote.GeminiLLMClient
@@ -8,6 +9,7 @@ import com.anurag.eduai.data.remote.SimulationAgentAPI
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -17,8 +19,8 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAgenticAIClient(): AgenticAIClient {
-        return AgenticAIClient(BuildConfig.AGENTIC_AI_BASE_URL)
+    fun provideAgenticAIClient(@ApplicationContext context: Context): AgenticAIClient {
+        return AgenticAIClient(BuildConfig.AGENTIC_AI_BASE_URL, context)
     }
 
     @Provides

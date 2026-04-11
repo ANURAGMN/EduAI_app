@@ -15,6 +15,7 @@ class SharedPreferenceUtils(context: Context) {
         private const val KEY_IS_LOGGED_IN = "key_is_logged_in"
         private const val KEY_SELECTED_SUBJECT = "selected_subject"
         private const val KEY_SESSION = "key_current_session"
+        private const val KEY_JWT_TOKEN = "key_jwt_token"
     }
 
     fun setUserId(id: String) {
@@ -59,5 +60,17 @@ class SharedPreferenceUtils(context: Context) {
     /** Clears current session id **/
     fun clearCurrentSession() {
         prefs.edit { remove(KEY_SESSION) }
+    }
+
+    fun setJwtToken(token: String) {
+        prefs.edit { putString(KEY_JWT_TOKEN, token) }
+    }
+
+    fun getJwtToken(): String? {
+        return prefs.getString(KEY_JWT_TOKEN, null)
+    }
+
+    fun clearJwtToken() {
+        prefs.edit { remove(KEY_JWT_TOKEN) }
     }
 }

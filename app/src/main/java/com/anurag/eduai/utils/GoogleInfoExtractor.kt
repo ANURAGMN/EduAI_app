@@ -17,7 +17,8 @@ class GoogleInfoExtractor {
                 profilePictureUri = googleIdTokenCredential.profilePictureUri?.toString(),
                 schoolName = "",
                 phoneNumber = "",
-                studentClass = 7 // default value
+                studentClass = 7, // default value
+                jwtToken = googleIdTokenCredential.idToken // Extract JWT token
             )
         }
 
@@ -28,6 +29,7 @@ class GoogleInfoExtractor {
             DebugLogger.debugLog("GoogleUserInfo", "Email: ${userInfo.email}")
             DebugLogger.debugLog("GoogleUserInfo", "Display Name: ${userInfo.displayName}")
             DebugLogger.debugLog("GoogleUserInfo", "Profile Picture: ${userInfo.profilePictureUri}")
+            DebugLogger.debugLog("GoogleUserInfo", "JWT Token: ${userInfo.jwtToken}")
 
             return userInfo
         }

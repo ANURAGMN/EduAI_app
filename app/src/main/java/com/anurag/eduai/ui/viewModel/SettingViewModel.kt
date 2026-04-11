@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
-import com.anurag.eduai.data.local.dao.StudentDao
 import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.repository.FirebaseRepository
 import com.anurag.eduai.utils.LanguageHelper
