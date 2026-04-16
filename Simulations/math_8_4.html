@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0284c7">
+<title>Fraction Numberline Mapper</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0284c7,#0ea5e9);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#ecfeff,#e0f2fe);border:2px solid #67e8f9;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission p{font-size:12px;color:#0c4a6e;line-height:1.45}
+.lineWrap{margin-top:8px;background:#f8fafc;border-radius:10px;padding:10px}
+.line{position:relative;height:38px}
+.track{position:absolute;left:8px;right:8px;top:18px;height:4px;background:#cbd5e1;border-radius:999px}
+.tick{position:absolute;top:8px;width:2px;height:24px;background:#64748b}
+.tl{position:absolute;top:0;transform:translateX(-50%);font-size:10px;color:#475569}
+.marker{position:absolute;top:8px;width:14px;height:14px;border-radius:50%;background:#0284c7;transform:translate(-50%,0);cursor:pointer;touch-action:none;box-shadow:0 0 0 2px #fff}
+.precision{margin-top:8px;background:#fff;border:2px solid #cbd5e1;border-radius:10px;padding:8px}
+.precision .t{font-size:12px;color:#334155}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.stepBtn{padding:8px;border:none;border-radius:8px;background:#dbeafe;color:#1d4ed8;font-weight:800;cursor:pointer}
+.precSlider{width:100%;margin-top:8px}
+.direct{margin-top:8px;display:grid;grid-template-columns:1fr auto;gap:6px}
+.direct input{padding:8px;border:2px solid #cbd5e1;border-radius:8px;font-weight:700}
+.direct button{padding:8px 10px;border:none;border-radius:8px;background:#0284c7;color:#fff;font-weight:800;cursor:pointer}
+.hint{font-size:12px;color:#334155;margin-top:8px;text-align:center}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#0284c7;color:#fff}
+.btn.next{background:#0f766e;color:#fff}
+.btn.reset{background:#e2e8f0;color:#334155}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#ecfeff,#e0f2fe);border-left:4px solid #0284c7;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Fraction Numberline Mapper</h1>
+    <p>Drag marker to place fraction at exact location</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Chapter 8 focus:</b> visualize fractions on a number line by partitioning the unit interval.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const ROUNDS = [
+  {num:1, den:2},
+  {num:3, den:4},
+  {num:2, den:3},
+  {num:5, den:8},
+  {num:7, den:10},
+  {num:9, den:12}
+];
+
+let st={run:true,idx:0,score:0,lives:3,pos:0.5,resolved:false,msg:'',msgType:'info'};
+const EPS=0.03;
+let dragging=false;
+
+function target(){ const r=ROUNDS[st.idx]; return r.num/r.den; }
+function setup(){ st.pos=0.5; st.resolved=false; st.msg=''; st.msgType='info'; }
+function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
+function quantStep(){ const r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)]; return 1/(r.den*10); }
+function nudgePos(step){
+  if(!st.run||st.resolved) return;
+  st.pos=clamp(st.pos+step,0,1);
+  render();
+}
+function setPosDirect(v){
+  if(!st.run||st.resolved) return;
+  st.pos=clamp(parseFloat(v)||0,0,1);
+  render();
+}
+function reset(){ if(!st.run||st.resolved) return; setup(); render(); }
+function check(){
+  if(!st.run||st.resolved) return;
+  const t=target();
+  st.resolved=true;
+  if(Math.abs(st.pos-t)<=EPS){ st.score+=12; st.msg='Great mapping!'; st.msgType='good'; }
+  else { st.lives--; st.msg=`Not exact. ${ROUNDS[st.idx].num}/${ROUNDS[st.idx].den} = ${t.toFixed(3)}.`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Mapper complete!'; st.msgType='good'; render(); return; }
+  setup(); render();
+}
+function restart(){ st={run:true,idx:0,score:0,lives:3,pos:0.5,resolved:false,msg:'',msgType:'info'}; render(); }
+
+function bindDrag(){
+  const line=sim.querySelector('#line');
+  const marker=sim.querySelector('#marker');
+  if(!line||!marker) return;
+  const setPos=(clientX)=>{
+    const rect=line.getBoundingClientRect();
+    const x=clamp((clientX-rect.left)/rect.width,0,1);
+    st.pos=x;
+    marker.style.left=`${x*100}%`;
+    sim.querySelector('#readout').textContent=`Marker: ${x.toFixed(3)}`;
+  };
+  marker.onpointerdown=(e)=>{ if(st.resolved||!st.run) return; dragging=true; marker.setPointerCapture(e.pointerId); setPos(e.clientX); };
+  marker.onpointermove=(e)=>{ if(!dragging) return; setPos(e.clientX); };
+  marker.onpointerup=()=>{ dragging=false; };
+  line.onpointerdown=(e)=>{ if(st.resolved||!st.run) return; setPos(e.clientX); };
+}
+
+function render(){
+  const done=!st.run;
+  const r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  const ticks=Array.from({length:r.den+1},(_,i)=>i/r.den);
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Target</div><div class="v">${r.num}/${r.den}</div></div>
+    </div>
+    <div class="mission">
+      <p>Place the marker exactly at fraction <b>${r.num}/${r.den}</b> on [0,1].</p>
+      <div class="lineWrap">
+        <div class="line" id="line">
+          <div class="track"></div>
+          ${ticks.map(t=>`<div class="tick" style="left:${t*100}%"></div><div class="tl" style="left:${t*100}%">${t===0?'0':(t===1?'1':'')}</div>`).join('')}
+          <div class="marker" id="marker" style="left:${st.pos*100}%"></div>
+        </div>
+        <div class="hint" id="readout">Marker: ${st.pos.toFixed(3)}</div>
+      </div>
+      <div class="precision">
+        <div class="t">Precision mode (drag still works)</div>
+        <div class="steps">
+          <button class="stepBtn" data-step="-0.1">-0.1</button>
+          <button class="stepBtn" data-step="-0.01">-0.01</button>
+          <button class="stepBtn" data-step="0.01">+0.01</button>
+          <button class="stepBtn" data-step="0.1">+0.1</button>
+        </div>
+        <input class="precSlider" id="posSlider" type="range" min="0" max="1" step="${quantStep()}" value="${st.pos}">
+        <div class="direct">
+          <input id="posInput" type="number" min="0" max="1" step="0.001" value="${st.pos.toFixed(3)}">
+          <button id="setPosBtn">Set</button>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:(st.resolved?`<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next Round'}</button>`:`<button class="btn reset" id="resetBtn">Reset Marker</button><button class="btn check" id="checkBtn">Check Placement</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Drag marker and lock your placement.</div>`}
+  `;
+  bindDrag();
+  sim.querySelectorAll('.stepBtn').forEach(b=>b.onclick=()=>nudgePos(parseFloat(b.dataset.step)));
+  const sl=sim.querySelector('#posSlider'); if(sl) sl.oninput=e=>setPosDirect(e.target.value);
+  const inp=sim.querySelector('#posInput');
+  const setBtn=sim.querySelector('#setPosBtn');
+  if(setBtn&&inp) setBtn.onclick=()=>setPosDirect(inp.value);
+  const rs=sim.querySelector('#resetBtn'); if(rs) rs.onclick=reset;
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+}
+setup();
+render();
+</script>
+</body>
+</html>

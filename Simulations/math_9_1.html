@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0ea5e9">
+<title>Bar Graph Constructor Bay</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0ea5e9,#0284c7);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#ecfeff,#e0f2fe);border:2px solid #67e8f9;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission p{font-size:12px;color:#0c4a6e;line-height:1.45}
+.chart{position:relative;height:220px;background:#f8fafc;border:2px solid #cbd5e1;border-radius:10px;padding:8px}
+.axis{position:absolute;left:28px;right:8px;bottom:28px;top:8px;border-left:2px solid #64748b;border-bottom:2px solid #64748b}
+.bars{position:absolute;left:30px;right:10px;bottom:30px;top:10px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-items:end}
+.barWrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+.bar{width:100%;max-width:44px;background:linear-gradient(180deg,#0ea5e9,#0284c7);border-radius:6px 6px 2px 2px;min-height:4px}
+.lbl{font-size:11px;color:#334155}
+.ctrls{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.ctrl{background:#f8fafc;border:2px solid #cbd5e1;border-radius:10px;padding:8px;text-align:center}
+.ctrl .t{font-size:11px;color:#475569}
+.ctrl .n{font-size:18px;font-family:'Courier New',monospace;font-weight:900;color:#0f172a}
+.btnRow{display:flex;gap:6px;margin-top:6px}
+.btnMini{flex:1;padding:8px;border:none;border-radius:8px;font-weight:800;cursor:pointer;background:#dbeafe;color:#1d4ed8}
+.valueIn{margin-top:6px;width:100%;padding:6px;border:2px solid #bfdbfe;border-radius:8px;font-weight:800;text-align:center}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#0284c7;color:#fff}
+.btn.next{background:#0f766e;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#ecfeff,#e0f2fe);border-left:4px solid #0ea5e9;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Bar Graph Constructor Bay</h1>
+    <p>Construct bar heights from frequency targets</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Chapter 9 focus:</b> represent data correctly using bar heights proportional to frequencies.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const ROUNDS = [
+  {cats:['A','B','C','D'], target:[3,5,2,4]},
+  {cats:['Red','Blue','Green','Yellow'], target:[4,1,5,3]},
+  {cats:['Mon','Tue','Wed','Thu'], target:[2,6,4,3]},
+  {cats:['P','Q','R','S'], target:[5,3,1,4]},
+  {cats:['X','Y','Z','W'], target:[1,4,6,2]},
+  {cats:['G1','G2','G3','G4'], target:[6,2,3,5]}
+];
+let st={run:true,idx:0,score:0,lives:3,bars:[0,0,0,0],resolved:false,msg:'',msgType:'info'};
+function setup(){ st.bars=[0,0,0,0]; st.resolved=false; st.msg=''; st.msgType='info'; }
+function bump(i,d){ if(!st.run||st.resolved) return; st.bars[i]=Math.max(0,Math.min(9,st.bars[i]+d)); render(); }
+function setBar(i,v){
+  if(!st.run||st.resolved) return;
+  st.bars[i]=Math.max(0,Math.min(9,parseInt(v,10)||0));
+  render();
+}
+function check(){
+  if(!st.run||st.resolved) return;
+  const r=ROUNDS[st.idx];
+  st.resolved=true;
+  const ok=r.target.every((v,i)=>v===st.bars[i]);
+  if(ok){ st.score+=12; st.msg='Graph constructed correctly.'; st.msgType='good'; }
+  else { st.lives--; st.msg=`Mismatch. Target frequencies: ${r.target.join(', ')}`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Constructor bay complete!'; st.msgType='good'; render(); return; }
+  setup(); render();
+}
+function restart(){ st={run:true,idx:0,score:0,lives:3,bars:[0,0,0,0],resolved:false,msg:'',msgType:'info'}; setup(); render(); }
+function render(){
+  const done=!st.run;
+  const r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Max</div><div class="v">9</div></div>
+    </div>
+    <div class="mission">
+      <p>Set each bar to target frequency: <b>${r.cats.map((c,i)=>`${c}:${r.target[i]}`).join(', ')}</b></p>
+    </div>
+    <div class="chart">
+      <div class="axis"></div>
+      <div class="bars">
+        ${r.cats.map((c,i)=>`
+          <div class="barWrap">
+            <div class="bar" style="height:${st.bars[i]*18+4}px"></div>
+            <div class="lbl">${c}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="ctrls">
+      ${r.cats.map((c,i)=>`
+        <div class="ctrl">
+          <div class="t">${c}</div>
+          <div class="n">${st.bars[i]}</div>
+          ${!done&&!st.resolved?`
+            <div class="btnRow"><button class="btnMini" data-i="${i}" data-d="-2">-2</button><button class="btnMini" data-i="${i}" data-d="-1">-1</button></div>
+            <div class="btnRow"><button class="btnMini" data-i="${i}" data-d="1">+1</button><button class="btnMini" data-i="${i}" data-d="2">+2</button></div>
+            <input class="valueIn" type="number" min="0" max="9" step="1" value="${st.bars[i]}" data-set="${i}">
+          `:''}
+        </div>
+      `).join('')}
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:(st.resolved?`<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next Round'}</button>`:`<button class="btn check" id="checkBtn">Check Graph</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Adjust bars using +/- controls to match target frequencies.</div>`}
+  `;
+  sim.querySelectorAll('.btnMini').forEach(b=>b.onclick=()=>bump(parseInt(b.dataset.i,10),parseInt(b.dataset.d,10)));
+  sim.querySelectorAll('[data-set]').forEach(inp=>inp.oninput=()=>setBar(parseInt(inp.dataset.set,10),inp.value));
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+}
+setup();
+render();
+</script>
+</body>
+</html>

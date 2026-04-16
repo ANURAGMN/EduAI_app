@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0284c7">
+<title>Decimal Place Value Gridlock</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0284c7,#0369a1);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#eff6ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0369a1;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#0f172a}
+.mission{background:linear-gradient(135deg,#e0f2fe,#bae6fd);border:2px solid #7dd3fc;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#075985}
+.mission p{font-size:12px;color:#0c4a6e;line-height:1.45;margin-top:4px}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+.cell{padding:10px 6px;border-radius:10px;border:2px solid #dbeafe;text-align:center;background:#f8fafc}
+.cell .pv{font-size:10px;color:#475569;font-weight:700}
+.cell .dv{margin-top:4px;font-size:18px;font-weight:800;color:#0f172a;font-family:'Courier New',monospace}
+.tools{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
+.tool{padding:10px 6px;border:none;border-radius:10px;background:#e2e8f0;color:#1e293b;font-weight:800;cursor:pointer}
+.tool.sel{background:#0369a1;color:#fff}
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
+.slot{padding:10px 6px;border:2px dashed #94a3b8;border-radius:10px;text-align:center;cursor:pointer}
+.slot.fill{border-style:solid;border-color:#0369a1;background:#eff6ff}
+.slot .lbl{font-size:10px;color:#475569;font-weight:700}
+.slot .val{margin-top:4px;font-size:18px;font-weight:800;font-family:'Courier New',monospace;color:#0f172a}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#0369a1;color:#fff}
+.btn.next{background:#0f766e;color:#fff}
+.btn.start{background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#e0f2fe,#bae6fd);border-left:4px solid #0284c7;border-radius:12px;padding:12px;font-size:12px;color:#0f172a;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Decimal Place Value Gridlock</h1>
+    <p>Reconstruct decimals by locking digits into right places</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> each digit has a place value role (hundreds, tens, ones, tenths, hundredths). Swapping places changes the number value completely.</div>
+</div>
+<script>
+const sim = document.getElementById("sim");
+
+const PLACE_KEYS = ["Hundreds","Tens","Ones","Tenths","Hundredths"];
+const ROUNDS = [
+  {digits:[3,5,8,1,4], target:"358.14"},
+  {digits:[0,7,2,9,6], target:"72.96"},
+  {digits:[4,1,0,3,5], target:"410.35"},
+  {digits:[9,2,6,0,8], target:"926.08"},
+  {digits:[1,3,7,4,0], target:"137.40"},
+  {digits:[5,0,2,8,9], target:"502.89"}
+];
+
+let st = {
+  run:false, idx:0, score:0, lives:3, streak:0,
+  selected:null, placements:[null,null,null,null,null], resolved:false,
+  msg:"", msgType:"info"
+};
+
+function startGame(){
+  st = {
+    run:true, idx:0, score:0, lives:3, streak:0,
+    selected:null, placements:[null,null,null,null,null], resolved:false,
+    msg:"", msgType:"info"
+  };
+  render();
+}
+
+function pickDigit(i){
+  if(!st.run || st.resolved) return;
+  st.selected = i;
+  render();
+}
+
+function placeAt(pos){
+  if(!st.run || st.resolved || st.selected===null) return;
+  const arr = [...st.placements];
+  arr[pos] = st.selected;
+  st.placements = arr;
+  st.selected = null;
+  render();
+}
+
+function removeAt(pos){
+  if(!st.run || st.resolved) return;
+  const arr = [...st.placements];
+  arr[pos] = null;
+  st.placements = arr;
+  render();
+}
+
+function buildNumberString(round){
+  const vals = st.placements.map(i => i===null ? "?" : String(round.digits[i]));
+  return `${vals[0]}${vals[1]}${vals[2]}.${vals[3]}${vals[4]}`;
+}
+
+function checkRound(){
+  if(!st.run || st.resolved) return;
+  const round = ROUNDS[st.idx];
+  if(st.placements.some(v => v===null)){
+    st.msg = "Fill all place slots before checking.";
+    st.msgType = "info";
+    render();
+    return;
+  }
+  const built = buildNumberString(round);
+  st.resolved = true;
+  if(built === round.target){
+    st.score += 12 + st.streak;
+    st.streak += 1;
+    st.msg = `Grid unlocked! ${built} matches target.`;
+    st.msgType = "good";
+  } else {
+    st.lives -= 1;
+    st.streak = 0;
+    st.msg = `Grid mismatch. Built ${built}, target ${round.target}.`;
+    st.msgType = "bad";
+    if(st.lives<=0) st.run = false;
+  }
+  render();
+}
+
+function nextRound(){
+  st.idx += 1;
+  if(st.idx >= ROUNDS.length){
+    st.run = false;
+    st.msg = "All decimal gridlocks solved!";
+    st.msgType = "good";
+    render();
+    return;
+  }
+  st.selected = null;
+  st.placements = [null,null,null,null,null];
+  st.resolved = false;
+  st.msg = "";
+  st.msgType = "info";
+  render();
+}
+
+function render(){
+  const done = !st.run;
+  const round = ROUNDS[Math.min(st.idx, ROUNDS.length-1)];
+  const used = new Set(st.placements.filter(v => v!==null));
+
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Streak</div><div class="v">${st.streak}</div></div>
+    </div>
+
+    <div class="mission">
+      <h3>Target decimal: ${round.target}</h3>
+      <p>Choose a digit tile, then tap a place-value slot to lock it.</p>
+      <div class="grid">
+        ${PLACE_KEYS.map((k, i) => `<div class="cell"><div class="pv">${k}</div><div class="dv">${round.target.replace(".","")[i]}</div></div>`).join("")}
+      </div>
+    </div>
+
+    <div class="tools">
+      ${round.digits.map((d, i) => {
+        const blocked = used.has(i) && st.selected!==i;
+        const cls = st.selected===i ? "sel" : "";
+        return `<button class="tool ${cls}" data-i="${i}" ${blocked?'disabled':''}>${d}</button>`;
+      }).join("")}
+    </div>
+
+    <div class="board">
+      ${PLACE_KEYS.map((k, pos) => {
+        const idx = st.placements[pos];
+        const val = idx===null ? "?" : round.digits[idx];
+        return `<div class="slot ${idx!==null ? "fill" : ""}" data-pos="${pos}">
+          <div class="lbl">${k}</div>
+          <div class="val">${val}</div>
+        </div>`;
+      }).join("")}
+    </div>
+
+    <div class="actions">
+      ${done
+        ? `<button class="btn start" id="startBtn">Start Gridlock</button>`
+        : (st.resolved
+            ? `<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1 ? "Finish Run" : "Next Grid"}</button>`
+            : `<button class="btn check" id="checkBtn">Check Number</button>`)}
+    </div>
+
+    ${st.msg ? `<div class="msg ${st.msgType}">${st.msg}</div>` : `<div class="msg info">Built: <b>${buildNumberString(round)}</b></div>`}
+  `;
+
+  sim.querySelectorAll(".tool").forEach(b => b.onclick = () => pickDigit(parseInt(b.dataset.i,10)));
+  sim.querySelectorAll(".slot").forEach(s => {
+    const p = parseInt(s.dataset.pos, 10);
+    s.onclick = () => {
+      if(st.placements[p]===null) placeAt(p);
+      else removeAt(p);
+    };
+  });
+  const start = sim.querySelector("#startBtn"); if(start) start.onclick = startGame;
+  const check = sim.querySelector("#checkBtn"); if(check) check.onclick = checkRound;
+  const next = sim.querySelector("#nextBtn"); if(next) next.onclick = nextRound;
+}
+
+startGame();
+</script>
+</body>
+</html>

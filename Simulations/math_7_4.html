@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<title>Intersection Angle Forge</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#7c3aed,#4338ca);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#f5f3ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#6d28d9;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:2px solid #c4b5fd;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#4c1d95}
+.mission p{font-size:12px;color:#5b21b6;line-height:1.45}
+.visual{height:270px;background:#faf5ff;border:2px solid #ddd6fe;border-radius:12px;overflow:hidden;margin-top:8px}
+svg{width:100%;height:100%;display:block;touch-action:none}
+.angles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.box{background:#f8fafc;border:2px solid #cbd5e1;border-radius:10px;padding:8px;text-align:center}
+.box .l{font-size:10px;color:#475569}
+.box .n{font-size:18px;font-family:'Courier New',monospace;font-weight:900;color:#0f172a}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#7c3aed;color:#fff}
+.btn.next{background:#0ea5e9;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.precision{margin-top:10px;background:#ffffff;border:2px solid #ddd6fe;border-radius:10px;padding:8px}
+.precision .t{font-size:12px;color:#4c1d95;font-weight:700}
+.nudges{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.nbtn{padding:8px;border:none;border-radius:8px;background:#ede9fe;color:#4c1d95;font-weight:800;cursor:pointer}
+.slider{width:100%;margin-top:8px}
+.insight{margin-top:12px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-left:4px solid #7c3aed;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Intersection Angle Forge</h1>
+    <p>Drag the line arm to forge target angle patterns</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Chapter 7 focus:</b> opposite angles are equal; adjacent angles sum to 180°.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const MISSIONS = [
+  {targetA:35, tol:2},
+  {targetA:60, tol:2},
+  {targetA:90, tol:2},
+  {targetA:120, tol:2},
+  {targetA:145, tol:2},
+  {targetA:72, tol:2}
+];
+let st = {run:true, idx:0, score:0, lives:3, resolved:false, msg:'', msgType:'info'};
+let armDeg = 35;
+let drag=false;
+
+function degNorm(a){ let x=a%180; if(x<0)x+=180; return x; }
+function angs(){
+  const a = degNorm(armDeg);
+  return {a, b:180-a, c:a, d:180-a};
+}
+function setupRound(){
+  armDeg = 20 + Math.random()*140;
+  st.resolved=false; st.msg=''; st.msgType='info';
+}
+function nudgeArm(delta){
+  if(!st.run||st.resolved) return;
+  armDeg = degNorm(armDeg + delta);
+  render();
+}
+function setArm(v){
+  if(!st.run||st.resolved) return;
+  armDeg = degNorm(parseFloat(v) || 0);
+  render();
+}
+function check(){
+  if(!st.run||st.resolved) return;
+  const m = MISSIONS[st.idx];
+  const a = angs().a;
+  st.resolved=true;
+  if(Math.abs(a-m.targetA)<=m.tol){
+    st.score += 12;
+    st.msg = `Great! ∠a≈${m.targetA}° reached.`;
+    st.msgType = 'good';
+  }else{
+    st.lives -= 1;
+    st.msg = `Not matched. Target was ${m.targetA}° (±${m.tol}°).`;
+    st.msgType = 'bad';
+    if(st.lives<=0) st.run=false;
+  }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=MISSIONS.length){
+    st.run=false; st.msg='Forge complete!'; st.msgType='good'; render(); return;
+  }
+  setupRound(); render();
+}
+function restart(){
+  st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info'};
+  setupRound(); render();
+}
+
+function render(){
+  const done=!st.run;
+  const m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+  const a=angs();
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Target ∠a</div><div class="v">${m.targetA}°</div></div>
+    </div>
+    <div class="mission">
+      <h3>Drag blue arm to set ∠a</h3>
+      <p>Observe all four angles update live by intersection rules.</p>
+      <div class="visual">
+        <svg id="forgeSvg" viewBox="0 0 400 270">
+          <rect x="0" y="0" width="400" height="270" fill="#faf5ff"/>
+          <line x1="20" y1="135" x2="380" y2="135" stroke="#334155" stroke-width="4"/>
+          <line id="diagLine" x1="40" y1="80" x2="360" y2="190" stroke="#2563eb" stroke-width="4"/>
+          <circle cx="200" cy="135" r="6" fill="#0f172a"/>
+          <circle id="handle" cx="320" cy="175" r="12" fill="#2563eb" stroke="#fff" stroke-width="3"/>
+          <text x="250" y="120" font-size="14" fill="#dc2626" font-weight="700">a</text>
+          <text x="120" y="120" font-size="14" fill="#16a34a" font-weight="700">b</text>
+          <text x="120" y="160" font-size="14" fill="#16a34a" font-weight="700">c</text>
+          <text x="250" y="160" font-size="14" fill="#dc2626" font-weight="700">d</text>
+        </svg>
+      </div>
+      <div class="precision">
+        <div class="t">Precision mode: tune ∠a = <b>${a.a.toFixed(1)}°</b></div>
+        <div class="nudges">
+          <button class="nbtn" data-d="-5">-5°</button>
+          <button class="nbtn" data-d="-1">-1°</button>
+          <button class="nbtn" data-d="1">+1°</button>
+          <button class="nbtn" data-d="5">+5°</button>
+        </div>
+        <input class="slider" id="armSlider" type="range" min="0" max="179.9" step="0.1" value="${a.a.toFixed(1)}">
+      </div>
+    </div>
+    <div class="angles">
+      <div class="box"><div class="l">∠a</div><div class="n">${a.a.toFixed(1)}°</div></div>
+      <div class="box"><div class="l">∠b</div><div class="n">${a.b.toFixed(1)}°</div></div>
+      <div class="box"><div class="l">∠c</div><div class="n">${a.c.toFixed(1)}°</div></div>
+      <div class="box"><div class="l">∠d</div><div class="n">${a.d.toFixed(1)}°</div></div>
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:(st.resolved?`<button class="btn next" id="nextBtn">${st.idx===MISSIONS.length-1?'Finish':'Next Round'}</button>`:`<button class="btn check" id="checkBtn">Lock Angles</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Drag handle and lock when close to target.</div>`}
+  `;
+
+  const svg=sim.querySelector('#forgeSvg');
+  const diag=sim.querySelector('#diagLine');
+  const h=sim.querySelector('#handle');
+  const cx=200, cy=135, r=130;
+
+  function setByDeg(deg){
+    armDeg = degNorm(deg);
+    const rad = armDeg*Math.PI/180;
+    const x2 = cx + Math.cos(rad)*r;
+    const y2 = cy - Math.sin(rad)*r;
+    const x1 = cx - Math.cos(rad)*r;
+    const y1 = cy + Math.sin(rad)*r;
+    diag.setAttribute('x1', x1.toFixed(1));
+    diag.setAttribute('y1', y1.toFixed(1));
+    diag.setAttribute('x2', x2.toFixed(1));
+    diag.setAttribute('y2', y2.toFixed(1));
+    h.setAttribute('cx', x2.toFixed(1));
+    h.setAttribute('cy', y2.toFixed(1));
+  }
+  setByDeg(armDeg);
+
+  function pointerToDeg(e){
+    const rect=svg.getBoundingClientRect();
+    const x=(e.clientX-rect.left)*(400/rect.width);
+    const y=(e.clientY-rect.top)*(270/rect.height);
+    const deg = Math.atan2(cy-y, x-cx)*180/Math.PI;
+    return degNorm(deg);
+  }
+  if(!st.resolved && !done){
+    svg.addEventListener('pointerdown', e=>{ drag=true; svg.setPointerCapture(e.pointerId); setByDeg(pointerToDeg(e)); render(); });
+    svg.addEventListener('pointermove', e=>{ if(!drag) return; setByDeg(pointerToDeg(e)); render(); });
+    svg.addEventListener('pointerup', ()=>{ drag=false; });
+    svg.addEventListener('pointercancel', ()=>{ drag=false; });
+  }
+  sim.querySelectorAll('.nbtn').forEach(b=>b.onclick=()=>nudgeArm(parseFloat(b.dataset.d)));
+  const s=sim.querySelector('#armSlider'); if(s) s.oninput=e=>setArm(e.target.value);
+
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+}
+
+setupRound();
+render();
+</script>
+</body>
+</html>

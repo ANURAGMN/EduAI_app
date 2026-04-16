@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0369a1">
+<title>Place Value Shift Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0369a1 0%,#1d4ed8 100%);min-height:100vh}
+#app{max-width:420px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#eff6ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#1d4ed8;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;color:#0f172a;font-weight:800}
+.mission{background:linear-gradient(135deg,#dbeafe,#bfdbfe);border:2px solid #93c5fd;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#1e3a8a}
+.mission p{font-size:12px;color:#1e40af;margin-top:4px;line-height:1.45}
+.display{background:#0f172a;border-radius:12px;padding:12px;color:#fff;text-align:center;margin-bottom:10px}
+.display .big{font-size:34px;font-family:'Courier New',monospace;font-weight:900}
+.display .sub{font-size:11px;opacity:.75}
+.ops{display:flex;gap:8px;margin-bottom:10px}
+.op{flex:1;padding:12px;border:none;border-radius:12px;font-size:18px;font-weight:900;cursor:pointer}
+.op.mul{background:#dbeafe;color:#1d4ed8}
+.op.div{background:#dcfce7;color:#166534}
+.history{background:#f8fafc;border-radius:10px;padding:10px;min-height:56px;max-height:110px;overflow:auto}
+.history div{font-size:12px;color:#334155;padding:3px 0}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.retry{background:#e2e8f0;color:#334155}
+.btn.next{background:#0369a1;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-left:4px solid #0369a1;border-radius:12px;padding:12px;font-size:12px;color:#0f172a;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Place Value Shift Lab</h1>
+    <p>Use ×10 and ÷10 to hit exact decimal targets</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> moving one place left means ÷10, right means ×10. This game makes decimal place value movement visible as a strategy puzzle.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+
+const MISSIONS = [
+  {start:"7.05",target:"70.5",moves:2,hint:"One shift right is enough."},
+  {start:"560",target:"5.6",moves:2,hint:"Two left shifts."},
+  {start:"0.84",target:"84",moves:2,hint:"Two right shifts."},
+  {start:"325",target:"3.25",moves:2,hint:"Shift left twice."},
+  {start:"91.2",target:"0.912",moves:2,hint:"Two left shifts again."},
+  {start:"4.08",target:"0.408",moves:1,hint:"Only one left shift needed."}
+];
+
+let st = {idx:0,current:0,left:0,wins:0,streak:0,log:[],state:"play"};
+
+function toMilli(x){return Math.round(parseFloat(x)*1000);}
+function fmt(v){
+  const s=(v/1000).toFixed(3).replace(/\.?0+$/,'');
+  return s === "-0" ? "0" : s;
+}
+
+function setup(){
+  const m = MISSIONS[st.idx];
+  st.current = toMilli(m.start);
+  st.left = m.moves;
+  st.log = [];
+  st.state = "play";
+}
+
+function apply(op){
+  if(st.state!=="play") return;
+  const before = st.current;
+  st.current = op==="mul" ? st.current*10 : Math.round(st.current/10);
+  st.left -= 1;
+  st.log.unshift(`${fmt(before)} ${op==="mul"?"×10":"÷10"} = ${fmt(st.current)}`);
+  check();
+  render();
+}
+
+function check(){
+  const m = MISSIONS[st.idx];
+  const target = toMilli(m.target);
+  if(st.current===target){
+    st.state="win";
+    st.wins += 1;
+    st.streak += 1;
+    return;
+  }
+  if(st.left<=0){
+    st.state="lose";
+    st.streak = 0;
+  }
+}
+
+function nextMission(){
+  st.idx = (st.idx+1)%MISSIONS.length;
+  setup();
+  render();
+}
+
+function render(){
+  const m = MISSIONS[st.idx];
+  const target = toMilli(m.target);
+  const msg = st.state==="win"
+    ? `<div class="msg good"><b>Mission clear!</b> You aligned place values perfectly.</div>`
+    : st.state==="lose"
+      ? `<div class="msg bad"><b>Not yet.</b> Target was ${fmt(target)}. Hint: ${m.hint}</div>`
+      : `<div class="msg info">Need ${fmt(target)}. Hint: ${m.hint}</div>`;
+
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Mission</div><div class="v">${st.idx+1}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Moves</div><div class="v">${st.left}</div></div>
+      <div class="stat"><div class="k">Wins</div><div class="v">${st.wins}</div></div>
+      <div class="stat"><div class="k">Streak</div><div class="v">${st.streak}</div></div>
+    </div>
+
+    <div class="mission">
+      <h3>${fmt(toMilli(m.start))} → ${m.target}</h3>
+      <p>Reach target in at most ${m.moves} moves using only decimal place shifts.</p>
+    </div>
+
+    <div class="display">
+      <div class="sub">Current value</div>
+      <div class="big">${fmt(st.current)}</div>
+    </div>
+
+    <div class="ops">
+      <button class="op mul" id="mulBtn">×10</button>
+      <button class="op div" id="divBtn">÷10</button>
+    </div>
+
+    <div class="history">${st.log.length?st.log.map(x=>`<div>${x}</div>`).join(''):'<div>Make your first shift.</div>'}</div>
+
+    <div class="actions">
+      <button class="btn retry" id="retryBtn">Retry</button>
+      <button class="btn next" id="nextBtn">${st.state==="play"?"Skip":"Next Mission"}</button>
+    </div>
+    ${msg}
+  `;
+
+  sim.querySelector("#mulBtn").onclick=()=>apply("mul");
+  sim.querySelector("#divBtn").onclick=()=>apply("div");
+  sim.querySelector("#retryBtn").onclick=()=>{setup();render();};
+  sim.querySelector("#nextBtn").onclick=nextMission;
+}
+
+setup();
+render();
+</script>
+</body>
+</html>

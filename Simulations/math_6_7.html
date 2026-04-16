@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Prime Composite Sort Circuit</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#0f766e,#115e59);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}.header h1{font-size:20px;font-weight:800}.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}.v{font-size:17px;font-weight:800;color:#0f172a}
+.mission{background:#ecfeff;border:2px solid #99f6e4;border-radius:12px;padding:10px;margin-bottom:10px;font-size:12px;color:#134e4a}
+.pool{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.tok{padding:8px 10px;border:2px solid #a7f3d0;border-radius:10px;background:#fff;color:#065f46;font-weight:900;cursor:pointer}
+.tok.sel{background:#ccfbf1;border-color:#0f766e}
+.bins{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.bin{background:#f8fafc;border:2px dashed #94a3b8;border-radius:10px;padding:8px;text-align:center}
+.bin h4{font-size:12px;color:#334155}.line{font-family:'Courier New',monospace;font-size:14px;font-weight:900;color:#0f172a;min-height:20px}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.check{background:#0f766e;color:#fff}.next{background:#0284c7;color:#fff}.retry{background:#334155;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.4}
+.good{background:#dcfce7;color:#166534}.bad{background:#fef2f2;color:#991b1b}.info{background:#eff6ff;color:#1e3a8a}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header"><h1>Prime Composite Sort Circuit</h1><p>Route each number into prime/composite circuit lanes</p></div>
+  <div class="card" id="sim"></div>
+</div>
+<script>
+const sim=document.getElementById('sim');
+const ROUNDS=[
+  [2,3,4,5,6,7,8,9],
+  [11,12,13,14,15,16,17,18],
+  [19,20,21,22,23,24,25,26],
+  [27,28,29,30,31,32,33,34],
+  [35,36,37,38,39,40,41,42]
+];
+let st={run:true,idx:0,score:0,lives:3,sel:null,left:[],right:[],resolved:false,msg:'',msgType:'info'};
+function isPrime(n){ if(n<2) return false; for(let i=2;i*i<=n;i++) if(n%i===0) return false; return true; }
+function setupRound(){ st.sel=null; st.left=[]; st.right=[]; st.resolved=false; st.msg=''; st.msgType='info'; }
+function pick(i){ if(!st.run||st.resolved) return; st.sel=i; render(); }
+function routePrime(){
+  if(!st.run||st.resolved||st.sel===null) return;
+  if(!st.left.includes(st.sel)&&!st.right.includes(st.sel)) st.left.push(st.sel);
+  st.sel=null; render();
+}
+function routeComposite(){
+  if(!st.run||st.resolved||st.sel===null) return;
+  if(!st.left.includes(st.sel)&&!st.right.includes(st.sel)) st.right.push(st.sel);
+  st.sel=null; render();
+}
+function check(){
+  if(!st.run||st.resolved) return;
+  const arr=ROUNDS[st.idx];
+  if(st.left.length+st.right.length!==arr.length){ st.msg='Route all numbers first.'; st.msgType='info'; render(); return; }
+  st.resolved=true;
+  let ok=true;
+  for(const i of st.left){ if(!isPrime(arr[i])) ok=false; }
+  for(const i of st.right){ if(isPrime(arr[i])) ok=false; }
+  if(ok){ st.score+=12; st.msg='Circuit sorted correctly.'; st.msgType='good'; }
+  else { st.lives--; st.msg='One or more numbers are in wrong lane.'; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function retry(){ if(st.run&&st.resolved){ setupRound(); render(); } }
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Circuit missions complete!'; st.msgType='good'; render(); return; }
+  setupRound(); render();
+}
+function restart(){ st={run:true,idx:0,score:0,lives:3,sel:null,left:[],right:[],resolved:false,msg:'',msgType:'info'}; setupRound(); render(); }
+function render(){
+  const done=!st.run, arr=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Routed</div><div class="v">${st.left.length+st.right.length}/${arr.length}</div></div>
+    </div>
+    <div class="mission">Pick a number then route to <b>Prime</b> or <b>Composite</b> lane.</div>
+    <div class="pool">${arr.map((n,i)=>`<button class="tok ${st.sel===i?'sel':''}" data-i="${i}" ${(st.left.includes(i)||st.right.includes(i)||done||st.resolved)?'disabled':''}>${n}</button>`).join('')}</div>
+    <div class="actions">${!done&&!st.resolved?`<button class="btn check" id="primeBtn">Route Prime</button><button class="btn next" id="compBtn">Route Composite</button>`:''}</div>
+    <div class="bins">
+      <div class="bin"><h4>Prime Lane</h4><div class="line">${st.left.map(i=>arr[i]).join(', ')||'...'}</div></div>
+      <div class="bin"><h4>Composite Lane</h4><div class="line">${st.right.map(i=>arr[i]).join(', ')||'...'}</div></div>
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Check Sort</button>`}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Use divisibility reasoning to classify quickly.</div>`}
+  `;
+  sim.querySelectorAll('.tok').forEach(b=>b.onclick=()=>pick(parseInt(b.dataset.i,10)));
+  const p=sim.querySelector('#primeBtn'); if(p) p.onclick=routePrime;
+  const c=sim.querySelector('#compBtn'); if(c) c.onclick=routeComposite;
+  const ck=sim.querySelector('#checkBtn'); if(ck) ck.onclick=check;
+  const rt=sim.querySelector('#retryBtn'); if(rt) rt.onclick=retry;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+}
+setupRound(); render();
+</script>
+</body>
+</html>

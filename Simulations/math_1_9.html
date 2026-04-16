@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<title>Population Estimate Radar</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#2563eb,#0ea5e9);min-height:100vh}
+#app{max-width:420px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#eff6ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#1d4ed8;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #93c5fd;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#1e3a8a}
+.mission p{font-size:12px;color:#334155;margin-top:4px;line-height:1.45}
+.big{font-size:24px;font-weight:900;color:#0f172a;font-family:'Courier New',monospace;text-align:center;margin:8px 0}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{padding:11px;border:2px solid #dbeafe;border-radius:10px;background:#fff;font-family:'Courier New',monospace;font-weight:800;color:#1e3a8a;cursor:pointer}
+.opt.sel{background:#dbeafe;border-color:#2563eb;color:#1e3a8a}
+.opt.correct{background:#dcfce7;border-color:#22c55e;color:#166534}
+.opt.wrong{background:#fee2e2;border-color:#ef4444;color:#991b1b}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.start{background:linear-gradient(135deg,#2563eb,#0ea5e9);color:#fff}
+.btn.next{background:#16a34a;color:#fff}
+.btn.retry{background:#f59e0b;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-left:4px solid #2563eb;border-radius:12px;padding:12px;font-size:12px;color:#0f172a;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Population Estimate Radar</h1>
+    <p>Lock nearest estimates quickly</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Radar rule:</b> choose nearest rounded estimate at the asked place value (thousand/lakh/crore).</div>
+</div>
+<script>
+const sim = document.getElementById("sim");
+const MISSIONS = [
+  {city:"Mumbai", pop:12442373, place:1000000, label:"nearest ten lakh"},
+  {city:"Bengaluru", pop:8443675, place:100000, label:"nearest lakh"},
+  {city:"Pune", pop:3115431, place:100000, label:"nearest lakh"},
+  {city:"Hyderabad", pop:6809970, place:1000000, label:"nearest ten lakh"},
+  {city:"Kolkata", pop:4496694, place:100000, label:"nearest lakh"},
+  {city:"Chennai", pop:4646732, place:1000000, label:"nearest ten lakh"}
+];
+
+let st = {run:false,idx:0,score:0,lives:3,resolved:false,msg:"",msgType:"info",opts:[],picked:null};
+
+function fmtI(n){
+  let s=String(Math.round(n)); if(s.length<=3) return s;
+  let last=s.slice(-3), rest=s.slice(0,-3), parts=[];
+  while(rest.length>2){ parts.unshift(rest.slice(-2)); rest=rest.slice(0,-2); }
+  if(rest.length) parts.unshift(rest);
+  return parts.join(",")+","+last;
+}
+function roundTo(n,p){ return Math.round(n/p)*p; }
+function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x;}
+
+function buildOptions(m){
+  const ans = roundTo(m.pop,m.place);
+  const deltas = [-2,-1,1,2].map(k=>ans+k*m.place);
+  const vals = shuffle([ans,...deltas.filter(v=>v>0).slice(0,3)]).slice(0,4);
+  if(!vals.includes(ans)) vals[0]=ans;
+  return shuffle(vals);
+}
+
+function setupRound(){
+  st.resolved=false; st.msg=""; st.msgType="info"; st.picked=null;
+  st.opts=buildOptions(MISSIONS[st.idx]);
+}
+function start(){ st={...st,run:true,idx:0,score:0,lives:3,picked:null}; setupRound(); render(); }
+function retry(){ if(!st.run) return; setupRound(); render(); }
+
+function choose(v){
+  if(!st.run || st.resolved) return;
+  st.picked = v;
+  const m = MISSIONS[st.idx];
+  const ans = roundTo(m.pop,m.place);
+  st.resolved=true;
+  if(v===ans){ st.score+=12; st.msgType="good"; st.msg=`Correct radar lock: ${fmtI(ans)}.`; }
+  else { st.lives--; st.msgType="bad"; st.msg=`Not closest. Correct: ${fmtI(ans)}.`; if(st.lives<=0) st.run=false; }
+  render();
+}
+
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=MISSIONS.length){ st.run=false; st.msg="All radar missions completed!"; st.msgType="good"; render(); return; }
+  setupRound(); render();
+}
+
+function render(){
+  const done=!st.run;
+  const m = MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Mission</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Place</div><div class="v" style="font-size:11px">${m.label}</div></div>
+    </div>
+    <div class="mission">
+      <h3>${m.city} population estimate</h3>
+      <p>Round to <b>${m.label}</b>:</p>
+      <div class="big">${fmtI(m.pop)}</div>
+    </div>
+    <div class="opts">
+      ${st.opts.map(v=>`<button class="opt ${(!st.resolved && st.picked===v)?'sel':''}" data-v="${v}">${fmtI(v)}</button>`).join("")}
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn start" id="startBtn">Start Radar Run</button>`:
+      (st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">Next</button>`:``)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Selected: <b>${st.picked===null?'-':fmtI(st.picked)}</b>. Compare nearest neighbors around the rounding place.</div>`}
+  `;
+  sim.querySelectorAll(".opt").forEach(b=>b.onclick=()=>choose(Number(b.dataset.v)));
+  const s=sim.querySelector("#startBtn"); if(s) s.onclick=start;
+  const r=sim.querySelector("#retryBtn"); if(r) r.onclick=retry;
+  const n=sim.querySelector("#nextBtn"); if(n) n.onclick=next;
+}
+
+start();
+</script>
+</body>
+</html>

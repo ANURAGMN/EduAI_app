@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Unit Conversion Precision Tower</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0f766e,#0ea5e9);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#0f172a}
+.mission{background:linear-gradient(135deg,#ecfeff,#cffafe);border:2px solid #67e8f9;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#134e4a}
+.mission p{font-size:12px;color:#0f766e;line-height:1.45}
+.target{font-family:'Courier New',monospace;font-size:18px;font-weight:900;text-align:center;color:#164e63;margin-top:6px}
+.entry{background:#f8fafc;border-radius:10px;padding:10px}
+.entry p{font-size:12px;color:#334155}
+.row{display:flex;gap:8px;align-items:center;margin-top:7px}
+.row input{flex:1;padding:10px;border:2px solid #cbd5e1;border-radius:8px;font-size:16px;font-weight:800}
+.btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.btn{padding:10px;border:none;border-radius:10px;font-weight:800;cursor:pointer}
+.btn.step{background:#e0f2fe;color:#0c4a6e}
+.btn.check{background:#0f766e;color:#fff}
+.btn.next{background:#0284c7;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#ecfeff,#cffafe);border-left:4px solid #0f766e;border-radius:12px;padding:12px;font-size:12px;color:#0f172a;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Unit Conversion Precision Tower</h1>
+    <p>Hit exact converted values with fine control</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> converting metric units is scaling by powers of 10. Precision matters for very small and very large values.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const MISSIONS = [
+  {src:750, from:'cm', to:'m', factor:0.01, unit:'m', hint:'cm to m: divide by 100'},
+  {src:0.45, from:'kg', to:'g', factor:1000, unit:'g', hint:'kg to g: multiply by 1000'},
+  {src:6200, from:'mL', to:'L', factor:0.001, unit:'L', hint:'mL to L: divide by 1000'},
+  {src:3.5, from:'m', to:'cm', factor:100, unit:'cm', hint:'m to cm: multiply by 100'},
+  {src:0.0008, from:'kg', to:'g', factor:1000, unit:'g', hint:'Small decimals still scale by 1000'},
+  {src:128, from:'mm', to:'cm', factor:0.1, unit:'cm', hint:'mm to cm: divide by 10'}
+];
+
+let st = {run:true, idx:0, score:0, lives:3, answer:'', resolved:false, msg:'', msgType:'info'};
+
+function target(){
+  const m = MISSIONS[st.idx];
+  return m.src * m.factor;
+}
+function fmt(v){
+  const s = Number(v).toFixed(6).replace(/\.?0+$/,'');
+  return s==='' ? '0' : s;
+}
+function setupRound(){
+  st.answer = '';
+  st.resolved = false;
+  st.msg = '';
+  st.msgType = 'info';
+}
+function startGame(){
+  st = {run:true, idx:0, score:0, lives:3, answer:'', resolved:false, msg:'', msgType:'info'};
+  setupRound();
+  render();
+}
+function nudge(delta){
+  if(!st.run || st.resolved) return;
+  const cur = parseFloat(st.answer || '0');
+  const next = cur + delta;
+  st.answer = String(Number(next.toFixed(6)));
+  render();
+}
+function check(){
+  if(!st.run || st.resolved) return;
+  const m = MISSIONS[st.idx];
+  const ans = target();
+  const got = parseFloat(st.answer);
+  if(!Number.isFinite(got)){
+    st.msg='Enter a valid number first.';
+    st.msgType='bad';
+    render();
+    return;
+  }
+  const ok = Math.abs(got-ans) < 1e-9;
+  st.resolved = true;
+  if(ok){
+    st.score += 14;
+    st.msg = `Perfect conversion! ${m.src} ${m.from} = ${fmt(ans)} ${m.to}.`;
+    st.msgType='good';
+  }else{
+    st.lives -= 1;
+    st.msg = `Off target. Correct value: ${fmt(ans)} ${m.to}. Hint: ${m.hint}`;
+    st.msgType='bad';
+    if(st.lives<=0) st.run=false;
+  }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx += 1;
+  if(st.idx>=MISSIONS.length){
+    st.run=false;
+    st.msg='Precision tower completed!';
+    st.msgType='good';
+    render();
+    return;
+  }
+  setupRound();
+  render();
+}
+function render(){
+  const done = !st.run;
+  const m = MISSIONS[Math.min(st.idx, MISSIONS.length-1)];
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Mode</div><div class="v">Tower</div></div>
+    </div>
+    <div class="mission">
+      <h3>Convert and lock exact value</h3>
+      <p>${m.hint}</p>
+      <div class="target">${m.src} ${m.from} → ? ${m.to}</div>
+    </div>
+    <div class="entry">
+      <p>Your converted value (${m.to})</p>
+      <div class="row"><input id="ans" type="number" step="0.0001" value="${st.answer}" placeholder="Type value"></div>
+      <div class="btns">
+        <button class="btn step" id="minusBtn">-0.1</button>
+        <button class="btn step" id="plusBtn">+0.1</button>
+        ${done ? `<button class="btn check" id="startBtn">Restart</button>` : (st.resolved ? `<button class="btn next" id="nextBtn">Next</button>` : `<button class="btn check" id="checkBtn">Check</button>`)}
+      </div>
+    </div>
+    ${st.msg ? `<div class="msg ${st.msgType}">${st.msg}</div>` : `<div class="msg info">Enter or nudge value, then check.</div>`}
+  `;
+  const a = sim.querySelector('#ans');
+  if(a){
+    a.oninput = ()=>{ st.answer = a.value; };
+    a.disabled = st.resolved || done;
+  }
+  const mn = sim.querySelector('#minusBtn'); if(mn) mn.onclick=()=>nudge(-0.1);
+  const pl = sim.querySelector('#plusBtn'); if(pl) pl.onclick=()=>nudge(0.1);
+  const c = sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n = sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const s = sim.querySelector('#startBtn'); if(s) s.onclick=startGame;
+}
+startGame();
+</script>
+</body>
+</html>

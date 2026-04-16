@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<title>Triangle Angle Sum Builder</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#7c3aed,#5b21b6);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#f5f3ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#6d28d9;font-weight:700;text-transform:uppercase}.v{font-size:17px;font-weight:800;color:#0f172a}
+.mission{background:#faf5ff;border:2px solid #ddd6fe;border-radius:12px;padding:10px;margin-bottom:10px;font-size:12px;color:#5b21b6}
+.stage{height:270px;background:#fafafa;border:2px solid #cbd5e1;border-radius:12px;overflow:hidden}
+svg{width:100%;height:100%;display:block;touch-action:none}
+.controlPad{margin-top:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.mini{padding:8px;border:none;border-radius:8px;background:#ede9fe;color:#5b21b6;font-weight:800;cursor:pointer}
+.mini:disabled{opacity:.5;cursor:not-allowed}
+.sliderWrap{margin-top:8px;font-size:12px;color:#5b21b6}
+.sliderWrap input{width:100%}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.check{background:#7c3aed;color:#fff}.next{background:#0f766e;color:#fff}.retry{background:#334155;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.4}
+.good{background:#dcfce7;color:#166534}.bad{background:#fef2f2;color:#991b1b}.info{background:#eff6ff;color:#1e3a8a}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Triangle Angle Sum Builder</h1>
+    <p>Drag vertex C to forge the target apex angle</p>
+  </div>
+  <div class="card" id="sim"></div>
+</div>
+<script>
+const sim=document.getElementById('sim');
+const MISSIONS=[
+  {targetC:40,tol:2},{targetC:55,tol:2},{targetC:70,tol:2},{targetC:85,tol:2},{targetC:100,tol:2}
+];
+const A={x:80,y:220}, B={x:320,y:220};
+let C={x:200,y:90};
+let st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info'};
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function dist(p,q){return Math.hypot(p.x-q.x,p.y-q.y)}
+function moveC(dx,dy){
+  C.x=clamp(C.x+dx,70,330);
+  C.y=clamp(C.y+dy,45,185);
+}
+function ang(p,q,r){
+  const v1={x:p.x-q.x,y:p.y-q.y}, v2={x:r.x-q.x,y:r.y-q.y};
+  const n1=Math.hypot(v1.x,v1.y)||1, n2=Math.hypot(v2.x,v2.y)||1;
+  const c=clamp((v1.x*v2.x+v1.y*v2.y)/(n1*n2),-1,1);
+  return Math.acos(c)*180/Math.PI;
+}
+function geo(){
+  const a=ang(B,A,C), b=ang(A,B,C), c=ang(A,C,B);
+  return {a,b,c,sum:a+b+c};
+}
+function setupRound(){ st.resolved=false; st.msg=''; st.msgType='info'; C={x:140+Math.random()*120,y:70+Math.random()*80}; }
+function check(){
+  if(!st.run||st.resolved) return;
+  const m=MISSIONS[st.idx], g=geo(); st.resolved=true;
+  if(Math.abs(g.c-m.targetC)<=m.tol){ st.score+=15; st.msg=`Excellent. ∠C = ${g.c.toFixed(1)}°`; st.msgType='good'; }
+  else{ st.lives--; st.msg=`Target ${m.targetC}° not reached. Your ∠C = ${g.c.toFixed(1)}°`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=MISSIONS.length){st.run=false; st.msg='Angle forge complete!'; st.msgType='good'; render(); return;}
+  setupRound(); render();
+}
+function retry(){ if(st.run&&st.resolved){ setupRound(); render(); } }
+function restart(){ st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info'}; setupRound(); render(); }
+function render(){
+  const done=!st.run, m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)], g=geo();
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">A+B+C</div><div class="v">${g.sum.toFixed(1)}°</div></div>
+    </div>
+    <div class="mission">Mission: Drag C so apex <b>∠C = ${m.targetC}° ± ${m.tol}°</b>. Observe A+B+C stays near 180°.</div>
+    <div class="stage">
+      <svg id="svg" viewBox="0 0 400 270">
+        <rect x="0" y="0" width="400" height="270" fill="#fafafa"/>
+        <line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="#334155" stroke-width="4"/>
+        <line x1="${A.x}" y1="${A.y}" x2="${C.x.toFixed(1)}" y2="${C.y.toFixed(1)}" stroke="#7c3aed" stroke-width="4"/>
+        <line x1="${B.x}" y1="${B.y}" x2="${C.x.toFixed(1)}" y2="${C.y.toFixed(1)}" stroke="#7c3aed" stroke-width="4"/>
+        <circle cx="${A.x}" cy="${A.y}" r="8" fill="#0f172a"/><text x="${A.x-14}" y="${A.y+20}" font-size="13" fill="#111827">A ${g.a.toFixed(1)}°</text>
+        <circle cx="${B.x}" cy="${B.y}" r="8" fill="#0f172a"/><text x="${B.x-18}" y="${B.y+20}" font-size="13" fill="#111827">B ${g.b.toFixed(1)}°</text>
+        <circle cx="${C.x.toFixed(1)}" cy="${C.y.toFixed(1)}" r="11" fill="#7c3aed" stroke="#fff" stroke-width="3"/><text x="${C.x+12}" y="${C.y-8}" font-size="13" fill="#5b21b6">C ${g.c.toFixed(1)}°</text>
+      </svg>
+    </div>
+    <div class="controlPad">
+      <button class="mini" id="leftBig" ${done||st.resolved?'disabled':''}>◀ 5</button>
+      <button class="mini" id="leftSmall" ${done||st.resolved?'disabled':''}>◀ 1</button>
+      <button class="mini" id="rightSmall" ${done||st.resolved?'disabled':''}>1 ▶</button>
+      <button class="mini" id="rightBig" ${done||st.resolved?'disabled':''}>5 ▶</button>
+      <button class="mini" id="upBig" ${done||st.resolved?'disabled':''}>▲ 5</button>
+      <button class="mini" id="upSmall" ${done||st.resolved?'disabled':''}>▲ 1</button>
+      <button class="mini" id="downSmall" ${done||st.resolved?'disabled':''}>1 ▼</button>
+      <button class="mini" id="downBig" ${done||st.resolved?'disabled':''}>5 ▼</button>
+    </div>
+    <div class="sliderWrap">
+      Horizontal (C.x): ${Math.round(C.x)}
+      <input type="range" id="xSlider" min="70" max="330" value="${Math.round(C.x)}" ${done||st.resolved?'disabled':''}>
+      Vertical (C.y): ${Math.round(C.y)}
+      <input type="range" id="ySlider" min="45" max="185" value="${Math.round(C.y)}" ${done||st.resolved?'disabled':''}>
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">${st.idx===MISSIONS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Lock Triangle</button>`}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Drag C and watch all three angles update live.</div>`}
+  `;
+  const svg=sim.querySelector('#svg');
+  let drag=false;
+  if(!done&&!st.resolved){
+    const move=(e)=>{
+      const r=svg.getBoundingClientRect();
+      C.x=clamp((e.clientX-r.left)*(400/r.width),70,330);
+      C.y=clamp((e.clientY-r.top)*(270/r.height),45,185);
+      render();
+    };
+    svg.addEventListener('pointerdown',e=>{
+      const r=svg.getBoundingClientRect(), x=(e.clientX-r.left)*(400/r.width), y=(e.clientY-r.top)*(270/r.height);
+      if(dist({x,y},C)<=30){ drag=true; svg.setPointerCapture(e.pointerId); move(e); }
+    });
+    svg.addEventListener('pointermove',e=>{if(drag)move(e);});
+    svg.addEventListener('pointerup',()=>drag=false); svg.addEventListener('pointercancel',()=>drag=false);
+  }
+  const bind=(id,dx,dy)=>{ const el=sim.querySelector('#'+id); if(el) el.onclick=()=>{ moveC(dx,dy); render(); }; };
+  bind('leftBig',-5,0); bind('leftSmall',-1,0); bind('rightSmall',1,0); bind('rightBig',5,0);
+  bind('upBig',0,-5); bind('upSmall',0,-1); bind('downSmall',0,1); bind('downBig',0,5);
+  const xs=sim.querySelector('#xSlider'); if(xs) xs.oninput=e=>{ C.x=clamp(parseInt(e.target.value,10),70,330); render(); };
+  const ys=sim.querySelector('#ySlider'); if(ys) ys.oninput=e=>{ C.y=clamp(parseInt(e.target.value,10),45,185); render(); };
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
+  const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+}
+setupRound(); render();
+</script>
+</body>
+</html>

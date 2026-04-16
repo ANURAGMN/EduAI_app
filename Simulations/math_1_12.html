@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#f59e0b">
+<title>Rounding Sniper Range</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#f59e0b 0%,#ea580c 100%);min-height:100vh}
+#app{max-width:420px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#fffbeb;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#92400e;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#fff7ed,#ffedd5);border:2px solid #fdba74;border-radius:12px;padding:10px;margin-bottom:10px}
+.num{font-size:28px;font-family:'Courier New',monospace;font-weight:800;text-align:center;color:#7c2d12}
+.prompt{text-align:center;font-size:12px;color:#9a3412;margin-top:4px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.opt{padding:10px;border-radius:10px;border:2px solid #fed7aa;background:#fff;font-family:'Courier New',monospace;font-size:13px;font-weight:800;color:#9a3412;cursor:pointer}
+.ops{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.start{background:linear-gradient(135deg,#f59e0b,#ea580c);color:#fff}
+.btn.next{background:#059669;color:#fff}
+.btn.retry{background:#e2e8f0;color:#334155}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#fffbeb,#fef3c7);border-left:4px solid #f59e0b;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Rounding Sniper Range</h1>
+    <p>Hit correct nearest values under pressure</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Challenge:</b> choose the nearest rounded value at different place levels (thousand/lakh/crore) before lives run out.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const MISSIONS = [
+  {n:38769957, p:1000},
+  {n:38769957, p:100000},
+  {n:290532481, p:10000000},
+  {n:67285183, p:1000000},
+  {n:12442373, p:1000000},
+  {n:463128, p:10000},
+  {n:419682, p:10000}
+];
+
+function fmtI(n){if(n===0)return'0';let s=Math.round(n).toString();if(s.length<=3)return s;let l=s.slice(-3),r=s.slice(0,-3),p=[];while(r.length>2){p.unshift(r.slice(-2));r=r.slice(0,-2)}if(r.length)p.unshift(r);return p.join(',')+','+l}
+function roundTo(n,p){return Math.round(n/p)*p;}
+function floorTo(n,p){return Math.floor(n/p)*p;}
+function placeName(p){return p===1000?'Thousand':p===10000?'Ten Thousand':p===100000?'Lakh':p===1000000?'Ten Lakh':p===10000000?'Crore':'Place';}
+function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x;}
+
+let st = {run:false, idx:0, score:0, lives:3, opts:[], resolved:false, msg:'', msgType:'info'};
+
+function setup(){
+  const m = MISSIONS[st.idx];
+  const ans = roundTo(m.n,m.p);
+  const low = floorTo(m.n,m.p);
+  const high = low + m.p;
+  const set = new Set([ans, low, high, ans+m.p, Math.max(0,ans-m.p)]);
+  st.opts = shuffle([...set]).slice(0,4);
+  if(!st.opts.includes(ans)){ st.opts[Math.floor(Math.random()*st.opts.length)] = ans; st.opts=shuffle(st.opts); }
+  st.resolved=false; st.msg='';
+}
+
+function start(){ st={...st,run:true,idx:0,score:0,lives:3}; setup(); render(); }
+
+function choose(v){
+  if(!st.run || st.resolved) return;
+  const m = MISSIONS[st.idx];
+  const ans = roundTo(m.n,m.p);
+  st.resolved = true;
+  if(v===ans){ st.score += 10; st.msg='Bullseye! Correct nearest rounding.'; st.msgType='good'; }
+  else { st.lives--; st.msg=`Missed. Correct value is ${fmtI(ans)}.`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=MISSIONS.length){ st.run=false; st.msg='Range complete!'; st.msgType='good'; render(); return; }
+  setup(); render();
+}
+
+function retry(){ if(!st.run) return; setup(); render(); }
+
+function render(){
+  const done = !st.run;
+  const m = MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+  const ans = roundTo(m.n,m.p);
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Place</div><div class="v" style="font-size:12px">${placeName(m.p)}</div></div>
+    </div>
+    <div class="mission">
+      <div class="num">${fmtI(m.n)}</div>
+      <div class="prompt">Nearest ${placeName(m.p)} ?</div>
+      <div class="opts">
+        ${st.opts.map(o=>`<button class="opt" data-v="${o}">${fmtI(o)}</button>`).join('')}
+      </div>
+    </div>
+    <div class="ops">
+      ${done ? `<button class="btn start" id="startBtn">Start Range</button>` :
+      (st.resolved ? `<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">Next</button>` :
+      `<button class="btn retry" id="retryBtn">Reshuffle</button>`)}
+    </div>
+    ${st.msg ? `<div class="msg ${st.msgType}">${st.msg}</div>` : `<div class="msg info">Hint: compare distance to lower and higher multiples of ${fmtI(m.p)}.</div>`}
+  `;
+  sim.querySelectorAll('.opt').forEach(b=>b.onclick=()=>choose(Number(b.dataset.v)));
+  const s=sim.querySelector('#startBtn'); if(s) s.onclick=start;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
+}
+
+start();
+</script>
+</body>
+</html>

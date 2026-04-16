@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Line Relation Sort Yard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0f766e,#2563eb);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#ecfeff,#dbeafe);border:2px solid #7dd3fc;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission p{font-size:12px;color:#0f766e;line-height:1.45}
+.visual{margin-top:8px;background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:8px}
+svg{width:100%;height:220px;display:block;border-radius:10px;background:#fff}
+.toolbar{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#0f766e;color:#fff}
+.btn.next{background:#0284c7;color:#fff}
+.btn.reset{background:#e2e8f0;color:#334155}
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.choice{padding:10px;border:2px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;font-weight:800}
+.choice.sel{border-color:#2563eb;background:#dbeafe;color:#1d4ed8}
+.choice.ok{border-color:#16a34a;background:#dcfce7;color:#166534}
+.choice.bad{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#ecfeff,#dbeafe);border-left:4px solid #0f766e;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+.drag{fill:#e11d48;stroke:#fff;stroke-width:2;cursor:grab}
+.lineA{stroke:#0f172a;stroke-width:4}
+.lineB{stroke:#2563eb;stroke-width:4}
+.helper{stroke:#94a3b8;stroke-width:1;stroke-dasharray:5 4}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Line Relation Sort Yard</h1>
+    <p>Drag points to create required line relation</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Interactive goal:</b> move line endpoints and classify the relation you created as parallel, intersecting, or perpendicular.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const ROUNDS = [
+  {target:'parallel'},
+  {target:'intersecting'},
+  {target:'perpendicular'},
+  {target:'parallel'},
+  {target:'perpendicular'},
+  {target:'intersecting'}
+];
+
+let st = {
+  run:true, idx:0, score:0, lives:3, pick:'', resolved:false, msg:'', msgType:'info',
+  pts:{A:{x:60,y:70},B:{x:340,y:90},C:{x:80,y:170},D:{x:330,y:160}},
+  drag:null
+};
+
+function resetGeometry(){
+  st.pts = {A:{x:60,y:70},B:{x:340,y:90},C:{x:80,y:170},D:{x:330,y:160}};
+}
+function dist(a,b){const dx=a.x-b.x,dy=a.y-b.y;return Math.hypot(dx,dy);}
+function lineVec(p,q){return {x:q.x-p.x,y:q.y-p.y};}
+function relation(){
+  const v1=lineVec(st.pts.A,st.pts.B), v2=lineVec(st.pts.C,st.pts.D);
+  const n1=Math.hypot(v1.x,v1.y), n2=Math.hypot(v2.x,v2.y);
+  if(n1<1||n2<1) return 'intersecting';
+  const dot=(v1.x*v2.x+v1.y*v2.y)/(n1*n2);
+  const cross=Math.abs(v1.x*v2.y-v1.y*v2.x)/(n1*n2);
+  if(Math.abs(dot)<0.08) return 'perpendicular';
+  if(cross<0.08) return 'parallel';
+  return 'intersecting';
+}
+function choose(v){ if(!st.run||st.resolved) return; st.pick=v; render(); }
+function check(){
+  if(!st.run||st.resolved||!st.pick) return;
+  const got=relation(), target=ROUNDS[st.idx].target;
+  st.resolved=true;
+  if(st.pick===target && got===target){
+    st.score+=12; st.msg='Perfect build and classification!'; st.msgType='good';
+  }else{
+    st.lives--; st.msg=`Target was ${target}. Current drawing is ${got}.`; st.msgType='bad'; if(st.lives<=0) st.run=false;
+  }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Sort yard complete!'; st.msgType='good'; render(); return; }
+  st.pick=''; st.resolved=false; st.msg=''; st.msgType='info'; resetGeometry(); render();
+}
+function restart(){
+  st={run:true,idx:0,score:0,lives:3,pick:'',resolved:false,msg:'',msgType:'info',
+      pts:{A:{x:60,y:70},B:{x:340,y:90},C:{x:80,y:170},D:{x:330,y:160}},drag:null};
+  render();
+}
+function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
+function bindDrag(){
+  const svg=sim.querySelector('#geom');
+  if(!svg) return;
+  const pt=svg.createSVGPoint();
+  function toLocal(evt){
+    pt.x=evt.clientX; pt.y=evt.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  svg.querySelectorAll('.drag').forEach(el=>{
+    el.onpointerdown=(e)=>{ if(st.resolved||!st.run) return; st.drag=el.dataset.id; el.setPointerCapture(e.pointerId); };
+  });
+  svg.onpointermove=(e)=>{
+    if(!st.drag) return;
+    const p=toLocal(e);
+    st.pts[st.drag].x=clamp(p.x,20,380);
+    st.pts[st.drag].y=clamp(p.y,20,200);
+    render();
+  };
+  svg.onpointerup=()=>{st.drag=null;};
+  svg.onpointercancel=()=>{st.drag=null;};
+}
+function render(){
+  const done=!st.run;
+  const target=ROUNDS[Math.min(st.idx,ROUNDS.length-1)].target;
+  const got=relation();
+  const cclass = (v)=>st.resolved?(v===target&&got===target&&st.pick===v?'ok':(v===st.pick?'bad':'')):(v===st.pick?'sel':'');
+  const p=st.pts;
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Current</div><div class="v" style="font-size:11px">${got}</div></div>
+    </div>
+    <div class="mission">
+      <p>Target relation: <b>${target}</b>. Drag red handles to shape the two lines, then choose the relation.</p>
+      <div class="visual">
+        <svg id="geom" viewBox="0 0 400 220">
+          <line class="helper" x1="0" y1="110" x2="400" y2="110"></line>
+          <line class="lineA" x1="${p.A.x}" y1="${p.A.y}" x2="${p.B.x}" y2="${p.B.y}"></line>
+          <line class="lineB" x1="${p.C.x}" y1="${p.C.y}" x2="${p.D.x}" y2="${p.D.y}"></line>
+          <circle class="drag" data-id="A" cx="${p.A.x}" cy="${p.A.y}" r="8"></circle>
+          <circle class="drag" data-id="B" cx="${p.B.x}" cy="${p.B.y}" r="8"></circle>
+          <circle class="drag" data-id="C" cx="${p.C.x}" cy="${p.C.y}" r="8"></circle>
+          <circle class="drag" data-id="D" cx="${p.D.x}" cy="${p.D.y}" r="8"></circle>
+        </svg>
+      </div>
+    </div>
+    <div class="choices">
+      <button class="choice ${cclass('parallel')}" data-v="parallel">parallel</button>
+      <button class="choice ${cclass('intersecting')}" data-v="intersecting">intersecting</button>
+      <button class="choice ${cclass('perpendicular')}" data-v="perpendicular">perpendicular</button>
+    </div>
+    <div class="toolbar">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:(st.resolved?`<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next Round'}</button>`:`<button class="btn reset" id="resetBtn">Reset Lines</button><button class="btn check" id="checkBtn">Check</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Drag handles until current relation matches target.</div>`}
+  `;
+  bindDrag();
+  sim.querySelectorAll('.choice').forEach(b=>b.onclick=()=>choose(b.dataset.v));
+  const rs=sim.querySelector('#resetBtn'); if(rs) rs.onclick=()=>{resetGeometry(); render();};
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const r=sim.querySelector('#restartBtn'); if(r) r.onclick=restart;
+}
+render();
+</script>
+</body>
+</html>
