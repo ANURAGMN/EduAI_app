@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#0284c7">
-<title>Nearest Neighbor Rounding Lineup</title>
+<meta name="theme-color" content="#0f766e">
+<title>Estimation Duel Grid</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0284c7,#0ea5e9);min-height:100vh}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0f766e,#2563eb);min-height:100vh}
 #app{max-width:430px;margin:auto;padding:10px}
 .header{text-align:center;color:#fff;padding:12px}
 .header h1{font-size:20px;font-weight:800}
@@ -16,67 +16,62 @@ body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
 .stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
 .k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}
-.v{font-size:18px;font-weight:800;color:#0f172a}
-.mission{background:linear-gradient(135deg,#ecfeff,#e0f2fe);border:2px solid #67e8f9;border-radius:12px;padding:10px;margin-bottom:10px}
-.mission p{font-size:12px;color:#0c4a6e;line-height:1.45}
-.num{font-family:'Courier New',monospace;font-size:26px;font-weight:900;color:#155e75;text-align:center;margin-top:6px}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#ecfeff,#dbeafe);border:2px solid #7dd3fc;border-radius:12px;padding:10px;margin-bottom:10px}
+.expr{font-family:'Courier New',monospace;font-size:22px;font-weight:900;color:#0f172a;text-align:center;margin-top:6px}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .opt{padding:10px;border:2px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;font-weight:800}
-.opt.sel{border-color:#0284c7;background:#e0f2fe;color:#0c4a6e}
+.opt.sel{border-color:#0f766e;background:#d1fae5;color:#065f46}
 .opt.ok{border-color:#16a34a;background:#dcfce7;color:#166534}
 .opt.bad{border-color:#dc2626;background:#fef2f2;color:#991b1b}
 .actions{display:flex;gap:8px;margin-top:10px}
 .btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
-.btn.check{background:#0284c7;color:#fff}
-.btn.next{background:#0f766e;color:#fff}
+.btn.check{background:#0f766e;color:#fff}
+.btn.next{background:#0284c7;color:#fff}
 .msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
 .msg.good{background:#dcfce7;color:#166534}
 .msg.bad{background:#fef2f2;color:#991b1b}
 .msg.info{background:#eff6ff;color:#1e3a8a}
-.insight{margin-top:12px;background:linear-gradient(135deg,#ecfeff,#e0f2fe);border-left:4px solid #0284c7;border-radius:12px;padding:12px;font-size:12px;color:#0f172a;line-height:1.5}
+.insight{margin-top:12px;background:linear-gradient(135deg,#ecfeff,#dbeafe);border-left:4px solid #0f766e;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
 </style>
 </head>
 <body>
 <div id="app">
   <div class="header">
-    <h1>Nearest Neighbor Rounding Lineup</h1>
-    <p>Pick the nearest rounded neighbor at asked place</p>
+    <h1>Estimation Duel Grid</h1>
+    <p>Pick closest estimate before exact value</p>
   </div>
   <div class="card" id="sim"></div>
-  <div class="insight"><b>Concept:</b> rounding uses nearest neighbors at the chosen scale (thousand/lakh/crore).</div>
+  <div class="insight"><b>Concept:</b> compare approximate results quickly, then verify with exact arithmetic.</div>
 </div>
 <script>
 const sim = document.getElementById('sim');
 const ROUNDS = [
-  {n:38769957, p:1000, ans:38770000},
-  {n:38769957, p:100000, ans:38800000},
-  {n:290532481, p:1000000, ans:291000000},
-  {n:67285183, p:10000000, ans:70000000},
-  {n:12442373, p:1000000, ans:12000000},
-  {n:463128, p:10000, ans:460000}
+  {expr:'4,63,128 + 4,19,682', exact:882810, opts:[800000,850000,900000,882810]},
+  {expr:'29,19,000 + 9,91,000', exact:3910000, opts:[3900000,4000000,3800000,3910000]},
+  {expr:'6,72,85,183 nearest crore', exact:70000000, opts:[60000000,70000000,67000000,68000000]},
+  {expr:'3,87,69,957 nearest lakh', exact:38800000, opts:[38700000,38800000,39000000,38500000]},
+  {expr:'9,99,999 + 2,01,001', exact:1201000, opts:[1000000,1200000,1300000,1201000]},
+  {expr:'5,40,200 - 1,89,700', exact:350500, opts:[350000,300000,360000,350500]}
 ];
 
 let st={run:true,idx:0,score:0,lives:3,pick:null,resolved:false,msg:'',msgType:'info'};
-function fmt(n){return Math.round(n).toLocaleString("en-IN");}
-function floorTo(n,p){return Math.floor(n/p)*p;}
-function opts(r){
-  const lo=floorTo(r.n,r.p), hi=lo+r.p;
-  const set=[r.ans,lo,hi,Math.max(0,r.ans-r.p),r.ans+r.p];
-  return [...new Set(set)].slice(0,4);
-}
+function fmt(n){return Math.round(n).toLocaleString('en-IN');}
 function choose(v){ if(!st.run||st.resolved) return; st.pick=v; render(); }
 function check(){
   if(!st.run||st.resolved||st.pick===null) return;
   const r=ROUNDS[st.idx];
   st.resolved=true;
-  if(st.pick===r.ans){ st.score+=12; st.msg='Correct nearest neighbor.'; st.msgType='good'; }
-  else { st.lives--; st.msg=`Correct rounding is ${fmt(r.ans)}.`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  const dist=Math.abs(st.pick-r.exact);
+  const best=Math.min(...r.opts.map(v=>Math.abs(v-r.exact)));
+  if(dist===best){ st.score+=12; st.msg=`Great estimate. Exact: ${fmt(r.exact)}.`; st.msgType='good'; }
+  else { st.lives--; st.msg=`Closer estimate exists. Exact: ${fmt(r.exact)}.`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
   render();
 }
 function next(){
   if(!st.resolved) return;
   st.idx++;
-  if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Lineup complete!'; st.msgType='good'; render(); return; }
+  if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Duel complete!'; st.msgType='good'; render(); return; }
   st.pick=null; st.resolved=false; st.msg=''; st.msgType='info'; render();
 }
 function restart(){ st={run:true,idx:0,score:0,lives:3,pick:null,resolved:false,msg:'',msgType:'info'}; render(); }
@@ -84,28 +79,27 @@ function restart(){ st={run:true,idx:0,score:0,lives:3,pick:null,resolved:false,
 function render(){
   const done=!st.run;
   const r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
-  const o=opts(r);
   sim.innerHTML=`
     <div class="stats">
       <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
       <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
       <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
-      <div class="stat"><div class="k">Scale</div><div class="v">${fmt(r.p)}</div></div>
+      <div class="stat"><div class="k">Mode</div><div class="v">Estimate</div></div>
     </div>
     <div class="mission">
-      <p>Round this number to nearest ${fmt(r.p)}:</p>
-      <div class="num">${fmt(r.n)}</div>
+      <div style="font-size:12px;color:#0f766e">Choose closest estimate:</div>
+      <div class="expr">${r.expr}</div>
     </div>
     <div class="opts">
-      ${o.map(v=>{
-        const cls=st.resolved?(v===r.ans?'ok':(v===st.pick?'bad':'')):(v===st.pick?'sel':'');
+      ${r.opts.map(v=>{
+        const cls=st.resolved?(Math.abs(v-r.exact)===Math.min(...r.opts.map(x=>Math.abs(x-r.exact)))?'ok':(v===st.pick?'bad':'')):(v===st.pick?'sel':'');
         return `<button class="opt ${cls}" data-v="${v}">${fmt(v)}</button>`;
       }).join('')}
     </div>
     <div class="actions">
-      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:(st.resolved?`<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Check</button>`)}
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:(st.resolved?`<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next Round'}</button>`:`<button class="btn check" id="checkBtn">Lock Estimate</button>`)}
     </div>
-    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Choose closest neighbor at this place scale.</div>`}
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Pick quickly, then verify exact value.</div>`}
   `;
   sim.querySelectorAll('.opt').forEach(b=>b.onclick=()=>choose(Number(b.dataset.v)));
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
