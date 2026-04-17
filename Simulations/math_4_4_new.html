@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#be123c">
+<title>Equivalence Oracle Arena</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#be123c,#4c1d95);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#fdf2f8;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#9d174d;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#fdf2f8,#f5d0fe);border:2px solid #f9a8d4;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#831843}
+.mission p{font-size:12px;color:#9d174d;line-height:1.45;margin-top:4px}
+.exprGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.expr{background:#111827;color:#fff;border-radius:10px;padding:10px;text-align:center}
+.expr .label{font-size:11px;opacity:.75}
+.expr .value{font-size:20px;margin-top:4px;font-family:'Courier New',monospace;font-weight:800}
+.probe{background:#f8fafc;border-radius:10px;padding:10px;margin-top:10px}
+.probe p{font-size:12px;color:#334155}
+.probe input{width:100%;margin-top:7px;padding:9px;border:2px solid #cbd5e1;border-radius:8px;font-size:14px;font-weight:700}
+.choices{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.choice{padding:10px;border:2px solid #d1d5db;border-radius:10px;background:#fff;font-weight:800;cursor:pointer}
+.choice.sel{border-color:#be123c;background:#ffe4e6;color:#9f1239;box-shadow:0 0 0 2px rgba(190,18,60,.12) inset}
+.choice.ok{border-color:#16a34a;background:#dcfce7;color:#166534}
+.choice.bad{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#be123c;color:#fff}
+.btn.next{background:#0369a1;color:#fff}
+.btn.start{background:linear-gradient(135deg,#be123c,#4c1d95);color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#fdf2f8,#f5d0fe);border-left:4px solid #be123c;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Equivalence Oracle Arena</h1>
+    <p>Judge whether two expressions are always equal</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> expressions can match for some values but not all. This arena trains the "always/sometimes/never equal" reasoning needed for algebra.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+
+const CASES = [
+  {L:'3x + 2x', R:'5x', evalL:(x)=>3*x+2*x, evalR:(x)=>5*x, answer:'always', note:'Like terms combine exactly.'},
+  {L:'2(x + 3)', R:'2x + 6', evalL:(x)=>2*(x+3), evalR:(x)=>2*x+6, answer:'always', note:'Distributive property holds for all x.'},
+  {L:'x + x + 1', R:'2x', evalL:(x)=>x+x+1, evalR:(x)=>2*x, answer:'never', note:'Left is always 1 more.'},
+  {L:'x + 4', R:'2x', evalL:(x)=>x+4, evalR:(x)=>2*x, answer:'sometimes', note:'Equal only when x = 4.'},
+  {L:'10(x - 3)', R:'10x - 3', evalL:(x)=>10*(x-3), evalR:(x)=>10*x-3, answer:'never', note:'Right missed multiplying 3 by 10.'},
+  {L:'4(x + 1)', R:'4x + 5', evalL:(x)=>4*(x+1), evalR:(x)=>4*x+5, answer:'never', note:'Difference is constant 1.'}
+];
+
+let st = {run:false, idx:0, score:0, lives:3, probeX:2, pick:'', resolved:false, msg:'', msgType:'info'};
+
+function startArena(){
+  st = {run:true, idx:0, score:0, lives:3, probeX:2, pick:'', resolved:false, msg:'', msgType:'info'};
+  render();
+}
+
+function choose(v){
+  if(!st.run || st.resolved) return;
+  st.pick = v;
+  render();
+}
+
+function checkCase(){
+  if(!st.run || st.resolved || !st.pick) return;
+  const c = CASES[st.idx];
+  const l = c.evalL(st.probeX);
+  const r = c.evalR(st.probeX);
+  st.resolved = true;
+  if(st.pick === c.answer){
+    st.score += 14;
+    st.msg = `Correct oracle call! At x=${st.probeX}, left=${l}, right=${r}. ${c.note}`;
+    st.msgType = 'good';
+  } else {
+    st.lives -= 1;
+    st.msg = `Not correct. At x=${st.probeX}, left=${l}, right=${r}. Correct type: ${c.answer}. ${c.note}`;
+    st.msgType = 'bad';
+    if(st.lives <= 0) st.run = false;
+  }
+  render();
+}
+
+function nextCase(){
+  st.idx += 1;
+  if(st.idx >= CASES.length){
+    st.run = false;
+    st.msg = 'Arena cleared! You can now classify equivalence strongly.';
+    st.msgType = 'good';
+    render();
+    return;
+  }
+  st.probeX = 2;
+  st.pick = '';
+  st.resolved = false;
+  st.msg = '';
+  st.msgType = 'info';
+  render();
+}
+
+function render(){
+  const done = !st.run;
+  const c = CASES[Math.min(st.idx, CASES.length - 1)];
+  const lv = c.evalL(st.probeX);
+  const rv = c.evalR(st.probeX);
+
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Case</div><div class="v">${Math.min(st.idx+1, CASES.length)}/${CASES.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Probe x</div><div class="v">${st.probeX}</div></div>
+    </div>
+
+    <div class="mission">
+      <h3>Classify relation</h3>
+      <p>Decide if expressions are <b>always equal</b>, <b>sometimes equal</b>, or <b>never equal</b>.</p>
+      <div class="exprGrid">
+        <div class="expr"><div class="label">Left</div><div class="value">${c.L}</div></div>
+        <div class="expr"><div class="label">Right</div><div class="value">${c.R}</div></div>
+      </div>
+    </div>
+
+    <div class="probe">
+      <p>Probe with a test value x (for evidence, not final proof):</p>
+      <input id="probeX" type="number" min="-20" max="20" step="1" value="${st.probeX}">
+      <p style="margin-top:7px">At x=${st.probeX}: left=${lv}, right=${rv}</p>
+    </div>
+
+    <div class="choices">
+      ${['always','sometimes','never'].map(v => {
+        const label = v[0].toUpperCase() + v.slice(1);
+        const cls = st.resolved ? (v===c.answer ? 'ok' : (v===st.pick ? 'bad' : '')) : (v===st.pick ? 'sel' : '');
+        return `<button class="choice ${cls}" data-v="${v}">${label}</button>`;
+      }).join('')}
+    </div>
+
+    <div class="actions">
+      ${done
+        ? `<button class="btn start" id="startBtn">Start Arena</button>`
+        : (st.resolved
+            ? `<button class="btn next" id="nextBtn">${st.idx===CASES.length-1?'Finish Arena':'Next Case'}</button>`
+            : `<button class="btn check" id="checkBtn">Submit Judgment</button>`)}
+    </div>
+
+    ${st.msg ? `<div class="msg ${st.msgType}">${st.msg}</div>` : `<div class="msg info">Selected: <b>${st.pick || "-"}</b>. Pick one relation and submit your judgment.</div>`}
+  `;
+
+  const px = sim.querySelector('#probeX');
+  if(px){
+    px.oninput = () => { st.probeX = parseInt(px.value || '0', 10); render(); };
+    px.disabled = st.resolved || done;
+  }
+  sim.querySelectorAll('.choice').forEach(b => b.onclick = () => choose(b.dataset.v));
+  const s = sim.querySelector('#startBtn'); if(s) s.onclick = startArena;
+  const cbtn = sim.querySelector('#checkBtn'); if(cbtn) cbtn.onclick = checkCase;
+  const n = sim.querySelector('#nextBtn'); if(n) n.onclick = nextCase;
+}
+
+startArena();
+</script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<title>Bracket Balance Anvil</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#7c3aed,#4f46e5);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#f5f3ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#6d28d9;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:2px solid #c4b5fd;border-radius:12px;padding:10px;margin-bottom:10px}
+.expr{font-family:'Courier New',monospace;font-size:20px;font-weight:900;color:#312e81;text-align:center;margin-top:6px}
+.goal{font-size:12px;color:#5b21b6;margin-top:4px;text-align:center}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.slot{background:#f8fafc;border:2px dashed #cbd5e1;border-radius:10px;padding:10px;text-align:center;cursor:pointer}
+.slot.fill{border-style:solid;border-color:#7c3aed;background:#ede9fe}
+.slot p{font-size:11px;color:#334155}
+.slot b{font-size:18px;color:#1f2937}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#7c3aed;color:#fff}
+.btn.next{background:#0ea5e9;color:#fff}
+.btn.reset{background:#e2e8f0;color:#334155}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-left:4px solid #7c3aed;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Bracket Balance Anvil</h1>
+    <p>Place one bracket pair to forge target value</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> adding brackets changes evaluation order. Same numbers/operators can give different values.</div>
+</div>
+<script>
+const sim = document.getElementById("sim");
+const ROUNDS = [
+  {tokens:["34","-","9","+","12"], goal:13, pair:[2,4]},
+  {tokens:["56","-","14","-","8"], goal:34, pair:[0,2]},
+  {tokens:["25","+","5","*","4"], goal:120, pair:[0,4]},
+  {tokens:["100","-","15","+","56"], goal:29, pair:[2,4]},
+  {tokens:["18","+","6","*","3"], goal:72, pair:[0,4]},
+  {tokens:["45","-","5","-","10"], goal:30, pair:[2,4]}
+];
+
+let st = {run:true, idx:0, score:0, lives:3, left:null, right:null, resolved:false, msg:'', msgType:'info'};
+
+function resetPick(){
+  st.left = null;
+  st.right = null;
+  st.resolved = false;
+  st.msg = '';
+  st.msgType = 'info';
+}
+
+function start(){
+  st = {run:true, idx:0, score:0, lives:3, left:null, right:null, resolved:false, msg:'', msgType:'info'};
+  render();
+}
+
+function pick(pos){
+  if(!st.run || st.resolved) return;
+  if(st.left===null){ st.left = pos; }
+  else if(st.right===null){ st.right = pos; }
+  else { st.left = pos; st.right = null; }
+  if(st.left!==null && st.right!==null && st.left>st.right){
+    const t=st.left; st.left=st.right; st.right=t;
+  }
+  render();
+}
+
+function buildExpr(tokens,l,r){
+  const out=[];
+  for(let i=0;i<tokens.length;i++){
+    if(i===l) out.push("(");
+    out.push(tokens[i]);
+    if(i===r) out.push(")");
+  }
+  return out.join(" ");
+}
+
+function safeEval(expr){
+  try{
+    if(!/^[0-9+\-*/()\s]+$/.test(expr)) return null;
+    const v = Function(`"use strict"; return (${expr});`)();
+    return Number.isFinite(v) ? v : null;
+  }catch{return null;}
+}
+
+function check(){
+  if(!st.run || st.resolved || st.left===null || st.right===null) return;
+  const r = ROUNDS[st.idx];
+  const expr = buildExpr(r.tokens, st.left, st.right);
+  const v = safeEval(expr);
+  st.resolved = true;
+  if(v===r.goal){
+    st.score += 14;
+    st.msg = `Perfect forge! ${expr} = ${v}.`;
+    st.msgType = 'good';
+  }else{
+    st.lives -= 1;
+    const correct = buildExpr(r.tokens, r.pair[0], r.pair[1]);
+    st.msg = `Not target. Your value ${v}. One valid bracket: ${correct} = ${r.goal}.`;
+    st.msgType = 'bad';
+    if(st.lives<=0) st.run=false;
+  }
+  render();
+}
+
+function next(){
+  if(!st.resolved) return;
+  st.idx += 1;
+  if(st.idx>=ROUNDS.length){
+    st.run=false;
+    st.msg='Anvil set complete!';
+    st.msgType='good';
+    render();
+    return;
+  }
+  resetPick();
+  render();
+}
+
+function render(){
+  const done = !st.run;
+  const r = ROUNDS[Math.min(st.idx, ROUNDS.length-1)];
+  const exprView = (st.left!==null && st.right!==null) ? buildExpr(r.tokens, st.left, st.right) : r.tokens.join(" ");
+  const v = (st.left!==null && st.right!==null) ? safeEval(exprView) : "-";
+
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Value</div><div class="v">${v}</div></div>
+    </div>
+    <div class="mission">
+      <div class="expr">${exprView}</div>
+      <div class="goal">Target value: <b>${r.goal}</b></div>
+    </div>
+    <div class="slots">
+      ${r.tokens.map((tk,i)=>`<button class="slot ${(i===st.left || i===st.right)?'fill':''}" data-i="${i}">
+        <p>${i===st.left?'(':(i===st.right?')':'slot')}</p><b>${tk}</b>
+      </button>`).join('')}
+    </div>
+    <div class="actions">
+      ${done ? `<button class="btn next" id="startBtn">Restart</button>` :
+        (st.resolved ? `<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next Round'}</button>` :
+        `<button class="btn reset" id="resetBtn">Reset Pick</button><button class="btn check" id="checkBtn">Check</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Tap two token slots: opening and closing bracket positions.</div>`}
+  `;
+  sim.querySelectorAll(".slot").forEach(b=>b.onclick=()=>pick(parseInt(b.dataset.i,10)));
+  const rs = sim.querySelector("#resetBtn"); if(rs) rs.onclick=()=>{resetPick(); render();};
+  const c = sim.querySelector("#checkBtn"); if(c) c.onclick=check;
+  const n = sim.querySelector("#nextBtn"); if(n) n.onclick=next;
+  const s = sim.querySelector("#startBtn"); if(s) s.onclick=start;
+}
+
+start();
+</script>
+</body>
+</html>

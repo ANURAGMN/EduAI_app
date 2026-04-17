@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0284c7">
+<title>Decimal Closest Target Hunt</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0284c7,#0891b2);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#0f172a}
+.mission{background:linear-gradient(135deg,#ecfeff,#e0f2fe);border:2px solid #67e8f9;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#155e75}
+.line{margin-top:8px;height:10px;background:#e2e8f0;border-radius:999px;position:relative}
+.mark{position:absolute;top:-4px;width:4px;height:18px;background:#0284c7;border-radius:3px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.opt{padding:10px;border:2px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;font-weight:800}
+.opt.sel{border-color:#0284c7;background:#e0f2fe;color:#0c4a6e}
+.opt.ok{border-color:#16a34a;background:#dcfce7;color:#166534}
+.opt.bad{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#0284c7;color:#fff}
+.btn.next{background:#0f766e;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#ecfeff,#e0f2fe);border-left:4px solid #0284c7;border-radius:12px;padding:12px;font-size:12px;color:#0f172a;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Decimal Closest Target Hunt</h1>
+    <p>Choose the decimal closest to target value</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> compare decimals by distance on number line, not just by length or trailing zeros.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const ROUNDS = [
+  {target:1.000, opts:[0.900,1.010,1.100,1.110], ans:1.010},
+  {target:4.000, opts:[3.560,3.650,3.099,4.120], ans:4.120},
+  {target:0.500, opts:[0.490,0.509,0.450,0.600], ans:0.490},
+  {target:2.750, opts:[2.749,2.760,2.705,2.680], ans:2.749},
+  {target:5.050, opts:[5.005,5.500,5.049,5.150], ans:5.049},
+  {target:9.900, opts:[9.890,9.909,9.999,9.800], ans:9.890}
+];
+
+let st={run:true,idx:0,score:0,lives:3,pick:null,resolved:false,msg:'',msgType:'info'};
+let roundOpts=[];
+function fmt(v){ return Number(v).toFixed(3).replace(/\.?0+$/,''); }
+function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x;}
+function setup(){ st.pick=null; st.resolved=false; st.msg=''; st.msgType='info'; roundOpts=shuffle([...ROUNDS[st.idx].opts]); }
+function choose(v){ if(!st.run||st.resolved) return; st.pick=v; render(); }
+function check(){
+  if(!st.run||st.resolved||st.pick===null) return;
+  const r=ROUNDS[st.idx];
+  st.resolved=true;
+  if(Math.abs(st.pick-r.ans)<1e-9){ st.score+=12; st.msg='Correct closest value.'; st.msgType='good'; }
+  else { st.lives--; st.msg=`Closest is ${fmt(r.ans)}.`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Hunt complete!'; st.msgType='good'; render(); return; }
+  setup(); render();
+}
+function render(){
+  const done=!st.run;
+  const r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Target</div><div class="v">${fmt(r.target)}</div></div>
+    </div>
+    <div class="mission">
+      <h3>Pick decimal closest to ${fmt(r.target)}</h3>
+      <div class="line"><span class="mark" style="left:50%"></span></div>
+    </div>
+    <div class="opts">
+      ${roundOpts.map(v=>{
+        const cls=st.resolved?(Math.abs(v-r.ans)<1e-9?'ok':(Math.abs(v-st.pick)<1e-9?'bad':'')):(Math.abs(v-st.pick)<1e-9?'sel':'');
+        return `<button class="opt ${cls}" data-v="${v}">${fmt(v)}</button>`;
+      }).join('')}
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:(st.resolved?`<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Check Closest</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Selected: <b>${st.pick===null?'-':fmt(st.pick)}</b></div>`}
+  `;
+  sim.querySelectorAll('.opt').forEach(b=>b.onclick=()=>choose(Number(b.dataset.v)));
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rr=sim.querySelector('#restartBtn'); if(rr) rr.onclick=()=>{st={run:true,idx:0,score:0,lives:3,pick:null,resolved:false,msg:'',msgType:'info'}; setup(); render();};
+}
+setup();
+render();
+</script>
+</body>
+</html>

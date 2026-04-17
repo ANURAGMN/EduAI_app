@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#be123c">
+<title>Algebra Mistake Sniper</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#be123c,#7c2d12);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#fff1f2;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#9f1239;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#fff1f2,#ffe4e6);border:2px solid #fda4af;border-radius:12px;padding:10px;margin-bottom:10px}
+.line{font-family:'Courier New',monospace;font-size:15px;font-weight:800;color:#7f1d1d;margin-top:5px}
+.choices{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+.choice{padding:10px;border:2px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;font-weight:700;text-align:left}
+.choice.sel{border-color:#be123c;background:#ffe4e6;color:#9f1239}
+.choice.ok{border-color:#16a34a;background:#dcfce7;color:#166534}
+.choice.bad{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#be123c;color:#fff}
+.btn.next{background:#0ea5e9;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#fff1f2,#ffe4e6);border-left:4px solid #be123c;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Algebra Mistake Sniper</h1>
+    <p>Spot the wrong step and pick the correct fix</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> many algebra errors come from sign misuse, omitted multiplication, or invalid simplification of unlike terms.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const CASES = [
+  {
+    q:'Given a=-4, student says 10-a=6',
+    fix:'10-(-4)=14',
+    why:'Subtracting a negative means adding.'
+  },
+  {
+    q:'Given d=6, student says 3d=36',
+    fix:'3d=3×6=18',
+    why:'3d means multiplication, not digit concatenation.'
+  },
+  {
+    q:'Student says 3a+2b = 5ab',
+    fix:'3a+2b cannot be merged',
+    why:'a and b are unlike terms.'
+  },
+  {
+    q:'Student says 6(p+2)=6p+8',
+    fix:'6(p+2)=6p+12',
+    why:'Distribute 6 to both terms.'
+  },
+  {
+    q:'Student says 5u = 5+u',
+    fix:'5u means 5×u',
+    why:'Coefficient next to variable implies multiplication.'
+  },
+  {
+    q:'Student says 10y-3 = 10(y-3)',
+    fix:'10(y-3)=10y-30',
+    why:'Bracket multiplies both terms.'
+  }
+];
+
+let st = {run:true, idx:0, score:0, lives:3, pick:null, resolved:false, msg:'', msgType:'info', opts:[]};
+
+function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x;}
+
+function buildOptions(c){
+  const pool = [
+    c.fix,
+    'Keep student answer as it is',
+    'Change only the sign, nothing else',
+    'Multiply fewer terms to simplify quickly'
+  ];
+  return shuffle(pool).slice(0,4);
+}
+
+function setupCase(){
+  st.pick = null;
+  st.resolved = false;
+  st.msg = '';
+  st.msgType = 'info';
+  st.opts = buildOptions(CASES[st.idx]);
+}
+
+function choose(i){ if(!st.run || st.resolved) return; st.pick=i; render(); }
+
+function check(){
+  if(!st.run || st.resolved || st.pick===null) return;
+  const c = CASES[st.idx];
+  const picked = st.opts[st.pick];
+  st.resolved = true;
+  if(picked===c.fix){
+    st.score += 12;
+    st.msg = `Bullseye! ${c.why}`;
+    st.msgType = 'good';
+  }else{
+    st.lives -= 1;
+    st.msg = `Not yet. Correct fix: ${c.fix}. ${c.why}`;
+    st.msgType = 'bad';
+    if(st.lives<=0) st.run=false;
+  }
+  render();
+}
+
+function next(){
+  if(!st.resolved) return;
+  st.idx += 1;
+  if(st.idx>=CASES.length){
+    st.run = false;
+    st.msg = 'Mistake sniper run complete!';
+    st.msgType = 'good';
+    render();
+    return;
+  }
+  setupCase();
+  render();
+}
+
+function restart(){
+  st = {run:true, idx:0, score:0, lives:3, pick:null, resolved:false, msg:'', msgType:'info', opts:[]};
+  setupCase();
+  render();
+}
+
+function render(){
+  const done = !st.run;
+  const c = CASES[Math.min(st.idx,CASES.length-1)];
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Case</div><div class="v">${Math.min(st.idx+1,CASES.length)}/${CASES.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Mode</div><div class="v">Sniper</div></div>
+    </div>
+    <div class="mission">
+      <div style="font-size:12px;color:#9f1239">Find the correction</div>
+      <div class="line">${c.q}</div>
+    </div>
+    <div class="choices">
+      ${st.opts.map((o,i)=>{
+        const cls = st.resolved ? (o===c.fix ? 'ok' : (i===st.pick ? 'bad' : '')) : (i===st.pick ? 'sel' : '');
+        return `<button class="choice ${cls}" data-i="${i}">${o}</button>`;
+      }).join('')}
+    </div>
+    <div class="actions">
+      ${done ? `<button class="btn next" id="restartBtn">Restart</button>` :
+      (st.resolved ? `<button class="btn next" id="nextBtn">${st.idx===CASES.length-1?'Finish':'Next Case'}</button>` :
+      `<button class="btn check" id="checkBtn">Confirm Fix</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Select correction then confirm.</div>`}
+  `;
+  sim.querySelectorAll('.choice').forEach(b=>b.onclick=()=>choose(parseInt(b.dataset.i,10)));
+  const cbtn = sim.querySelector('#checkBtn'); if(cbtn) cbtn.onclick=check;
+  const nbtn = sim.querySelector('#nextBtn'); if(nbtn) nbtn.onclick=next;
+  const rbtn = sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+}
+
+setupCase();
+render();
+</script>
+</body>
+</html>

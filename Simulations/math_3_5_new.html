@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#b45309">
+<title>Decimal Order Rescue</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#b45309 0%,#dc2626 100%);min-height:100vh}
+#app{max-width:420px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#fffbeb;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#92400e;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#fff7ed,#ffedd5);border:2px solid #fdba74;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#9a3412}
+.mission p{font-size:12px;color:#7c2d12;margin-top:4px;line-height:1.45}
+.tray{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.token{padding:9px 12px;border-radius:10px;border:2px solid #fed7aa;background:#fff;color:#9a3412;font-weight:800;font-family:'Courier New',monospace;cursor:pointer}
+.token.used{opacity:.45}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.slot{height:48px;border-radius:10px;border:2px dashed #fdba74;background:#fff7ed;display:flex;align-items:center;justify-content:center;font-family:'Courier New',monospace;font-weight:800;color:#9a3412}
+.slot.fill{border-style:solid;background:#fff}
+.ops{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.start{background:linear-gradient(135deg,#b45309,#dc2626);color:#fff}
+.btn.check{background:#b45309;color:#fff}
+.btn.next{background:#059669;color:#fff}
+.btn.clear{background:#f3f4f6;color:#374151}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#fff7ed,#ffedd5);border-left:4px solid #b45309;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Decimal Order Rescue</h1>
+    <p>Rescue capsules by ordering decimals correctly</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Rule:</b> place all decimals in ascending order. Trailing zeros can be deceptive, so compare place values carefully.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const ROUNDS = [
+  ["0.2","0.20","0.02","0.002"],
+  ["1.09","1.009","1.9","1.10"],
+  ["3.56","3.65","3.099","3.605"],
+  ["4.5","4.50","4.05","4.500"],
+  ["2.718","2.71","2.701","2.72"],
+  ["0.81","0.8","0.801","0.82"]
+];
+
+let st = {run:false, idx:0, score:0, lives:3, tray:[], placed:[null,null,null,null], resolved:false, msg:'', msgType:'info'};
+
+function parseD(x){ return Number(x); }
+function start(){
+  st = {...st, run:true, idx:0, score:0, lives:3};
+  setup();
+  render();
+}
+function setup(){
+  st.tray = [...ROUNDS[st.idx]].sort(()=>Math.random()-0.5);
+  st.placed = Array(st.tray.length).fill(null);
+  st.resolved = false;
+  st.msg = '';
+}
+function retryRound(){
+  if(!st.run) return;
+  setup();
+  st.msg = 'Retry this round. Compare from the leftmost place and move right.';
+  st.msgType = 'info';
+  render();
+}
+function mismatchHint(placed){
+  for(let i=1;i<placed.length;i++){
+    if(parseD(placed[i]) < parseD(placed[i-1])){
+      const a = Number(placed[i-1]).toFixed(6);
+      const b = Number(placed[i]).toFixed(6);
+      const names = ['ones','tenths','hundredths','thousandths','ten-thousandths','hundred-thousandths'];
+      let pos = 'leftmost differing';
+      for(let k=0,j=0;k<a.length && k<b.length;k++){
+        if(a[k]==='.') continue;
+        if(a[k]!==b[k]){ pos = names[j] || pos; break; }
+        j++;
+      }
+      return `Mismatch at ${placed[i-1]} and ${placed[i]} — compare from ${pos} (left to right).`;
+    }
+  }
+  return 'Order mismatch. Compare from leftmost decimal place.';
+}
+function place(token){
+  if(st.resolved || !st.run) return;
+  const ti = st.tray.findIndex(x=>x===token);
+  if(ti<0) return;
+  const si = st.placed.findIndex(x=>x===null);
+  if(si<0) return;
+  st.placed[si] = token;
+  st.tray.splice(ti,1);
+  render();
+}
+function clearAll(){
+  if(st.resolved) return;
+  st.tray = [...st.tray, ...st.placed.filter(Boolean)];
+  st.placed = st.placed.map(()=>null);
+  st.tray.sort(()=>Math.random()-0.5);
+  render();
+}
+function check(){
+  if(!st.run || st.resolved) return;
+  if(st.placed.some(x=>x===null)){
+    st.msg='Fill all slots before checking.';
+    st.msgType='info';
+    render();
+    return;
+  }
+  const vals = st.placed.map(parseD);
+  let ok = true;
+  for(let i=1;i<vals.length;i++){
+    if(vals[i] < vals[i-1]) ok = false;
+  }
+  st.resolved = true;
+  if(ok){
+    st.score += 12;
+    st.msg='Rescue successful! Correct ascending order.';
+    st.msgType='good';
+  } else {
+    st.lives -= 1;
+    st.msg=mismatchHint(st.placed);
+    st.msgType='bad';
+    if(st.lives<=0) st.run = false;
+  }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx += 1;
+  if(st.idx>=ROUNDS.length){
+    st.run=false;
+    st.msg='All rescue rounds cleared!';
+    st.msgType='good';
+    render();
+    return;
+  }
+  setup();
+  render();
+}
+
+function render(){
+  const done = !st.run;
+  const total = ROUNDS[Math.min(st.idx, ROUNDS.length-1)].length;
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Slots</div><div class="v">${st.placed.filter(Boolean).length}/${total}</div></div>
+    </div>
+    <div class="mission">
+      <h3>Mission: Ascending order lock</h3>
+      <p>Tap decimals to fill slots from left to right in ascending order.</p>
+    </div>
+    <div class="tray">${st.tray.map(t=>`<button class="token" data-t="${t}">${t}</button>`).join('')}</div>
+    <div class="slots">${st.placed.map((s,i)=>`<div class="slot ${s?'fill':''}">${s||`#${i+1}`}</div>`).join('')}</div>
+    <div class="ops">
+      ${done ? `<button class="btn start" id="startBtn">Start Rescue Run</button>` :
+      (st.resolved ? (st.msgType==='bad'
+        ? `<button class="btn clear" id="retryBtn">Retry Round</button><button class="btn next" id="nextBtn">Next Round</button>`
+        : `<button class="btn next" id="nextBtn">Next Round</button>`) :
+      `<button class="btn clear" id="clearBtn">Reset Slots</button><button class="btn check" id="checkBtn">Check Order</button>`)}
+    </div>
+    ${st.msg ? `<div class="msg ${st.msgType}">${st.msg}</div>` : `<div class="msg info">Tip: 0.2 = 0.20 but both are greater than 0.02.</div>`}
+  `;
+  sim.querySelectorAll('.token').forEach(b=>b.onclick=()=>place(b.dataset.t));
+  const s = sim.querySelector('#startBtn'); if(s) s.onclick=start;
+  const c = sim.querySelector('#clearBtn'); if(c) c.onclick=clearAll;
+  const rr = sim.querySelector('#retryBtn'); if(rr) rr.onclick=retryRound;
+  const ch = sim.querySelector('#checkBtn'); if(ch) ch.onclick=check;
+  const n = sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+}
+start();
+</script>
+</body>
+</html>

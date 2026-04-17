@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#dc2626">
+<title>Bracket Tunnel Escape</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#dc2626,#f59e0b);min-height:100vh}
+#app{max-width:420px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#fef2f2;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#991b1b;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#0f172a}
+.mission{background:linear-gradient(135deg,#fef2f2,#fee2e2);border:2px solid #fca5a5;border-radius:12px;padding:10px;margin-bottom:10px}
+.expr{font-family:'Courier New',monospace;font-size:20px;font-weight:800;color:#7f1d1d;text-align:center;margin-top:4px}
+.rule{font-size:12px;color:#991b1b;text-align:center;margin-top:4px}
+.opts{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+.opt{padding:12px;border:2px solid #e5e7eb;border-radius:10px;background:#fff;font-family:'Courier New',monospace;font-size:14px;font-weight:700;cursor:pointer}
+.opt.sel{border-color:#dc2626;background:#fee2e2;color:#991b1b}
+.opt.ok{border-color:#16a34a;background:#dcfce7;color:#166534}
+.opt.bad{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.start{background:linear-gradient(135deg,#dc2626,#f59e0b);color:#fff}
+.btn.next{background:#0ea5e9;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#fef2f2,#fee2e2);border-left:4px solid #dc2626;border-radius:12px;padding:12px;font-size:12px;color:#0f172a;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Bracket Tunnel Escape</h1>
+    <p>Pick the correct bracket-free expression to escape each tunnel</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Rule:</b> minus before bracket flips every sign inside; plus before bracket keeps signs unchanged.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const MISSIONS = [
+  {q:'200 - (40 + 3)', ans:'200 - 40 - 3', ex:'Minus before bracket: + becomes -.'},
+  {q:'500 - (250 - 100)', ans:'500 - 250 + 100', ex:'Minus before bracket: - becomes +.'},
+  {q:'28 + (35 - 10)', ans:'28 + 35 - 10', ex:'Plus before bracket: signs stay.'},
+  {q:'27 - (8 - 3)', ans:'27 - 8 + 3', ex:'Minus before bracket flips signs.'},
+  {q:'90 - (-10 + 30)', ans:'90 + 10 - 30', ex:'-10 flips to +10, +30 flips to -30.'},
+  {q:'-22 - (12 + 10) + 22', ans:'-22 - 12 - 10 + 22', ex:'Only signs inside bracket flip.'}
+];
+let st={run:false,idx:0,score:0,lives:3,time:90,resolved:false,msg:'',msgType:'info',pick:''};
+let timer=null;
+let currentOptions=[];
+
+function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x;}
+function wrongs(ans){
+  const variants = [
+    ans.replace(/\+/g,'__P__').replace(/-/g,'+').replace(/__P__/g,'-'),
+    ans.replace(/ \+ /g,' - '),
+    ans.replace(/ - /g,' + ')
+  ];
+  return [...new Set(variants.filter(v=>v!==ans))].slice(0,3);
+}
+function start(){
+  st={run:true,idx:0,score:0,lives:3,time:90,resolved:false,msg:'',msgType:'info',pick:''};
+  currentOptions=[];
+  if(timer) clearInterval(timer);
+  timer=setInterval(()=>{
+    if(!st.run) return;
+    st.time--;
+    if(st.time<=0){st.time=0;st.run=false;st.msg='Time up.';st.msgType='bad';clearInterval(timer);}
+    render();
+  },1000);
+  render();
+}
+function next(){
+  st.idx++;
+  st.resolved=false;
+  st.pick='';
+  currentOptions=[];
+  if(st.idx>=MISSIONS.length){st.run=false;st.msg='Tunnel escaped!';st.msgType='good';clearInterval(timer);}
+  render();
+}
+function pick(v){
+  if(!st.run||st.resolved) return;
+  const m=MISSIONS[st.idx];
+  st.pick=v;
+  st.resolved=true;
+  if(v===m.ans){st.score+=12;st.msg='Correct gate unlocked! '+m.ex;st.msgType='good';}
+  else {st.lives--;st.msg='Wrong gate. '+m.ex;st.msgType='bad';if(st.lives<=0){st.run=false;clearInterval(timer);}}
+  render(v);
+}
+function render(last=''){
+  const done=!st.run;
+  const m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+  if(currentOptions.length===0){ currentOptions=shuffle([m.ans,...wrongs(m.ans)]); }
+  const opts=currentOptions;
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Tunnel</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Time</div><div class="v">${st.time}s</div></div>
+    </div>
+    <div class="mission">
+      <div class="rule">Remove brackets correctly</div>
+      <div class="expr">${m.q}</div>
+    </div>
+    <div class="opts">
+      ${opts.map(o=>`<button class="opt ${st.resolved?(o===m.ans?'ok':(o===last?'bad':'')):(o===st.pick?'sel':'')}" data-v="${o}">${o}</button>`).join('')}
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn start" id="startBtn">Start Escape</button>`:(st.resolved?`<button class="btn next" id="nextBtn">Next Tunnel</button>`:'')}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Selected form: <b>${st.pick||'-'}</b>. Pick the correct bracket-free form.</div>`}
+  `;
+  sim.querySelectorAll('.opt').forEach(b=>b.onclick=()=>pick(b.dataset.v));
+  const s=sim.querySelector('#startBtn'); if(s) s.onclick=start;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+}
+start();
+</script>
+</body>
+</html>
