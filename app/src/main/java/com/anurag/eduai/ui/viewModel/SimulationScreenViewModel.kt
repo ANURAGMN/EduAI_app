@@ -4,11 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.repository.SimulationRepository
-import com.anurag.eduai.ui.models.SimulationUiModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class SimulationScreenState(
     val isLoading: Boolean = false,
@@ -17,7 +18,8 @@ data class SimulationScreenState(
     val error: String? = null
 )
 
-class SimulationViewModel(
+@HiltViewModel
+class SimulationViewModel @Inject constructor(
     private val simulationRepository: SimulationRepository
 ) : ViewModel() {
 

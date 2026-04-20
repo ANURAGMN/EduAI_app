@@ -12,18 +12,21 @@ import com.anurag.eduai.data.local.entities.SubjectEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.utils.StreakManager
 import com.anurag.eduai.utils.getLocalizedName
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import javax.inject.Inject
 
 /**
  * ViewModel for Progress Screen
  * Contains ALL business logic, data fetching, and state management
  * UI layer should only observe state and trigger actions
  */
-class ProgressScreenViewModel(
+@HiltViewModel
+class ProgressScreenViewModel @Inject constructor(
     private val progressDao: ProgressDao,
     private val subjectDao: SubjectDao,
     private val chapterDao: com.anurag.eduai.data.local.dao.ChapterDao,

@@ -7,6 +7,8 @@ import com.anurag.eduai.data.local.dao.StudentDao
 import com.anurag.eduai.data.local.dao.SubjectDao
 import com.anurag.eduai.repository.ChapterRepository
 import com.anurag.eduai.repository.ConceptRepository
+import com.anurag.eduai.repository.FirebaseRepository
+import com.anurag.eduai.repository.SimulationRepository
 import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.repository.SubjectRepository
 import dagger.Module
@@ -50,5 +52,17 @@ object RepositoryModule {
     @Singleton
     fun provideStudentRepository(studentDao: StudentDao): StudentLocalRepository {
         return StudentLocalRepository(studentDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFirebaseRepository(): FirebaseRepository {
+        return FirebaseRepository()
+    }
+
+    @Provides
+    @Singleton
+    fun provideSimulationRepository(conceptDao: ConceptDao): SimulationRepository {
+        return SimulationRepository(conceptDao)
     }
 }

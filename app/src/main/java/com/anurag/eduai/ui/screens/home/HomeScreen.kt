@@ -14,11 +14,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.anurag.eduai.data.local.EduAiDatabase
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.ScreenName
@@ -30,8 +28,6 @@ import com.anurag.eduai.ui.screens.home.components.TodayProgressCard
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.HomeViewModel
-import com.anurag.eduai.ui.viewmodel_factory.HomeViewModelFactory
-import com.anurag.eduai.utils.StreakManager
 
 @Composable
 fun HomeScreen(
@@ -47,30 +43,10 @@ fun HomeScreen(
     val dimens = LocalDimensions.current
     val scrollState = rememberScrollState()
     val context = LocalContext.current
-
-    val db = remember { EduAiDatabase.getInstance(context) }
-    val studentDao = db.studentDao()
-    val conceptDao = db.conceptDao()
-    val progressDao = db.progressDao()
     val sharedPreferenceUtils = SharedPreferenceUtils(context)
-    val streakManager = StreakManager(context)
-
-    val userId =
-        sharedPreferenceUtils.getUserId().toString() ?: error("Userid missing in home screen")
-
     val selectedSubject = sharedPreferenceUtils.getSubjectSelection()
 
-    val viewModel: HomeViewModel =
-        viewModel(
-            factory =
-                HomeViewModelFactory(
-                    conceptDao,
-                    progressDao,
-                    studentDao,
-                    userId,
-                    streakManager
-                )
-        )
+    val viewModel: HomeViewModel = hiltViewModel()
 
     val progressConcepts by viewModel.progressConcepts.collectAsState()
     val progressSimulations by viewModel.progressSimulations.collectAsState()

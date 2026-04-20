@@ -1,17 +1,18 @@
 package com.anurag.eduai.ui.viewModel
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
+import com.anurag.eduai.data.local.dao.StudentDao
 import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.repository.FirebaseRepository
 import com.anurag.eduai.utils.LanguageHelper
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 sealed class UpdateProfileState {
     object Idle : UpdateProfileState()
@@ -20,15 +21,15 @@ sealed class UpdateProfileState {
     data class Error(val message: String) : UpdateProfileState()
 }
 
-class SettingViewModel(
-    context: Context
+@HiltViewModel
+class SettingViewModel @Inject constructor(
+    private val sharedPref: SharedPreferenceUtils,
+    private val repository: FirebaseRepository,
+    private val studentDao: StudentDao,
+    private val userId: String
 ) : ViewModel() {
 
-    val sharedPref = SharedPreferenceUtils(context)
-    val repository: FirebaseRepository = FirebaseRepository()
-    val db = EduAiDatabase.getInstance(context)
-    val studentDao = db.studentDao()
-    val userId = sharedPref.getUserId().toString()
+    // ...existing code...
 
     private val _student = MutableStateFlow<StudentEntity?>(null)
     val student: StateFlow<StudentEntity?> = _student.asStateFlow()

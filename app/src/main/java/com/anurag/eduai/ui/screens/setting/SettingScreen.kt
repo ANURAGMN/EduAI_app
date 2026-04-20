@@ -44,10 +44,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.anurag.eduai.R
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
@@ -67,7 +66,6 @@ import com.anurag.eduai.ui.theme.TextOnPrimary
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.viewModel.SettingViewModel
-import com.anurag.eduai.ui.viewmodel_factory.SettingViewModelFactory
 
 sealed class PopupScreen {
     object EditProfile : PopupScreen()
@@ -84,9 +82,8 @@ fun SettingScreen(
     val dimens = LocalDimensions.current
 
     var activeScreen by remember { mutableStateOf<PopupScreen?>(null) }
-    val context = LocalContext.current
 
-    val viewModel: SettingViewModel = viewModel(factory = SettingViewModelFactory(context))
+    val viewModel: SettingViewModel = hiltViewModel()
 
     val student by viewModel.student.collectAsState()
     val selectedLanguage by viewModel.selectedLanguage.collectAsState()

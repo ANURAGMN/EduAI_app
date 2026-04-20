@@ -12,11 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.anurag.eduai.data.local.EduAiDatabase
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
@@ -27,8 +24,6 @@ import com.anurag.eduai.ui.screens.progess.component.WeeklyActivitySection
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.ProgressScreenViewModel
-import com.anurag.eduai.ui.viewmodel_factory.ProgressViewModelFactory
-import com.anurag.eduai.utils.StreakManager
 
 /**
  * Progress Screen Composable
@@ -44,31 +39,9 @@ fun ProgressScreen(
     TrackScreenEvent(screenName = ScreenName.PROGRESS)
 
     val dimes = LocalDimensions.current
-    val context = LocalContext.current
-
-    // Setup dependencies
-    val sharedPref = SharedPreferenceUtils(context)
-    val userId = sharedPref.getUserId().toString()
-    val streakManager = StreakManager(context)
-    val db = remember { EduAiDatabase.getInstance(context) }
-    val progressDao = db.progressDao()
-    val studentDao = db.studentDao()
-    val subjectDao = db.subjectDao()
-    val chapterDao = db.chapterDao()
 
     // Initialize ViewModel
-    val viewModel: ProgressScreenViewModel =
-        viewModel(
-            factory =
-                ProgressViewModelFactory(
-                    progressDao,
-                    subjectDao,
-                    chapterDao,
-                    streakManager,
-                    studentDao,
-                    userId
-                )
-        )
+    val viewModel: ProgressScreenViewModel = hiltViewModel()
 
     // Collect all state from ViewModel
     val totalCompletedConcept by viewModel.totalCompletedConcept.collectAsState()

@@ -13,17 +13,19 @@ import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.repository.UserCheckResult
 import com.anurag.eduai.sync.FirebaseSyncManager
 import com.anurag.eduai.utils.LanguageHelper
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class UserViewModel(
-    private val repo: FirebaseRepository = FirebaseRepository(),
-    context: Context
+@HiltViewModel
+class UserViewModel @Inject constructor(
+    private val repo: FirebaseRepository,
+    private val sharedPreferenceUtils: SharedPreferenceUtils,
+    private val context: Context
 ) : ViewModel() {
-
-    val sharedPreferenceUtils = SharedPreferenceUtils(context)
 
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
     val loginState = _loginState.asStateFlow()

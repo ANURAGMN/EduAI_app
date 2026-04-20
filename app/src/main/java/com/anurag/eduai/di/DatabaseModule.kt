@@ -8,6 +8,7 @@ import com.anurag.eduai.data.local.dao.ConceptDao
 import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.data.local.dao.StudentDao
 import com.anurag.eduai.data.local.dao.SubjectDao
+import com.anurag.eduai.utils.StreakManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -62,5 +63,17 @@ object DatabaseModule {
     @Singleton
     fun provideSharedPreferenceUtils(@ApplicationContext context: Context): SharedPreferenceUtils {
         return SharedPreferenceUtils(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideStreakManager(@ApplicationContext context: Context): StreakManager {
+        return StreakManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserId(sharedPreferenceUtils: SharedPreferenceUtils): String {
+        return sharedPreferenceUtils.getUserId().toString()
     }
 }
