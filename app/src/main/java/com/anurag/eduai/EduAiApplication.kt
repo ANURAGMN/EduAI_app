@@ -7,7 +7,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.service.analytics.SessionManager
-import com.anurag.eduai.sync.WeeklySyncWorker
+import com.anurag.eduai.service.sync.WeeklySyncWorker
 import com.anurag.eduai.utils.AppLifecycleObserver
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope

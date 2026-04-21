@@ -5,7 +5,6 @@ import com.anurag.eduai.BuildConfig
 import com.anurag.eduai.data.remote.AgenticAIClient
 import com.anurag.eduai.data.remote.GeminiLLMClient
 import com.anurag.eduai.data.remote.LLMClient
-import com.anurag.eduai.data.remote.SimulationAgentAPI
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,10 +21,6 @@ object NetworkModule {
     fun provideAgenticAIClient(@ApplicationContext context: Context): AgenticAIClient {
         return AgenticAIClient(BuildConfig.AGENTIC_AI_BASE_URL, context)
     }
-
-    @Provides
-    @Singleton
-    fun provideSimulationAgentAPI(): SimulationAgentAPI = SimulationAgentAPI()
 
     @Provides
     @Singleton

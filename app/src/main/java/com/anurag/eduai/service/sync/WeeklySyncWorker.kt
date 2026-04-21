@@ -1,4 +1,4 @@
-package com.anurag.eduai.sync
+package com.anurag.eduai.service.sync
 
 import android.content.Context
 import android.os.Build

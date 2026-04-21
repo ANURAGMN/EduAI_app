@@ -11,7 +11,7 @@ import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.repository.FirebaseRepository
 import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.repository.UserCheckResult
-import com.anurag.eduai.sync.FirebaseSyncManager
+import com.anurag.eduai.service.sync.FirebaseSyncManager
 import com.anurag.eduai.utils.LanguageHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

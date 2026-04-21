@@ -1,4 +1,4 @@
-package com.anurag.eduai.sync
+package com.anurag.eduai.service.sync
 
 import com.anurag.eduai.data.local.entities.SubjectEntity
 import com.google.firebase.firestore.DocumentSnapshot

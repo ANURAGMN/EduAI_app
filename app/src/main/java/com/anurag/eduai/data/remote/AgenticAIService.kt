@@ -1,7 +1,9 @@
 package com.anurag.eduai.data.remote
 
-
 import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -62,6 +64,31 @@ interface AgenticAIService {
 
     @DELETE("/revision/session/{thread_id}")
     suspend fun deleteRevisionSession(@Path("thread_id") threadId: String): Response<String>
+
+    // ==================== SIMULATION ENDPOINTS ====================
+    @GET("/simulation")
+    suspend fun simulationHealthCheck(): Response<SimHealthResponse>
+
+    @GET("/simulation/simulations")
+    suspend fun getAvailableSimulations(): Response<SimSimulationsListResponse>
+
+    @POST("/simulation/session/start")
+    suspend fun startSimulationSession(@Body request: SimStartSessionRequest): Response<SimSessionResponse>
+
+    @POST("/simulation/session/{session_id}/respond")
+    suspend fun sendSimulationResponse(
+        @Path("session_id") sessionId: String,
+        @Body request: SimStudentResponseRequest
+    ): Response<SimSessionResponse>
+
+    @POST("/simulation/session/{session_id}/submit-quiz")
+    suspend fun submitSimulationQuiz(
+        @Path("session_id") sessionId: String,
+        @Body request: SimQuizAnswerRequest
+    ): Response<SimSessionResponse>
+
+    @GET("/simulation/session/{session_id}")
+    suspend fun getSimulationSession(@Path("session_id") sessionId: String): Response<SimSessionResponse>
 }
 
 //All Data Classes
@@ -249,4 +276,123 @@ data class RevSessionHistoryResponse(
     @SerializedName("node_transitions") val nodeTransitions: List<Map<String, Any>>? = null,
     @SerializedName("chapter") val chapter: String? = null,
     val message: String? = "Revision history retrieved successfully"
+)
+
+//Simulation data classes
+
+@Serializable
+data class SimStartSessionRequest(
+    @SerialName("simulation_id") val simulationId: String,
+    @SerialName("student_id") val studentId: String? = null,
+    @SerialName("language") val language:String?="english"
+)
+
+@Serializable
+data class SimStudentResponseRequest(@SerialName("student_response") val studentResponse: String)
+
+@Serializable
+data class SimQuizAnswerRequest(val answer: String)
+
+// ==================== RESPONSE MODELS ====================
+
+@Serializable
+data class SimHealthResponse(
+    val status: String,
+    val service: String,
+    val version: String,
+    @SerialName("available_simulations") val availableSimulations: List<String>
+)
+
+@Serializable
+data class SimSimulationsListResponse(
+    val simulations: List<SimSimulationMetadata>
+)
+
+@Serializable
+data class SimSimulationMetadata(
+    val id: String,
+    val title: String,
+    val description: String,
+    @SerialName("concept_count") val conceptCount: Int? = null,
+    val tags: List<String>? = null
+)
+
+@Serializable
+data class SimSessionResponse(
+    @SerialName("session_id") val sessionId: String,
+    val simulation: SimSimulationState,
+    val concepts: SimConceptsInfo,
+    @SerialName("teacher_message") val teacherMessage: SimTeacherMessage,
+    @SerialName("learning_state") val learningState: SimLearningState,
+    @SerialName("language")val language: String?="english",
+    val summary: Map<String, String>? = null
+)
+
+@Serializable
+data class SimSimulationState(
+    val id: String,
+    val title: String,
+    @SerialName("html_url") val htmlUrl: String,
+    @SerialName("current_params") val currentParams: Map<String, JsonElement>,
+    @SerialName("param_change") val paramChange: SimParameterChange? = null
+)
+
+@Serializable
+data class SimParameterChange(
+    val parameter: String,
+    val before: JsonElement? = null,
+    val after: JsonElement? = null,
+    val reason: String? = null,
+    @SerialName("before_url") val beforeUrl: String? = null,
+    @SerialName("after_url") val afterUrl: String? = null
+)
+
+@Serializable
+data class SimConceptsInfo(
+    val total: Int,
+    @SerialName("current_index") val currentIndex: Int,
+    @SerialName("current_concept") val currentConcept: SimConcept? = null,
+    @SerialName("all_concepts") val allConcepts: List<SimConcept> = emptyList(),
+    @SerialName("all_completed") val allCompleted: Boolean? = false,
+    @SerialName("previous_concept") val previousConcept: SimPreviousConcept? = null
+)
+
+@Serializable
+data class SimConcept(
+    val id: Int,
+    val title: String,
+    val description: String,
+    @SerialName("key_insight") val keyInsight: String,
+    @SerialName("related_params") val relatedParams: List<String>
+)
+
+@Serializable
+data class SimPreviousConcept(
+    val id: Int,
+    val title: String,
+    val completed: Boolean
+)
+
+@Serializable
+data class SimTeacherMessage(
+    val text: String,
+    val timestamp: String,
+    @SerialName("requires_response") val requiresResponse: Boolean,
+    @SerialName("correction_made") val correctionMade: Boolean? = false,
+    @SerialName("asks_for_reasoning") val asksForReasoning: Boolean? = false,
+    @SerialName("concept_transition") val conceptTransition: Boolean? = false,
+    @SerialName("session_ending") val sessionEnding: Boolean? = false
+)
+
+@Serializable
+data class SimLearningState(
+    @SerialName("understanding_level") val understandingLevel: String,
+    @SerialName("understanding_reasoning") val understandingReasoning: String? = null,
+    @SerialName("exchange_count") val exchangeCount: Int,
+    @SerialName("concept_complete") val conceptComplete: Boolean,
+    @SerialName("session_complete") val sessionComplete: Boolean,
+    val strategy: String,
+    @SerialName("teacher_mode") val teacherMode: String,
+    @SerialName("trajectory_status") val trajectoryStatus: String? = null,
+    @SerialName("needs_deeper") val needsDeeper: Boolean? = false
 )

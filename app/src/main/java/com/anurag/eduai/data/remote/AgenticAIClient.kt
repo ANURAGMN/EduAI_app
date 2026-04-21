@@ -2,6 +2,7 @@ package com.anurag.eduai.data.remote
 
 
 import android.content.Context
+import com.anurag.eduai.BuildConfig
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.utils.ErrorHandler
 import kotlinx.coroutines.Dispatchers
@@ -49,7 +50,7 @@ class AgenticAIClient(
                     DebugLogger.debugLog("AgenticAIClient", "Response received: attempt=$attempt url=$urlStr code=$code")
                     // Check whether header exists in the request (mask it if present)
                     val reqHeaders: Headers = resp.raw().request.headers
-                    val headerName = com.anurag.eduai.BuildConfig.API_KEY_HEADER_NAME.trim().ifEmpty { "X-API-Key" }
+                    val headerName = BuildConfig.API_KEY_HEADER_NAME.trim().ifEmpty { "X-API-Key" }
                     val hv = reqHeaders[headerName]
                     if (hv != null) {
                         val masked = if (hv.length <= 6) "****" else "****" + hv.takeLast(4)
@@ -123,14 +124,14 @@ class AgenticAIClient(
             }
 
             // Retry logic
-            if (attempt < maxAttempts && shouldRetry(lastEx)) {
+            if (attempt < maxAttempts && ErrorHandler.shouldRetryException(lastEx)) {
                 DebugLogger.debugLog(
                     "AgenticAIClient",
                     "Retrying in ${delayMs}ms (attempt $attempt/$maxAttempts)"
                 )
                 delay(delayMs)
                 delayMs = (delayMs * factor).toLong()
-            } else if (attempt < maxAttempts && !shouldRetry(lastEx)) {
+            } else if (attempt < maxAttempts && !ErrorHandler.shouldRetryException(lastEx)) {
                 break  // Don't retry
             }
         }
@@ -153,6 +154,9 @@ class AgenticAIClient(
             is RevContinueSessionResponse -> body.success
             is RevSessionStatusResponse -> body.success
             is RevSessionHistoryResponse -> body.success
+            is SimSessionResponse -> true
+            is SimSimulationsListResponse -> true
+            is SimHealthResponse -> true
             is HealthResponse -> true
             else -> true
         }
@@ -173,6 +177,9 @@ class AgenticAIClient(
             is RevContinueSessionResponse -> body.message
             is RevSessionStatusResponse -> body.message
             is RevSessionHistoryResponse -> body.message
+            is SimSessionResponse -> null
+            is SimSimulationsListResponse -> null
+            is SimHealthResponse -> null
             else -> null
         }
     }
@@ -182,24 +189,6 @@ class AgenticAIClient(
             resp.errorBody()?.string()
         } catch (_: Exception) {
             null
-        }
-    }
-
-    private fun shouldRetry(exception: Exception?): Boolean {
-        return when {
-            exception == null -> false  // No exception means success path was taken
-            // Check for 5xx server errors - these should be retried
-            exception.message?.contains("HTTP 5") == true -> true
-            // Check for 4xx client errors - don't retry these
-            exception.message?.contains("HTTP 4") == true -> false
-            // Check for application-level errors (success=false) - don't retry
-            exception.message?.contains("Server error:") == true -> false
-            // Network/IO errors (timeout, connection failed, etc.) - should retry
-            exception is java.net.SocketTimeoutException -> true
-            exception is java.net.ConnectException -> true
-            exception is java.net.UnknownHostException -> true
-            exception is IOException -> true
-            else -> false  // Unknown exceptions - don't retry by default
         }
     }
 
@@ -396,5 +385,62 @@ class AgenticAIClient(
             } catch (e: Exception) {
                 Result.failure(e)
             }
+        }
+    // ==================== SIMULATION METHODS ====================
+
+    suspend fun simulationHealthCheck(): Result<SimHealthResponse> =
+        withContext(Dispatchers.IO) {
+            callWithRetry { service.simulationHealthCheck() }
+        }
+
+    suspend fun getAvailableSimulations(): Result<SimSimulationsListResponse>  =
+        withContext(Dispatchers.IO) {
+            callWithRetry { service.getAvailableSimulations() }
+        }
+
+    suspend fun startSimulationSession(
+        simulationId: String,
+        studentId: String? = null,
+        language: String? = "english"
+    ): Result<SimSessionResponse> = withContext(Dispatchers.IO) {
+        val req = SimStartSessionRequest(
+            simulationId = simulationId,
+            studentId = studentId,
+            language = language
+        )
+
+        val res = callWithRetry { service.startSimulationSession(req) }
+
+        // Update session state on success
+        if (res.isSuccess) {
+            val body = res.getOrNull()
+            body?.sessionId?.let { _currentSessionId.value = it }
+            DebugLogger.debugLog(
+                "AgenticAIClient",
+                "Simulation session started: sessionId=${body?.sessionId}"
+            )
+        }
+        res
+    }
+
+    suspend fun sendSimulationResponse(
+        sessionId: String,
+        studentResponse: String
+    ): Result<SimSessionResponse> = withContext(Dispatchers.IO) {
+        val req = SimStudentResponseRequest(studentResponse = studentResponse)
+        callWithRetry { service.sendSimulationResponse(sessionId, req) }
+    }
+
+    suspend fun submitSimulationQuiz(
+        sessionId: String,
+        answer: String
+    ): Result<SimSessionResponse> = withContext(Dispatchers.IO) {
+        val req = SimQuizAnswerRequest(answer = answer)
+        callWithRetry { service.submitSimulationQuiz(sessionId, req) }
+    }
+
+    suspend fun getSimulationSession(sessionId: String): Result<SimSessionResponse> =
+        withContext(Dispatchers.IO) {
+            callWithRetry { service.getSimulationSession(sessionId) }
         }
 }

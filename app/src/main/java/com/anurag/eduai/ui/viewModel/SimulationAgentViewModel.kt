@@ -5,14 +5,12 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import com.anurag.eduai.data.local.SharedPreferenceUtils
-import com.anurag.eduai.data.model.SimQuizAnswerRequest
-import com.anurag.eduai.data.model.SimSessionResponse
-import com.anurag.eduai.data.model.SimStartSessionRequest
-import com.anurag.eduai.data.model.SimStudentResponseRequest
-import com.anurag.eduai.data.remote.SimulationAgentAPI
+import com.anurag.eduai.data.remote.AgenticAIClient
+import com.anurag.eduai.data.remote.SimSessionResponse
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.domain.chatbot.usecase.AvatarChangeUseCase
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
+import com.anurag.eduai.utils.ErrorHandler
 import com.anurag.eduai.utils.isKannada
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -20,8 +18,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 
 /**
  * ViewModel for the Simulation Agent screen
@@ -29,7 +25,7 @@ import java.net.UnknownHostException
  */
 @HiltViewModel
 class SimulationAgentViewModel @Inject constructor(
-    private val api: SimulationAgentAPI,
+    private val agenticAIClient: AgenticAIClient,
     private val sharedPrefs: SharedPreferenceUtils,
     private val avatarChangeUseCase: AvatarChangeUseCase
 ) : ViewModel() {
@@ -323,39 +319,10 @@ class SimulationAgentViewModel @Inject constructor(
      */
 
     /**
-     * Handle exceptions and return user-friendly error message
+     * Handle exceptions
      */
     private fun handleError(e: Exception, operation: String): String {
-        val errorMessage = when (e) {
-            is SocketTimeoutException -> {
-                "Connection timed out. Please check your internet connection."
-            }
-
-            is UnknownHostException -> {
-                "Unable to reach server. Please check your internet connection."
-            }
-
-            is retrofit2.HttpException -> {
-                when (e.code()) {
-                    404 -> "Simulation not found. Please try a different simulation."
-                    500 -> "Server error. Please try again later."
-                    else -> "Network error (${e.code()}). Please try again."
-                }
-            }
-
-            else -> {
-                when (operation) {
-                    "start_session" -> "Failed to start simulation. Please try again."
-                    "send_response" -> "Failed to send response. Please try again."
-                    "submit_quiz" -> "Failed to submit quiz answer. Please try again."
-                    "get_session" -> "Failed to retrieve session. Please try again."
-                    else -> "An error occurred. Please try again."
-                }
-            }
-        }
-
-        DebugLogger.errorLog(TAG, " $operation failed: ${e.javaClass.simpleName} - ${e.message}")
-        return errorMessage
+        return ErrorHandler.handleException(e, operation, TAG)
     }
 
     /**
@@ -371,20 +338,24 @@ class SimulationAgentViewModel @Inject constructor(
                 _simulationsLoading.value = true
                 DebugLogger.debugLog(TAG, "Loading available simulations...")
 
-                val response = api.getAvailableSimulations()
+                val result = agenticAIClient.getAvailableSimulations()
+                if (result.isSuccess) {
+                    val response = result.getOrNull()!!
+                    val simulations = response.simulations.map { sim ->
+                        SimulationInfo(
+                            id = sim.id,
+                            title = sim.title,
+                            description = sim.description
+                        )
+                    }
 
-                val simulations = response.simulations.map { sim ->
-                    SimulationInfo(
-                        id = sim.id,
-                        title = sim.title,
-                        description = sim.description
-                    )
-                }
-
-                _availableSimulations.value = simulations
-                DebugLogger.debugLog(TAG, "Loaded ${simulations.size} simulations")
-                simulations.forEach {
-                    DebugLogger.debugLog(TAG, "  - ${it.title} (${it.id})")
+                    _availableSimulations.value = simulations
+                    DebugLogger.debugLog(TAG, "Loaded ${simulations.size} simulations")
+                    simulations.forEach {
+                        DebugLogger.debugLog(TAG, "  - ${it.title} (${it.id})")
+                    }
+                } else {
+                    throw result.exceptionOrNull() ?: Exception("Failed to load simulations")
                 }
 
             } catch (e: Exception) {
@@ -427,22 +398,25 @@ class SimulationAgentViewModel @Inject constructor(
                 val studentId = sharedPrefs.getUserId()
                 DebugLogger.debugLog(TAG, "Starting session with student ID: $studentId")
 
-                val response = api.startSession(
-                    SimStartSessionRequest(
-                        simulationId = simulationId,
-                        language = currentLanguage,
-                        studentId = studentId
-                    )
+                val result = agenticAIClient.startSimulationSession(
+                    simulationId = simulationId,
+                    studentId = studentId,
+                    language = currentLanguage
                 )
 
-                DebugLogger.debugLog(TAG, "Session started successfully")
-                DebugLogger.debugLog(TAG, "Session ID: ${response.sessionId}")
-                DebugLogger.debugLog(TAG, "Teacher Message: ${response.teacherMessage.text}")
-                DebugLogger.debugLog(TAG, "Simulation URL: ${response.simulation.htmlUrl}")
+                if (result.isSuccess) {
+                    val response = result.getOrNull()!!
+                    DebugLogger.debugLog(TAG, "Session started successfully")
+                    DebugLogger.debugLog(TAG, "Session ID: ${response.sessionId}")
+                    DebugLogger.debugLog(TAG, "Teacher Message: ${response.teacherMessage.text}")
+                    DebugLogger.debugLog(TAG, "Simulation URL: ${response.simulation.htmlUrl}")
 
-                _sessionData.value = response
-                processSessionResponse(response)
-                _uiState.value = SimAgentUiState.Success(response)
+                    _sessionData.value = response
+                    processSessionResponse(response)
+                    _uiState.value = SimAgentUiState.Success(response)
+                } else {
+                    throw result.exceptionOrNull() ?: Exception("Failed to start simulation session")
+                }
 
             } catch (e: Exception) {
                 val errorMsg = handleError(e, "start_session")
@@ -470,30 +444,35 @@ class SimulationAgentViewModel @Inject constructor(
                 _uiState.value = SimAgentUiState.Loading
                 DebugLogger.debugLog(TAG, "Sending student response: $response")
 
-                val apiResponse = api.sendResponse(
+                val result = agenticAIClient.sendSimulationResponse(
                     sessionId = currentSessionId,
-                    request = SimStudentResponseRequest(studentResponse = response)
+                    studentResponse = response
                 )
 
-                DebugLogger.debugLog(TAG, " Response received successfully")
-                DebugLogger.debugLog(TAG, "Teacher Message: ${apiResponse.teacherMessage.text}")
-                DebugLogger.debugLog(TAG, "Understanding Level: ${apiResponse.learningState.understandingLevel}")
+                if (result.isSuccess) {
+                    val apiResponse = result.getOrNull()!!
+                    DebugLogger.debugLog(TAG, " Response received successfully")
+                    DebugLogger.debugLog(TAG, "Teacher Message: ${apiResponse.teacherMessage.text}")
+                    DebugLogger.debugLog(TAG, "Understanding Level: ${apiResponse.learningState.understandingLevel}")
 
-                apiResponse.simulation.paramChange?.let { change ->
-                    DebugLogger.debugLog(TAG, " Parameter Changed!")
-                    DebugLogger.debugLog(TAG, "  Parameter: ${change.parameter}")
-                    // Safely stringify JsonElement values
-                    val beforeVal = change.before?.toString() ?: "null"
-                    val afterVal = change.after?.toString() ?: "null"
-                    DebugLogger.debugLog(TAG, "  Before Value: $beforeVal")
-                    DebugLogger.debugLog(TAG, "  After Value: $afterVal")
-                    DebugLogger.debugLog(TAG, "  Before URL: ${change.beforeUrl}")
-                    DebugLogger.debugLog(TAG, "  After URL: ${change.afterUrl}")
+                    apiResponse.simulation.paramChange?.let { change ->
+                        DebugLogger.debugLog(TAG, " Parameter Changed!")
+                        DebugLogger.debugLog(TAG, "  Parameter: ${change.parameter}")
+                        // Safely stringify JsonElement values
+                        val beforeVal = change.before?.toString() ?: "null"
+                        val afterVal = change.after?.toString() ?: "null"
+                        DebugLogger.debugLog(TAG, "  Before Value: $beforeVal")
+                        DebugLogger.debugLog(TAG, "  After Value: $afterVal")
+                        DebugLogger.debugLog(TAG, "  Before URL: ${change.beforeUrl}")
+                        DebugLogger.debugLog(TAG, "  After URL: ${change.afterUrl}")
+                    }
+
+                    _sessionData.value = apiResponse
+                    processSessionResponse(apiResponse)
+                    _uiState.value = SimAgentUiState.Success(apiResponse)
+                } else {
+                    throw result.exceptionOrNull() ?: Exception("Failed to send response")
                 }
-
-                _sessionData.value = apiResponse
-                processSessionResponse(apiResponse)
-                _uiState.value = SimAgentUiState.Success(apiResponse)
 
             } catch (e: Exception) {
                 val errorMsg = handleError(e, "send_response")
@@ -521,46 +500,25 @@ class SimulationAgentViewModel @Inject constructor(
                 _uiState.value = SimAgentUiState.Loading
                 DebugLogger.debugLog(TAG, "Submitting quiz answer: $answer")
 
-                val apiResponse = api.submitQuizAnswer(
+                val result = agenticAIClient.submitSimulationQuiz(
                     sessionId = currentSessionId,
-                    request = SimQuizAnswerRequest(answer = answer)
+                    answer = answer
                 )
 
-                DebugLogger.debugLog(TAG, " Quiz answer submitted successfully")
-                DebugLogger.debugLog(TAG, "Teacher Message: ${apiResponse.teacherMessage.text}")
+                if (result.isSuccess) {
+                    val apiResponse = result.getOrNull()!!
+                    DebugLogger.debugLog(TAG, " Quiz answer submitted successfully")
+                    DebugLogger.debugLog(TAG, "Teacher Message: ${apiResponse.teacherMessage.text}")
 
-                _sessionData.value = apiResponse
-                processSessionResponse(apiResponse)
-                _uiState.value = SimAgentUiState.Success(apiResponse)
+                    _sessionData.value = apiResponse
+                    processSessionResponse(apiResponse)
+                    _uiState.value = SimAgentUiState.Success(apiResponse)
+                } else {
+                    throw result.exceptionOrNull() ?: Exception("Failed to submit quiz answer")
+                }
 
             } catch (e: Exception) {
                 val errorMsg = handleError(e, "submit_quiz")
-                _errorMessage.value = errorMsg
-                _uiState.value = SimAgentUiState.Error(errorMsg)
-            }
-        }
-    }
-
-    /**
-     * Get the current session state (for recovery)
-     */
-    fun getSessionState(sessionId: String) {
-        viewModelScope.launch {
-            try {
-                _uiState.value = SimAgentUiState.Loading
-                DebugLogger.debugLog(TAG, "Fetching session state for: $sessionId")
-
-                val response = api.getSession(sessionId)
-
-                DebugLogger.debugLog(TAG, "Session state retrieved")
-                DebugLogger.debugLog(TAG, "Exchange Count: ${response.learningState.exchangeCount}")
-
-                _sessionData.value = response
-                processSessionResponse(response)
-                _uiState.value = SimAgentUiState.Success(response)
-
-            } catch (e: Exception) {
-                val errorMsg = handleError(e, "get_session")
                 _errorMessage.value = errorMsg
                 _uiState.value = SimAgentUiState.Error(errorMsg)
             }

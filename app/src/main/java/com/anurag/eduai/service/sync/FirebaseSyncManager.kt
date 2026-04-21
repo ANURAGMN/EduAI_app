@@ -1,8 +1,11 @@
-package com.anurag.eduai.sync
+package com.anurag.eduai.service.sync
 
 import com.anurag.eduai.data.local.dao.ChapterDao
 import com.anurag.eduai.data.local.dao.ConceptDao
 import com.anurag.eduai.data.local.dao.SubjectDao
+import com.anurag.eduai.data.local.entities.ChapterEntity
+import com.anurag.eduai.data.local.entities.ConceptEntity
+import com.anurag.eduai.data.local.entities.SubjectEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -39,10 +42,10 @@ class FirebaseSyncManager(
             }
 
             val subjects =
-                    mutableMapOf<String, com.anurag.eduai.data.local.entities.SubjectEntity>()
+                    mutableMapOf<String, SubjectEntity>()
             val chapters =
-                    mutableMapOf<String, com.anurag.eduai.data.local.entities.ChapterEntity>()
-            val concepts = mutableListOf<com.anurag.eduai.data.local.entities.ConceptEntity>()
+                    mutableMapOf<String, ChapterEntity>()
+            val concepts = mutableListOf<ConceptEntity>()
 
             // Process each document
             for (document in snapshot.documents) {
@@ -107,8 +110,8 @@ class FirebaseSyncManager(
             }
 
             val chapters =
-                    mutableMapOf<String, com.anurag.eduai.data.local.entities.ChapterEntity>()
-            val concepts = mutableListOf<com.anurag.eduai.data.local.entities.ConceptEntity>()
+                    mutableMapOf<String, ChapterEntity>()
+            val concepts = mutableListOf<ConceptEntity>()
 
             for (document in snapshot.documents) {
                 try {
