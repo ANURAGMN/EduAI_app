@@ -10,6 +10,7 @@ import com.anurag.eduai.ui.screens.login.LoginScreen
 import com.anurag.eduai.ui.screens.login.UserDetailEntryScreen
 import com.anurag.eduai.ui.screens.login.viewmodel.UserViewModel
 import androidx.compose.ui.platform.LocalContext
+import com.anurag.eduai.debug.DebugLogger
 
 @Composable
 fun LoginNavigator() {
@@ -38,7 +39,15 @@ fun LoginNavigator() {
             )
         }
         composable("main") {
-            BottomNavBar()
+            BottomNavBar(
+                onLogout = {
+                    DebugLogger.debugLog("LoginNavigator", "User logged out, navigating to login screen")
+                    // Navigate back to login and clear the back stack
+                    navController.navigate("login") {
+                        popUpTo("main") { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }

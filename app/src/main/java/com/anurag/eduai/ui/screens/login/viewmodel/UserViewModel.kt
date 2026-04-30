@@ -46,6 +46,10 @@ class UserViewModel @Inject constructor(
     )
     val selectedLanguage: StateFlow<String> = _selectedLanguage.asStateFlow()
 
+    init {
+        DebugLogger.debugLog("UserViewModel", "UserViewModel initialized")
+    }
+
     fun updateId(id: String) {
         _user.value = _user.value.copy(id = id)
     }

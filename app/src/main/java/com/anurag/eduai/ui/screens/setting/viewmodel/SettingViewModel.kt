@@ -1,13 +1,20 @@
 package com.anurag.eduai.ui.screens.setting.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.anurag.eduai.data.local.ConceptSessionRepository
+import com.anurag.eduai.data.local.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.local.dao.StudentDao
 import com.anurag.eduai.data.local.entities.StudentEntity
+import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.repository.FirebaseRepository
 import com.anurag.eduai.utils.LanguageHelper
+import com.anurag.eduai.utils.StreakManager
+import com.anurag.eduai.utils.TokenManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,6 +33,7 @@ class SettingViewModel @Inject constructor(
     private val sharedPref: SharedPreferenceUtils,
     private val repository: FirebaseRepository,
     private val studentDao: StudentDao,
+    @ApplicationContext private val context: Context,
     val userId: String
 ) : ViewModel() {
 
@@ -140,9 +148,43 @@ class SettingViewModel @Inject constructor(
 
     fun logout() {
         viewModelScope.launch {
+            try {
+                DebugLogger.debugLog("SettingViewModel", "Starting logout process")
 
-            // Set logout state to trigger navigation
-            _logoutState.value = true
+                // Clear Google authentication tokens
+                TokenManager.clearAllTokens(context)
+                DebugLogger.debugLog("SettingViewModel", "Cleared authentication tokens")
+
+                // Clear all session mappings for chatbot
+                ConceptSessionRepository(context).clearAllMappings()
+                DebugLogger.debugLog("SettingViewModel", "Cleared concept session mappings")
+
+                // Clear streak data
+                StreakManager(context).resetStreak()
+                DebugLogger.debugLog("SettingViewModel", "Reset streak data")
+
+                // Clear shared preferences (user data, login status, etc.)
+                sharedPref.clearAllUserData()
+                DebugLogger.debugLog("SettingViewModel", "Cleared user preferences")
+
+                // Clear all sessions from database
+                val db = EduAiDatabase.getInstance(context)
+                db.sessionDao().deleteAllSessions()
+                DebugLogger.debugLog("SettingViewModel", "Cleared database sessions")
+
+                // Clear all student data from local database
+                studentDao.deleteAllStudents()
+                DebugLogger.debugLog("SettingViewModel", "Cleared local student data")
+
+                // Set logout state to trigger navigation
+                _logoutState.value = true
+                DebugLogger.debugLog("SettingViewModel", "Logout completed successfully")
+
+            } catch (e: Exception) {
+                DebugLogger.errorLog("SettingViewModel", "Error during logout: ${e.message}")
+                // Still set logout state even if there's an error
+                _logoutState.value = true
+            }
         }
     }
 }

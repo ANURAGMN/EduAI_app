@@ -54,9 +54,8 @@ class GoogleSignIn {
                                 val user: User =
                                     GoogleInfoExtractor.extractAndLogUserInfo(googleIdTokenCredential)
 
-                                // Store JWT token
-                                TokenManager.saveToken(context, user.jwtToken)
-                                DebugLogger.debugLog("GoogleSignIn", "JWT token stored successfully")
+                                // Store Google ID token for API authentication and silent refresh
+                                TokenManager.saveIdToken(context, googleIdTokenCredential.idToken)
 
                                 onLoginSuccess(user)
                             } else {

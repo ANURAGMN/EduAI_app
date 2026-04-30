@@ -10,14 +10,50 @@ class SharedPreferenceUtils(context: Context) {
         context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
 
     companion object {
+        private const val KEY_ID_TOKEN = "key_id_token"
+        private const val KEY_TOKEN_EXPIRY_TIME = "key_token_expiry_time"
         private const val KEY_USER_ID = "key_user_id"
         private const val KEY_LANGUAGE = "key_language"
         private const val KEY_IS_LOGGED_IN = "key_is_logged_in"
         private const val KEY_SELECTED_SUBJECT = "selected_subject"
         private const val KEY_SESSION = "key_current_session"
-        private const val KEY_JWT_TOKEN = "key_jwt_token"
     }
 
+    fun setIdToken(idToken: String) {
+        prefs.edit { putString(KEY_ID_TOKEN, idToken) }
+    }
+
+    fun getIdToken(): String? {
+        return prefs.getString(KEY_ID_TOKEN, null)
+    }
+
+    fun clearIdToken() {
+        prefs.edit { remove(KEY_ID_TOKEN) }
+    }
+
+    fun setTokenExpiryTime(expiryTimeMs: Long) {
+        prefs.edit { putLong(KEY_TOKEN_EXPIRY_TIME, expiryTimeMs) }
+    }
+
+    fun getTokenExpiryTime(): Long {
+        return prefs.getLong(KEY_TOKEN_EXPIRY_TIME, 0L)
+    }
+
+    fun isTokenExpiredOrExpiring(): Boolean {
+        val expiryTime = getTokenExpiryTime()
+        val currentTime = System.currentTimeMillis()
+        val bufferTime = 10 * 60 * 1000
+        return currentTime >= (expiryTime - bufferTime)
+    }
+
+    fun clearAllAuthData() {
+        prefs.edit {
+            remove(KEY_ID_TOKEN)
+            remove(KEY_TOKEN_EXPIRY_TIME)
+        }
+    }
+
+    // Other preferences (unchanged)
     fun setUserId(id: String) {
         prefs.edit { putString(KEY_USER_ID, id) }
     }
@@ -31,15 +67,17 @@ class SharedPreferenceUtils(context: Context) {
     }
 
     fun getLanguagePreference(): String? {
-        return prefs.getString(KEY_LANGUAGE, "en") // default: English
+        return prefs.getString(KEY_LANGUAGE, "en")
     }
 
-    fun setSubjectSelection(subject: String){
+    fun setSubjectSelection(subject: String) {
         prefs.edit { putString(KEY_SELECTED_SUBJECT, subject) }
     }
+
     fun getSubjectSelection(): String? {
         return prefs.getString(KEY_SELECTED_SUBJECT, "science")
     }
+
     fun setLoggedIn(isLoggedIn: Boolean) {
         prefs.edit { putBoolean(KEY_IS_LOGGED_IN, isLoggedIn) }
     }
@@ -48,29 +86,29 @@ class SharedPreferenceUtils(context: Context) {
         return prefs.getBoolean(KEY_IS_LOGGED_IN, false)
     }
 
-    /** Stores current session id **/
-    fun setCurrentSession(sessionId:String){
-        prefs.edit{putString(KEY_SESSION,sessionId)}
+    fun setCurrentSession(sessionId: String) {
+        prefs.edit { putString(KEY_SESSION, sessionId) }
     }
 
-    /** Retrieves current session id **/
     fun getCurrentSession(): String? {
         return prefs.getString(KEY_SESSION, null)
     }
-    /** Clears current session id **/
+
     fun clearCurrentSession() {
         prefs.edit { remove(KEY_SESSION) }
     }
 
-    fun setJwtToken(token: String) {
-        prefs.edit { putString(KEY_JWT_TOKEN, token) }
-    }
-
-    fun getJwtToken(): String? {
-        return prefs.getString(KEY_JWT_TOKEN, null)
-    }
-
-    fun clearJwtToken() {
-        prefs.edit { remove(KEY_JWT_TOKEN) }
+    /**
+     * Clear all user data on logout
+     * Removes user ID, selected subject, and current session
+     * Keeps language preference for future login convenience
+     */
+    fun clearAllUserData() {
+        prefs.edit {
+            remove(KEY_USER_ID)
+            remove(KEY_SELECTED_SUBJECT)
+            remove(KEY_SESSION)
+            remove(KEY_IS_LOGGED_IN)
+        }
     }
 }

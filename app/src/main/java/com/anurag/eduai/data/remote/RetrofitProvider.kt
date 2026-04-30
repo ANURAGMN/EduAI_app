@@ -28,9 +28,9 @@ object RetrofitProvider {
         }
         logging.level = HttpLoggingInterceptor.Level.BASIC
 
-        // Bearer token interceptor for JWT authentication
-        val bearerTokenInterceptor = BearerTokenInterceptor(context)
-        DebugLogger.debugLog("RetrofitProvider", "Bearer token interceptor configured for JWT authentication")
+        // Proactive token interceptor to ensure valid token BEFORE API calls
+        val proactiveTokenInterceptor = ProactiveTokenInterceptor(context)
+        DebugLogger.debugLog("RetrofitProvider", "Proactive token interceptor configured - refreshes before API calls")
 
         val errorLoggingInterceptor = Interceptor { chain ->
             val request = chain.request()
@@ -49,14 +49,10 @@ object RetrofitProvider {
             response
         }
 
-        // Token refresh interceptor to handle 401 errors
-        val tokenRefreshInterceptor = TokenRefreshInterceptor(context)
-
         val client = OkHttpClient.Builder()
-            .addInterceptor(bearerTokenInterceptor)
-            .addInterceptor(logging)
-            .addNetworkInterceptor(tokenRefreshInterceptor)
-            .addNetworkInterceptor(errorLoggingInterceptor)
+            .addInterceptor(proactiveTokenInterceptor)      // Ensure fresh token BEFORE request
+            .addInterceptor(logging)                        //  Log request with fresh token
+            .addNetworkInterceptor(errorLoggingInterceptor) //  Network-level error logging
             .connectTimeout(20, TimeUnit.SECONDS)
             .readTimeout(20, TimeUnit.SECONDS)
             .writeTimeout(20, TimeUnit.SECONDS)

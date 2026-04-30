@@ -35,7 +35,7 @@ import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 
 @Composable
-fun BottomNavBar() {
+fun BottomNavBar(onLogout: () -> Unit = {}) {
     val items = listOf(BottomNavItem.Home, BottomNavItem.Progress, BottomNavItem.Setting)
     val navController = rememberNavController()
 
@@ -140,8 +140,10 @@ fun BottomNavBar() {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
                             restoreState = true
                         }
-                    }
-            ) }
+                    },
+                    onLogout = onLogout
+                )
+            }
             composable("learning") {
                 LearningNavigator(
                     onBackToHome = { navController.popBackStack() },
