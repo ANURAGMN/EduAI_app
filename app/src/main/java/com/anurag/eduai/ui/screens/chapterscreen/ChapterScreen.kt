@@ -26,8 +26,8 @@ import com.anurag.eduai.ui.screens.chapterscreen.components.ChapterCard
 import com.anurag.eduai.ui.screens.chatbotscreen.components.AppDialog
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
-import com.anurag.eduai.ui.viewModel.ChapterViewModel
-import com.anurag.eduai.ui.viewModel.RevisionViewModel
+import com.anurag.eduai.ui.screens.chapterscreen.viewmodel.ChapterViewModel
+import com.anurag.eduai.ui.screens.revisionscreen.viewmodel.RevisionViewModel
 
 /**
  * Mapping of chapter display names to their API-compatible names.

@@ -28,9 +28,9 @@ import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptCard
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
-import com.anurag.eduai.ui.viewModel.ChatViewModel
-import com.anurag.eduai.ui.viewModel.ConceptViewModel
-import com.anurag.eduai.ui.viewModel.SimulationAgentViewModel
+import com.anurag.eduai.ui.screens.chatbotscreen.viewmodel.ChatViewModel
+import com.anurag.eduai.ui.screens.conceptscreen.viewmodel.ConceptViewModel
+import com.anurag.eduai.ui.screens.simulation_agent.viewmodel.SimulationAgentViewModel
 import com.anurag.eduai.utils.StreakManager
 
 /**

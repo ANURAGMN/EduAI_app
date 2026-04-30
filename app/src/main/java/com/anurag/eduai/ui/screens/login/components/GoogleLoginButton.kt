@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.login
+package com.anurag.eduai.ui.screens.login.components
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -40,9 +40,9 @@ import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
-import com.anurag.eduai.ui.viewModel.ExistingUserSyncState
-import com.anurag.eduai.ui.viewModel.LoginState
-import com.anurag.eduai.ui.viewModel.UserViewModel
+import com.anurag.eduai.ui.screens.login.viewmodel.ExistingUserSyncState
+import com.anurag.eduai.ui.screens.login.viewmodel.LoginState
+import com.anurag.eduai.ui.screens.login.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
 
 @Composable

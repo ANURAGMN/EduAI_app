@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.viewModel
+package com.anurag.eduai.ui.screens.subjectscreen.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

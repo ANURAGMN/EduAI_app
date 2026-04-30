@@ -27,7 +27,7 @@ import com.anurag.eduai.ui.screens.home.components.PracticeSimulationCard
 import com.anurag.eduai.ui.screens.home.components.TodayProgressCard
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.theme.LocalDimensions
-import com.anurag.eduai.ui.viewModel.HomeViewModel
+import com.anurag.eduai.ui.screens.home.viewmodel.HomeViewModel
 
 @Composable
 fun HomeScreen(

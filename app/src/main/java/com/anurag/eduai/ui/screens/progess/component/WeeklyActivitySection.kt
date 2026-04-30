@@ -28,7 +28,7 @@ import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.WeeklyActivityBarColor
-import com.anurag.eduai.ui.viewModel.DayProgress
+import com.anurag.eduai.ui.screens.progess.viewmodel.DayProgress
 
 /**
  * Weekly Activity Section Component

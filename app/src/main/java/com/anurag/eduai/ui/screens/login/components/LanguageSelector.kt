@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.login
+package com.anurag.eduai.ui.screens.login.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

@@ -1,7 +1,8 @@
-package com.anurag.eduai.ui.viewModel
+package com.anurag.eduai.ui.screens.progess.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.anurag.eduai.data.local.dao.ChapterDao
 import com.anurag.eduai.data.local.dao.ChapterProgressSummary
 import com.anurag.eduai.data.local.dao.DailyConceptCount
 import com.anurag.eduai.data.local.dao.ProgressDao
@@ -29,7 +30,7 @@ import javax.inject.Inject
 class ProgressScreenViewModel @Inject constructor(
     private val progressDao: ProgressDao,
     private val subjectDao: SubjectDao,
-    private val chapterDao: com.anurag.eduai.data.local.dao.ChapterDao,
+    private val chapterDao: ChapterDao,
     private val streakManager: StreakManager,
     private val studentDao: StudentDao,
     private val userId: String

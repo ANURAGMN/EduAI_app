@@ -1,16 +1,17 @@
-package com.anurag.eduai.ui.viewModel
+package com.anurag.eduai.ui.screens.conceptscreen.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.anurag.eduai.data.local.SharedPreferenceUtils
+import com.anurag.eduai.data.local.entities.ProgressEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.repository.ChapterRepository
 import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.repository.SubjectRepository
+import com.anurag.eduai.ui.models.ChapterProgressUiModel
 import com.anurag.eduai.ui.models.ConceptStatus
 import com.anurag.eduai.ui.models.ConceptUiModel
-import com.anurag.eduai.ui.models.ChapterProgressUiModel
 import com.anurag.eduai.ui.screens.conceptscreen.dataclass.ConceptScreenState
 import com.anurag.eduai.utils.getLocalizedName
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -122,7 +123,7 @@ class ConceptViewModel @Inject constructor(
     }
 
     private fun determineConceptStatus(
-        progress: com.anurag.eduai.data.local.entities.ProgressEntity?,
+        progress: ProgressEntity?,
         isFirstConcept: Boolean,
         previousConceptStatus: String?
     ): String {

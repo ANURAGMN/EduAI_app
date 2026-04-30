@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.viewModel
+package com.anurag.eduai.ui.screens.chapterscreen.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -63,7 +63,7 @@ class ChapterViewModel @Inject constructor(
 
                     ChapterUiModel(
                         id = chapter.chapterId,
-                        orderIndex =chapter.orderIndex,
+                        orderIndex = chapter.orderIndex,
                         name = chapter.getLocalizedName(),  // Display name (localized)
                         englishName = chapter.chapterName,  // API name (always English)
                         totalConcepts = totalConcepts,

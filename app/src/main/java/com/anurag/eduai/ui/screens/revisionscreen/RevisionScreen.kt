@@ -39,7 +39,7 @@ import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSet
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.isConversationStarted
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.lastAiMessage
 import com.anurag.eduai.ui.theme.White
-import com.anurag.eduai.ui.viewModel.RevisionViewModel
+import com.anurag.eduai.ui.screens.revisionscreen.viewmodel.RevisionViewModel
 import com.anurag.eduai.ui.viewModel.SpeechToText
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 

@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.viewModel
+package com.anurag.eduai.ui.screens.chatbotscreen.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,13 +7,13 @@ import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.domain.chatbot.controller.IdleTimerController
 import com.anurag.eduai.domain.chatbot.controller.ResourceController
 import com.anurag.eduai.domain.chatbot.controller.TypingAnimationController
+import com.anurag.eduai.domain.chatbot.model.ResourceDecision
 import com.anurag.eduai.domain.chatbot.usecase.AutoSuggestionUseCase
 import com.anurag.eduai.domain.chatbot.usecase.AvatarChangeUseCase
 import com.anurag.eduai.domain.chatbot.usecase.ChatIntent
 import com.anurag.eduai.domain.chatbot.usecase.ConceptMapUseCase
-import com.anurag.eduai.domain.chatbot.usecase.HandleAgentResponseUseCase
-import com.anurag.eduai.domain.chatbot.model.ResourceDecision
 import com.anurag.eduai.domain.chatbot.usecase.ConceptProgressUseCase
+import com.anurag.eduai.domain.chatbot.usecase.HandleAgentResponseUseCase
 import com.anurag.eduai.domain.chatbot.usecase.ResourceDecisionUseCase
 import com.anurag.eduai.domain.chatbot.usecase.SendMessageUseCase
 import com.anurag.eduai.domain.chatbot.usecase.SessionUseCase
@@ -22,15 +22,16 @@ import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
+import com.anurag.eduai.ui.viewModel.TextToSpeech
 import com.anurag.eduai.utils.getCurrentLanguageCode
 import com.anurag.eduai.utils.isKannada
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
@@ -456,12 +457,14 @@ class ChatViewModel @Inject constructor(
      */
     private fun startFreshSession(concept: String) = viewModelScope.launch {
         sessionUseCase.deleteSessionMapping(concept)
-        _uiState.update { ChatUiState(
-            selectedConcept = concept,
-            availableConcepts = it.availableConcepts,
-            currentLanguage = it.currentLanguage,
-            studentLevel = it.studentLevel,
-            isKannada = it.isKannada)
+        _uiState.update {
+            ChatUiState(
+                selectedConcept = concept,
+                availableConcepts = it.availableConcepts,
+                currentLanguage = it.currentLanguage,
+                studentLevel = it.studentLevel,
+                isKannada = it.isKannada
+            )
         }
         selectConcept(concept)
     }

@@ -26,7 +26,7 @@ import com.anurag.eduai.ui.screens.subjectscreen.components.SubjectCard
 import com.anurag.eduai.ui.screens.subjectscreen.components.SubjectScreenHeader
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
-import com.anurag.eduai.ui.viewModel.SubjectViewModel
+import com.anurag.eduai.ui.screens.subjectscreen.viewmodel.SubjectViewModel
 
 @Composable
 fun SubjectScreen(

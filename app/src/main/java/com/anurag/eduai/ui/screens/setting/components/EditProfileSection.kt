@@ -64,8 +64,8 @@ import com.anurag.eduai.ui.theme.ProfileAvatarGradientEnd
 import com.anurag.eduai.ui.theme.ProfileAvatarGradientStart
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
-import com.anurag.eduai.ui.viewModel.SettingViewModel
-import com.anurag.eduai.ui.viewModel.UpdateProfileState
+import com.anurag.eduai.ui.screens.setting.viewmodel.SettingViewModel
+import com.anurag.eduai.ui.screens.setting.viewmodel.UpdateProfileState
 import kotlinx.coroutines.launch
 
 @Composable

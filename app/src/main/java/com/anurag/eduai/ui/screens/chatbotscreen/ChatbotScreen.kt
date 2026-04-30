@@ -39,7 +39,7 @@ import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessag
 import com.anurag.eduai.ui.theme.White
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
-import com.anurag.eduai.ui.viewModel.ChatViewModel
+import com.anurag.eduai.ui.screens.chatbotscreen.viewmodel.ChatViewModel
 import com.anurag.eduai.ui.viewModel.SpeechToText
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.isConversationStarted

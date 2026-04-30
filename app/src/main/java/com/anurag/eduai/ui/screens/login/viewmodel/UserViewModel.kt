@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.viewModel
+package com.anurag.eduai.ui.screens.login.viewmodel
 
 import android.content.Context
 import androidx.lifecycle.ViewModel

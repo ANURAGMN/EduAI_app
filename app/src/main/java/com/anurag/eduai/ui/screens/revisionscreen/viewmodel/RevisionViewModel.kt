@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.viewModel
+package com.anurag.eduai.ui.screens.revisionscreen.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,6 +10,7 @@ import com.anurag.eduai.domain.chatbot.usecase.TranslationUseCase
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
+import com.anurag.eduai.ui.viewModel.TextToSpeech
 import com.anurag.eduai.utils.getCurrentLanguageCode
 import com.anurag.eduai.utils.isKannada
 import dagger.hilt.android.lifecycle.HiltViewModel

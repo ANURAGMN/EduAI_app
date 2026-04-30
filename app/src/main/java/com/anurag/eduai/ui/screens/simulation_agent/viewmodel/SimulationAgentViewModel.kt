@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.viewModel
+package com.anurag.eduai.ui.screens.simulation_agent.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,6 +10,7 @@ import com.anurag.eduai.data.remote.SimSessionResponse
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.domain.chatbot.usecase.AvatarChangeUseCase
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
+import com.anurag.eduai.ui.viewModel.TextToSpeech
 import com.anurag.eduai.utils.ErrorHandler
 import com.anurag.eduai.utils.isKannada
 import kotlinx.coroutines.Job

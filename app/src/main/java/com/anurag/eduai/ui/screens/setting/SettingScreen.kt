@@ -65,7 +65,7 @@ import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextOnPrimary
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
-import com.anurag.eduai.ui.viewModel.SettingViewModel
+import com.anurag.eduai.ui.screens.setting.viewmodel.SettingViewModel
 
 sealed class PopupScreen {
     object EditProfile : PopupScreen()

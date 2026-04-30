@@ -35,18 +35,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.anurag.eduai.R
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
+import com.anurag.eduai.ui.screens.login.components.FooterCard
+import com.anurag.eduai.ui.screens.login.components.GoogleLoginButton
+import com.anurag.eduai.ui.screens.login.components.LanguageSelector
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
-import com.anurag.eduai.ui.viewModel.UserViewModel
+import com.anurag.eduai.ui.screens.login.viewmodel.UserViewModel
 
 @Composable
 fun LoginScreen(

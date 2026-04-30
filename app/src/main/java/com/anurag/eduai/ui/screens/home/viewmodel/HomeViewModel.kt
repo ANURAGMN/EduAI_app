@@ -1,12 +1,12 @@
-package com.anurag.eduai.ui.viewModel
+package com.anurag.eduai.ui.screens.home.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.anurag.eduai.data.local.dao.ProgressDao
-import com.anurag.eduai.data.local.entities.ProgressEntity
 import com.anurag.eduai.data.local.dao.ConceptDao
+import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.data.local.dao.StudentDao
 import com.anurag.eduai.data.local.entities.ConceptEntity
+import com.anurag.eduai.data.local.entities.ProgressEntity
 import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.utils.StreakManager
@@ -31,8 +31,10 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel(){
 
     // Pair of ProgressEntity and its corresponding ConceptEntity
-    var progressConcepts = MutableStateFlow<List<Pair<ProgressEntity?, ConceptEntity?>>>(emptyList())
-    var progressSimulations = MutableStateFlow<List<Pair<ProgressEntity?, ConceptEntity?>>>(emptyList())
+    var progressConcepts =
+        MutableStateFlow<List<Pair<ProgressEntity?, ConceptEntity?>>>(emptyList())
+    var progressSimulations =
+        MutableStateFlow<List<Pair<ProgressEntity?, ConceptEntity?>>>(emptyList())
 
     private val _streakCount = MutableStateFlow(0)
     val streakCount: StateFlow<Int> = _streakCount

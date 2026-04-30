@@ -14,7 +14,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.progess.component.ProgressScreenTopBar
@@ -23,7 +22,7 @@ import com.anurag.eduai.ui.screens.progess.component.StatusCardGrid
 import com.anurag.eduai.ui.screens.progess.component.WeeklyActivitySection
 import com.anurag.eduai.ui.theme.BackgroundSecondary
 import com.anurag.eduai.ui.theme.LocalDimensions
-import com.anurag.eduai.ui.viewModel.ProgressScreenViewModel
+import com.anurag.eduai.ui.screens.progess.viewmodel.ProgressScreenViewModel
 
 /**
  * Progress Screen Composable

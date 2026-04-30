@@ -38,7 +38,7 @@ import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ResourceCardUiState
-import com.anurag.eduai.ui.viewModel.ChatViewModel
+import com.anurag.eduai.ui.screens.chatbotscreen.viewmodel.ChatViewModel
 import com.anurag.eduai.ui.viewModel.SpeechToText
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 import kotlinx.coroutines.delay
