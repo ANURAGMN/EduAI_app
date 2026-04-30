@@ -105,67 +105,78 @@ fun ConceptCard(
 
                 // Simulation Buttons
                 if (concept.type.equals("SIMULATION", ignoreCase = true)) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = dimens.spaceSmall),
-                        horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
-                    ) {
-                        Button(
-                            onClick = {
-                                concept.simulationId?.let { simId ->
-                                    onSimulationAgentClick(simId)
+                    // Check if concept has valid simulationId
+                    val hasValidSimulationId = !concept.simulationId.isNullOrBlank()
+
+                    // Select URL based on current app language
+                    val selectedUrl = if (isKannada()) {
+                        // Use Kannada URL if available, fallback to English URL
+                        concept.simulationUrlKannada?.takeIf { it.isNotBlank() }
+                            ?: concept.simulationUrl
+                    } else {
+                        // Use English URL
+                        concept.simulationUrl
+                    }
+
+                    val hasValidUrl = !selectedUrl.isNullOrBlank() && selectedUrl != "Not found"
+
+                    // Only show buttons row if at least one button will be visible
+                    if (hasValidSimulationId || hasValidUrl) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = dimens.spaceSmall),
+                            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
+                        ) {
+                            // Agent button - only show if simulationId exists
+                            if (hasValidSimulationId) {
+                                Button(
+                                    onClick = {
+                                        concept.simulationId?.let { simId ->
+                                            onSimulationAgentClick(simId)
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
+                                    shape = MaterialTheme.shapes.small,
+                                    colors = buttonColors(
+                                        containerColor =AccentBlue ,
+                                        contentColor = TextPrimary
+                                    )
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.agent),
+                                        textAlign = TextAlign.Center,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        color = White
+                                    )
                                 }
-                            },
-                            modifier = Modifier.weight(1f),
-                            contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
-                            shape = MaterialTheme.shapes.small,
-                            colors = buttonColors(
-                                containerColor =AccentBlue ,
-                                contentColor = TextPrimary
-                            )
-                        ) {
-                            Text(
-                                text = stringResource(R.string.agent),
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.fillMaxWidth(),
-                                color = White
-                            )
+                            }
+
+                            // Simulation button - only show if URL exists
+                            if (hasValidUrl) {
+                                OutlinedButton(
+                                    onClick = {
+                                        onSimulationClick(concept.name, selectedUrl)
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
+                                    shape = MaterialTheme.shapes.small,
+                                    colors = outlinedButtonColors(
+                                        containerColor = White,
+                                        contentColor = TextPrimary,
+                                    )
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.simulation),
+                                        textAlign = TextAlign.Center,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
                         }
-
-                        // Select URL based on current app language
-                        val selectedUrl = if (isKannada()) {
-                            // Use Kannada URL if available, fallback to English URL
-                            concept.simulationUrlKannada?.takeIf { it.isNotBlank() }
-                                ?: concept.simulationUrl
-                        } else {
-                            // Use English URL
-                            concept.simulationUrl
-                        }
-
-                        val hasValidUrl = !selectedUrl.isNullOrBlank() && selectedUrl != "Not found"
-
-                        if (hasValidUrl) {
-                        OutlinedButton(
-                            onClick = {
-                                onSimulationClick(concept.name, selectedUrl)
-                            },
-                            modifier = Modifier.weight(1f),
-                            contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
-                            shape = MaterialTheme.shapes.small,
-                            colors = outlinedButtonColors(
-                                containerColor = White,
-                                contentColor = TextPrimary,
-                            )
-                        ) {
-                            Text(
-                                text = stringResource(R.string.simulation),
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }}
                     }
                 }
             }
