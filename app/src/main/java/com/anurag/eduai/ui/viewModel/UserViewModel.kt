@@ -14,6 +14,7 @@ import com.anurag.eduai.repository.UserCheckResult
 import com.anurag.eduai.service.sync.FirebaseSyncManager
 import com.anurag.eduai.utils.LanguageHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,7 +25,7 @@ import javax.inject.Inject
 class UserViewModel @Inject constructor(
     private val repo: FirebaseRepository,
     private val sharedPreferenceUtils: SharedPreferenceUtils,
-    private val context: Context
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)

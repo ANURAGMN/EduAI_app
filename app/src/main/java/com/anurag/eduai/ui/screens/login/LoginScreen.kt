@@ -47,7 +47,6 @@ import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.viewModel.UserViewModel
-import com.anurag.eduai.ui.viewmodel_factory.UserViewModelFactory
 
 @Composable
 fun LoginScreen(

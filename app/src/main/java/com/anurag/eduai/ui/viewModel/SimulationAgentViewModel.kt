@@ -88,6 +88,10 @@ class SimulationAgentViewModel @Inject constructor(
     private val _currentLanguage = MutableStateFlow("")
     val currentLanguage: StateFlow<String> = _currentLanguage.asStateFlow()
 
+    // NEW: Track changed parameters from webview
+    private val _changedSimulationParams = MutableStateFlow<Map<String, Any>?>(null)
+    val changedSimulationParams: StateFlow<Map<String, Any>?> = _changedSimulationParams.asStateFlow()
+
     companion object {
         private const val TAG = "SimulationAgentVM"
         private const val WEBVIEW_DELAY_MS = 300L
@@ -177,6 +181,15 @@ class SimulationAgentViewModel @Inject constructor(
      */
     fun onWebViewClose() {
         _showWebView.value = false
+    }
+
+    /**
+     * Called when simulation parameters are changed in the webview
+     * Example: user changes pendulum length from 5 to 6
+     */
+    fun onSimulationParamsChanged(changedParams: Map<String, Any>) {
+        _changedSimulationParams.value = changedParams
+        DebugLogger.debugLog(TAG, "Simulation parameters changed: $changedParams")
     }
 
     /**
@@ -444,12 +457,22 @@ class SimulationAgentViewModel @Inject constructor(
                 _uiState.value = SimAgentUiState.Loading
                 DebugLogger.debugLog(TAG, "Sending student response: $response")
 
+                // Get changed parameters if any
+                val changedParams = _changedSimulationParams.value
+                if (changedParams != null) {
+                    DebugLogger.debugLog(TAG, "Student changed parameters: $changedParams")
+                }
+
                 val result = agenticAIClient.sendSimulationResponse(
                     sessionId = currentSessionId,
-                    studentResponse = response
+                    studentResponse = response,
+                    studentChangedParams = changedParams
                 )
 
                 if (result.isSuccess) {
+                    // Clear changed parameters after sending
+                    _changedSimulationParams.value = null
+
                     val apiResponse = result.getOrNull()!!
                     DebugLogger.debugLog(TAG, " Response received successfully")
                     DebugLogger.debugLog(TAG, "Teacher Message: ${apiResponse.teacherMessage.text}")

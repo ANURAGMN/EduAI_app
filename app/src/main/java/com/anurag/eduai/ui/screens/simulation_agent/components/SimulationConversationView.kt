@@ -44,6 +44,7 @@ fun SimulationConversationView(
     showWebView: Boolean = false,
     simulationUrls: List<String> = emptyList(),
     onCloseWebView: () -> Unit = {},
+    onParamsChanged: (Map<String, Any>) -> Unit = {},
     errorCardHeight: Dp = 0.dp // height to match when reducing message container
 ) {
     val dimens = LocalDimensions.current
@@ -146,6 +147,7 @@ fun SimulationConversationView(
                                 // Single simulation view
                                 InlineSimulationWebView(
                                     url = simulationUrls[0],
+                                    onParamsChanged = onParamsChanged,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(dimens.spaceLarge * 15)
@@ -162,7 +164,7 @@ fun SimulationConversationView(
                                     Box(modifier = Modifier
                                         .fillMaxWidth()
                                         .height(dimens.spaceLarge * 15)) {
-                                        InlineSimulationWebView(url = simulationUrls[0])
+                                        InlineSimulationWebView(url = simulationUrls[0], onParamsChanged = {})
                                     }
                                     Text(
                                         text = stringResource(R.string.sim_after_label),
@@ -172,7 +174,7 @@ fun SimulationConversationView(
                                     Box(modifier = Modifier
                                         .fillMaxWidth()
                                         .height(dimens.spaceLarge * 15)) {
-                                        InlineSimulationWebView(url = simulationUrls[1])
+                                        InlineSimulationWebView(url = simulationUrls[1], onParamsChanged = onParamsChanged)
                                     }
                                 }
                             }
@@ -247,7 +249,7 @@ fun SimulationConversationView(
 
 /** WebView component for rendering simulation HTML inline */
 @Composable
-fun InlineSimulationWebView(url: String, modifier: Modifier = Modifier) {
+fun InlineSimulationWebView(url: String, onParamsChanged: (Map<String, Any>) -> Unit = {}, modifier: Modifier = Modifier) {
     AndroidView(
         factory = { context ->
             WebView(context).apply {
@@ -258,6 +260,13 @@ fun InlineSimulationWebView(url: String, modifier: Modifier = Modifier) {
                     useWideViewPort = true
                 }
                 webViewClient = WebViewClient()
+
+                // Add JavaScript interface for receiving parameter changes from the simulation
+                addJavascriptInterface(
+                    SimulationJavaScriptInterface(onParamsChanged),
+                    "SimulationAndroidInterface"
+                )
+
                 loadUrl(url)
             }
         },

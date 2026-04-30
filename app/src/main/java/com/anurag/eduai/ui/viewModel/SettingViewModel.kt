@@ -26,7 +26,7 @@ class SettingViewModel @Inject constructor(
     private val sharedPref: SharedPreferenceUtils,
     private val repository: FirebaseRepository,
     private val studentDao: StudentDao,
-    private val userId: String
+    val userId: String
 ) : ViewModel() {
 
     // ...existing code...

@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import com.google.gson.JsonPrimitive
 import retrofit2.Response
 import java.io.IOException
 import okhttp3.Headers
@@ -425,9 +426,22 @@ class AgenticAIClient(
 
     suspend fun sendSimulationResponse(
         sessionId: String,
-        studentResponse: String
+        studentResponse: String,
+        studentChangedParams: Map<String, Any>? = null
     ): Result<SimSessionResponse> = withContext(Dispatchers.IO) {
-        val req = SimStudentResponseRequest(studentResponse = studentResponse)
+        val convertedParams = studentChangedParams?.mapValues { (_, v) ->
+            when (v) {
+                is String -> JsonPrimitive(v)
+                is Number -> JsonPrimitive(v)
+                is Boolean -> JsonPrimitive(v)
+                else -> JsonPrimitive(v.toString())
+            }
+        }
+        val req = SimStudentResponseRequest(
+            studentResponse = studentResponse,
+            studentChangedParams = convertedParams
+
+        )
         callWithRetry { service.sendSimulationResponse(sessionId, req) }
     }
 

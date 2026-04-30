@@ -75,7 +75,8 @@ sealed class PopupScreen {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onLogout: () -> Unit = {}
 ) {
     TrackScreenEvent(screenName = ScreenName.SETTINGS)
 
@@ -248,8 +249,7 @@ fun SettingScreen(
 
         // Handle logout success
         if (logoutState) {
-//            onLogout()
-            // TODO:
+            onLogout()
         }
     }
 }

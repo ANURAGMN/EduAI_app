@@ -364,6 +364,7 @@ fun SimulationAgentScreen(
                     showWebView = showWebView,
                     simulationUrls = simulationUrls,
                     onCloseWebView = { viewModel.onWebViewClose() },
+                    onParamsChanged = { viewModel.onSimulationParamsChanged(it) },
                     modifier = Modifier.weight(1f).background(White),
                     errorCardHeight = errorCardHeightDp
                 )

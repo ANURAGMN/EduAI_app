@@ -70,7 +70,6 @@ import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.theme.White
 import com.anurag.eduai.ui.viewModel.UserSaveState
 import com.anurag.eduai.ui.viewModel.UserViewModel
-import com.anurag.eduai.ui.viewmodel_factory.UserViewModelFactory
 
 @Composable
 fun UserDetailEntryScreen(
