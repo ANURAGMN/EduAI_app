@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.data.local.entities.ProgressEntity
-import com.anurag.eduai.data.model.LessonStatus
+import com.anurag.eduai.data.model.ProgressStatus
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.AccentGreen
@@ -142,36 +142,36 @@ fun TodayProgressCard(
             Spacer(modifier = Modifier.padding(dimes.spaceSmall))
 
             progressConcepts.forEach { (progress, concept) ->
-                val lessonStatus = LessonStatus.fromString(progress?.status ?: "NOT_STARTED")
-                val isCompleted = lessonStatus == LessonStatus.COMPLETED
-                val isInProgress = lessonStatus == LessonStatus.IN_PROGRESS
+                val progressStatus = ProgressStatus.fromString(progress?.status ?: "NOT_STARTED")
+                val isCompleted = progressStatus == ProgressStatus.COMPLETED
+                val isInProgress = progressStatus == ProgressStatus.IN_PROGRESS
 
                 val progressPercentage = progress?.progressPercentage ?: 0
                 LessonStatusCard(
                     title = concept?.getLocalizedName()
                         ?: stringResource(R.string.unknown_concept),
-                    subtitle = stringResource(R.string.status_label, lessonStatus.value),
-                    iconColor = when (lessonStatus) {
-                        LessonStatus.COMPLETED -> AccentGreen
-                        LessonStatus.IN_PROGRESS -> AccentBlue
+                    subtitle = stringResource(R.string.status_label, progressStatus.value),
+                    iconColor = when (progressStatus) {
+                        ProgressStatus.COMPLETED -> AccentGreen
+                        ProgressStatus.IN_PROGRESS -> AccentBlue
                         else -> AccentBlue
                     },
-                    backgroundColor = when (lessonStatus) {
-                        LessonStatus.COMPLETED -> AccentGreen.copy(alpha = 0.1f)
-                        LessonStatus.IN_PROGRESS -> AccentBlue.copy(alpha = 0.1f)
+                    backgroundColor = when (progressStatus) {
+                        ProgressStatus.COMPLETED -> AccentGreen.copy(alpha = 0.1f)
+                        ProgressStatus.IN_PROGRESS -> AccentBlue.copy(alpha = 0.1f)
                         else -> AccentBlue.copy(alpha = 0.1f)
                     },
                     icon = {
                         Icon(
-                            imageVector = when (lessonStatus) {
-                                LessonStatus.COMPLETED -> Icons.Outlined.CheckCircle
+                            imageVector = when (progressStatus) {
+                                ProgressStatus.COMPLETED -> Icons.Outlined.CheckCircle
                                 else -> Icons.AutoMirrored.Outlined.LibraryBooks
                             },
                             contentDescription = null,
                             tint = White
                         )
                     },
-                    lessonStatus = lessonStatus,
+                    progressStatus = progressStatus,
                     progressPercentage = progressPercentage,
                     onClick = {
                         DebugLogger.debugLog("TodayProgressCard", "Concept Clicked id ${concept?.conceptId}")

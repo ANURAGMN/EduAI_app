@@ -10,6 +10,7 @@ import com.anurag.eduai.data.local.dao.ConceptDao
 import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.data.local.dao.SessionDao
 import com.anurag.eduai.data.local.dao.SimulationDao
+import com.anurag.eduai.data.local.dao.StreakDao
 import com.anurag.eduai.data.local.dao.StudentDao
 import com.anurag.eduai.data.local.dao.SubjectDao
 import com.anurag.eduai.data.local.entities.AppAnalyticsEntity
@@ -48,6 +49,8 @@ abstract class EduAiDatabase : RoomDatabase() {
     abstract fun simulationDao(): SimulationDao
     abstract fun sessionDao(): SessionDao
     abstract fun appAnalyticsDao(): AppAnalyticsDao
+    abstract fun streakDao(): StreakDao
+
 
     companion object {
         @Volatile

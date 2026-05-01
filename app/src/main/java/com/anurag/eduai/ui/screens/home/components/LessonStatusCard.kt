@@ -24,7 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.anurag.eduai.R
-import com.anurag.eduai.data.model.LessonStatus
+import com.anurag.eduai.data.model.ProgressStatus
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.Black
 import com.anurag.eduai.ui.theme.ColorHint
@@ -39,13 +39,13 @@ fun LessonStatusCard(
     iconColor: Color,
     progressPercentage: Int = 0,
     backgroundColor: Color,
-    lessonStatus: LessonStatus,
+    progressStatus: ProgressStatus,
     icon: @Composable () -> Unit,
     onClick: () -> Unit = {},
 ) {
     val dimens = LocalDimensions.current
-    val isCompleted = lessonStatus == LessonStatus.COMPLETED
-    val isInProgress = lessonStatus == LessonStatus.IN_PROGRESS
+    val isCompleted = progressStatus == ProgressStatus.COMPLETED
+    val isInProgress = progressStatus == ProgressStatus.IN_PROGRESS
 
     Row(
         modifier = modifier

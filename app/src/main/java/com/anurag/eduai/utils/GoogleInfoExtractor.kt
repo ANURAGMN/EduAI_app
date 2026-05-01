@@ -1,6 +1,7 @@
 package com.anurag.eduai.utils
 
-import com.anurag.eduai.data.firebase.User
+import com.anurag.eduai.config.AppConfig
+import com.anurag.eduai.data.firebase.model.User
 import com.anurag.eduai.debug.DebugLogger
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 
@@ -18,7 +19,8 @@ class GoogleInfoExtractor {
                 schoolName = "",
                 phoneNumber = "",
                 studentClass = 7, // default value
-                jwtToken = googleIdTokenCredential.idToken // Extract JWT token
+                jwtToken = googleIdTokenCredential.idToken, // Extract JWT token
+                appName = AppConfig.APP_NAME // set app identifier
             )
         }
 

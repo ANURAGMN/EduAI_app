@@ -1,4 +1,4 @@
-package com.anurag.eduai.data.firebase
+package com.anurag.eduai.data.firebase.model
 
 import android.os.Parcelable
 import com.anurag.eduai.data.local.entities.StudentEntity
@@ -16,7 +16,9 @@ data class User(
     val language: String = "en", // default english
     val createdAt: Long = System.currentTimeMillis(),
     val lastLogin: Long = System.currentTimeMillis(),
-    val jwtToken: String = "" // JWT token from auth provider
+    val jwtToken: String = "", // JWT token from auth provider
+    val appName: String = "", // app identifier for tracking which app user comes from
+
 ) : Parcelable {
     fun toStudentEntity(): StudentEntity {
         return StudentEntity(

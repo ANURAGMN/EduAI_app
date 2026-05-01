@@ -1,0 +1,375 @@
+package com.anurag.eduai.repository
+
+import com.anurag.eduai.config.AppConfig
+import com.anurag.eduai.data.local.dao.StreakDao
+import com.anurag.eduai.data.local.entities.StreakEntity
+import com.anurag.eduai.debug.DebugLogger
+import kotlinx.coroutines.flow.Flow
+import java.util.Calendar
+import kotlin.apply
+
+/**
+ * Repository for managing streak data
+ * Handles both local (Room) and remote (Firestore) streak operations
+ * Serves as a single source of truth for streak data
+ */
+class StreakRepository(
+    private val streakDao: StreakDao,
+    private val firebaseRepository: FirebaseRepository
+) {
+
+    /**
+     * Get user's current streak
+     * First tries local cache, falls back to Firestore
+     */
+    suspend fun getUserStreak(userId: String): StreakEntity? {
+        return try {
+            // Try to get from local database first
+            val localStreak = streakDao.getStreakByUserId(userId)
+
+            if (localStreak != null) {
+                DebugLogger.debugLog("StreakRepository", "Streak found in local DB: ${localStreak.streakCount}")
+                return localStreak
+            }
+
+            // If not in local DB, try to fetch from Firestore
+            val remoteStreak = firebaseRepository.getStreak(userId)
+            if (remoteStreak != null) {
+                val streakEntity = StreakEntity(
+                    userId = remoteStreak.userId,
+                    streakCount = remoteStreak.streakCount,
+                    lastStreakDate = remoteStreak.lastStreakDate,
+                    createdAt = remoteStreak.createdAt,
+                    updatedAt = remoteStreak.updatedAt,
+                    appName = remoteStreak.appName,
+                    isSynced = true
+                )
+                // Cache it locally
+                streakDao.insertStreak(streakEntity)
+                DebugLogger.debugLog("StreakRepository", "Streak fetched from Firestore and cached: ${streakEntity.streakCount}")
+                return streakEntity
+            }
+
+            // No streak found anywhere
+            DebugLogger.debugLog("StreakRepository", "No streak found for user: $userId")
+            null
+        } catch (e: Exception) {
+            DebugLogger.errorLog("StreakRepository", "Error getting user streak: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * Get user's streak as a reactive Flow
+     * Automatically emits whenever the streak data changes in the database
+     * Perfect for UI reactive updates
+     */
+    fun getStreakFlow(userId: String): Flow<StreakEntity?> {
+        return streakDao.getStreakByUserIdFlow(userId)
+    }
+
+    /**
+     * Update streak locally and sync with Firestore
+     * Returns the updated streak count
+     */
+    suspend fun updateStreak(userId: String, newStreakCount: Int, lastStreakDate: Long): Int {
+        return try {
+            val now = System.currentTimeMillis()
+
+            // Update local database
+            val streakEntity = StreakEntity(
+                userId = userId,
+                streakCount = newStreakCount,
+                lastStreakDate = lastStreakDate,
+                updatedAt = now,
+                appName = AppConfig.APP_NAME,
+                isSynced = false
+            )
+            streakDao.insertStreak(streakEntity)
+            DebugLogger.debugLog("StreakRepository", "Streak updated locally: $newStreakCount")
+
+            // Try to sync with Firestore
+            val syncSuccess = firebaseRepository.updateStreak(userId, newStreakCount, lastStreakDate)
+            if (syncSuccess) {
+                streakDao.markAsSynced(userId)
+                DebugLogger.debugLog("StreakRepository", "Streak synced with Firestore")
+            } else {
+                DebugLogger.debugLog("StreakRepository", "Streak sync pending - will retry on next sync")
+            }
+
+            newStreakCount
+        } catch (e: Exception) {
+            DebugLogger.errorLog("StreakRepository", "Error updating streak: ${e.message}")
+            0
+        }
+    }
+
+    /**
+     * Create initial streak for new user
+     */
+    suspend fun createStreakForUser(userId: String): Boolean {
+        return try {
+            val now = System.currentTimeMillis()
+            val dayIdentifier = getDayIdentifier(now)
+
+            val streakEntity = StreakEntity(
+                userId = userId,
+                streakCount = 1,
+                lastStreakDate = dayIdentifier,
+                createdAt = now,
+                updatedAt = now,
+                appName = AppConfig.APP_NAME,
+                isSynced = false
+            )
+
+            streakDao.insertStreak(streakEntity)
+            DebugLogger.debugLog("StreakRepository", "Initial streak created for user: $userId")
+
+            // Try to sync with Firestore
+            firebaseRepository.updateStreak(userId, 1, dayIdentifier)
+            true
+        } catch (e: Exception) {
+            DebugLogger.errorLog("StreakRepository", "Error creating streak: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * Clear all unsynced local streak data on logout
+     * NOTE: Firestore streak is NOT deleted - it persists for the user
+     */
+    suspend fun clearLocalStreakOnLogout(): Boolean {
+        return try {
+            streakDao.clearAll()
+            DebugLogger.debugLog("StreakRepository", "Local streak data cleared on logout (Firestore data preserved)")
+            true
+        } catch (e: Exception) {
+            DebugLogger.errorLog("StreakRepository", "Error clearing local streak: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * Sync all unsynced streak data with Firestore
+     */
+    suspend fun syncUnsyncedStreaks(): Boolean {
+        return try {
+            val unsyncedStreaks = streakDao.getUnsyncedStreaks()
+            if (unsyncedStreaks.isEmpty()) {
+                DebugLogger.debugLog("StreakRepository", "No unsynced streaks to sync")
+                return true
+            }
+
+            var allSynced = true
+            for (streak in unsyncedStreaks) {
+                val success = firebaseRepository.updateStreak(
+                    streak.userId,
+                    streak.streakCount,
+                    streak.lastStreakDate
+                )
+                if (success) {
+                    streakDao.markAsSynced(streak.userId)
+                } else {
+                    allSynced = false
+                }
+            }
+
+            DebugLogger.debugLog("StreakRepository", "Sync complete. All synced: $allSynced")
+            allSynced
+        } catch (e: Exception) {
+            DebugLogger.errorLog("StreakRepository", "Error syncing streaks: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * Clear all streak data (on user logout)
+     */
+    suspend fun clearAllStreaks(): Boolean {
+        return try {
+            streakDao.clearAll()
+            DebugLogger.debugLog("StreakRepository", "All local streaks cleared")
+            true
+        } catch (e: Exception) {
+            DebugLogger.errorLog("StreakRepository", "Error clearing streaks: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * Check if two timestamps fall on the same calendar day
+     */
+    private fun isSameDay(time1: Long, time2: Long): Boolean {
+        val cal1 = Calendar.getInstance().apply { timeInMillis = time1 }
+        val cal2 = Calendar.getInstance().apply { timeInMillis = time2 }
+
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+    }
+
+    /**
+     * Check if time2 is exactly one calendar day after time1
+     */
+    private fun isConsecutiveDay(time1: Long, time2: Long): Boolean {
+        val cal1 = Calendar.getInstance().apply {
+            timeInMillis = time1
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        val cal2 = Calendar.getInstance().apply {
+            timeInMillis = time2
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        cal1.add(Calendar.DAY_OF_YEAR, 1)
+
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+    }
+
+    /**
+     * Get day identifier (start of day timestamp) for consistent day comparison
+     */
+    private fun getDayIdentifier(time: Long): Long {
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = time
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        return cal.timeInMillis
+    }
+
+    /**
+     * Calculate difference in calendar days between two timestamps
+     */
+    private fun getDayDifference(time1: Long, time2: Long): Int {
+        val cal1 = Calendar.getInstance().apply {
+            timeInMillis = time1
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        val cal2 = Calendar.getInstance().apply {
+            timeInMillis = time2
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        val diffInMillis = cal2.timeInMillis - cal1.timeInMillis
+        return (diffInMillis / (24 * 60 * 60 * 1000)).toInt()
+    }
+
+    /**
+     * Sync streak when user logs in
+     * - For new users: Initializes streak = 1 if doesn't exist
+     * - For existing users: Fetches from Firestore and validates
+     * - Handles consecutive day logic automatically
+     */
+    suspend fun syncStreakOnLogin(userId: String): StreakEntity {
+        return try {
+            DebugLogger.debugLog("StreakRepository", "Syncing streak on login for user: $userId")
+
+            // Try to get user's existing streak from Firestore
+            val remoteStreak = firebaseRepository.getStreak(userId)
+
+            if (remoteStreak != null) {
+                // EXISTING USER - Fetch their streak
+                DebugLogger.debugLog("StreakRepository", "Existing user found with streak: ${remoteStreak.streakCount}")
+
+                val streakEntity = StreakEntity(
+                    userId = remoteStreak.userId,
+                    streakCount = remoteStreak.streakCount,
+                    lastStreakDate = remoteStreak.lastStreakDate,
+                    createdAt = remoteStreak.createdAt,
+                    updatedAt = remoteStreak.updatedAt,
+                    appName = remoteStreak.appName,
+                    isSynced = true
+                )
+
+                // Cache locally
+                streakDao.insertStreak(streakEntity)
+                DebugLogger.debugLog("StreakRepository", "Existing user streak cached locally")
+
+                return streakEntity
+            } else {
+                // NEW USER - Create initial streak
+                DebugLogger.debugLog("StreakRepository", "New user detected, creating initial streak")
+
+                val now = System.currentTimeMillis()
+                val dayIdentifier = getDayIdentifier(now)
+
+                val newStreak = StreakEntity(
+                    userId = userId,
+                    streakCount = 1,
+                    lastStreakDate = dayIdentifier,
+                    createdAt = now,
+                    updatedAt = now,
+                    appName = AppConfig.APP_NAME,
+                    isSynced = false  // Will sync on next update
+                )
+
+                // Save to local DB
+                streakDao.insertStreak(newStreak)
+                DebugLogger.debugLog("StreakRepository", "New user streak created and saved locally")
+
+                // Try to sync to Firestore (if online)
+                try {
+                    firebaseRepository.updateStreak(userId, 1, dayIdentifier)
+                    streakDao.markAsSynced(userId)
+                    DebugLogger.debugLog("StreakRepository", "New user streak synced to Firestore")
+                } catch (e: Exception) {
+                    DebugLogger.debugLog("StreakRepository", "New user streak sync will retry later: ${e.message}")
+                }
+
+                return newStreak
+            }
+        } catch (e: Exception) {
+            DebugLogger.errorLog("StreakRepository", "Error syncing streak on login: ${e.message}")
+
+            // Fallback: Create initial streak locally for safety
+            val now = System.currentTimeMillis()
+            val dayIdentifier = getDayIdentifier(now)
+
+            val fallbackStreak = StreakEntity(
+                userId = userId,
+                streakCount = 1,
+                lastStreakDate = dayIdentifier,
+                createdAt = now,
+                updatedAt = now,
+                appName = AppConfig.APP_NAME,
+                isSynced = false
+            )
+
+            streakDao.insertStreak(fallbackStreak)
+            return fallbackStreak
+        }
+    }
+
+    /**
+     * Public method to check if streak is valid (not expired)
+     */
+    suspend fun isStreakValid(userId: String): Boolean {
+        return try {
+            val streak = getUserStreak(userId) ?: return false
+            if (streak.lastStreakDate == 0L) return false
+
+            val now = System.currentTimeMillis()
+            isSameDay(streak.lastStreakDate, now) || isConsecutiveDay(streak.lastStreakDate, now)
+        } catch (e: Exception) {
+            DebugLogger.errorLog("StreakRepository", "Error checking streak validity: ${e.message}")
+            false
+        }
+    }
+}

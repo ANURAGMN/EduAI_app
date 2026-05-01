@@ -12,7 +12,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
 import com.anurag.eduai.BuildConfig
-import com.anurag.eduai.data.firebase.User
+import com.anurag.eduai.data.firebase.model.User
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.utils.GoogleInfoExtractor
 import com.anurag.eduai.utils.TokenManager

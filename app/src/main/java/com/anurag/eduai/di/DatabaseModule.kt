@@ -6,6 +6,7 @@ import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.local.dao.ChapterDao
 import com.anurag.eduai.data.local.dao.ConceptDao
 import com.anurag.eduai.data.local.dao.ProgressDao
+import com.anurag.eduai.data.local.dao.StreakDao
 import com.anurag.eduai.data.local.dao.StudentDao
 import com.anurag.eduai.data.local.dao.SubjectDao
 import com.anurag.eduai.utils.StreakManager
@@ -65,6 +66,11 @@ object DatabaseModule {
         return SharedPreferenceUtils(context)
     }
 
+    @Provides
+    @Singleton
+    fun provideStreakDao(database: EduAiDatabase): StreakDao {
+        return database.streakDao()
+    }
     @Provides
     @Singleton
     fun provideStreakManager(@ApplicationContext context: Context): StreakManager {
