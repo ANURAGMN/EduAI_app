@@ -17,7 +17,7 @@ fun LoginNavigator() {
     val navController = rememberNavController()
     val context = LocalContext.current
     val sharedPreferenceUtils = SharedPreferenceUtils(context)
-    val isLoggedIn: Boolean = sharedPreferenceUtils.isLoggedIn()
+    var isLoggedIn: Boolean = sharedPreferenceUtils.isLoggedIn()
 
     // Create ViewModel using Hilt
     val userViewModel: UserViewModel = hiltViewModel()
@@ -42,10 +42,13 @@ fun LoginNavigator() {
             BottomNavBar(
                 onLogout = {
                     DebugLogger.debugLog("LoginNavigator", "User logged out, navigating to login screen")
-                    // Navigate back to login and clear the back stack
+                    // Navigate back to login and clear the back stack completely
                     navController.navigate("login") {
-                        popUpTo("main") { inclusive = true }
+                        // Clear entire back stack
+                        popUpTo(0) { inclusive = true }
                     }
+                    // Reset user ViewModel state
+                    userViewModel.resetUserState()
                 }
             )
         }

@@ -296,6 +296,18 @@ class UserViewModel @Inject constructor(
     fun resetExistingUserSyncState() {
         _existingUserSyncState.value = ExistingUserSyncState.Idle
     }
+
+    /**
+     * Reset all user state after logout
+     */
+    fun resetUserState() {
+        DebugLogger.debugLog("UserViewModel", "Resetting user state after logout")
+        _loginState.value = LoginState.Idle
+        _user.value = User()
+        _userSaveState.value = UserSaveState.Idle
+        _existingUserSyncState.value = ExistingUserSyncState.Idle
+        _selectedLanguage.value = sharedPreferenceUtils.getLanguagePreference() ?: "en"
+    }
 }
 
 sealed class LoginState {

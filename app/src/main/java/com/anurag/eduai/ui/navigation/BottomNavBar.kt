@@ -135,6 +135,7 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
             }
             composable(BottomNavItem.Setting.route) {
                 SettingScreen(
+                    navController = navController,
                     onNavigateBack = {
                         navController.navigate("home") {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }

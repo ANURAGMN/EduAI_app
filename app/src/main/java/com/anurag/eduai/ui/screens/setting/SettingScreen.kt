@@ -35,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,6 +48,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.anurag.eduai.R
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
@@ -75,6 +77,7 @@ sealed class PopupScreen {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingScreen(
+    navController: NavController,
     onNavigateBack: () -> Unit,
     onLogout: () -> Unit = {}
 ) {
@@ -89,6 +92,13 @@ fun SettingScreen(
     val student by viewModel.student.collectAsState()
     val selectedLanguage by viewModel.selectedLanguage.collectAsState()
     val logoutState by viewModel.logoutState.collectAsState()
+
+    // Handle logout state changes
+    LaunchedEffect(logoutState) {
+        if (logoutState) {
+            onLogout()
+        }
+    }
 
     val scrollState = rememberScrollState()
 
@@ -245,11 +255,6 @@ fun SettingScreen(
                     ) { activeScreen = null }
                 null -> {}
             }
-        }
-
-        // Handle logout success
-        if (logoutState) {
-            onLogout()
         }
     }
 }
