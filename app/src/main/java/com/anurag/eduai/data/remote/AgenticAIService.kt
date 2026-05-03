@@ -87,6 +87,22 @@ interface AgenticAIService {
 
     @GET("/simulation/session/{session_id}")
     suspend fun getSimulationSession(@Path("session_id") sessionId: String): Response<SimSessionResponse>
+
+    // ==================== MATH AGENT ENDPOINTS ====================
+    @GET("/math/problems")
+    suspend fun getAvailableMathProblems(): Response<ProblemsListResponse>
+
+    @POST("/math/session/start")
+    suspend fun startMathSession(@Body request: MathStartSessionRequest): Response<MathStartSessionResponse>
+
+    @POST("/math/session/continue")
+    suspend fun continueMathSession(@Body request: MathContinueSessionRequest): Response<MathContinueSessionResponse>
+
+    @GET("/math/session/status/{thread_id}")
+    suspend fun getMathSessionStatus(@Path("thread_id") threadId: String): Response<MathSessionStatusResponse>
+
+    @GET("/math/session/history/{thread_id}")
+    suspend fun getMathSessionHistory(@Path("thread_id") threadId: String): Response<MathSessionHistoryResponse>
 }
 
 //All Data Classes
@@ -382,4 +398,90 @@ data class SimLearningState(
     @SerializedName("teacher_mode") val teacherMode: String,
     @SerializedName("trajectory_status") val trajectoryStatus: String? = null,
     @SerializedName("needs_deeper") val needsDeeper: Boolean? = false
+)
+
+// ==================== MATH AGENT DATA CLASSES ====================
+
+data class ProblemsListResponse(
+    val success: Boolean,
+    val problems: List<MathProblem> = emptyList(),
+    val total: Int = 0,
+    val message: String = "Available problems retrieved successfully."
+)
+
+data class MathProblem(
+    val id: String,
+    val title: String,
+    val description: String? = null,
+    val difficulty: String? = null,
+    val category: String? = null
+)
+
+data class MathStartSessionRequest(
+    @SerializedName("problem_id") val problemId: String,
+    @SerializedName("student_id") val studentId: String? = null,
+    @SerializedName("session_label") val sessionLabel: String? = null,
+    @SerializedName("is_kannada") val isKannada: Boolean = false
+)
+
+data class MathStartSessionResponse(
+    val success: Boolean,
+    @SerializedName("session_id") val sessionId: String,
+    @SerializedName("thread_id") val threadId: String,
+    @SerializedName("problem_id") val problemId: String,
+    @SerializedName("user_id") val userId: String,
+    @SerializedName("agent_response") val agentResponse: String,
+    @SerializedName("current_state") val currentState: String,
+    val message: String = "Session started successfully. Agent is ready for student input.",
+    val metadata: SessionMetadata = SessionMetadata()
+)
+
+data class MathContinueSessionRequest(
+    @SerializedName("thread_id") val threadId: String,
+    @SerializedName("user_message") val userMessage: String,
+    @SerializedName("is_kannada") val isKannada: Boolean = false,
+    val image: String? = null
+)
+
+data class MathContinueSessionResponse(
+    val success: Boolean,
+    @SerializedName("thread_id") val threadId: String,
+    @SerializedName("agent_response") val agentResponse: String,
+    @SerializedName("current_state") val currentState: String,
+    val metadata: SessionMetadata = SessionMetadata(),
+    val message: String
+)
+
+data class MathSessionStatusResponse(
+    val success: Boolean,
+    @SerializedName("thread_id") val threadId: String,
+    val exists: Boolean,
+    @SerializedName("current_state") val currentState: String? = null,
+    @SerializedName("problem_id") val problemId: String? = null,
+    val progress: JsonElement? = null,
+    val message: String = "Status retrieved successfully."
+)
+
+data class MathSessionHistoryResponse(
+    val success: Boolean,
+    @SerializedName("thread_id") val threadId: String,
+    val exists: Boolean,
+    val messages: List<SessionMessage> = emptyList(),
+    @SerializedName("node_transitions") val nodeTransitions: List<NodeTransition> = emptyList(),
+    @SerializedName("problem_id") val problemId: String? = null,
+    val message: String = "History retrieved successfully."
+)
+
+data class SessionMessage(
+    val role: String,
+    val content: String,
+    val node: String? = null,
+    val timestamp: String? = null
+)
+
+data class NodeTransition(
+    val from: String? = null,
+    val to: String? = null,
+    val timestamp: String? = null,
+    val reason: String? = null
 )

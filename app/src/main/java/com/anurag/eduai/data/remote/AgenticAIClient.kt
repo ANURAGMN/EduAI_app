@@ -486,4 +486,64 @@ class AgenticAIClient(
         withContext(Dispatchers.IO) {
             callWithRetry { service.getSimulationSession(sessionId) }
         }
+
+    // ==================== MATH AGENT METHODS ====================
+
+    suspend fun getAvailableMathProblems(): Result<ProblemsListResponse> =
+        withContext(Dispatchers.IO) {
+            callWithRetry { service.getAvailableMathProblems() }
+        }
+
+    suspend fun startMathSession(
+        problemId: String,
+        studentId: String? = null,
+        sessionLabel: String? = null,
+        isKannada: Boolean = false
+    ): Result<MathStartSessionResponse> = withContext(Dispatchers.IO) {
+        val req = MathStartSessionRequest(
+            problemId = problemId,
+            studentId = studentId,
+            sessionLabel = sessionLabel,
+            isKannada = isKannada
+        )
+
+        val res = callWithRetry { service.startMathSession(req) }
+
+        // Update thread state on success
+        if (res.isSuccess) {
+            val body = res.getOrNull()
+            body?.threadId?.let { _currentThreadId.value = it }
+            DebugLogger.debugLog(
+                "AgenticAIClient",
+                "Math session started: threadId=${body?.threadId}, problemId=${body?.problemId}"
+            )
+        }
+        res
+    }
+
+    suspend fun continueMathSession(
+        threadId: String,
+        userMessage: String,
+        isKannada: Boolean = false,
+        image: String? = null
+    ): Result<MathContinueSessionResponse> = withContext(Dispatchers.IO) {
+        val req = MathContinueSessionRequest(
+            threadId = threadId,
+            userMessage = userMessage,
+            isKannada = isKannada,
+            image = image
+        )
+
+        callWithRetry { service.continueMathSession(req) }
+    }
+
+    suspend fun getMathSessionStatus(threadId: String): Result<MathSessionStatusResponse> =
+        withContext(Dispatchers.IO) {
+            callWithRetry { service.getMathSessionStatus(threadId) }
+        }
+
+    suspend fun getMathSessionHistory(threadId: String): Result<MathSessionHistoryResponse> =
+        withContext(Dispatchers.IO) {
+            callWithRetry { service.getMathSessionHistory(threadId) }
+        }
 }
