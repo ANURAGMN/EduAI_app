@@ -5,6 +5,7 @@ import android.content.Context
 import com.anurag.eduai.BuildConfig
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.utils.ErrorHandler
+import com.anurag.eduai.utils.TokenManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -16,7 +17,7 @@ import okhttp3.Headers
 
 class AgenticAIClient(
     agenticAIBaseUrl: String,
-    context: Context
+    private val context: Context
 ) {
     val service: AgenticAIService
 
@@ -38,11 +39,22 @@ class AgenticAIClient(
         var attempt = 0
         var lastEx: Exception? = null
         var delayMs = initialDelayMs
+        var tokenExpiredRetries = 0
+        val maxTokenRefreshRetries = 3
 
         while (attempt < maxAttempts) {
             attempt++
             try {
                 DebugLogger.debugLog("AgenticAIClient", "Call attempt=$attempt for call (starting)")
+
+                // Log full token before making the call
+                val currentToken = TokenManager.getIdToken(context)
+                if (currentToken != null) {
+                    DebugLogger.debugLog("AgenticAIClient", "Full token being used: $currentToken")
+                } else {
+                    DebugLogger.errorLog("AgenticAIClient", "No token found in storage")
+                }
+
                 val resp = call()
                 try {
                     // Log response basic info
@@ -56,6 +68,8 @@ class AgenticAIClient(
                     if (hv != null) {
                         val masked = if (hv.length <= 6) "****" else "****" + hv.takeLast(4)
                         DebugLogger.debugLog("AgenticAIClient", "Request contained header $headerName with value=$masked")
+                        // Log full token in request header as well
+                        DebugLogger.debugLog("AgenticAIClient", "Full token in request header: $hv")
                     } else {
                         DebugLogger.debugLog("AgenticAIClient", "Request did not contain header $headerName")
                     }
@@ -83,37 +97,52 @@ class AgenticAIClient(
                         break
                     }
 
-                    resp.code() in 500..599 -> {
-                        val errBody = safeGetErrorBody(resp)
-                        lastEx = IOException("HTTP ${resp.code()}: ${errBody ?: resp.message()}")
-
-                        // Log server error - will retry if network/timeout
-                        ErrorHandler.logError(
-                            "AgenticAIClient",
-                            resp.code(),
-                            "Server error - will retry if transient"
-                        )
-                        // Don't break - allow retry for 5xx errors as they may be transient
-                    }
-
-                    resp.code() in 400..499 -> {
-                        val errBody = safeGetErrorBody(resp)
-                        lastEx = IOException("HTTP ${resp.code()}: ${errBody ?: resp.message()}")
-
-                        // Don't retry 401, 403, 404
-                        if (resp.code() in listOf(401, 403, 404)) {
-                            DebugLogger.errorLog(
-                                "AgenticAIClient",
-                                "Client error ${resp.code()} - not retrying"
-                            )
-                            break
-                        }
-                        // Retry other 4xx errors (429, etc.)
-                    }
-
+                    // Delegate all response code handling to ErrorHandler
                     else -> {
-                        val errBody = safeGetErrorBody(resp)
-                        lastEx = IOException("HTTP ${resp.code()}: ${errBody ?: resp.message()}")
+                        val result = ErrorHandler.handleResponseCode(
+                            resp, context, attempt, tokenExpiredRetries, maxTokenRefreshRetries, "AgenticAIClient"
+                        )
+
+                        when (result) {
+                            ErrorHandler.ResponseHandlerResult.Success -> {
+                                return Result.success(resp.body() as T)
+                            }
+                            is ErrorHandler.ResponseHandlerResult.ServerError -> {
+                                lastEx = result.exception
+                                // Don't break - allow retry for 5xx errors
+                            }
+                            is ErrorHandler.ResponseHandlerResult.ClientError -> {
+                                lastEx = result.exception
+                                break
+                            }
+                            is ErrorHandler.ResponseHandlerResult.OtherClientError -> {
+                                lastEx = result.exception
+                                // Retry other 4xx errors (429, etc.)
+                            }
+                            is ErrorHandler.ResponseHandlerResult.UnknownError -> {
+                                lastEx = result.exception
+                            }
+                            is ErrorHandler.ResponseHandlerResult.Token401RetryAfterRefresh -> {
+                                tokenExpiredRetries = result.newRetryCount
+                                // Retry without incrementing attempt counter
+                                attempt--
+                                continue
+                            }
+                            is ErrorHandler.ResponseHandlerResult.Token401RetryAfterFailedRefresh -> {
+                                tokenExpiredRetries = result.newRetryCount
+                                lastEx = IOException("Token refresh failed")
+                                // Continue to next retry
+                                continue
+                            }
+                            is ErrorHandler.ResponseHandlerResult.Token401Exhausted -> {
+                                lastEx = result.exception
+                                break
+                            }
+                            is ErrorHandler.ResponseHandlerResult.Token401NotExpired -> {
+                                lastEx = result.exception
+                                break
+                            }
+                        }
                     }
                 }
             } catch (e: Exception) {

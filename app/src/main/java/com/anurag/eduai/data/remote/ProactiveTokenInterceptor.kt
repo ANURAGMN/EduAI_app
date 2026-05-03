@@ -42,8 +42,11 @@ class ProactiveTokenInterceptor(private val context: Context) : Interceptor {
         val token = TokenManager.getIdToken(context)
         val request = chain.request().newBuilder().apply {
             if (token != null) {
+                DebugLogger.debugLog("ProactiveTokenInterceptor", "Full token being attached to request: $token")
                 header("Authorization", "Bearer $token")
                 header("X-API-Key", token)
+            } else {
+                DebugLogger.errorLog("ProactiveTokenInterceptor", "No token available to attach to request")
             }
         }.build()
 

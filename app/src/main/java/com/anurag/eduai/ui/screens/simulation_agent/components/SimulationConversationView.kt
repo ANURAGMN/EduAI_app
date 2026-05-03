@@ -1,39 +1,35 @@
 package com.anurag.eduai.ui.screens.simulation_agent.components
 
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.screens.chatbotscreen.components.AgentMessage
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 
-/** Conversation view with avatar and content area (matches chatbot ConversationView) */
+/** Conversation view with agent message (25%) and single simulation (75%) */
 @Composable
 fun SimulationConversationView(
     avatarSize: Dp,
@@ -41,58 +37,98 @@ fun SimulationConversationView(
     isLoading: Boolean,
     ttsController: TextToSpeech,
     modifier: Modifier = Modifier,
-    showWebView: Boolean = false,
-    simulationUrls: List<String> = emptyList(),
-    onCloseWebView: () -> Unit = {},
-    onParamsChanged: (Map<String, Any>) -> Unit = {},
-    errorCardHeight: Dp = 0.dp // height to match when reducing message container
+    simulationUrl: String? = null,
+    onParamsChanged: (Map<String, Any>) -> Unit = {}
 ) {
     val dimens = LocalDimensions.current
 
-    // Animate avatar visibility based on whether simulation is showing
-    val avatarHeightFraction by animateDpAsState(
-        targetValue = if (showWebView && simulationUrls.isNotEmpty()) 0.dp else dimens.avatarSizeLarge * 2.5f,
-        label = "avatarHeightFraction"
-    )
-
     Column(modifier = modifier.fillMaxSize()) {
-        // Avatar at top - Hidden when simulation shows, visible otherwise
-        if (avatarHeightFraction > dimens.spaceSmall) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(avatarHeightFraction + dimens.spaceMedium),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                Card(
-                    elevation = CardDefaults.cardElevation(defaultElevation = dimens.cardElevation),
-                    shape = CircleShape,
-                    modifier = Modifier
-                        .size(avatarSize)
-                        .clip(CircleShape)
+        // TOP SECTION (25%): Agent Message
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.25f)
+                .background(White)
+                .padding(dimens.spaceMedium)
+        ) {
+            if (isLoading) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    AndroidView(
-                        factory = {
-                            WebView(it).apply {
-                                setBackgroundColor(0)
-                                ttsController.setupWebView(this)
-                            }
-                        },
-                        modifier = Modifier.fillMaxSize()
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(dimens.iconLarge),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = dimens.inputBorderWidth
+                    )
+                    Spacer(modifier = Modifier.height(dimens.spaceSmall))
+                    Text(
+                        text = stringResource(R.string.sim_teacher_thinking),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        fontStyle = FontStyle.Italic,
+                        textAlign = TextAlign.Center
                     )
                 }
+            } else {
+                AgentMessage(
+                    text = currentMessage,
+                    isTyping = false,
+                    fullText = currentMessage,
+                    ttsController = ttsController,
+                    modifier = Modifier.fillMaxSize(),
+                    reduceTextSize = true
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(dimens.spaceLarge)
+                        .align(Alignment.TopCenter)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(White, White.copy(alpha = 0f))
+                            )
+                        )
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(dimens.spaceLarge)
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(White.copy(alpha = 0f), White)
+                            )
+                        )
+                )
             }
         }
 
-        // Content area - avoid nested scrolls: AgentMessage already handles its own scrolling
+        HorizontalDivider(modifier = Modifier.fillMaxWidth(), thickness = 1.dp)
+
+        // BOTTOM SECTION (75%): Single Simulation
         Box(
             modifier = Modifier
-                .weight(1f)
                 .fillMaxWidth()
+                .weight(0.75f)
+                .background(White)
         ) {
-            // Show loading spinner or message content
             if (isLoading) {
-                // Loading state with spinner and text
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(dimens.iconLarge),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = dimens.inputBorderWidth
+                    )
+                }
+            } else if (simulationUrl == null) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -100,176 +136,20 @@ fun SimulationConversationView(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(dimens.iconExtraLarge),
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = dimens.inputBorderWidth
-                    )
-
-                    Spacer(modifier = Modifier.height(dimens.spaceMedium))
-
                     Text(
-                        text = stringResource(R.string.sim_teacher_thinking),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        fontStyle = FontStyle.Italic,
+                        text = stringResource(R.string.sim_no_simulation),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         textAlign = TextAlign.Center
                     )
                 }
-            } else if (showWebView && simulationUrls.isNotEmpty()) {
-                // WebView content displayed inline with auto-scrolling text above
-                // Column with proper weight distribution: message container constrained to errorCardHeight when provided
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // Auto-scrolling message text section
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .then(if (errorCardHeight > 0.dp) Modifier.height(errorCardHeight) else Modifier.weight(1f))
-                    ) {
-                        AgentMessage(
-                            text = currentMessage,
-                            isTyping = false,
-                            fullText = currentMessage,
-                            ttsController = ttsController,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(dimens.spaceMedium),
-                            reduceTextSize = true
-                        )
-                    }
-
-                    // Simulation content section (fixed height)
-                    Box(modifier = Modifier
-                        .fillMaxWidth()
-                    ) {
-                        when (simulationUrls.size) {
-                            1 -> {
-                                // Single simulation view
-                                InlineSimulationWebView(
-                                    url = simulationUrls[0],
-                                    onParamsChanged = onParamsChanged,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(dimens.spaceLarge * 15)
-                                )
-                            }
-                            2 -> {
-                                // Before/After comparison
-                                Column(modifier = Modifier.fillMaxWidth()) {
-                                    Text(
-                                        text = stringResource(R.string.sim_before_label),
-                                        style = MaterialTheme.typography.labelLarge,
-                                        modifier = Modifier.padding(dimens.spaceMedium)
-                                    )
-                                    Box(modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(dimens.spaceLarge * 15)) {
-                                        InlineSimulationWebView(url = simulationUrls[0], onParamsChanged = {})
-                                    }
-                                    Text(
-                                        text = stringResource(R.string.sim_after_label),
-                                        style = MaterialTheme.typography.labelLarge,
-                                        modifier = Modifier.padding(dimens.spaceMedium)
-                                    )
-                                    Box(modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(dimens.spaceLarge * 15)) {
-                                        InlineSimulationWebView(url = simulationUrls[1], onParamsChanged = onParamsChanged)
-                                    }
-                                }
-                            }
-                        }
-
-                        // Close button
-                        Card(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(dimens.spaceMedium),
-                            shape = MaterialTheme.shapes.small,
-                            elevation = CardDefaults.cardElevation(defaultElevation = dimens.cardElevation),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surface
-                            )
-                        ) {
-                            IconButton(onClick = onCloseWebView) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = stringResource(R.string.sim_close_simulation),
-                                    tint = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
-                    }
-                }
             } else {
-                // AgentMessage content (no simulation)
-                AgentMessage(
-                    text = currentMessage,
-                    isTyping = false,
-                    fullText = currentMessage,
-                    ttsController = ttsController,
+                SimulationWebView(
+                    url = simulationUrl,
+                    onParamsChanged = onParamsChanged,
                     modifier = Modifier.fillMaxSize()
-                )
-
-                // Top gradient fade
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(dimens.spaceLarge * 2) // Adjust for more/less fade
-                        .align(Alignment.TopCenter)
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.White,
-                                    Color.White.copy(alpha = 0f)
-                                )
-                            )
-                        )
-                )
-
-                // Bottom gradient fade
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(dimens.spaceLarge * 2) // Adjust for more/less fade
-                        .align(Alignment.BottomCenter)
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0f),
-                                    Color.White
-                                )
-                            )
-                        )
                 )
             }
         }
     }
-}
-
-/** WebView component for rendering simulation HTML inline */
-@Composable
-fun InlineSimulationWebView(url: String, onParamsChanged: (Map<String, Any>) -> Unit = {}, modifier: Modifier = Modifier) {
-    AndroidView(
-        factory = { context ->
-            WebView(context).apply {
-                settings.apply {
-                    javaScriptEnabled = true
-                    domStorageEnabled = true
-                    loadWithOverviewMode = true
-                    useWideViewPort = true
-                }
-                webViewClient = WebViewClient()
-
-                // Add JavaScript interface for receiving parameter changes from the simulation
-                addJavascriptInterface(
-                    SimulationJavaScriptInterface(onParamsChanged),
-                    "SimulationAndroidInterface"
-                )
-
-                loadUrl(url)
-            }
-        },
-        modifier = modifier.fillMaxSize()
-    )
 }

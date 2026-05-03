@@ -24,14 +24,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.anurag.eduai.R
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettings
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatHeaderIcons
-import com.anurag.eduai.ui.screens.chatbotscreen.components.InitialAvatarView
 import com.anurag.eduai.ui.screens.chatbotscreen.components.InputSection
+import com.anurag.eduai.ui.screens.chatbotscreen.components.AppDialog
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
 import com.anurag.eduai.ui.screens.simulation_agent.components.SimulationConversationView
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.screens.simulation_agent.viewmodel.SimAgentUiState
 import com.anurag.eduai.ui.screens.simulation_agent.viewmodel.SimulationAgentViewModel
+import com.anurag.eduai.ui.screens.simulation_agent.viewmodel.SimulationIntent
 import com.anurag.eduai.ui.viewModel.SpeechToText
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 
@@ -68,6 +69,7 @@ fun SimulationAgentScreen(
     val isInputEnabled by viewModel.isInputEnabled.collectAsState()
     val shouldTriggerTts by viewModel.shouldTriggerTts.collectAsState()
     val currentLanguage by viewModel.currentLanguage.collectAsState()
+    val showSessionResumeDialog by viewModel.showSessionResumeDialog.collectAsState()
 
     // TTS/STT states
     val ttsState by ttsController.state.collectAsState()
@@ -150,9 +152,9 @@ fun SimulationAgentScreen(
      */
     LaunchedEffect(ttsState.isSpeaking) {
         if (ttsState.isSpeaking) {
-            viewModel.onTtsStarted()
+            viewModel.handleIntent(SimulationIntent.TtsStarted)
         } else {
-            viewModel.onTtsStopped()
+            viewModel.handleIntent(SimulationIntent.TtsStopped)
         }
     }
 
@@ -164,7 +166,7 @@ fun SimulationAgentScreen(
     LaunchedEffect(shouldTriggerTts) {
         if (shouldTriggerTts && currentTeacherMessage.isNotEmpty() && !ttsState.isSpeaking) {
             ttsController.speak(currentTeacherMessage)
-            viewModel.onTtsTriggered() // Acknowledge that TTS was triggered
+            viewModel.handleIntent(SimulationIntent.TtsTriggered) // Acknowledge that TTS was triggered
         }
     }
 
@@ -334,7 +336,7 @@ fun SimulationAgentScreen(
                         )
                         Spacer(modifier = Modifier.height(dimens.spaceMedium))
                         Button(
-                            onClick = { viewModel.onRetryClick(simulationId) },
+                            onClick = { viewModel.handleIntent(SimulationIntent.RetrySession(simulationId)) },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.error
                             )
@@ -348,27 +350,14 @@ fun SimulationAgentScreen(
             /**
              * Main content area
              */
-            if (!isSessionStarted) {
-                InitialAvatarView(
-                    avatarSize = avatarSize,
-                    ttsController = ttsController,
-                    modifier = Modifier.weight(0.1f).background(White),
-                    isLoading = uiState is SimAgentUiState.Loading
-                )
-            } else {
-                SimulationConversationView(
-                    avatarSize = avatarSize,
-                    currentMessage = currentTeacherMessage,
-                    isLoading = uiState is SimAgentUiState.Loading,
-                    ttsController = ttsController,
-                    showWebView = showWebView,
-                    simulationUrls = simulationUrls,
-                    onCloseWebView = { viewModel.onWebViewClose() },
-                    onParamsChanged = { viewModel.onSimulationParamsChanged(it) },
-                    modifier = Modifier.weight(1f).background(White),
-                    errorCardHeight = errorCardHeightDp
-                )
-            }
+            SimulationConversationView(
+                avatarSize = avatarSize,
+                currentMessage = currentTeacherMessage,
+                isLoading = uiState is SimAgentUiState.Loading,
+                ttsController = ttsController,
+                onParamsChanged = { viewModel.handleIntent(SimulationIntent.ParametersChanged(it)) },
+                modifier = Modifier.weight(1f).background(White),
+            )
 
             /**
              * User Input section
@@ -379,10 +368,10 @@ fun SimulationAgentScreen(
                     isLoading = !isInputEnabled
                 ),
                 sttState = sttState,
-                onTextChange = { viewModel.onUserInputChanged(it) },
+                onTextChange = { viewModel.handleIntent(SimulationIntent.UpdateInput(it)) },
                 onSendClick = {
                     ttsController.stop()
-                    viewModel.onSendClick()
+                    viewModel.handleIntent(SimulationIntent.SendUserResponse(userInput))
                 },
                 onSpeakClick = {
                     if (ttsState.isSpeaking) {
@@ -400,4 +389,18 @@ fun SimulationAgentScreen(
             )
         }
     }
-}
+
+    // Session Resume Dialog - Ask to continue or start fresh
+    AppDialog(
+        show = showSessionResumeDialog,
+        title = stringResource(R.string.existing_session_found),
+        message = stringResource(R.string.resume_or_start_fresh),
+        confirmText = stringResource(R.string.continue_session),
+        dismissText = stringResource(R.string.start_new),
+        onConfirm = {
+            viewModel.handleIntent(SimulationIntent.ContinueExistingSession)
+        },
+        onDismiss = {
+            viewModel.handleIntent(SimulationIntent.StartFreshSession)
+        }
+    )}

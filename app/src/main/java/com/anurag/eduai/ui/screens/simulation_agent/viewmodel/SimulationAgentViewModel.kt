@@ -89,9 +89,20 @@ class SimulationAgentViewModel @Inject constructor(
     private val _currentLanguage = MutableStateFlow("")
     val currentLanguage: StateFlow<String> = _currentLanguage.asStateFlow()
 
-    // NEW: Track changed parameters from webview
+    // Track changed parameters from webview
     private val _changedSimulationParams = MutableStateFlow<Map<String, Any>?>(null)
     val changedSimulationParams: StateFlow<Map<String, Any>?> = _changedSimulationParams.asStateFlow()
+
+    // Session Dialog State - for continuing existing session or starting new
+    private val _showSessionResumeDialog = MutableStateFlow(false)
+    val showSessionResumeDialog: StateFlow<Boolean> = _showSessionResumeDialog.asStateFlow()
+
+    private val _pendingSimulationForDialog = MutableStateFlow<String?>(null)
+    val pendingSimulationForDialog: StateFlow<String?> = _pendingSimulationForDialog.asStateFlow()
+
+    //Consolidated screen state for unified rendering
+    private val _screenState = MutableStateFlow(SimulationScreenState())
+    val screenState: StateFlow<SimulationScreenState> = _screenState.asStateFlow()
 
     companion object {
         private const val TAG = "SimulationAgentVM"
@@ -106,13 +117,164 @@ class SimulationAgentViewModel @Inject constructor(
         viewModelScope.launch {
             uiState.collect { state ->
                 updateInputEnabledState(state)
+                updateScreenState()
             }
         }
 
         viewModelScope.launch {
             isTtsSpeaking.collect {
                 updateInputEnabledState(uiState.value)
+                updateScreenState()
             }
+        }
+
+        // Sync all state flows to screenState whenever they change
+        viewModelScope.launch {
+            currentTeacherMessage.collect {
+                updateScreenState()
+            }
+        }
+
+        viewModelScope.launch {
+            simulationUrls.collect {
+                updateScreenState()
+            }
+        }
+
+        viewModelScope.launch {
+            isSessionStarted.collect {
+                updateScreenState()
+            }
+        }
+
+        viewModelScope.launch {
+            errorMessage.collect {
+                updateScreenState()
+            }
+        }
+
+        viewModelScope.launch {
+            userInput.collect {
+                updateScreenState()
+            }
+        }
+
+        viewModelScope.launch {
+            isInputEnabled.collect {
+                updateScreenState()
+            }
+        }
+
+        viewModelScope.launch {
+            shouldTriggerTts.collect {
+                updateScreenState()
+            }
+        }
+
+        viewModelScope.launch {
+            hasSpokeCurrentMessage.collect {
+                updateScreenState()
+            }
+        }
+
+        viewModelScope.launch {
+            showWebView.collect {
+                updateScreenState()
+            }
+        }
+
+        viewModelScope.launch {
+            currentLanguage.collect {
+                updateScreenState()
+            }
+        }
+
+        viewModelScope.launch {
+            sessionData.collect {
+                updateScreenState()
+            }
+        }
+    }
+
+    /**
+     * Sync all individual state flows into the consolidated screenState
+     * This ensures the UI has a single source of truth
+     */
+    private fun updateScreenState() {
+        _screenState.value = SimulationScreenState(
+            isSessionStarted = _isSessionStarted.value,
+            isLoading = _uiState.value is SimAgentUiState.Loading,
+            errorMessage = _errorMessage.value,
+            currentTeacherMessage = _currentTeacherMessage.value,
+            simulationUrls = _simulationUrls.value,
+            showWebView = _showWebView.value,
+            hasSimulationHTMLUrl = _sessionData.value?.simulation?.htmlUrl?.isNotBlank() == true,
+            userInput = _userInput.value,
+            isInputEnabled = _isInputEnabled.value,
+            shouldTriggerTts = _shouldTriggerTts.value,
+            hasSpokeCurrentMessage = _hasSpokeCurrentMessage.value,
+            sessionData = _sessionData.value,
+            currentLanguage = _currentLanguage.value
+        )
+    }
+
+    /**
+     * Public API UI Logic
+     */
+
+    /**
+     * Handle user intents dispatched from UI
+     * This is the main entry point for all user actions
+     */
+    fun handleIntent(intent: SimulationIntent) {
+        when (intent) {
+            is SimulationIntent.SendUserResponse -> onSendClick()
+            is SimulationIntent.UpdateInput -> onUserInputChanged(intent.text)
+            is SimulationIntent.ParametersChanged -> onSimulationParamsChanged(intent.params)
+            is SimulationIntent.OnBackPressed -> onBackPressed()
+            is SimulationIntent.TtsStarted -> onTtsStarted()
+            is SimulationIntent.TtsStopped -> onTtsStopped()
+            is SimulationIntent.TtsTriggered -> onTtsTriggered()
+            is SimulationIntent.LoadSimulations -> loadAvailableSimulations()
+            is SimulationIntent.StartNewSession -> startNewSession(intent.simulationId)
+            is SimulationIntent.RetrySession -> onRetryClick(intent.simulationId)
+            is SimulationIntent.AvatarChanged -> onAvatarChanged()
+            is SimulationIntent.VoiceChanged -> onVoiceChanged()
+            is SimulationIntent.SpeedChanged -> onSpeedChanged()
+            is SimulationIntent.SubmitQuizAnswer -> submitQuizAnswer(intent.answer)
+            is SimulationIntent.DismissSessionDialog -> dismissSessionDialog()
+            is SimulationIntent.ContinueExistingSession -> continueWithExistingSession()
+            is SimulationIntent.StartFreshSession -> startFreshSession()
+        }
+    }
+
+    /**
+     * Dismiss the session resume dialog
+     */
+    private fun dismissSessionDialog() {
+        _showSessionResumeDialog.value = false
+        _pendingSimulationForDialog.value = null
+    }
+
+    /**
+     * Continue with existing session (keep current session ID)
+     */
+    private fun continueWithExistingSession() {
+        dismissSessionDialog()
+        // Session is already active, just show UI
+        _isSessionStarted.value = true
+        DebugLogger.debugLog(TAG, "Continuing with existing session")
+    }
+
+    /**
+     * Start a fresh session (clear old session and create new one)
+     */
+    private fun startFreshSession() {
+        val simulationId = _pendingSimulationForDialog.value
+        if (simulationId != null) {
+            dismissSessionDialog()
+            resetSessionForNavigation()
+            startNewSession(simulationId)
         }
     }
 
@@ -389,16 +551,27 @@ class SimulationAgentViewModel @Inject constructor(
     /**
      * Start a new teaching session
      * IMPORTANT: Only starts if simulation ID has changed (prevents re-start on config change)
+     * Shows dialog if session already exists for this simulation
      */
     fun startNewSession(simulationId: String) {
         // Check if we're already in this simulation session
         if (currentSimulationId == simulationId && _sessionData.value != null) {
-            DebugLogger.debugLog(TAG, "⏭️ Already in session for $simulationId - skipping restart")
+            DebugLogger.debugLog(TAG, "Session already active for $simulationId")
+            // Show dialog to ask continue or start fresh
+            _pendingSimulationForDialog.value = simulationId
+            _showSessionResumeDialog.value = true
+            DebugLogger.debugLog(TAG, "Showing session resume dialog")
             return
         }
 
         currentSimulationId = simulationId
+        performStartNewSession(simulationId)
+    }
 
+    /**
+     * Internal method to actually start the session
+     */
+    private fun performStartNewSession(simulationId: String) {
         viewModelScope.launch {
             try {
                 _uiState.value = SimAgentUiState.Loading
