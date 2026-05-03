@@ -19,6 +19,7 @@ import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.data.local.entities.ProgressEntity
 import com.anurag.eduai.data.local.entities.SessionEntity
 import com.anurag.eduai.data.local.entities.SimulationEntity
+import com.anurag.eduai.data.local.entities.StreakEntity
 import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.data.local.entities.SubjectEntity
 
@@ -35,6 +36,7 @@ import com.anurag.eduai.data.local.entities.SubjectEntity
         SessionEntity::class,
         AppAnalyticsEntity::class,
         ProgressEntity::class,
+        StreakEntity::class
     ],
     version = 1,
     exportSchema = true

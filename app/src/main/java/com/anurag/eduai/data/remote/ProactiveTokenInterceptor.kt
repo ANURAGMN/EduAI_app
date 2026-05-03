@@ -7,69 +7,77 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import okhttp3.Interceptor
 import okhttp3.Response
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 /**
- * OPTIMIZED: Token refresh happens asynchronously in background.
+ * OkHttp interceptor that:
+ * 1. Attaches the current stored token to every request (Bearer + X-API-Key).
+ * 2. If the token is expiring in <10 min, kicks off a background silent refresh
+ *    so the NEXT request gets a fresh token — without blocking the current one.
  *
- * Design:
- * - Does NOT block the interceptor thread
- * - Token refresh happens asynchronously in background
- * - Current request uses existing token immediately
- * - Prevents 401s by keeping token fresh between requests
- *
- * Performance improvements:
- * - No runBlocking (no thread blocking)
- * - Async refresh prevents slowdown
- * - 1-second minimum between refresh attempts
- * - 10-second timeout on refresh to prevent hangs
+ * The interceptor NEVER blocks. Refresh is fire-and-forget in a background coroutine.
+ * Duplicate refreshes are prevented by [isRefreshing] flag and [lastRefreshAttemptMs].
  */
 class ProactiveTokenInterceptor(private val context: Context) : Interceptor {
 
     companion object {
-        private var lastRefreshAttemptTime = 0L
-        private const val REFRESH_CHECK_INTERVAL_MS = 1000L // Check at least every 1 second
-        private val refreshMutex = Mutex() // Prevent concurrent refresh attempts
-        private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        // Minimum gap between refresh attempts — avoids hammering on every API call
+        private const val REFRESH_COOLDOWN_MS = 60_000L // 1 minute
+
+        private val isRefreshing = AtomicBoolean(false)
+        private val lastRefreshAttemptMs = AtomicLong(0L)
+
+        // Single background scope shared across all interceptor instances
+        private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     }
 
     override fun intercept(chain: Interceptor.Chain): Response {
+        // ── 1. Kick off background refresh if token is expiring soon ──
+        triggerBackgroundRefreshIfNeeded()
+
+        // ── 2. Attach current token to the request (no blocking) ──
+        val token = TokenManager.getIdToken(context)
+        val request = chain.request().newBuilder().apply {
+            if (token != null) {
+                header("Authorization", "Bearer $token")
+                header("X-API-Key", token)
+            }
+        }.build()
+
+        return chain.proceed(request)
+    }
+
+    /**
+     * Fires a background coroutine to refresh the token.
+     * Guards:
+     * - Only runs if token is actually expiring
+     * - Only one refresh at a time ([isRefreshing])
+     * - Minimum [REFRESH_COOLDOWN_MS] between attempts
+     */
+    private fun triggerBackgroundRefreshIfNeeded() {
+        if (!TokenManager.isTokenExpiredOrExpiring(context)) return
+
         val now = System.currentTimeMillis()
+        if (now - lastRefreshAttemptMs.get() < REFRESH_COOLDOWN_MS) return
+        if (!isRefreshing.compareAndSet(false, true)) return // already refreshing
 
-        // Trigger refresh asynchronously if needed (non-blocking)
-        if (now - lastRefreshAttemptTime >= REFRESH_CHECK_INTERVAL_MS) {
-            lastRefreshAttemptTime = now
+        lastRefreshAttemptMs.set(now)
 
-            // Launch refresh in background - doesn't block this thread
-            scope.launch {
-                refreshMutex.withLock {
-                    if (TokenManager.isTokenExpiredOrExpiring(context)) {
-                        DebugLogger.debugLog(
-                            "ProactiveTokenInterceptor",
-                            "Background: Refreshing token"
-                        )
-                        val refreshSuccess = TokenManager.refreshTokenSilently(context)
-                        if (!refreshSuccess) {
-                            TokenManager.clearAllTokens(context)
-                        }
-                    }
+        scope.launch {
+            try {
+                DebugLogger.debugLog("ProactiveTokenInterceptor", "Background: token expiring, refreshing silently")
+                val success = TokenManager.refreshTokenSilently(context)
+                if (success) {
+                    DebugLogger.debugLog("ProactiveTokenInterceptor", "Background: token refreshed OK")
+                } else {
+                    DebugLogger.errorLog("ProactiveTokenInterceptor", "Background: token refresh failed")
                 }
+            } finally {
+                isRefreshing.set(false)
             }
         }
-
-        // Get current token and proceed immediately (no blocking)
-        val token = TokenManager.getIdToken(context)
-        val requestBuilder = chain.request().newBuilder()
-
-        if (token != null) {
-            requestBuilder
-                .header("Authorization", "Bearer $token")
-                .header("X-API-Key", token)
-        }
-
-        return chain.proceed(requestBuilder.build())
     }
 }
