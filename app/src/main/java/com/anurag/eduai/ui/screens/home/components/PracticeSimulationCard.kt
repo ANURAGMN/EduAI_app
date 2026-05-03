@@ -25,6 +25,7 @@ import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.utils.getLocalizedName
+import com.anurag.eduai.utils.isKannada
 
 @Composable
 fun PracticeSimulationCard(
@@ -68,9 +69,9 @@ fun PracticeSimulationCard(
                                 else -> ConceptStatus.NOT_STARTED
                             },
                             type = sim.type,
-                            simulationUrl = sim.simulationUrl,
-                            simulationUrlKannada = sim.simulationUrlKannada,
-                            simulationId = sim.simulationId
+                            // Pass only the correct language-based URL and ID
+                            simulationUrl = if (isKannada()) sim.simulationUrlKannada else sim.simulationUrl,
+                            simulationId = if (isKannada()) sim.simulationIdKannada else sim.simulationId
                         )
 
                         ConceptCard(

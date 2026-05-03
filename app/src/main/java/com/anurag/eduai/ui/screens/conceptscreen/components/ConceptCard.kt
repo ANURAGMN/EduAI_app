@@ -38,7 +38,6 @@ import com.anurag.eduai.ui.theme.NotStartedTextColor
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
 import com.anurag.eduai.ui.theme.White
- import com.anurag.eduai.utils.isKannada
 
 /**
  * Composable function to display a Concept Card with status badge, title, concept completion status, and an icon.
@@ -105,23 +104,13 @@ fun ConceptCard(
 
                 // Simulation Buttons
                 if (concept.type.equals("SIMULATION", ignoreCase = true)) {
-                    // Check if concept has valid simulationId
-                    val hasValidSimulationId = !concept.simulationId.isNullOrBlank()
-
-                    // Select URL based on current app language
-                    val selectedUrl = if (isKannada()) {
-                        // Use Kannada URL if available, fallback to English URL
-                        concept.simulationUrlKannada?.takeIf { it.isNotBlank() }
-                            ?: concept.simulationUrl
-                    } else {
-                        // Use English URL
-                        concept.simulationUrl
-                    }
-
-                    val hasValidUrl = !selectedUrl.isNullOrBlank() && selectedUrl != "Not found"
+                    // At this point, concepts are already filtered by the repository
+                    // based on language, so we only render what's present
+                    val hasSimulationId = !concept.simulationId.isNullOrBlank()
+                    val hasSimulationUrl = !concept.simulationUrl.isNullOrBlank()
 
                     // Only show buttons row if at least one button will be visible
-                    if (hasValidSimulationId || hasValidUrl) {
+                    if (hasSimulationId || hasSimulationUrl) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -129,18 +118,16 @@ fun ConceptCard(
                             horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
                         ) {
                             // Agent button - only show if simulationId exists
-                            if (hasValidSimulationId) {
+                            if (hasSimulationId) {
                                 Button(
                                     onClick = {
-                                        concept.simulationId?.let { simId ->
-                                            onSimulationAgentClick(simId)
-                                        }
+                                        concept.simulationId?.let { onSimulationAgentClick(it) }
                                     },
                                     modifier = Modifier.weight(1f),
                                     contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
                                     shape = MaterialTheme.shapes.small,
                                     colors = buttonColors(
-                                        containerColor =AccentBlue ,
+                                        containerColor = AccentBlue,
                                         contentColor = TextPrimary
                                     )
                                 ) {
@@ -155,10 +142,12 @@ fun ConceptCard(
                             }
 
                             // Simulation button - only show if URL exists
-                            if (hasValidUrl) {
+                            if (hasSimulationUrl) {
                                 OutlinedButton(
                                     onClick = {
-                                        onSimulationClick(concept.name, selectedUrl)
+                                        concept.simulationUrl?.let {
+                                            onSimulationClick(concept.name, it)
+                                        }
                                     },
                                     modifier = Modifier.weight(1f),
                                     contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),

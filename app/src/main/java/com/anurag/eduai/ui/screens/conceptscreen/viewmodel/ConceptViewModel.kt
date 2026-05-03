@@ -14,6 +14,7 @@ import com.anurag.eduai.ui.models.ConceptStatus
 import com.anurag.eduai.ui.models.ConceptUiModel
 import com.anurag.eduai.ui.screens.conceptscreen.dataclass.ConceptScreenState
 import com.anurag.eduai.utils.getLocalizedName
+import com.anurag.eduai.utils.isKannada
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,7 +38,19 @@ class ConceptViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
-                val concepts = conceptRepository.getConceptsForChapter(chapterId, type)
+                // Get concepts - if type is SIMULATION, use language-specific queries to filter at DB level
+                val concepts = if (type.equals("SIMULATION", ignoreCase = true)) {
+                    val isKannadaLanguage = isKannada()
+                    if (isKannadaLanguage) {
+                        conceptRepository.getSimulationConceptsKannada(chapterId)
+                    } else {
+                        conceptRepository.getSimulationConceptsEnglish(chapterId)
+                    }
+                } else {
+                    // For non-simulation types (e.g., STUDY), use regular query
+                    conceptRepository.getConceptsForChapter(chapterId, type)
+                }
+
                 val chapter = chapterRepository.getChapter(chapterId)
                 val studentId = sharedPrefs.getUserId() ?: ""
 
@@ -46,42 +59,42 @@ class ConceptViewModel @Inject constructor(
                 val student = studentRepository.getStudentSync(studentId)
                 val classLevel = student?.classLevel ?: 7
 
-                // Convert to UI models with status
-                val conceptUiModels = concepts.mapIndexed { index, concept ->
-                    val progress = conceptRepository.getProgress(
-                        studentId = studentId,
-                        itemType = "CONCEPT",
-                        itemId = concept.conceptId
-                    )
+                val conceptUiModels = concepts
+                    .mapIndexed { index, concept ->
+                        val progress = conceptRepository.getProgress(
+                            studentId = studentId,
+                            itemType = "CONCEPT",
+                            itemId = concept.conceptId
+                        )
 
-                    // Determine status with sequential unlocking logic
-                    val status = determineConceptStatus(
-                        progress = progress,
-                        isFirstConcept = index == 0,
-                        previousConceptStatus = if (index > 0) {
-                            conceptRepository.getProgress(
-                                studentId = studentId,
-                                itemType = "CONCEPT",
-                                itemId = concepts[index - 1].conceptId
-                            )?.status
-                        } else null
-                    )
+                        // Determine status with sequential unlocking logic
+                        val status = determineConceptStatus(
+                            progress = progress,
+                            isFirstConcept = index == 0,
+                            previousConceptStatus = if (index > 0) {
+                                conceptRepository.getProgress(
+                                    studentId = studentId,
+                                    itemType = "CONCEPT",
+                                    itemId = concepts[index - 1].conceptId
+                                )?.status
+                            } else null
+                        )
 
-                    ConceptUiModel(
-                        id = concept.conceptId,
-                        name = concept.getLocalizedName(),
-                        order = concept.orderIndex,
-                        status = when (status) {
-                            "COMPLETED" -> ConceptStatus.COMPLETED
-                            "IN_PROGRESS", "STARTED" -> ConceptStatus.IN_PROGRESS
-                            else -> ConceptStatus.NOT_STARTED
-                        },
-                        type = concept.type,
-                        simulationUrl = concept.simulationUrl,
-                        simulationUrlKannada = concept.simulationUrlKannada,
-                        simulationId = concept.simulationId
-                    )
-                }
+                        ConceptUiModel(
+                            id = concept.conceptId,
+                            name = concept.getLocalizedName(),
+                            order = concept.orderIndex,
+                            status = when (status) {
+                                "COMPLETED" -> ConceptStatus.COMPLETED
+                                "IN_PROGRESS", "STARTED" -> ConceptStatus.IN_PROGRESS
+                                else -> ConceptStatus.NOT_STARTED
+                            },
+                            type = concept.type,
+                            // Pass only the correct language-based URL and ID
+                            simulationUrl = if (isKannada()) concept.simulationUrlKannada else concept.simulationUrl,
+                            simulationId = if (isKannada()) concept.simulationIdKannada else concept.simulationId
+                        )
+                    }
 
                 // Auto-unlock first concept if not started
                 if (conceptUiModels.isNotEmpty() &&

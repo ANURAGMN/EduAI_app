@@ -57,5 +57,21 @@ class ConceptRepository(
     ) {
         progressDao.updateProgressStatus(studentId, itemType, itemId, newStatus, progressPercentage,timestamp)
     }
+
+    /**
+     * Retrieves simulation concepts for English (with valid simulationId or simulationUrl).
+     * This filters at the database level to only get concepts that have simulation data.
+     */
+    suspend fun getSimulationConceptsEnglish(chapterId: String): List<ConceptEntity> {
+        return conceptDao.getSimulationConceptsEnglish(chapterId)
+    }
+
+    /**
+     * Retrieves simulation concepts for Kannada (with valid simulationIdKannada or simulationUrlKannada).
+     * This filters at the database level to only get concepts that have Kannada simulation data.
+     */
+    suspend fun getSimulationConceptsKannada(chapterId: String): List<ConceptEntity> {
+        return conceptDao.getSimulationConceptsKannada(chapterId)
+    }
 }
 

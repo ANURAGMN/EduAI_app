@@ -64,4 +64,32 @@ interface ConceptDao {
         limit: Int
     ): List<ConceptEntity>
 
+    /**
+     * Get simulation concepts for English (with valid simulationId or simulationUrl)
+     */
+    @Query(
+        """
+    SELECT * FROM concepts 
+    WHERE chapterId = :chapterId 
+    AND type = 'SIMULATION'
+    AND (simulationId IS NOT NULL AND simulationId != '' OR simulationUrl IS NOT NULL AND simulationUrl != '')
+    ORDER BY orderIndex ASC
+    """
+    )
+    suspend fun getSimulationConceptsEnglish(chapterId: String): List<ConceptEntity>
+
+    /**
+     * Get simulation concepts for Kannada (with valid simulationIdKannada or simulationUrlKannada)
+     */
+    @Query(
+        """
+    SELECT * FROM concepts 
+    WHERE chapterId = :chapterId 
+    AND type = 'SIMULATION'
+    AND (simulationIdKannada IS NOT NULL AND simulationIdKannada != '' OR simulationUrlKannada IS NOT NULL AND simulationUrlKannada != '')
+    ORDER BY orderIndex ASC
+    """
+    )
+    suspend fun getSimulationConceptsKannada(chapterId: String): List<ConceptEntity>
+
 }
