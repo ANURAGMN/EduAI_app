@@ -135,7 +135,7 @@ class SettingViewModel @Inject constructor(
 
             val updated =
                 existing.copy(
-                    localProfilePhotoUri = localPath,
+                    profilePhotoUrl = localPath,
                     updatedAt = System.currentTimeMillis(),
                     isSynced = false
                 )

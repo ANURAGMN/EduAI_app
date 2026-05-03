@@ -21,7 +21,6 @@ data class StudentEntity(
     val language: String, // "English" or "Kannada"
     val classLevel: Int = 7, // Default class 7
     val profilePhotoUrl: String? = null,
-    val localProfilePhotoUri: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val isSynced: Boolean = false

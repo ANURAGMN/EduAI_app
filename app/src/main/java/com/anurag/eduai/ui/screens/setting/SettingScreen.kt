@@ -176,8 +176,7 @@ fun SettingScreen(
                     )
                 } else {
                     ProfileCard(
-                        profileImageUri = student!!.localProfilePhotoUri
-                            ?: student!!.profilePhotoUrl,
+                        profileImageUri = student!!.profilePhotoUrl,
                         name = student!!.studentName,
                         email = student!!.email,
                         phone = student!!.phoneNumber,

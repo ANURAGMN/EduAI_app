@@ -9,5 +9,7 @@ data class SubjectUiModel(
     val id: String,
     val name: String,
     val color: Color,
-    val totalChapters: Int
+    val totalChapters: Int,
+    val iconUrl: String? = null
+
 )

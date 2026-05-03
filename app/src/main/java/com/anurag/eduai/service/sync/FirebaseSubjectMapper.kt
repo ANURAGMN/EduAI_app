@@ -22,7 +22,7 @@ object FirebaseSubjectMapper {
                 ?: error("Unable to extract subject from document id ${document.id}"),
             subjectNameKannada = document.getString("subject_name_kn")?:error("Unable to extract subject from document id ${document.id}"),
             classLevel = classLevel,
-            iconUrl = null,
+            iconUrl = document.getString("iconUrl"),
             orderIndex = 0,
             totalChapters = totalChapters,
             syncAt = System.currentTimeMillis(),

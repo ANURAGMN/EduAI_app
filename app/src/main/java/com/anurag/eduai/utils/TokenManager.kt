@@ -31,13 +31,15 @@ object TokenManager {
         prefs.setTokenExpiryTime(System.currentTimeMillis() + 60 * 60 * 1000L)
 
         if (isRefresh) {
-            // Short preview — safe to share in logs (last 20 chars only)
-            val preview = if (idToken.length > 20) "...${idToken.takeLast(20)}" else idToken
-            DebugLogger.debugLog("TokenManager", " REFRESHED token preview (last 20): $preview")
+            // Short preview — safe to share in logs (last 4 chars only for header comparison)
+            val last4 = idToken.takeLast(4)
+            val last20 = if (idToken.length > 20) idToken.takeLast(20) else idToken
+            DebugLogger.debugLog("TokenManager", "✓ REFRESHED token (last 4 for header match): ****$last4")
+            DebugLogger.debugLog("TokenManager", "✓ REFRESHED token (last 20 for verification): ...${last20}")
             // Full token — remove this line before production release
-            DebugLogger.debugLog("TokenManager", " REFRESHED full token: $idToken")
+            DebugLogger.debugLog("TokenManager", "✓ REFRESHED full token: $idToken")
         } else {
-            DebugLogger.debugLog("TokenManager", "Token saved (login), expires in 60 min")
+            DebugLogger.debugLog("TokenManager", "✓ Token saved (login), expires in 60 min")
         }
     }
 
