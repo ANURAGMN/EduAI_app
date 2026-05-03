@@ -31,6 +31,7 @@ data class ConceptEntity(
     val hasSimulation: Boolean = false,
     val type: String, // simulation , study
     val simulationId: String, //simulation id
+    val simulationIdKannada: String, //simulation id
     val simulationUrl: String? = null,
     val simulationUrlKannada: String? = null,
     val syncAt: Long = System.currentTimeMillis(),

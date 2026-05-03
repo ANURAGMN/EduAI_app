@@ -50,6 +50,7 @@ object FirebaseConceptMapper {
             hasSimulation = conceptType is ConceptType.Simulation,
             type = conceptType.raw,
             simulationId = document.getString("simulation_id") ?: "",
+            simulationIdKannada = document.getString("simulation_id_kn") ?: "",
             simulationUrl = document.getString("simulation_url") ?: "",
             simulationUrlKannada = document.getString("simulation_url_kannada") ?: "",
             syncAt = System.currentTimeMillis(),
