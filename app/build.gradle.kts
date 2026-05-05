@@ -133,4 +133,7 @@ dependencies {
     // Kotlin Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
+    // JWT Decoding
+    implementation("com.auth0:java-jwt:4.4.0")
+
 }

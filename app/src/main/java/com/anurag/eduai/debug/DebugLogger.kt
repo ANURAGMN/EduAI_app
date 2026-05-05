@@ -15,4 +15,10 @@ object DebugLogger {
             Log.e(tag, message)
 //        }
     }
+
+    fun warnLog(tag: String, message: String){
+//        if (BuildConfig.DEBUG){
+            Log.w(tag, message)
+//        }
+    }
 }

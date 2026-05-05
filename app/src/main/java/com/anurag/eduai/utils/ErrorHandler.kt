@@ -173,6 +173,7 @@ object ErrorHandler {
 
     /**
      * Handles 401 Unauthorized errors with token refresh logic
+     * Uses JWT decoder to check actual token expiry, not just stored value
      */
     private suspend fun handle401Error(
         context: Context,
@@ -181,37 +182,73 @@ object ErrorHandler {
         maxTokenRefreshRetries: Int,
         tag: String
     ): ResponseHandlerResult {
-        // Check if token is expired
-        val isTokenExpired = TokenManager.isTokenExpiredOrExpiring(context)
+        // Get current token for validation
+        val currentToken = TokenManager.getIdToken(context)
+
+        // Check if token is expired using JWT decoder (most accurate)
+        val isTokenExpiredFromJwt = if (currentToken != null) {
+            JwtDecoder.isTokenExpired(currentToken)
+        } else {
+            true // No token = definitely expired
+        }
+
+        // Also check if expiring soon (within buffer)
+        val isTokenExpiringWithinBuffer = if (currentToken != null) {
+            JwtDecoder.isTokenExpiringWithinBuffer(currentToken, 600L)
+        } else {
+            true
+        }
+
+        val isTokenExpired = isTokenExpiredFromJwt || isTokenExpiringWithinBuffer
+
+        val secondsRemaining = if (currentToken != null) {
+            JwtDecoder.getSecondsUntilExpiry(currentToken) ?: -1
+        } else {
+            -1
+        }
+
         DebugLogger.debugLog(
             tag,
-            "Got 401 - Token expired/expiring: $isTokenExpired, retry attempt: $tokenExpiredRetries/$maxTokenRefreshRetries"
+            "Got 401 - Token expired/expiring: $isTokenExpired (JWT: $isTokenExpiredFromJwt, Buffer: $isTokenExpiringWithinBuffer), " +
+                    "Seconds remaining: ${secondsRemaining}, Retry attempt: $tokenExpiredRetries/$maxTokenRefreshRetries"
         )
 
         if (isTokenExpired && tokenExpiredRetries < maxTokenRefreshRetries) {
             val newRetryCount = tokenExpiredRetries + 1
             DebugLogger.debugLog(
                 tag,
-                "Token is expired, attempting refresh ($newRetryCount/$maxTokenRefreshRetries)"
+                "⟳ Token is expired/expiring, attempting refresh ($newRetryCount/$maxTokenRefreshRetries)"
             )
 
             val refreshSuccess = TokenManager.refreshTokenSilently(context)
             if (refreshSuccess) {
-                DebugLogger.debugLog(tag, "Token refreshed successfully, retrying request")
-                delay(500L) // Small delay before retry
-                return ResponseHandlerResult.Token401RetryAfterRefresh(newRetryCount)
+                // Verify new token was actually obtained
+                val newToken = TokenManager.getIdToken(context)
+                if (newToken != null && newToken != currentToken) {
+                    val newSecondsRemaining = JwtDecoder.getSecondsUntilExpiry(newToken) ?: 0
+                    DebugLogger.debugLog(tag, "✓ Token refreshed successfully (${newSecondsRemaining}s now available)")
+                    delay(300L) // Small delay before retry to ensure token is propagated
+                    return ResponseHandlerResult.Token401RetryAfterRefresh(newRetryCount)
+                } else {
+                    DebugLogger.errorLog(tag, "✗ Token refresh returned same token or null")
+                    return ResponseHandlerResult.Token401RetryAfterFailedRefresh(newRetryCount)
+                }
             } else {
-                DebugLogger.errorLog(tag, "Token refresh failed")
+                DebugLogger.errorLog(tag, "✗ Token refresh failed")
                 return ResponseHandlerResult.Token401RetryAfterFailedRefresh(newRetryCount)
             }
         } else if (isTokenExpired && tokenExpiredRetries >= maxTokenRefreshRetries) {
             DebugLogger.errorLog(
                 tag,
-                "Token refresh retries exhausted ($maxTokenRefreshRetries attempts), giving up"
+                "✗ Token refresh retries exhausted ($maxTokenRefreshRetries attempts), giving up"
             )
             return ResponseHandlerResult.Token401Exhausted(lastEx)
         } else {
-            DebugLogger.errorLog(tag, "Got 401 but token is not expired - authentication issue")
+            // Got 401 but token appears valid
+            DebugLogger.errorLog(
+                tag,
+                " Got 401 but token appears valid (${secondsRemaining}s remaining) - authentication issue"
+            )
             return ResponseHandlerResult.Token401NotExpired(lastEx)
         }
     }

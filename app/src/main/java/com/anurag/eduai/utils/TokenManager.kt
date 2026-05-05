@@ -28,7 +28,19 @@ object TokenManager {
     fun saveIdToken(context: Context, idToken: String, isRefresh: Boolean = false) {
         val prefs = SharedPreferenceUtils(context)
         prefs.setIdToken(idToken)
-        prefs.setTokenExpiryTime(System.currentTimeMillis() + 60 * 60 * 1000L)
+
+        // Extract actual expiry time from JWT token instead of assuming 60 minutes
+        val expiryTimeMs = JwtDecoder.getExpiryTimeInMillis(idToken)
+        if (expiryTimeMs != null) {
+            prefs.setTokenExpiryTime(expiryTimeMs)
+            val currentTimeMs = System.currentTimeMillis()
+            val expiresInSeconds = (expiryTimeMs - currentTimeMs) / 1000
+            DebugLogger.debugLog("TokenManager", "✓ Token expiry extracted from JWT: expires in ${expiresInSeconds}s")
+        } else {
+            // Fallback to 60 minutes if JWT decoding fails
+            prefs.setTokenExpiryTime(System.currentTimeMillis() + 60 * 60 * 1000L)
+            DebugLogger.errorLog("TokenManager", "Failed to extract JWT expiry, using 60min fallback")
+        }
 
         if (isRefresh) {
             // Short preview — safe to share in logs (last 4 chars only for header comparison)
@@ -39,7 +51,7 @@ object TokenManager {
             // Full token — remove this line before production release
             DebugLogger.debugLog("TokenManager", "✓ REFRESHED full token: $idToken")
         } else {
-            DebugLogger.debugLog("TokenManager", "✓ Token saved (login), expires in 60 min")
+            DebugLogger.debugLog("TokenManager", "✓ Token saved (login) with JWT expiry time")
         }
     }
 
@@ -53,21 +65,29 @@ object TokenManager {
 
     fun clearAllTokens(context: Context) {
         val prefs = SharedPreferenceUtils(context)
+        val oldToken = prefs.getIdToken()
+        val oldExpiry = prefs.getTokenExpiryTime()
+
         prefs.clearIdToken()
         prefs.setTokenExpiryTime(0L)
-        DebugLogger.debugLog("TokenManager", "All tokens cleared")
+
+        DebugLogger.debugLog(
+            "TokenManager",
+            "✗ All tokens cleared (had expiry: ${if (oldExpiry > 0) "yes" else "no"}, token: ${if (oldToken != null) "yes" else "no"})"
+        )
     }
 
     // ──────────────────────────── Silent Refresh ─────────────────────────────────
 
     suspend fun refreshTokenSilently(context: Context): Boolean = withContext(Dispatchers.IO) {
         refreshMutex.withLock {
+            // Double-check: if token is still valid after acquiring lock, skip refresh
             if (!isTokenExpiredOrExpiring(context)) {
-                DebugLogger.debugLog("TokenManager", "Token still valid after acquiring lock, skip refresh")
+                DebugLogger.debugLog("TokenManager", "✓ Token still valid after acquiring lock, skip refresh")
                 return@withLock true
             }
 
-            DebugLogger.debugLog("TokenManager", "Starting silent token refresh")
+            DebugLogger.debugLog("TokenManager", "⟳ Starting silent token refresh...")
 
             val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(BuildConfig.AUTH_KEY)
@@ -77,35 +97,43 @@ object TokenManager {
             val googleSignInClient = GoogleSignIn.getClient(context, gso)
 
             try {
+                // Attempt silent sign-in with timeout
                 val account = withTimeoutOrNull(15_000L) {
                     googleSignInClient.silentSignIn().await()
                 }
 
                 if (account == null) {
-                    DebugLogger.errorLog("TokenManager", "Silent sign-in timed out")
+                    DebugLogger.errorLog("TokenManager", "✗ Silent sign-in timed out (15 seconds)")
                     showToastOnMain(context, "Could not refresh session. Please check your connection.")
                     return@withLock false
                 }
 
+                // Extract new token
                 val newToken = account.idToken
                 if (newToken.isNullOrEmpty()) {
-                    DebugLogger.errorLog("TokenManager", "Silent sign-in succeeded but idToken is null")
+                    DebugLogger.errorLog("TokenManager", "✗ Silent sign-in succeeded but idToken is null/empty")
                     return@withLock false
                 }
 
-                //  isRefresh=true → logs the new token for verification
+                // Verify it's a different token
+                val oldToken = getIdToken(context)
+                if (oldToken != null && oldToken == newToken) {
+                    DebugLogger.warnLog("TokenManager", "⚠ New token is same as old token - refresh may not have worked")
+                }
+
+                // Save the new token with isRefresh=true for logging
                 saveIdToken(context, newToken, isRefresh = true)
-                DebugLogger.debugLog("TokenManager", "Token refreshed successfully via silent sign-in")
+                DebugLogger.debugLog("TokenManager", "✓ Token refreshed successfully via silent sign-in")
                 return@withLock true
 
             } catch (e: UnknownHostException) {
-                DebugLogger.debugLog("TokenManager", "Offline: cannot refresh token")
+                DebugLogger.debugLog("TokenManager", "✗ Offline: cannot refresh token - ${e.message}")
                 showToastOnMain(context, "Connect to the internet to refresh your session.")
                 return@withLock false
 
             } catch (e: Exception) {
                 val msg = e.message ?: e.javaClass.simpleName
-                DebugLogger.errorLog("TokenManager", "Silent sign-in failed: $msg")
+                DebugLogger.errorLog("TokenManager", "✗ Silent sign-in failed: $msg")
                 if (isNetworkException(e)) {
                     showToastOnMain(context, "Connect to the internet to refresh your session.")
                 }

@@ -40,10 +40,38 @@ class SharedPreferenceUtils(context: Context) {
     }
 
     fun isTokenExpiredOrExpiring(): Boolean {
-        val expiryTime = getTokenExpiryTime()
-        val currentTime = System.currentTimeMillis()
-        val bufferTime = 10 * 60 * 1000
-        return currentTime >= (expiryTime - bufferTime)
+        val token = getIdToken()
+
+        // No token = definitely expired
+        if (token.isNullOrEmpty()) {
+            com.anurag.eduai.debug.DebugLogger.debugLog("SharedPreferenceUtils", "✗ No token found in storage")
+            return true
+        }
+
+        // Check JWT expiry directly from token (most accurate)
+        // This validates against the actual exp claim from Google
+        val isTokenExpiringFromJwt = com.anurag.eduai.utils.JwtDecoder.isTokenExpiringWithinBuffer(token, 600L)
+        if (isTokenExpiringFromJwt) {
+            com.anurag.eduai.debug.DebugLogger.debugLog("SharedPreferenceUtils", "✗ Token expiring (from JWT exp claim)")
+            return true
+        }
+
+        // Fallback: also check stored expiry time as secondary validation
+        val storedExpiryTime = getTokenExpiryTime()
+        if (storedExpiryTime > 0L) {
+            val currentTime = System.currentTimeMillis()
+            val bufferTime = 10 * 60 * 1000 // 10 minutes
+            val isStoredExpired = currentTime >= (storedExpiryTime - bufferTime)
+            if (isStoredExpired) {
+                com.anurag.eduai.debug.DebugLogger.debugLog("SharedPreferenceUtils", "✗ Token expiring (from stored expiry time)")
+                return true
+            }
+        }
+
+        // Token is still valid
+        val secondsRemaining = com.anurag.eduai.utils.JwtDecoder.getSecondsUntilExpiry(token) ?: 0
+        com.anurag.eduai.debug.DebugLogger.debugLog("SharedPreferenceUtils", "✓ Token valid: ${secondsRemaining}s remaining")
+        return false
     }
 
     fun clearAllAuthData() {
