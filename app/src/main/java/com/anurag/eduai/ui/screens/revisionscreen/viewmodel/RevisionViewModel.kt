@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.domain.chatbot.controller.TypingAnimationController
 import com.anurag.eduai.domain.chatbot.usecase.AvatarChangeUseCase
-import com.anurag.eduai.domain.chatbot.usecase.RevisionUseCase
+import com.anurag.eduai.domain.revisionagent.usecase.RevisionUseCase
 import com.anurag.eduai.domain.chatbot.usecase.TranslationUseCase
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
@@ -219,9 +219,8 @@ class RevisionViewModel @Inject constructor(
         }
 
         val aiMessage = ChatMessageModel(
-            content = translatedResponse,
             sender = "ai",
-            timestamp = System.currentTimeMillis()
+            content = translatedResponse,
         )
 
         _uiState.update {
@@ -296,9 +295,8 @@ class RevisionViewModel @Inject constructor(
         if (message.isBlank()) return@launch
 
         val userMessage = ChatMessageModel(
-            content = message,
             sender = "user",
-            timestamp = System.currentTimeMillis()
+            content = message,
         )
 
         _uiState.update {
@@ -338,9 +336,8 @@ class RevisionViewModel @Inject constructor(
         }
 
         val aiMessage = ChatMessageModel(
-            content = translatedResponse,
             sender = "ai",
-            timestamp = System.currentTimeMillis()
+            content = translatedResponse,
         )
 
         _uiState.update {

@@ -1,4 +1,4 @@
-package com.anurag.eduai.domain.chatbot.usecase
+package com.anurag.eduai.domain.revisionagent.usecase
 
 import com.anurag.eduai.data.remote.AgenticAIClient
 import com.anurag.eduai.debug.DebugLogger
@@ -6,8 +6,8 @@ import com.anurag.eduai.domain.chatbot.model.SessionResult
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
 import com.anurag.eduai.utils.getCurrentLanguageCode
 import com.anurag.eduai.utils.isKannada
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
@@ -139,7 +139,10 @@ class RevisionUseCase @Inject constructor(
     ): SessionResult = withContext(Dispatchers.IO) {
         try {
             val threadId = revisionThreadMap[chapter]
-                ?: return@withContext SessionResult(false, agentResponse = "No active revision session")
+                ?: return@withContext SessionResult(
+                    false,
+                    agentResponse = "No active revision session"
+                )
 
             val result = agenticAIClient.continueRevisionSession(
                 threadId = threadId,
@@ -191,9 +194,8 @@ class RevisionUseCase @Inject constructor(
             }
 
             ChatMessageModel(
-                content = translatedContent,
                 sender = sender,
-                timestamp = System.currentTimeMillis()
+                content = translatedContent,
             )
         }
     }

@@ -22,11 +22,11 @@ object RetrofitProvider {
             throw IllegalArgumentException("API base URL required")
         } + "/"
 
-        // Logging interceptor
+        // Logging interceptor - use BODY level for debugging request/response bodies
         val logging = HttpLoggingInterceptor { msg ->
             DebugLogger.debugLog("OkHttp", msg)
         }
-        logging.level = HttpLoggingInterceptor.Level.BASIC
+        logging.level = HttpLoggingInterceptor.Level.BODY
 
         // Proactive token interceptor to ensure valid token BEFORE API calls
         val proactiveTokenInterceptor = ProactiveTokenInterceptor(context)

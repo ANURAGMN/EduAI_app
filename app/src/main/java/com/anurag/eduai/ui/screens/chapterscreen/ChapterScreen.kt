@@ -15,10 +15,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.anurag.eduai.R
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.chapterscreen.components.ChapterScreenHeader
@@ -28,6 +30,8 @@ import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.screens.chapterscreen.viewmodel.ChapterViewModel
 import com.anurag.eduai.ui.screens.revisionscreen.viewmodel.RevisionViewModel
+import com.anurag.eduai.ui.screens.mathagentscreen.viewmodel.MathViewModel
+import com.anurag.eduai.domain.mathagent.usecase.MathIntent
 
 /**
  * Mapping of chapter display names to their API-compatible names.
@@ -82,10 +86,12 @@ fun ChapterScreen(
     onStudyClick: (String, String) -> Unit = {_, _ -> },
     onSimulationClick: (String, String) -> Unit = {_, _ -> },
     onRevisionClick: (String) -> Unit = {},
+    onMathAgentClick: (String, String?) -> Unit = {_, _ -> },
     onGoHome: () -> Unit = {},
     onGoSetting: () -> Unit = {},
     onProgressClick: () -> Unit = {},
     viewModel: ChapterViewModel = hiltViewModel(),
+    mathViewModel: MathViewModel = hiltViewModel(),
     revisionViewModel: RevisionViewModel = hiltViewModel()
 ) {
     // Analytics Tracking
@@ -93,6 +99,7 @@ fun ChapterScreen(
 
     val dimens = LocalDimensions.current
     val state by viewModel.state.collectAsState()
+    val mathState by mathViewModel.uiState.collectAsState()
 
     // State for revision dialog
     var showRevisionDialog by remember { mutableStateOf(false) }
@@ -101,6 +108,21 @@ fun ChapterScreen(
     // Load chapters when subjectId changes
     LaunchedEffect(subjectId) {
         viewModel.loadChapters(subjectId)
+    }
+
+    // Initialize MathViewModel if needed
+    val context = LocalContext.current
+    LaunchedEffect(state.subjectName, mathState.problems.isEmpty()) {
+        val isMathSubject = state.subjectName.contains("Math", ignoreCase = true) ||
+                state.subjectName.contains("ಗಣಿತ", ignoreCase = true)
+        if (isMathSubject && mathState.problems.isEmpty()) {
+            val sharedPrefs = SharedPreferenceUtils(context)
+            val userId = sharedPrefs.getUserId() ?: ""
+            if (userId.isNotEmpty()) {
+                DebugLogger.debugLog("ChapterScreen", "Initializing MathViewModel with userId: $userId")
+                mathViewModel.onIntent(MathIntent.Initialize(userId))
+            }
+        }
     }
 
     Column(
@@ -133,6 +155,10 @@ fun ChapterScreen(
                 Text(text = stringResource(R.string.unable_to_load_chapters))
             }
         } else {
+            // Check if this is a Math subject
+            val isMathSubject = state.subjectName.contains("Math", ignoreCase = true) ||
+                    state.subjectName.contains("ಗಣಿತ", ignoreCase = true)
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -143,7 +169,17 @@ fun ChapterScreen(
                     ChapterCard(
                         chapter = chapterUiModel,
                         subjectName = state.subjectName, // Pass subject name for conditional rendering
-                        onStudyClick = { onStudyClick(chapterUiModel.id, "STUDY") },
+                        onStudyClick = {
+                            if (isMathSubject) {
+                                // For Math: go directly to MathAgentScreen with first problem ID
+                                val firstProblemId = mathState.problems.firstOrNull()?.id
+                                DebugLogger.debugLog("ChapterScreen", "Math Study clicked. First problem ID: $firstProblemId")
+                                onMathAgentClick(chapterUiModel.id, firstProblemId)
+                            } else {
+                                // For other subjects: go to ConceptScreen
+                                onStudyClick(chapterUiModel.id, "STUDY")
+                            }
+                        },
                         onSimulationClick = { onSimulationClick(chapterUiModel.id, "SIMULATION") },
                         onRevisionClick = {
                             // Use the English name from the model to get the API-compatible name

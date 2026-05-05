@@ -8,6 +8,9 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Multipart
+import retrofit2.http.Part
+import okhttp3.MultipartBody
 
 interface AgenticAIService {
     //core session Endpoints
@@ -96,7 +99,13 @@ interface AgenticAIService {
     suspend fun startMathSession(@Body request: MathStartSessionRequest): Response<MathStartSessionResponse>
 
     @POST("/math/session/continue")
-    suspend fun continueMathSession(@Body request: MathContinueSessionRequest): Response<MathContinueSessionResponse>
+    @Multipart
+    suspend fun continueMathSession(
+        @Part("thread_id") threadId: okhttp3.RequestBody,
+        @Part("user_message") userMessage: okhttp3.RequestBody,
+        @Part("is_kannada") isKannada: okhttp3.RequestBody,
+        @Part image: MultipartBody.Part? = null
+    ): Response<MathContinueSessionResponse>
 
     @GET("/math/session/status/{thread_id}")
     suspend fun getMathSessionStatus(@Path("thread_id") threadId: String): Response<MathSessionStatusResponse>
@@ -410,11 +419,9 @@ data class ProblemsListResponse(
 )
 
 data class MathProblem(
-    val id: String,
-    val title: String,
-    val description: String? = null,
-    val difficulty: String? = null,
-    val category: String? = null
+    @SerializedName("problem_id") val problemId: String,
+    @SerializedName("topic") val topic: String,
+    @SerializedName("difficulty") val difficulty: String? = null,
 )
 
 data class MathStartSessionRequest(
@@ -440,7 +447,9 @@ data class MathContinueSessionRequest(
     @SerializedName("thread_id") val threadId: String,
     @SerializedName("user_message") val userMessage: String,
     @SerializedName("is_kannada") val isKannada: Boolean = false,
-    val image: String? = null
+    val image: String? = null,
+    @SerializedName("session_id") val sessionId: String? = null,
+    @SerializedName("student_id") val studentId: String? = null
 )
 
 data class MathContinueSessionResponse(

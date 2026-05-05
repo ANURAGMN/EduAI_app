@@ -209,21 +209,19 @@ fun ChapterCard(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
                             ) {
-                                // Study button - hidden for Math
-                                if (!isMathSubject) {
-                                    ChapterActionButton(
-                                        label = stringResource(R.string.study),
-                                        icon = {
-                                            Icon(
-                                                imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                                                contentDescription = stringResource(R.string.study),
-                                                tint = TextPrimary
-                                            )
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                        onClick = onStudyClick
-                                    )
-                                }
+                                // Study button - shown for all subjects
+                                ChapterActionButton(
+                                    label = stringResource(R.string.study),
+                                    icon = {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                                            contentDescription = stringResource(R.string.study),
+                                            tint = TextPrimary
+                                        )
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    onClick = onStudyClick
+                                )
                                 ChapterActionButton(
                                     label = stringResource(R.string.simulation),
                                     icon = {
@@ -233,7 +231,7 @@ fun ChapterCard(
                                             tint = TextPrimary
                                         )
                                     },
-                                    modifier = if (isMathSubject) Modifier.fillMaxWidth() else Modifier.weight(1f),
+                                    modifier = Modifier.weight(1f),
                                     onClick = onSimulationClick
                                 )
                             }

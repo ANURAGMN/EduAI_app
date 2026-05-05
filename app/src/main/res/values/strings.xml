@@ -200,6 +200,7 @@
     <string name="status_in_progress">In Progress</string>
     <string name="status_not_started">Not Started</string>
     <string name="type_or_speak">Type or speak...</string>
+    <string name="attach_image">Attach Image</string>
     <string name="send_message">Send message</string>
     <string name="start_listening">Start listening</string>
     <string name="stop_listening">Stop listening</string>
@@ -316,4 +317,11 @@
     <string name="success">Success</string>
     <string name="retry">Retry</string>
     <string name="ok">OK</string>
+
+    <!-- Math Agent Strings -->
+    <string name="math_session_failed_start">Failed to start session</string>
+    <string name="math_session_failed_continue">Failed to continue session</string>
+    <string name="math_session_resumed">Session resumed</string>
+    <string name="math_session_failed_resume">Failed to resume session</string>
+    <string name="math_error_prefix">Error: %1$s</string>
 </resources>

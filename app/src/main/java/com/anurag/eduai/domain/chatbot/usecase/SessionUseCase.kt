@@ -79,7 +79,7 @@ class SessionUseCase @Inject constructor(
                     ChatMessageModel(
                         sender = sender,
                         content = content,
-                        timestamp = (msg["timestamp"] as? Long) ?: System.currentTimeMillis()
+                        timestamp = (msg["timestamp"] as? Long) ?: System.currentTimeMillis(),
                     )
                 }
                 SessionResult(success = true, messages = chatMessages)

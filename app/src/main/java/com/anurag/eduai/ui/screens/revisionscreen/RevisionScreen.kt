@@ -57,7 +57,7 @@ fun RevisionScreen(
 ) {
     DebugLogger.debugLog("RevisionScreen", "RevisionScreen composable - chapter: $chapterName")
 
-    TrackScreenEvent(ScreenName.CHATBOT)
+    TrackScreenEvent(ScreenName.REVISION)
 
     val context = LocalContext.current
     val sharedPrefs = remember { SharedPreferenceUtils(context) }
@@ -207,6 +207,7 @@ fun RevisionScreen(
                     onStopListening = { sttController.stopListening() },
                     onSuggestionClick = { },
                     shouldDisableSend = shouldDisableSend,
+                    showImageIcon = false,
                     modifier = Modifier.imePadding()
                 )
             }

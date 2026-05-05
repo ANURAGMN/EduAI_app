@@ -30,6 +30,7 @@ import com.anurag.eduai.ui.screens.setting.SettingScreen
 import com.anurag.eduai.ui.screens.simulation_agent.SimulationAgentScreen
 import com.anurag.eduai.ui.screens.simulationscreen.SimulationViewerScreen
 import com.anurag.eduai.ui.screens.subjectscreen.SubjectScreen
+import com.anurag.eduai.ui.screens.mathagentscreen.MathAgentScreen
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.TextSecondary
@@ -91,7 +92,7 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = BottomNavItem.Home.route,
+            startDestination = "learning",
             modifier = Modifier.padding(innerPadding),
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
@@ -160,6 +161,12 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                             launchSingleTop =  true
                             restoreState = true
                         }
+                    },
+                    onGoProgress = {
+                        navController.navigate("progress") {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                            restoreState = true
+                        }
                     }
                 )
             }
@@ -175,6 +182,10 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                     onSimulationClick = { chapterId, type ->
                         navController.navigate("concepts/$chapterId/$type")
                     },
+                    onMathAgentClick = { chapterId, problemId ->
+                        val problemIdParam = problemId ?: "null"
+                        navController.navigate("math_agent?chapterId=$chapterId&problemId=$problemIdParam")
+                    },
                     onRevisionClick = { chapterName ->
                         com.anurag.eduai.debug.DebugLogger.debugLog("BottomNavBar", "Navigating to revision with chapter: $chapterName")
                         val encodedChapter = java.net.URLEncoder.encode(chapterName, "UTF-8")
@@ -189,6 +200,12 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                     },
                     onGoSetting = {
                         navController.navigate("setting") {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                            restoreState = true
+                        }
+                    },
+                    onProgressClick = {
+                        navController.navigate("progress") {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
                             restoreState = true
                         }
@@ -276,6 +293,28 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                 com.anurag.eduai.ui.screens.revisionscreen.RevisionScreen(
                     chapterName = chapterName,
                     onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = "math_agent?chapterId={chapterId}&problemId={problemId}",
+                arguments = listOf(
+                    navArgument("chapterId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("problemId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
+                val chapterId = backStackEntry.arguments?.getString("chapterId")
+                val problemId = backStackEntry.arguments?.getString("problemId")
+                MathAgentScreen(
+                    problemId = problemId
                 )
             }
 

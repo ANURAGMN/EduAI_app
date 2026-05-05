@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.anurag.eduai.R
+import com.anurag.eduai.service.analytics.ScreenName
+import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatBotSettings
 import com.anurag.eduai.ui.screens.chatbotscreen.components.ChatHeaderIcons
 import com.anurag.eduai.ui.screens.chatbotscreen.components.InputSection
@@ -55,14 +57,13 @@ fun SimulationAgentScreen(
     val context = LocalContext.current
     val density = LocalDensity.current
     val viewModel: SimulationAgentViewModel = hiltViewModel()
+    TrackScreenEvent(ScreenName.SIMULATIONAGENT)
 
     var errorCardHeightDp by remember { mutableStateOf(0.dp) }
 
     // Observe ALL state from ViewModel - no local state management
     val uiState by viewModel.uiState.collectAsState()
     val currentTeacherMessage by viewModel.currentTeacherMessage.collectAsState()
-    val showWebView by viewModel.showWebView.collectAsState()
-    val simulationUrls by viewModel.simulationUrls.collectAsState()
     val isSessionStarted by viewModel.isSessionStarted.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val userInput by viewModel.userInput.collectAsState()
@@ -107,7 +108,7 @@ fun SimulationAgentScreen(
     )
 
     /**
-     * Permission launcher (UI-only)
+     * Permission launcher
      */
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -215,11 +216,11 @@ fun SimulationAgentScreen(
             ?: ttsController.getDefaultVoiceName("en", settingsState.selectedAvatar)
     }
 
-    /**
-     * UI RENDERING
-     */
     Box(modifier = Modifier.fillMaxSize().background(White)) {
         Column(modifier = Modifier.fillMaxSize().imePadding()) {
+            /**
+             * Header icons
+             */
             ChatHeaderIcons(
                 isKannada = false,
                 isSpeaking = ttsState.isSpeaking,
@@ -385,7 +386,8 @@ fun SimulationAgentScreen(
                 },
                 onStopListening = { sttController.stopListening() },
                 onSuggestionClick = { /* Not used */ },
-                shouldDisableSend = !isInputEnabled
+                shouldDisableSend = !isInputEnabled,
+                showImageIcon = false
             )
         }
     }

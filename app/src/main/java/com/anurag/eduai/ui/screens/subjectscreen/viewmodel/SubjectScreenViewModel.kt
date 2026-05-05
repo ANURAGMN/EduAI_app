@@ -39,7 +39,8 @@ class SubjectViewModel @Inject constructor(
                         id = entity.subjectId,
                         name = entity.getLocalizedName(),
                         color = BrandPrimary,
-                        totalChapters = entity.totalChapters
+                        totalChapters = entity.totalChapters,
+                        iconUrl = entity.iconUrl
                     )
                 }
 

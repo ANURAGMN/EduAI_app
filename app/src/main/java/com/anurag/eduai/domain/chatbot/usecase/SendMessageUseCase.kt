@@ -8,17 +8,15 @@ class SendMessageUseCase @Inject constructor(
 
     fun createUserMessage(content: String): ChatMessageModel {
         return ChatMessageModel(
-            content = content,
             sender = "user",
-            timestamp = System.currentTimeMillis()
+            content = content,
         )
     }
 
     fun createAIMessage(content: String): ChatMessageModel {
         return ChatMessageModel(
-            content = content,
             sender = "ai",
-            timestamp = System.currentTimeMillis()
+            content = content,
         )
     }
 }

@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import com.google.gson.JsonPrimitive
 import retrofit2.Response
 import java.io.IOException
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody
 import okhttp3.Headers
 
 class AgenticAIClient(
@@ -81,6 +83,14 @@ class AgenticAIClient(
                     resp.isSuccessful && resp.body() != null -> {
                         val body = resp.body()!!
                         val isAppSuccess = isApplicationSuccess(body)
+
+                        // Log the full response body as JSON for debugging
+                        try {
+                            val jsonString = com.google.gson.Gson().toJson(body)
+                            DebugLogger.debugLog("AgenticAIClient", "Response body JSON: $jsonString")
+                        } catch (e: Exception) {
+                            DebugLogger.debugLog("AgenticAIClient", "Could not serialize response to JSON: ${e.message}")
+                        }
 
                         if (isAppSuccess) {
                             return Result.success(body)
@@ -188,6 +198,11 @@ class AgenticAIClient(
             is SimSimulationsListResponse -> true
             is SimHealthResponse -> true
             is HealthResponse -> true
+            is MathStartSessionResponse -> body.success
+            is MathContinueSessionResponse -> body.success
+            is MathSessionStatusResponse -> body.success
+            is MathSessionHistoryResponse -> body.success
+            is ProblemsListResponse -> body.success
             else -> true
         }
     }
@@ -210,6 +225,10 @@ class AgenticAIClient(
             is SimSessionResponse -> null
             is SimSimulationsListResponse -> null
             is SimHealthResponse -> null
+            is MathStartSessionResponse -> body.message
+            is MathContinueSessionResponse -> body.message
+            is MathSessionHistoryResponse -> body.message
+            is ProblemsListResponse -> body.message
             else -> null
         }
     }
@@ -525,16 +544,78 @@ class AgenticAIClient(
         threadId: String,
         userMessage: String,
         isKannada: Boolean = false,
-        image: String? = null
+        imageUri: String? = null,
     ): Result<MathContinueSessionResponse> = withContext(Dispatchers.IO) {
-        val req = MathContinueSessionRequest(
-            threadId = threadId,
-            userMessage = userMessage,
-            isKannada = isKannada,
-            image = image
-        )
+        // Validate threadId before making request
+        if (threadId.isNullOrEmpty()) {
+            DebugLogger.errorLog("AgenticAIClient", "✗ Cannot continue math session: threadId is null or empty")
+            return@withContext Result.failure(IllegalArgumentException("Thread ID cannot be null or empty"))
+        }
 
-        callWithRetry { service.continueMathSession(req) }
+        if (threadId.isBlank()) {
+            DebugLogger.errorLog("AgenticAIClient", "✗ Cannot continue math session: threadId is blank (whitespace only)")
+            return@withContext Result.failure(IllegalArgumentException("Thread ID cannot be blank"))
+        }
+        val hasImage = imageUri != null
+        DebugLogger.debugLog("MathSessionUseCase", "Image attached: $hasImage, imageUri: $imageUri")
+
+        DebugLogger.debugLog("AgenticAIClient", "=== MATH CONTINUE SESSION (MULTIPART) DEBUG ===")
+        DebugLogger.debugLog("AgenticAIClient", "threadId: '$threadId'")
+        DebugLogger.debugLog("AgenticAIClient", "userMessage: '$userMessage'")
+        DebugLogger.debugLog("AgenticAIClient", "isKannada: $isKannada")
+        DebugLogger.debugLog("AgenticAIClient", "imageUri is null: ${imageUri == null}")
+
+        // Build multipart form data
+        val threadIdPart = okhttp3.RequestBody.create("text/plain".toMediaType(), threadId)
+        val userMessagePart = okhttp3.RequestBody.create("text/plain".toMediaType(), userMessage)
+        val isKannadaPart = okhttp3.RequestBody.create("text/plain".toMediaType(), isKannada.toString())
+
+        // Image part (optional) - read file from URI and create proper MultipartBody.Part
+        val imagePart: okhttp3.MultipartBody.Part? = imageUri?.let { uriStr ->
+            try {
+                val uri = android.net.Uri.parse(uriStr)
+                val inputStream = context.contentResolver.openInputStream(uri)
+                if (inputStream != null) {
+                    val bytes = inputStream.readBytes()
+                    inputStream.close()
+                    // Create RequestBody with application/octet-stream MIME type for file data
+                    val requestBody = okhttp3.RequestBody.create("application/octet-stream".toMediaType(), bytes)
+                    // Wrap in MultipartBody.Part with "image" as the part name and filename
+                    okhttp3.MultipartBody.Part.createFormData("image", "image.jpg", requestBody)
+                } else {
+                    DebugLogger.errorLog("AgenticAIClient", "Could not open input stream for image URI: $uriStr")
+                    null
+                }
+            } catch (e: Exception) {
+                DebugLogger.errorLog("AgenticAIClient", "Error reading image file from URI: ${e.message}")
+                null
+            }
+        }
+
+        DebugLogger.debugLog("AgenticAIClient", "✓ Built multipart form data with all required fields")
+        DebugLogger.debugLog("AgenticAIClient", "  - thread_id part size: ${threadIdPart.contentLength()} bytes")
+        DebugLogger.debugLog("AgenticAIClient", "  - user_message part size: ${userMessagePart.contentLength()} bytes")
+        DebugLogger.debugLog("AgenticAIClient", "  - is_kannada part: '$isKannada'")
+        DebugLogger.debugLog("AgenticAIClient", "  - image part is null: ${imagePart == null}")
+        if (imagePart != null) {
+            DebugLogger.debugLog("AgenticAIClient", "  - image part created with filename: image.jpg")
+        }
+
+        try {
+            val response = callWithRetry {
+                service.continueMathSession(
+                    threadId = threadIdPart,
+                    userMessage = userMessagePart,
+                    isKannada = isKannadaPart,
+                    image = imagePart
+                )
+            }
+            DebugLogger.debugLog("AgenticAIClient", " Multipart continue session request completed")
+            response
+        } catch (e: Exception) {
+            DebugLogger.errorLog("AgenticAIClient", " Error in multipart continue session: ${e.message}")
+            throw e
+        }
     }
 
     suspend fun getMathSessionStatus(threadId: String): Result<MathSessionStatusResponse> =

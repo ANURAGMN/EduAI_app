@@ -9,11 +9,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.screens.chapterscreen.ChapterScreen
 import com.anurag.eduai.ui.screens.chatbotscreen.ChatbotScreen
 import com.anurag.eduai.ui.screens.conceptscreen.ConceptScreen
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptSimulationViewer
 import com.anurag.eduai.ui.screens.home.HomeScreen
+import com.anurag.eduai.ui.screens.mathagentscreen.MathAgentScreen
+import com.anurag.eduai.ui.screens.revisionscreen.RevisionScreen
 import com.anurag.eduai.ui.screens.simulation_agent.SimulationAgentScreen
 import com.anurag.eduai.ui.screens.simulationscreen.SimulationViewerScreen
 import com.anurag.eduai.ui.screens.subjectscreen.SubjectScreen
@@ -34,7 +37,8 @@ fun LearningNavigator(
     navController: NavHostController = rememberNavController(),
     onBackToHome: () -> Unit,
     onGoHome: () -> Unit = {},
-    onGoSetting: () -> Unit = {}
+    onGoSetting: () -> Unit = {},
+    onGoProgress: () -> Unit = {}
 ) {
     NavHost(
         navController = navController,
@@ -54,7 +58,7 @@ fun LearningNavigator(
 
         composable(LearningRoutes.SUBJECTS) {
             SubjectScreen(
-                onBackClick = onBackToHome,
+                onBackClick = onGoHome,
                 onSubjectClick = { subjectId ->
                     navController.navigate("chapters/${subjectId}")
                 },
@@ -74,14 +78,19 @@ fun LearningNavigator(
                 onSimulationClick = { chapterId, type ->
                     navController.navigate("concepts/$chapterId/$type")
                 },
+                onMathAgentClick = { chapterId, problemId ->
+                    val problemIdParam = problemId ?: "null"
+                    navController.navigate("math_agent?chapterId=$chapterId&problemId=$problemIdParam")
+                },
                 onRevisionClick = { chapterName ->
-                    com.anurag.eduai.debug.DebugLogger.debugLog("LearningNavigator", "Navigating to revision with chapter: $chapterName")
+                    DebugLogger.debugLog("LearningNavigator", "Navigating to revision with chapter: $chapterName")
                     val encodedChapter = java.net.URLEncoder.encode(chapterName, "UTF-8")
-                    com.anurag.eduai.debug.DebugLogger.debugLog("LearningNavigator", "Encoded chapter name: $encodedChapter")
+                    DebugLogger.debugLog("LearningNavigator", "Encoded chapter name: $encodedChapter")
                     navController.navigate("revision/$encodedChapter")
                 },
                 onGoHome = onGoHome,
-                onGoSetting = onGoSetting
+                onGoSetting = onGoSetting,
+                onProgressClick = onGoProgress
             )
         }
 
@@ -117,6 +126,28 @@ fun LearningNavigator(
         ) { backStackEntry ->
             val conceptId = backStackEntry.arguments?.getString("conceptId")
             ChatbotScreen(conceptId = conceptId)
+        }
+
+        composable(
+            route = "math_agent?chapterId={chapterId}&problemId={problemId}",
+            arguments = listOf(
+                navArgument("chapterId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("problemId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val chapterId = backStackEntry.arguments?.getString("chapterId")
+            val problemId = backStackEntry.arguments?.getString("problemId")
+            MathAgentScreen(
+                problemId = problemId
+            )
         }
 
         // Simulation Viewer Screen
@@ -160,8 +191,8 @@ fun LearningNavigator(
         composable("revision/{chapterName}") { backStackEntry ->
             val encodedChapterName = backStackEntry.arguments?.getString("chapterName") ?: return@composable
             val chapterName = java.net.URLDecoder.decode(encodedChapterName, "UTF-8")
-            com.anurag.eduai.debug.DebugLogger.debugLog("LearningNavigator", "Revision route - Encoded: $encodedChapterName, Decoded: $chapterName")
-            com.anurag.eduai.ui.screens.revisionscreen.RevisionScreen(
+            DebugLogger.debugLog("LearningNavigator", "Revision route - Encoded: $encodedChapterName, Decoded: $chapterName")
+           RevisionScreen(
                 chapterName = chapterName,
                 onBackClick = { navController.popBackStack() }
             )

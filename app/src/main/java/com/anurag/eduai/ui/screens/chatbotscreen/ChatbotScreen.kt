@@ -182,6 +182,7 @@ fun ChatbotScreen(
                         chatViewModel.onIntent(ChatIntent.HideAutosuggestions)
                     },
                     shouldDisableSend = shouldDisableSend,
+                    showImageIcon = false,
                     modifier = Modifier
                         .imePadding()
                 )
