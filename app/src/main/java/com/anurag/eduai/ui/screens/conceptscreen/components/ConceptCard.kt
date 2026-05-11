@@ -27,7 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.anurag.eduai.R
-import com.anurag.eduai.ui.models.ConceptStatus
+import com.anurag.eduai.domain.progress.model.ProgressStatus
 import com.anurag.eduai.ui.models.ConceptUiModel
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.CardBackground
@@ -43,14 +43,16 @@ import com.anurag.eduai.ui.theme.White
  * Composable function to display a Concept Card with status badge, title, concept completion status, and an icon.
  *
  * @param concept The Concept data to display.
+ * @param serialNumber The serial number (1, 2, 3, ...) to display in the badge.
  * @param onClick Lambda function to handle card click events.
  */
 @Composable
 fun ConceptCard(
     concept: ConceptUiModel,
+    serialNumber: Int = 1,
     onClick: () -> Unit = {},
     onSimulationAgentClick: (String) -> Unit = {},
-    onSimulationClick: (String,String) -> Unit = { _,_ -> }
+    onSimulationClick: (title: String, url: String, conceptId: String) -> Unit = { _, _, _ -> }
 ) {
     val dimens = LocalDimensions.current
 
@@ -75,7 +77,7 @@ fun ConceptCard(
         ) {
             // Status badge (Circle with icon/order)
             ConceptStatusBadge(
-                conceptOrder = concept.order.toString(),
+                conceptOrder = serialNumber.toString(),
                 status = concept.status
             )
 
@@ -146,7 +148,7 @@ fun ConceptCard(
                                 OutlinedButton(
                                     onClick = {
                                         concept.simulationUrl?.let {
-                                            onSimulationClick(concept.name, it)
+                                            onSimulationClick(concept.name, it, concept.id)
                                         }
                                     },
                                     modifier = Modifier.weight(1f),
@@ -184,14 +186,16 @@ fun ConceptCard(
 
 // Helper Functions for Status Texts and Colors
 @Composable
-private fun getStatus(status: ConceptStatus): String = when (status) {
-    ConceptStatus.COMPLETED -> stringResource(R.string.completed)
-    ConceptStatus.IN_PROGRESS -> stringResource(R.string.in_progress_continue_learning)
-    ConceptStatus.NOT_STARTED -> stringResource(R.string.complete_previous_concepts)
+private fun getStatus(status: ProgressStatus): String = when (status) {
+    ProgressStatus.COMPLETED -> stringResource(R.string.completed)
+    ProgressStatus.IN_PROGRESS -> stringResource(R.string.in_progress_continue_learning)
+    ProgressStatus.NOT_STARTED -> stringResource(R.string.complete_previous_concepts)
+    ProgressStatus.LOCKED -> stringResource(R.string.locked)
 }
 
-private fun getStatusColor(status: ConceptStatus): Color = when (status) {
-    ConceptStatus.COMPLETED -> CompleteTextColor
-    ConceptStatus.IN_PROGRESS -> InProgressTextColor
-    ConceptStatus.NOT_STARTED -> NotStartedTextColor
+private fun getStatusColor(status: ProgressStatus): Color = when (status) {
+    ProgressStatus.COMPLETED -> CompleteTextColor
+    ProgressStatus.IN_PROGRESS -> InProgressTextColor
+    ProgressStatus.NOT_STARTED -> NotStartedTextColor
+    ProgressStatus.LOCKED -> NotStartedTextColor
 }

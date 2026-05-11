@@ -1,7 +1,10 @@
 package com.anurag.eduai.utils
 
 import android.content.Context
+import androidx.compose.ui.platform.LocalContext
+import com.anurag.eduai.R
 import com.anurag.eduai.debug.DebugLogger
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import retrofit2.Response
 import java.io.IOException
@@ -14,17 +17,18 @@ import java.net.UnknownHostException
  */
 object ErrorHandler {
 
-    // Error message mapping — easy to maintain and extend
-    private val errorMessages = mapOf(
-        401 to "Authentication failed. Please log in again.",
-        403 to "Access denied. You don't have permission to access this resource.",
-        404 to "Resource not found.",
-        501 to "Please try after some time.",
-        502 to "Please try tomorrow.",
-    )
-
-    fun getErrorMessage(statusCode: Int): String {
-        return errorMessages[statusCode] ?: "An unexpected error occurred. Please try again."
+    /**
+     * Returns a localized error message based on the HTTP status code.
+     */
+    fun getErrorMessage(context: Context, statusCode: Int): String {
+        return when (statusCode) {
+            401 -> context.getString(R.string.authentication_failed_please_log_in_again)
+            403 -> context.getString(R.string.access_denied_you_don_t_have_permission_to_access_this_resource)
+            404 -> context.getString(R.string.resource_not_found)
+            501 -> context.getString(R.string.please_try_after_some_time)
+            502 -> context.getString(R.string.please_try_tomorrow)
+            else -> context.getString(R.string.an_unexpected_error_occurred_please_try_again)
+        }
     }
 
     fun extractStatusCode(errorMessage: String): Int {
@@ -77,7 +81,11 @@ object ErrorHandler {
         DebugLogger.errorLog(tag, "HTTP $statusCode - $message")
     }
 
+    /**
+     * Centralized exception handling that returns localized error strings.
+     */
     fun handleException(
+        context: Context,
         exception: Exception,
         operation: String = "operation",
         tag: String = "ErrorHandler"
@@ -85,39 +93,45 @@ object ErrorHandler {
         return when (exception) {
             is SocketTimeoutException -> {
                 DebugLogger.errorLog(tag, "$operation - Connection timed out")
-                "Connection timed out. Please check your internet connection."
+                context.getString(R.string.error_connection_timeout)
             }
             is UnknownHostException -> {
                 DebugLogger.errorLog(tag, "$operation - Unable to reach server")
-                "Unable to reach server. Please check your internet connection."
+                context.getString(R.string.error_unable_to_reach_server)
             }
             is retrofit2.HttpException -> {
                 val statusCode = exception.code()
                 DebugLogger.errorLog(tag, "$operation - HTTP $statusCode")
                 when (statusCode) {
-                    501, 502 -> getErrorMessage(statusCode)
-                    404 -> getErrorMessage(404)
-                    500 -> getErrorMessage(500)
-                    in 500..599 -> "Server error. Please try again later."
-                    in 400..499 -> "Request error. Please try again."
-                    else -> "Network error ($statusCode). Please try again."
+                    501, 502 -> getErrorMessage(context, statusCode)
+                    404 -> getErrorMessage(context, 404)
+                    500 -> getErrorMessage(context, 500)
+                    in 500..599 -> context.getString(R.string.error_server_try_later)
+                    in 400..499 -> context.getString(R.string.error_request_error)
+                    else -> context.getString(R.string.error_network_error_with_code, statusCode)
                 }
             }
             is IOException -> {
                 val statusCode = extractStatusCode(exception.message ?: "")
-                DebugLogger.errorLog(tag, "$operation - IOException with status $statusCode: ${exception.message}")
+                DebugLogger.errorLog(
+                    tag,
+                    "$operation - IOException with status $statusCode: ${exception.message}"
+                )
                 when {
-                    statusCode == 501 || statusCode == 502 -> getErrorMessage(statusCode)
-                    statusCode == 404 -> getErrorMessage(404)
-                    statusCode == 500 -> getErrorMessage(500)
-                    statusCode in 500..599 -> "Server error. Please try again later."
-                    statusCode in 400..499 -> "Request error. Please try again."
-                    else -> "Connection error. Please check your internet and try again."
+                    statusCode == 501 || statusCode == 502 -> getErrorMessage(context, statusCode)
+                    statusCode == 404 -> getErrorMessage(context, 404)
+                    statusCode == 500 -> getErrorMessage(context, 500)
+                    statusCode in 500..599 -> context.getString(R.string.error_server_try_later)
+                    statusCode in 400..499 -> context.getString(R.string.error_request_error)
+                    else -> context.getString(R.string.error_connection_error)
                 }
             }
             else -> {
-                DebugLogger.errorLog(tag, "$operation - ${exception.javaClass.simpleName}: ${exception.message}")
-                "An error occurred. Please try again."
+                DebugLogger.errorLog(
+                    tag,
+                    "$operation - ${exception.javaClass.simpleName}: ${exception.message}"
+                )
+                context.getString(R.string.error_unknown)
             }
         }
     }
@@ -230,17 +244,17 @@ object ErrorHandler {
                     delay(300L) // Small delay before retry to ensure token is propagated
                     return ResponseHandlerResult.Token401RetryAfterRefresh(newRetryCount)
                 } else {
-                    DebugLogger.errorLog(tag, "✗ Token refresh returned same token or null")
+                    DebugLogger.errorLog(tag, " Token refresh returned same token or null")
                     return ResponseHandlerResult.Token401RetryAfterFailedRefresh(newRetryCount)
                 }
             } else {
-                DebugLogger.errorLog(tag, "✗ Token refresh failed")
+                DebugLogger.errorLog(tag, " Token refresh failed")
                 return ResponseHandlerResult.Token401RetryAfterFailedRefresh(newRetryCount)
             }
         } else if (isTokenExpired && tokenExpiredRetries >= maxTokenRefreshRetries) {
             DebugLogger.errorLog(
                 tag,
-                "✗ Token refresh retries exhausted ($maxTokenRefreshRetries attempts), giving up"
+                " Token refresh retries exhausted ($maxTokenRefreshRetries attempts), giving up"
             )
             return ResponseHandlerResult.Token401Exhausted(lastEx)
         } else {

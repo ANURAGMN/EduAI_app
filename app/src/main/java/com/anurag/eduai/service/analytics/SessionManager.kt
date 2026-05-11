@@ -1,7 +1,7 @@
 package com.anurag.eduai.service.analytics
 
 import android.content.Context
-import com.anurag.eduai.data.local.EduAiDatabase
+import com.anurag.eduai.data.local.database.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.local.entities.AppAnalyticsEntity
 import com.anurag.eduai.data.local.entities.SessionEntity
@@ -65,11 +65,12 @@ object SessionManager {
 
                 val session = SessionEntity(
                     sessionId = sessionId,
+                    studentId = sharedPrefs.getUserId() ?: "",
                     sessionDate = getCurrentDate(),
                     sessionStartTime = startTime,
                     sessionEndTime = null,
                     durationMillis = 0,
-                    syncAt = System.currentTimeMillis(),
+                    appName = com.anurag.eduai.config.AppConfig.APP_NAME,
                     isSynced = false
                 )
 
@@ -145,11 +146,13 @@ object SessionManager {
 
             val analytics = AppAnalyticsEntity(
                 sessionId = sessionId,
+                studentId = sharedPrefs.getUserId() ?: "",
                 screenName = screenName.displayName,
                 eventType = EventType.ENTRY.type,
                 entryTime = System.currentTimeMillis(),
                 exitTime = null,
                 durationMillis = 0,
+                appName = com.anurag.eduai.config.AppConfig.APP_NAME,
                 isSynced = false
             )
 

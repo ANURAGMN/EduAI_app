@@ -53,7 +53,8 @@ fun SimulationViewerScreen(
     simulationId: String,
     htmlFileName: String,
     simulationTitle: String,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onSimulationLoaded: ((simulationId: String) -> Unit)? = null  // Called when WebView finishes loading
 ) {
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.SIMULATIONVIEWER)
@@ -142,7 +143,13 @@ fun SimulationViewerScreen(
                             setSupportZoom(true)
                         }
 
-                        webViewClient = WebViewClient()
+                        webViewClient = object : WebViewClient() {
+                            override fun onPageFinished(view: WebView, url: String) {
+                                super.onPageFinished(view, url)
+                                // Notify caller so progress can be tracked (e.g. markSimulationUrlCompleted)
+                                onSimulationLoaded?.invoke(simulationId)
+                            }
+                        }
                         webChromeClient = WebChromeClient()
 
                         // Load HTML file from assets

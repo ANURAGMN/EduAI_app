@@ -1,5 +1,6 @@
 package com.anurag.eduai.repository
 
+import com.anurag.eduai.config.AppConfig
 import com.anurag.eduai.data.local.dao.ChapterDao
 import com.anurag.eduai.data.local.dao.ChapterProgressSummary
 import com.anurag.eduai.data.local.dao.ProgressDao
@@ -29,15 +30,18 @@ class ChapterRepository(
     }
 
     /**
-     * Retrieves chapter-wise progress for a student in a specific subject and class level.
-     * returns List of ChapterProgressSummary
+     * Retrieves chapter-wise progress for a student in a specific subject.
+     * Does NOT filter by classLevel — subjectId uniquely identifies the subject.
+     * returns Flow of List of ChapterProgressSummary
      */
-    suspend fun getChapterWiseProgress(
+    fun getChapterWiseProgress(
         studentId: String,
-        classLevel: Int,
-        subjectId: String
-    ): List<ChapterProgressSummary> {
-        return progressDao.getChapterWiseProgress(studentId, classLevel, subjectId)
-    }
+        subjectId: String,
+        language: String
+    ) = progressDao.getChapterWiseProgressFlow(
+        studentId = studentId,
+        subjectId = subjectId,
+        language = language,
+        appName = AppConfig.APP_NAME
+    )
 }
-

@@ -1,7 +1,14 @@
 package com.anurag.eduai.service.sync
 
+import android.content.Context
+import com.anurag.eduai.config.AppConfig
+import com.anurag.eduai.data.local.dao.AppAnalyticsDao
+import com.anurag.eduai.data.local.dao.ChapterAgentProgressDao
 import com.anurag.eduai.data.local.dao.ChapterDao
 import com.anurag.eduai.data.local.dao.ConceptDao
+import com.anurag.eduai.data.local.dao.ProgressDao
+import com.anurag.eduai.data.local.dao.SessionDao
+import com.anurag.eduai.data.local.dao.StreakDao
 import com.anurag.eduai.data.local.dao.SubjectDao
 import com.anurag.eduai.data.local.entities.ChapterEntity
 import com.anurag.eduai.data.local.entities.ConceptEntity
@@ -11,29 +18,40 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
 /**
- * Handles synchronization of educational content from Firebase Firestore to local Room database.
+ * Handles synchronization of educational content and user progress from Firebase Firestore to local Room database.
  * Uses mapper objects to convert Firestore documents to local entities.
+ * Ensures data isolation across multiple apps using the same Firebase project.
  */
 class FirebaseSyncManager(
-        private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
-        private val subjectDao: SubjectDao,
-        private val chapterDao: ChapterDao,
-        private val conceptDao: ConceptDao
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val subjectDao: SubjectDao,
+    private val chapterDao: ChapterDao,
+    private val conceptDao: ConceptDao,
+    private val progressDao: ProgressDao? = null,
+    private val analyticsDao: AppAnalyticsDao? = null,
+    private val sessionDao: SessionDao? = null,
+    private val streakDao: StreakDao? = null,
+    private val chapterProgressDao: ChapterAgentProgressDao? = null,
+    private val context: Context? = null
 ) {
     companion object {
         private const val CONCEPTS_COLLECTION = "Concept"
+        private const val PROGRESS_COLLECTION = "progress"
+        private const val ANALYTICS_COLLECTION = "analytics"
+        private const val SESSIONS_COLLECTION = "sessions"
+        private const val STREAK_COLLECTION = "streak"
+        private const val CHAPTER_PROGRESS_COLLECTION = "chapterprogress"
         private const val TAG = "FirebaseSyncManager"
     }
 
     /**
-     * Syncs all concepts from Firestore and extracts unique subjects and chapters to populate the
-     * local database.
+     * Syncs all concepts from Firestore and extracts unique subjects and chapters.
+     * Also detects and notifies about new simulation concepts.
      */
     suspend fun syncAllContent(): SyncResult {
         return try {
             DebugLogger.debugLog(TAG, "Starting content sync from Firestore...")
 
-            // Fetch all concept documents from Firestore
             val snapshot = firestore.collection(CONCEPTS_COLLECTION).get().await()
 
             if (snapshot.isEmpty) {
@@ -41,146 +59,139 @@ class FirebaseSyncManager(
                 return SyncResult(success = true, message = "No data to sync")
             }
 
-            val subjects =
-                    mutableMapOf<String, SubjectEntity>()
-            val chapters =
-                    mutableMapOf<String, ChapterEntity>()
+            val subjects = mutableMapOf<String, SubjectEntity>()
+            val chapters = mutableMapOf<String, ChapterEntity>()
             val concepts = mutableListOf<ConceptEntity>()
 
-            // Process each document
             for (document in snapshot.documents) {
                 try {
-                    // Extract and store unique subjects
                     val subjectId = document.getString("subject_id")
                     if (subjectId != null && !subjects.containsKey(subjectId)) {
-                        val subject = FirebaseSubjectMapper.map(document)
-                        subjects[subjectId] = subject
+                        subjects[subjectId] = FirebaseSubjectMapper.map(document)
                     }
 
                     val chapterId = document.getString("chapter_id")
                     if (chapterId != null && !chapters.containsKey(chapterId)) {
-                        val chapter = FirebaseChapterMapper.map(document)
-                        chapters[chapterId] = chapter
+                        chapters[chapterId] = FirebaseChapterMapper.map(document)
                     }
 
-                    // Map concept
-                    val concept = FirebaseConceptMapper.map(document)
-                    concepts.add(concept)
+                    concepts.add(FirebaseConceptMapper.map(document))
                 } catch (e: Exception) {
                     DebugLogger.errorLog(TAG, "Error mapping document ${document.id}: ${e.message}")
                 }
             }
 
-            // Insert into local database in correct order (subjects -> chapters -> concepts)
-            DebugLogger.debugLog(TAG, "Inserting ${subjects.size} subjects...")
+            // Insert content
             subjectDao.insertSubjects(subjects.values.toList())
-
-            DebugLogger.debugLog(TAG, "Inserting ${chapters.size} chapters...")
             chapterDao.insertChapters(chapters.values.toList())
 
-            DebugLogger.debugLog(TAG, "Inserting ${concepts.size} concepts...")
+            // Detect and Notify about new simulations
+            val newSimulations = if (context != null) {
+                NewSimulationNotifier.getNewSimulations(concepts, conceptDao)
+            } else emptyList()
+
             conceptDao.insertConcepts(concepts)
 
-            val message =
-                    "Synced ${subjects.size} subjects, ${chapters.size} chapters, ${concepts.size} concepts"
-            DebugLogger.debugLog(TAG, message)
+            if (context != null && newSimulations.isNotEmpty()) {
+                NewSimulationNotifier.showNotification(context, newSimulations)
+            }
 
+            val message = "Synced ${subjects.size} subjects, ${chapters.size} chapters, ${concepts.size} concepts"
+            DebugLogger.debugLog(TAG, message)
             SyncResult(success = true, message = message)
         } catch (e: Exception) {
-            val errorMsg = "Sync failed: ${e.message}"
+            val errorMsg = "Content sync failed: ${e.message}"
             DebugLogger.errorLog(TAG, errorMsg)
             SyncResult(success = false, message = errorMsg)
         }
     }
 
-    /** Syncs concepts for a specific subject */
-    suspend fun syncSubjectContent(subjectId: String): SyncResult {
+    /**
+     * Syncs user's progress history from Firestore to local database.
+     * Uses APP_NAME for data isolation.
+     */
+    suspend fun syncUserProgress(userId: String): SyncResult {
         return try {
-            DebugLogger.debugLog(TAG, "Syncing content for subject: $subjectId")
+            if (progressDao == null) return SyncResult(true, "ProgressDao not available")
 
-            val snapshot =
-                    firestore
-                            .collection(CONCEPTS_COLLECTION)
-                            .whereEqualTo("subject_id", subjectId)
-                            .get()
-                            .await()
+            val studentAppDocId = "${AppConfig.APP_NAME}_$userId"
+            DebugLogger.debugLog(TAG, "Syncing user progress for: $studentAppDocId")
 
-            if (snapshot.isEmpty) {
-                return SyncResult(success = true, message = "No concepts found for subject")
+            val snapshot = firestore.collection(PROGRESS_COLLECTION)
+                .document(studentAppDocId)
+                .collection("records")
+                .get()
+                .await()
+
+            val progressList = snapshot.documents.mapNotNull { 
+                try { FirebaseProgressMapper.map(it, userId) } catch (e: Exception) { null }
             }
 
-            val chapters =
-                    mutableMapOf<String, ChapterEntity>()
-            val concepts = mutableListOf<ConceptEntity>()
-
-            for (document in snapshot.documents) {
-                try {
-                    // Extract unique chapters (chapter_id is now unique string)
-                    val chapterId = document.getString("chapter_id")
-                    if (chapterId != null && !chapters.containsKey(chapterId)) {
-                        val chapter = FirebaseChapterMapper.map(document)
-                        chapters[chapterId] = chapter
-                    }
-
-                    // Map concept
-                    val concept = FirebaseConceptMapper.map(document)
-                    concepts.add(concept)
-                } catch (e: Exception) {
-                    DebugLogger.errorLog(TAG, "Error mapping document: ${e.message}")
-                }
+            if (progressList.isNotEmpty()) {
+                progressDao.insertProgressList(progressList)
             }
 
-            chapterDao.insertChapters(chapters.values.toList())
-            conceptDao.insertConcepts(concepts)
-
-            val message =
-                    "Synced ${chapters.size} chapters, ${concepts.size} concepts for subject $subjectId"
-            DebugLogger.debugLog(TAG, message)
-
-            SyncResult(success = true, message = message)
+            SyncResult(true, "Synced ${progressList.size} progress entries")
         } catch (e: Exception) {
-            val errorMsg = "Subject sync failed: ${e.message}"
-            DebugLogger.errorLog(TAG, errorMsg)
-            SyncResult(success = false, message = errorMsg)
+            SyncResult(false, "Progress sync failed: ${e.message}")
         }
     }
 
-    /** Syncs concepts for a specific chapter */
-    suspend fun syncChapterContent(chapterId: String): SyncResult {
+    /**
+     * Syncs user's streak data from Firestore.
+     */
+    suspend fun syncUserStreak(userId: String): SyncResult {
         return try {
-            DebugLogger.debugLog(TAG, "Syncing content for chapter: $chapterId")
+            if (streakDao == null) return SyncResult(true, "StreakDao not available")
 
-            val snapshot =
-                    firestore
-                            .collection(CONCEPTS_COLLECTION)
-                            .whereEqualTo("chapter_id", chapterId)
-                            .get()
-                            .await()
+            val studentAppDocId = "${AppConfig.APP_NAME}_$userId"
+            val snapshot = firestore.collection(STREAK_COLLECTION)
+                .document(studentAppDocId)
+                .collection("data")
+                .document("current")
+                .get()
+                .await()
 
-            if (snapshot.isEmpty) {
-                return SyncResult(success = true, message = "No concepts found for chapter")
+            if (snapshot.exists()) {
+                val streak = FirebaseStreakMapper.map(snapshot, userId)
+                streakDao.insertStreak(streak)
+                SyncResult(true, "Synced streak data")
+            } else {
+                SyncResult(true, "No streak data found")
+            }
+        } catch (e: Exception) {
+            SyncResult(false, "Streak sync failed: ${e.message}")
+        }
+    }
+
+    /**
+     * Syncs chapter agent progress history.
+     */
+    suspend fun syncChapterAgentProgress(userId: String): SyncResult {
+        return try {
+            if (chapterProgressDao == null) return SyncResult(true, "ChapterProgressDao not available")
+
+            val studentAppDocId = "${AppConfig.APP_NAME}_$userId"
+            val snapshot = firestore.collection(CHAPTER_PROGRESS_COLLECTION)
+                .document(studentAppDocId)
+                .collection("records")
+                .get()
+                .await()
+
+            DebugLogger.debugLog(TAG, "Retrieved ${snapshot.size()} chapter progress records from Firestore for: $studentAppDocId")
+
+            val list = snapshot.documents.mapNotNull { 
+                try { FirebaseChapterProgressMapper.map(it, userId) } catch (e: Exception) { null }
             }
 
-            val concepts =
-                    snapshot.documents.mapNotNull { document ->
-                        try {
-                            FirebaseConceptMapper.map(document)
-                        } catch (e: Exception) {
-                            DebugLogger.errorLog(TAG, "Error mapping concept: ${e.message}")
-                            null
-                        }
-                    }
+            if (list.isNotEmpty()) {
+                chapterProgressDao.insertAll(list)
+                DebugLogger.debugLog(TAG, "Restored ${list.size} chapter progress records to local database")
+            }
 
-            conceptDao.insertConcepts(concepts)
-
-            val message = "Synced ${concepts.size} concepts for chapter $chapterId"
-            DebugLogger.debugLog(TAG, message)
-
-            SyncResult(success = true, message = message)
+            SyncResult(true, "Synced ${list.size} chapter progress entries")
         } catch (e: Exception) {
-            val errorMsg = "Chapter sync failed: ${e.message}"
-            DebugLogger.errorLog(TAG, errorMsg)
-            SyncResult(success = false, message = errorMsg)
+            SyncResult(false, "Chapter progress sync failed: ${e.message}")
         }
     }
 }

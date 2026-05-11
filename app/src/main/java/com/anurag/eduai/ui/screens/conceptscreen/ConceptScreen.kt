@@ -3,15 +3,9 @@ package com.anurag.eduai.ui.screens.conceptscreen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -23,26 +17,15 @@ import com.anurag.eduai.domain.chatbot.usecase.ChatIntent
 import com.anurag.eduai.service.analytics.ScreenName
 import com.anurag.eduai.service.analytics.TrackScreenEvent
 import com.anurag.eduai.ui.screens.chatbotscreen.components.AppDialog
-import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptScreenHeader
+import com.anurag.eduai.ui.screens.chatbotscreen.viewmodel.ChatViewModel
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptCard
+import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptScreenHeader
+import com.anurag.eduai.ui.screens.conceptscreen.viewmodel.ConceptViewModel
+import com.anurag.eduai.ui.screens.simulation_agent.viewmodel.SimulationAgentViewModel
 import com.anurag.eduai.ui.theme.BackgroundPrimary
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
-import com.anurag.eduai.ui.screens.chatbotscreen.viewmodel.ChatViewModel
-import com.anurag.eduai.ui.screens.conceptscreen.viewmodel.ConceptViewModel
-import com.anurag.eduai.ui.screens.simulation_agent.viewmodel.SimulationAgentViewModel
 import com.anurag.eduai.utils.StreakManager
-
-/**
- * Composable screen to display concepts of a chapter.
- * chapterId: ID of the chapter whose concepts are to be displayed.
- * type: Type of concepts to load (STUDY or SIMULATION).
- * onBackClick: Lambda function to handle back navigation.
- * onConceptClick: Lambda function to handle concept item clicks.
- *
- * loads concepts from the database using ConceptViewModel and displays them in a list.
- */
-
 
 @Composable
 fun ConceptScreen(
@@ -51,7 +34,7 @@ fun ConceptScreen(
     onBackClick: () -> Unit = {},
     onConceptClick: (String) -> Unit = {},
     onSimulationAgentClick: (String) -> Unit = {},
-    onSimulationClick: (String, String) -> Unit = { _, _ -> },
+    onSimulationClick: (title: String, url: String, conceptId: String) -> Unit = { _, _, _ -> },
     onGoHome:() -> Unit = {},
     onGoSetting:() -> Unit = {},
     viewModel: ConceptViewModel = hiltViewModel(),
@@ -59,19 +42,37 @@ fun ConceptScreen(
 ) {
     TrackScreenEvent(screenName = ScreenName.CONCEPT)
 
-    val dimens = LocalDimensions.current
+    val dimes = LocalDimensions.current
     val context = LocalContext.current
     val state by viewModel.state.collectAsState()
     val chatState by chatViewModel.uiState.collectAsState()
+    val pendingNavigation by viewModel.pendingNavigation.collectAsState()
+
+    // Handle Ad-Interception Navigation
+    LaunchedEffect(pendingNavigation) {
+        pendingNavigation?.let { nav ->
+            if (nav.isDirect) {
+                DebugLogger.debugLog("ConceptScreen", "Performing Direct Navigation: ${nav.route}")
+                when (nav.route) {
+                    "simulation_agent" -> {
+                        nav.conceptId?.let { onSimulationAgentClick(it) }
+                    }
+                    "concept_sim_view" -> {
+                        if (nav.simulationTitle != null && nav.simulationUrl != null && nav.conceptId != null) {
+                            onSimulationClick(nav.simulationTitle, nav.simulationUrl, nav.conceptId)
+                        }
+                    }
+                }
+                viewModel.clearPendingNavigation()
+            }
+        }
+    }
 
     val simulationViewModel: SimulationAgentViewModel = hiltViewModel()
-
-    // available simulations are exposed by the SimulationAgentViewModel when needed
 
     // streak update
     val streakManager = remember { StreakManager(context) }
 
-    // updating streak on concept opening
     LaunchedEffect(Unit) {
         streakManager.onConceptOpened()
         simulationViewModel.loadAvailableSimulations()
@@ -80,81 +81,88 @@ fun ConceptScreen(
         viewModel.loadConcepts(chapterId, type)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundPrimary)
-    ) {
-        ConceptScreenHeader(
-            classLevel = state.classLevel,
-            subjectName = state.subjectName,
-            chapterName = state.chapterName,
-            progress = state.progressUiModel,
-            onBackClick = onBackClick,
-            onGoHome = onGoHome,
-            onGoSetting = onGoSetting
-        )
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(BackgroundPrimary)
+        ) {
+            ConceptScreenHeader(
+                classLevel = state.classLevel,
+                subjectName = state.subjectName,
+                chapterName = state.chapterName,
+                progress = state.progressUiModel,
+                onBackClick = onBackClick,
+                onGoHome = onGoHome,
+                onGoSetting = onGoSetting
+            )
 
-        if (state.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else if (state.error != null) {
-            DebugLogger.errorLog("ConceptScreen", "Error loading concepts: ${state.error}")
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = stringResource(R.string.unable_to_load_concepts), color = TextPrimary)
-            }
-        } else {
-            Column(
-                modifier = Modifier.padding(dimens.spaceMedium),
-            ) {
-                Text(
-                    text = if (state.type.equals("SIMULATION", ignoreCase = true))
-                        stringResource(R.string.simulations_to_explore)
-                    else
-                        stringResource(R.string.lessons_to_master),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = TextPrimary,
-                )
-
-                Spacer(modifier = Modifier.height(dimens.spaceSmall))
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall),
+            if (state.isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    items(state.concepts, key = { it.id }) { conceptUiModel ->
-                        ConceptCard(
-                            concept = conceptUiModel,
-                            onClick = {
-                                DebugLogger.debugLog("ConceptScreen", "Concept clicked: ${conceptUiModel.id}")
+                    CircularProgressIndicator()
+                }
+            } else if (state.error != null) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = stringResource(R.string.unable_to_load_concepts), color = TextPrimary)
+                }
+            } else {
+                Column(
+                    modifier = Modifier.padding(dimes.spaceMedium),
+                ) {
+                    Text(
+                        text = if (state.type.equals("SIMULATION", ignoreCase = true))
+                            stringResource(R.string.simulations_to_explore)
+                        else
+                            stringResource(R.string.lessons_to_master),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimary,
+                        modifier = Modifier.padding(bottom = dimes.spaceSmall)
+                    )
 
-                                // Use the simplified approach - check and show dialog if session exists
-                                chatViewModel.selectConceptWithDialog(conceptUiModel.name)
-
-                                // If no existing session, navigate directly
-                                if (!chatViewModel.hasExistingSession(conceptUiModel.name)) {
-                                    onConceptClick(conceptUiModel.id)
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(dimes.spaceMedium)
+                    ) {
+                        itemsIndexed(state.concepts, key = { _, it -> it.id }) { index, conceptUiModel ->
+                            ConceptCard(
+                                concept = conceptUiModel,
+                                serialNumber = index + 1,
+                                onClick = {
+                                    chatViewModel.selectConceptWithDialog(conceptUiModel.name)
+                                    if (!chatViewModel.hasExistingSession(conceptUiModel.name)) {
+                                        onConceptClick(conceptUiModel.id)
+                                    }
+                                },
+                                onSimulationAgentClick = { simId ->
+                                    viewModel.onSimulationOpened(simId)
+                                },
+                                onSimulationClick = { title, url, conceptId ->
+                                    viewModel.onSimulationUrlOpened(title, url, conceptId)
                                 }
-                            },
-                            onSimulationAgentClick = { simId ->
-                                onSimulationAgentClick(simId)
-                            },
-                            onSimulationClick = { title, url ->
-                                // Pass everything back to the navigator
-                                onSimulationClick( title, url)
-                            }                       )
+                            )
+                        }
                     }
                 }
             }
         }
-        
-        // Session Resume Dialog - Completely stateless, driven by ChatViewModel
+
+        // Ad Banner Dialog - Shown after 5 free simulations
+        if (pendingNavigation != null && !pendingNavigation!!.isDirect) {
+            com.anurag.eduai.ui.components.AdDialog(
+                context = context,
+                onDismiss = {
+                    viewModel.markAdShown()
+                }
+            )
+        }
+
+        // Session Resume Dialog
         AppDialog(
             show = chatState.pendingConceptForDialog != null,
             title = stringResource(R.string.existing_session_found),
@@ -162,22 +170,18 @@ fun ConceptScreen(
             confirmText = stringResource(R.string.continue_session),
             dismissText = stringResource(R.string.start_new),
             onConfirm = {
-                // Resume existing session - use SelectConcept intent
                 chatState.pendingConceptForDialog?.let { conceptName ->
                     chatViewModel.onIntent(ChatIntent.SelectConcept(conceptName))
                     chatViewModel.dismissSessionDialog()
-                    // Find conceptId and navigate
                     state.concepts.find { it.name == conceptName }?.let { concept ->
                         onConceptClick(concept.id)
                     }
                 }
             },
             onDismiss = {
-                // Start fresh session - use StartFreshSession intent
                 chatState.pendingConceptForDialog?.let { conceptName ->
                     chatViewModel.onIntent(ChatIntent.StartFreshSession(conceptName))
                     chatViewModel.dismissSessionDialog()
-                    // Find conceptId and navigate
                     state.concepts.find { it.name == conceptName }?.let { concept ->
                         onConceptClick(concept.id)
                     }

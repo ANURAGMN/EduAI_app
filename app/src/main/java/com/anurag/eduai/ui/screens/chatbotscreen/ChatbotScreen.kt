@@ -195,12 +195,8 @@ fun ChatbotScreen(
             ) {
                 // Header icons (settings, tts icon, kannada toggle)
                 ChatHeaderIcons(
-                    isKannada = chatState.isKannada,
                     isSpeaking = ttsState.isSpeaking,
-                    showResourceCard = chatState.resourceCardState !is ResourceCardUiState.Hidden,
-                    ttsPausedForResource = chatState.ttsPausedForResource,
                     showSettingsMenu = showSettingsMenu,
-                    onKannadaToggle = { chatViewModel.onIntent(ChatIntent.SetKannada(!chatState.isKannada)) },
                     onVolumeClick = {
                         handleVolumeClick(
                             chatState = chatState,

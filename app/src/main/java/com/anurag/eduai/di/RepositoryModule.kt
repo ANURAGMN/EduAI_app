@@ -1,5 +1,6 @@
 package com.anurag.eduai.di
 
+import com.anurag.eduai.data.local.dao.ChapterAgentProgressDao
 import com.anurag.eduai.data.local.dao.ChapterDao
 import com.anurag.eduai.data.local.dao.ConceptDao
 import com.anurag.eduai.data.local.dao.ProgressDao
@@ -9,6 +10,7 @@ import com.anurag.eduai.data.local.dao.SubjectDao
 import com.anurag.eduai.repository.ChapterRepository
 import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.repository.FirebaseRepository
+import com.anurag.eduai.repository.ProgressRepository
 import com.anurag.eduai.repository.StreakRepository
 import com.anurag.eduai.repository.StudentLocalRepository
 import com.anurag.eduai.repository.SubjectRepository
@@ -68,5 +70,14 @@ object RepositoryModule {
         firebaseRepository: FirebaseRepository
     ): StreakRepository {
         return StreakRepository(streakDao, firebaseRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideProgressRepository(
+        progressDao: ProgressDao,
+        chapterAgentProgressDao: ChapterAgentProgressDao
+    ): ProgressRepository {
+        return ProgressRepository(progressDao, chapterAgentProgressDao)
     }
 }

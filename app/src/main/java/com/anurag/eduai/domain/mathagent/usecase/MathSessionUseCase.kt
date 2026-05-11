@@ -45,7 +45,10 @@ class MathSessionUseCase @Inject constructor(
             result.onSuccess { response ->
                 DebugLogger.debugLog("MathSessionUseCase", "Session started: ${response.threadId}")
             }.onFailure { exception ->
-                DebugLogger.errorLog("MathSessionUseCase", "Failed to start session: ${exception.message}")
+                DebugLogger.errorLog(
+                    "MathSessionUseCase",
+                    "Failed to start session: ${exception.message}"
+                )
             }
 
             // Convert result to MathSessionResult
@@ -76,7 +79,10 @@ class MathSessionUseCase @Inject constructor(
                 )
             }
         } catch (e: Exception) {
-            DebugLogger.errorLog("MathSessionUseCase", "Exception starting session: ${e.message}")
+            DebugLogger.errorLog(
+                "MathSessionUseCase",
+                "Exception starting session: ${e.message}"
+            )
             MathSessionResult(
                 success = false,
                 agentResponse = context.getString(R.string.math_error_prefix, e.message ?: "")
@@ -150,7 +156,10 @@ class MathSessionUseCase @Inject constructor(
             }
 
             if (userMessage.isNullOrEmpty()) {
-                DebugLogger.errorLog("MathSessionUseCase", "✗ Cannot continue session: userMessage is empty")
+                DebugLogger.errorLog(
+                    "MathSessionUseCase",
+                    "✗ Cannot continue session: userMessage is empty"
+                )
                 return MathSessionResult(
                     success = false,
                     agentResponse = "User message cannot be empty"
@@ -203,7 +212,10 @@ class MathSessionUseCase @Inject constructor(
                 )
             }
         } catch (e: Exception) {
-            DebugLogger.errorLog("MathSessionUseCase", "✗ Exception continuing session: ${e.message}\nStackTrace: ${e.stackTraceToString()}")
+            DebugLogger.errorLog(
+                "MathSessionUseCase",
+                " Exception continuing session: ${e.message}\nStackTrace: ${e.stackTraceToString()}"
+            )
             MathSessionResult(
                 success = false,
                 agentResponse = "Error: ${e.message ?: "Unknown error"}"
@@ -271,7 +283,7 @@ class MathSessionUseCase @Inject constructor(
             } catch (e: Exception) {
                 DebugLogger.errorLog(
                     "MathSessionUseCase",
-                    "✗ loadThreadMapping error for problemId='$problemId': ${e.message}\nStack: ${e.stackTraceToString()}"
+                    " loadThreadMapping error for problemId='$problemId': ${e.message}\nStack: ${e.stackTraceToString()}"
                 )
                 null
             }
@@ -312,7 +324,10 @@ class MathSessionUseCase @Inject constructor(
      */
     suspend fun deleteSessionMapping(problemId: String) {
         if (problemId.isBlank()) {
-            DebugLogger.errorLog("MathSessionUseCase", "Cannot delete mapping with blank problemId")
+            DebugLogger.errorLog(
+                "MathSessionUseCase",
+                "Cannot delete mapping with blank problemId"
+            )
             return
         }
 
@@ -339,7 +354,10 @@ class MathSessionUseCase @Inject constructor(
         return try {
             // Validate threadId before attempting to resume
             if (threadId.isNullOrEmpty() || threadId.isBlank()) {
-                DebugLogger.errorLog("MathSessionUseCase", "Cannot resume session: Invalid threadId: '$threadId'")
+                DebugLogger.errorLog(
+                    "MathSessionUseCase",
+                    "Cannot resume session: Invalid threadId: '$threadId'"
+                )
                 return MathSessionResult(
                     success = false,
                     agentResponse = context.getString(R.string.math_session_failed_resume) + " (Invalid thread ID)"
@@ -377,7 +395,10 @@ class MathSessionUseCase @Inject constructor(
                 )
             }
         } catch (e: Exception) {
-            DebugLogger.errorLog("MathSessionUseCase", "Exception resuming session: ${e.message}")
+            DebugLogger.errorLog(
+                "MathSessionUseCase",
+                "Exception resuming session: ${e.message}"
+            )
             MathSessionResult(
                 success = false,
                 agentResponse = context.getString(R.string.math_error_prefix, e.message ?: "")

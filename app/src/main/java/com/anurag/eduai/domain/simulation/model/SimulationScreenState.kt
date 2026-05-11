@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.simulation_agent.viewmodel
+package com.anurag.eduai.domain.simulation.model
 
 import com.anurag.eduai.data.remote.SimSessionResponse
 

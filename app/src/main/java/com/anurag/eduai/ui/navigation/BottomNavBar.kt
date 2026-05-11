@@ -28,7 +28,6 @@ import com.anurag.eduai.ui.screens.home.HomeScreen
 import com.anurag.eduai.ui.screens.progess.ProgressScreen
 import com.anurag.eduai.ui.screens.setting.SettingScreen
 import com.anurag.eduai.ui.screens.simulation_agent.SimulationAgentScreen
-import com.anurag.eduai.ui.screens.simulationscreen.SimulationViewerScreen
 import com.anurag.eduai.ui.screens.subjectscreen.SubjectScreen
 import com.anurag.eduai.ui.screens.mathagentscreen.MathAgentScreen
 import com.anurag.eduai.ui.theme.BackgroundPrimary
@@ -111,10 +110,11 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                     onSimulationClick = { simulationId ->
                         navController.navigate("simulation_agent/$simulationId")
                     },
-                    onSimulationUrlClick = { title, url ->
+                    onSimulationUrlClick = { title, url, conceptId ->
                         // Encoded the URL to prevent navigation crashes due to '/'
                         val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
-                        navController.navigate("concept_sim_view/$encodedUrl/$title")
+                        val encodedConceptId = if (conceptId.isNotBlank()) java.net.URLEncoder.encode(conceptId, "UTF-8") else "empty"
+                        navController.navigate("concept_sim_view/$encodedUrl/$title/$encodedConceptId")
                     }
                 )
             }
@@ -233,10 +233,11 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                     onSimulationAgentClick = { simulationId ->
                         navController.navigate("simulation_agent/$simulationId")
                     },
-                    onSimulationClick = { title, url ->
+                    onSimulationClick = { title, url, conceptId ->
                         //  Encode the URL to prevent navigation crashes due to '/'
                         val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
-                        navController.navigate("concept_sim_view/$encodedUrl/$title")
+                        val encodedConceptId = java.net.URLEncoder.encode(conceptId, "UTF-8")
+                        navController.navigate("concept_sim_view/$encodedUrl/$title/$encodedConceptId")
                     },
                     onGoSetting = {
                         navController.navigate("setting") {
@@ -326,32 +327,22 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                 )
             }
 
-            composable("simulation_viewer/{simulationId}/{htmlFileName}/{simulationTitle}") { backStackEntry ->
-                val simulationId = backStackEntry.arguments?.getString("simulationId") ?: return@composable
-                val htmlFileName = backStackEntry.arguments?.getString("htmlFileName") ?: return@composable
-                val simulationTitle = backStackEntry.arguments?.getString("simulationTitle") ?: ""
-
-                SimulationViewerScreen(
-                    simulationId = simulationId,
-                    htmlFileName = htmlFileName,
-                    simulationTitle = simulationTitle,
-                    onBackClick = { navController.popBackStack() }
-                )
-            }
-
             composable(
-                route = "concept_sim_view/{url}/{title}",
+                route = "concept_sim_view/{url}/{title}/{conceptId}",
                 arguments = listOf(
                     navArgument("url") { type = NavType.StringType },
-                    navArgument("title") { type = NavType.StringType }
+                    navArgument("title") { type = NavType.StringType },
+                    navArgument("conceptId") { type = NavType.StringType }
                 )
             ) { backStackEntry ->
                 val url = backStackEntry.arguments?.getString("url") ?: ""
                 val title = backStackEntry.arguments?.getString("title") ?: "Simulation"
+                val conceptId = backStackEntry.arguments?.getString("conceptId") ?: ""
 
                 ConceptSimulationViewer(
                     simulationUrl = url,
                     simulationTitle = title,
+                    conceptId = conceptId,
                     onBackClick = { navController.popBackStack() }
                 )
             }

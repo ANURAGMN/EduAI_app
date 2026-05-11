@@ -36,6 +36,10 @@ android {
         // API key and header name for backend authentication (from local.properties)
         buildConfigField("String", "API_KEYS", "\"${prop("API_KEYS")}\"")
         buildConfigField("String", "API_KEY_HEADER_NAME", "\"${prop("API_KEY_HEADER_NAME")}\"")
+        buildConfigField("String", "ADMOB_APP_ID", "\"${prop("ADMOB_APP_ID")}\"")
+        buildConfigField("String", "BANNER_AD_UNIT_ID", "\"${prop("BANNER_AD_UNIT_ID")}\"")
+        // Manifest placeholders for runtime value substitution
+        manifestPlaceholders["ADMOB_APP_ID"] = prop("ADMOB_APP_ID")
 
     }
     buildFeatures {
@@ -135,5 +139,9 @@ dependencies {
 
     // JWT Decoding
     implementation("com.auth0:java-jwt:4.4.0")
+    // Google Play In-App Update
+    implementation("com.google.android.play:app-update:2.1.0")
 
+    // Google Mobile Ads SDK
+    implementation("com.google.android.gms:play-services-ads:22.6.0")
 }

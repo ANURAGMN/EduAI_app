@@ -219,12 +219,8 @@ fun RevisionScreen(
             ) {
                 // Header with full ChatBotSettings
                 ChatHeaderIcons(
-                    isKannada = chatState.isKannada,
                     isSpeaking = ttsState.isSpeaking,
-                    showResourceCard = false,
-                    ttsPausedForResource = false,
                     showSettingsMenu = showSettingsMenu,
-                    onKannadaToggle = { revisionViewModel.toggleLanguage() },
                     onVolumeClick = {
                         if (ttsState.isSpeaking) {
                             ttsController.stop()

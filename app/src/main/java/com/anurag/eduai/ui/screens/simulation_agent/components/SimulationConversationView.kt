@@ -38,7 +38,8 @@ fun SimulationConversationView(
     ttsController: TextToSpeech,
     modifier: Modifier = Modifier,
     simulationUrl: String? = null,
-    onParamsChanged: (Map<String, Any>) -> Unit = {}
+    onParamsChanged: (Map<String, Any>) -> Unit = {},
+    onPageFinished: () -> Unit = {}
 ) {
     val dimens = LocalDimensions.current
 
@@ -147,6 +148,7 @@ fun SimulationConversationView(
                 SimulationWebView(
                     url = simulationUrl,
                     onParamsChanged = onParamsChanged,
+                    onPageFinished = onPageFinished,
                     modifier = Modifier.fillMaxSize()
                 )
             }

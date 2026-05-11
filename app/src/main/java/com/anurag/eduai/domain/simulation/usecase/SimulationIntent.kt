@@ -1,4 +1,4 @@
-package com.anurag.eduai.ui.screens.simulation_agent.viewmodel
+package com.anurag.eduai.domain.simulation.usecase
 
 /**
  * Pure Kotlin sealed class representing user intents/actions on the Simulation Agent screen.
@@ -84,10 +84,10 @@ sealed class SimulationIntent {
     /**
      * Continue with existing session (don't start fresh)
      */
-    object ContinueExistingSession : SimulationIntent()
+    data class ContinueExistingSession(val simulationId: String) : SimulationIntent()
 
     /**
      * Start fresh session (clear old session and start new one)
      */
-    object StartFreshSession : SimulationIntent()
+    data class StartFreshSession(val simulationId: String) : SimulationIntent()
 }

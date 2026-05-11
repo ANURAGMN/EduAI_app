@@ -2,6 +2,7 @@ package com.anurag.eduai.ui.screens.home.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.anurag.eduai.config.AppConfig
 import com.anurag.eduai.data.local.dao.ConceptDao
 import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.data.local.dao.StudentDao
@@ -9,6 +10,7 @@ import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.data.local.entities.ProgressEntity
 import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.repository.StreakRepository
 import com.anurag.eduai.utils.StreakManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,9 +28,13 @@ class HomeViewModel @Inject constructor(
     private val conceptDao: ConceptDao,
     private val progressDao: ProgressDao,
     private val studentDao: StudentDao,
-    private val userId: String,
-    private val streakManager: StreakManager
+    private val streakRepository: StreakRepository,
+    private val sharedPrefs: com.anurag.eduai.data.local.SharedPreferenceUtils
 ) : ViewModel(){
+
+    private val userId: String
+        get() = sharedPrefs.getUserId() ?: ""
+
 
     // Pair of ProgressEntity and its corresponding ConceptEntity
     var progressConcepts =
@@ -67,15 +73,14 @@ class HomeViewModel @Inject constructor(
         .toEpochMilli() - 1
 
     init {
-        getTodayCompletedConcept()
-        getTodayCompletedSimulation()
         getStudent()
         getGreeting()
-        getStreak()
+        observeStreak()
+        observeTodayProgress()
 
         // Load CONCEPTS
         viewModelScope.launch {
-            progressDao.getAllProgress(userId)
+            progressDao.getAllProgress(userId, AppConfig.APP_NAME )
                 .collectLatest { allProgressList ->
                     // Filter by CONCEPT type in memory
                     val allProgress = allProgressList.filter { it.itemType == "CONCEPT" }
@@ -138,7 +143,7 @@ class HomeViewModel @Inject constructor(
 
         // Load SIMULATIONS
         viewModelScope.launch {
-            progressDao.getAllProgress(userId)
+            progressDao.getAllProgress(userId, AppConfig.APP_NAME)
                 .collectLatest { allProgressList ->
                     // Filter by SIMULATION type in memory
                     val allProgress = allProgressList.filter { it.itemType == "SIMULATION" }
@@ -190,17 +195,38 @@ class HomeViewModel @Inject constructor(
                 }
         }
     }
-    fun getStreak() {
-        val result = streakManager.getCurrentStreak()
-        _streakCount.value = result
-        DebugLogger.debugLog("HomeViewModel", "Current streak: $result days")
+    private fun observeStreak() {
+        viewModelScope.launch {
+            if (userId.isEmpty()) return@launch
+            streakRepository.getStreakFlow(userId).collectLatest { streak ->
+                // Default to 1 as requested for a better new user experience
+                _streakCount.value = streak?.streakCount ?: 1
+            }
+        }
     }
 
-    fun getTodayCompletedConcept() {
+
+    private fun observeTodayProgress() {
         viewModelScope.launch {
-            val result = progressDao.getTodayCompletedConceptCount(userId, startOfDay, endOfDay)
-            _todayConceptCount.value = result
-            DebugLogger.debugLog("HomeViewModel", "Today's completed concepts: $result")
+            if (userId.isEmpty()) return@launch
+            
+            // Observe today's concept count
+            launch {
+                progressDao.getTodayCompletedConceptCountFlow(userId, startOfDay, endOfDay, AppConfig.APP_NAME)
+                    .collectLatest { count ->
+                        _todayConceptCount.value = count
+                        DebugLogger.debugLog("HomeViewModel", "Today's concept count updated: $count")
+                    }
+            }
+
+            // Observe today's simulation count
+            launch {
+                progressDao.getTodayCompletedSimulationCountFlow(userId, startOfDay, endOfDay, AppConfig.APP_NAME)
+                    .collectLatest { count ->
+                        _todaySimulationCount.value = count
+                        DebugLogger.debugLog("HomeViewModel", "Today's simulation count updated: $count")
+                    }
+            }
         }
     }
 
@@ -222,13 +248,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun getTodayCompletedSimulation() {
-        viewModelScope.launch {
-            val result = progressDao.getTodayCompletedSimulationCount(userId, startOfDay, endOfDay)
-            _todaySimulationCount.value = result
-            DebugLogger.debugLog("HomeViewModel", "Today's completed simulations: $result")
-        }
-    }
 
     fun getStudent() {
         viewModelScope.launch {

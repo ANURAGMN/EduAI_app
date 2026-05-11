@@ -45,7 +45,10 @@ class RevisionUseCase @Inject constructor(
                 emptyList()
             }
         } catch (e: Exception) {
-            DebugLogger.errorLog("RevisionUseCase", "Error fetching revision chapters: ${e.message}")
+            DebugLogger.errorLog(
+                "RevisionUseCase",
+                "Error fetching revision chapters: ${e.message}"
+            )
             emptyList()
         }
     }
@@ -164,7 +167,10 @@ class RevisionUseCase @Inject constructor(
                 SessionResult(false)
             }
         } catch (e: Exception) {
-            DebugLogger.errorLog("RevisionUseCase", "continueRevisionSession error: ${e.message}")
+            DebugLogger.errorLog(
+                "RevisionUseCase",
+                "continueRevisionSession error: ${e.message}"
+            )
             SessionResult(false)
         }
     }

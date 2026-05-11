@@ -20,10 +20,4 @@ object LanguageHelper {
         AppCompatDelegate.setApplicationLocales(localeList)
     }
 
-    /**
-     * Clears any app-specific language and follows system language again.
-     */
-    fun resetToSystemLanguage() {
-        AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList())
-    }
 }

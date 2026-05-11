@@ -17,10 +17,11 @@ import androidx.room.PrimaryKey
 data class SessionEntity(
     @PrimaryKey
     val sessionId: String,
+    val studentId: String = "",
     val sessionDate: String, // Format: "yyyy-MM-dd"
     val sessionStartTime: Long,
     val sessionEndTime: Long? = null,
     val durationMillis: Long = 0,
-    val syncAt: Long = System.currentTimeMillis(),
+    val appName: String = "",
     val isSynced: Boolean = false
 )

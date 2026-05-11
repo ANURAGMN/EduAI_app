@@ -35,7 +35,7 @@ fun HomeScreen(
     onNavigateToChapters: (String) -> Unit = {},
     onLessonClick: (String) -> Unit = {},
     onSimulationClick: (String) -> Unit = {},
-    onSimulationUrlClick: (String, String) -> Unit = { _, _ -> }
+    onSimulationUrlClick: (String, String, String) -> Unit = { _, _, _ -> }
 ) {
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.HOME)
@@ -116,8 +116,8 @@ fun HomeScreen(
                     onSimulationClick = { simulationId ->
                         onSimulationClick(simulationId)
                     },
-                    onSimulationUrlClick = { title, url ->
-                        onSimulationUrlClick(title, url)
+                    onSimulationUrlClick = { title, url, conceptId ->
+                        onSimulationUrlClick(title, url, conceptId)
                     }
                 )
             }

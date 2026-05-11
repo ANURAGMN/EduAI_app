@@ -12,8 +12,8 @@ class GoogleInfoExtractor {
 
         fun extractUserInfo(googleIdTokenCredential: GoogleIdTokenCredential): User {
             return User(
-                id = googleIdTokenCredential.id,
-                email = googleIdTokenCredential.id, // id is mostly email address
+                id = googleIdTokenCredential.id, // Keep Google ID for document reference
+                email = googleIdTokenCredential.id, // Will be set to actual email by caller
                 displayName = googleIdTokenCredential.displayName,
                 profilePictureUri = googleIdTokenCredential.profilePictureUri?.toString(),
                 schoolName = "",

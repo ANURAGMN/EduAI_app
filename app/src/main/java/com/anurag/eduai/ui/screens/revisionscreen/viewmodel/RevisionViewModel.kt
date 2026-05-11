@@ -2,11 +2,14 @@ package com.anurag.eduai.ui.screens.revisionscreen.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.anurag.eduai.data.local.dao.ChapterDao
+import com.anurag.eduai.data.local.dao.ConceptDao
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.domain.chatbot.controller.TypingAnimationController
 import com.anurag.eduai.domain.chatbot.usecase.AvatarChangeUseCase
 import com.anurag.eduai.domain.revisionagent.usecase.RevisionUseCase
 import com.anurag.eduai.domain.chatbot.usecase.TranslationUseCase
+import com.anurag.eduai.domain.progress.ProgressEventTracker
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
@@ -30,7 +33,10 @@ class RevisionViewModel @Inject constructor(
     private val revisionUseCase: RevisionUseCase,
     private val typingAnimationController: TypingAnimationController,
     private val translationUseCase: TranslationUseCase,
-    private val avatarChangeUseCase: AvatarChangeUseCase
+    private val avatarChangeUseCase: AvatarChangeUseCase,
+    private val progressEventTracker: ProgressEventTracker,
+    private val chapterDao: ChapterDao,
+    private val conceptDao: ConceptDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -215,6 +221,30 @@ class RevisionViewModel @Inject constructor(
                 translationUseCase.translateToEnglish(agentResponse)
             } else {
                 agentResponse // Already in English
+            }
+        }
+
+        // ✅ Track Revision Progress - mark each concept in this chapter as REVISION_AGENT completed
+        // The chapter name is used to look up the chapter in the DB, then all concepts are fetched.
+        // ChapterProgressCalculator.calculateRevisionProgress() checks per-concept REVISION_AGENT status.
+        viewModelScope.launch {
+            try {
+                // Try to find chapter by normalized name first, then by original name
+                val matchedChapter = chapterDao.getChapterByName(chapter)
+                    ?: chapterDao.getChapterByName(currentChapter)
+
+                if (matchedChapter != null) {
+                    // Get all STUDY concepts in the chapter and mark each as REVISION_AGENT COMPLETED
+                    val concepts = conceptDao.getConceptsForChapterSync(matchedChapter.chapterId, "STUDY")
+                    concepts.forEach { concept ->
+                        progressEventTracker.markRevisionCompleted(userId, concept.conceptId)
+                    }
+                    DebugLogger.debugLog("RevisionViewModel", "✅ Marked ${concepts.size} concepts as revision-completed for chapter: $chapter")
+                } else {
+                    DebugLogger.errorLog("RevisionViewModel", "Could not find chapter in DB for name: $chapter — revision progress not tracked")
+                }
+            } catch (e: Exception) {
+                DebugLogger.errorLog("RevisionViewModel", "Error tracking revision progress: ${e.message}")
             }
         }
 

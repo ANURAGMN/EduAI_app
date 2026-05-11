@@ -51,13 +51,13 @@ interface StreakDao {
      * Used for syncing with Firestore
      */
     @Query("SELECT * FROM streak WHERE isSynced = 0")
-    suspend fun getUnsyncedStreaks(): List<StreakEntity>
+    suspend fun getUnsyncedStreak(): StreakEntity?
 
     /**
      * Mark streak as synced
      */
     @Query("UPDATE streak SET isSynced = 1 WHERE userId = :userId")
-    suspend fun markAsSynced(userId: String)
+    suspend fun markStreakAsSynced(userId: String)
 
     /**
      * Clear all streak data (for logout)

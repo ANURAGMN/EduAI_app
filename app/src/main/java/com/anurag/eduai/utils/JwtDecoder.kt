@@ -30,7 +30,10 @@ object JwtDecoder {
             DebugLogger.errorLog(TAG, "JWT decode error: ${e.message}")
             null
         } catch (e: Exception) {
-            DebugLogger.errorLog(TAG, "Unexpected error decoding JWT: ${e.javaClass.simpleName} - ${e.message}")
+            DebugLogger.errorLog(
+                TAG,
+                "Unexpected error decoding JWT: ${e.javaClass.simpleName} - ${e.message}"
+            )
             null
         }
     }

@@ -17,12 +17,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import com.anurag.eduai.domain.simulation.usecase.SimulationInfo
 import com.anurag.eduai.ui.theme.BrandPrimary
 import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.White
-import com.anurag.eduai.ui.screens.simulation_agent.viewmodel.SimulationInfo
 
 @Composable
 fun SimulationItem(

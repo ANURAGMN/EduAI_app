@@ -24,7 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.anurag.eduai.R
-import com.anurag.eduai.data.model.ProgressStatus
+import com.anurag.eduai.domain.progress.model.ProgressStatus
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.Black
 import com.anurag.eduai.ui.theme.ColorHint

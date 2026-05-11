@@ -71,7 +71,7 @@ object RetrofitProvider {
             val networkInterceptorNames = client.networkInterceptors.map { it.javaClass.simpleName }
             DebugLogger.debugLog("RetrofitProvider", "OkHttp interceptors=${interceptorNames}, networkInterceptors=${networkInterceptorNames}")
         } catch (e: Exception) {
-            DebugLogger.errorLog("RetrofitProvider", "Error enumerating interceptors: ${e.message}")
+            DebugLogger.errorLog("RetrofitProvider","Error enumerating interceptors: ${e.message}")
         }
 
         return Retrofit.Builder()

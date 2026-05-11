@@ -28,6 +28,7 @@ import com.anurag.eduai.ui.theme.ColorHint
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.theme.TextPrimary
 import com.anurag.eduai.ui.theme.WeeklyActivityBarColor
+import com.anurag.eduai.ui.theme.WeeklyActivityTrackColor
 import com.anurag.eduai.ui.screens.progess.viewmodel.DayProgress
 
 /**
@@ -75,19 +76,32 @@ fun WeeklyActivitySection(
                         ) {
                             val barHeight = getBarHeight(day.count)
 
-                            // Bar
+                            // Bar with Track
                             Box(
                                 modifier = Modifier
                                     .width(dimes.spaceLarge)
-                                    .height(barHeight.dp)
+                                    .height(dimes.weeklyActivityCardHeight)
                                     .background(
-                                        color = WeeklyActivityBarColor,
-                                        shape = RoundedCornerShape(
-                                            topStart = dimes.cornerRadiusSmall,
-                                            topEnd = dimes.cornerRadiusSmall
+                                        color = WeeklyActivityTrackColor.copy(alpha = 0.3f),
+                                        shape = RoundedCornerShape(dimes.cornerRadiusSmall)
+                                    ),
+                                contentAlignment = Alignment.BottomCenter
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(dimes.spaceLarge)
+                                        .height(barHeight.dp)
+                                        .background(
+                                            color = WeeklyActivityBarColor,
+                                            shape = RoundedCornerShape(
+                                                topStart = dimes.cornerRadiusSmall,
+                                                topEnd = dimes.cornerRadiusSmall,
+                                                bottomStart = if (barHeight > 4) 0.dp else dimes.cornerRadiusSmall,
+                                                bottomEnd = if (barHeight > 4) 0.dp else dimes.cornerRadiusSmall
+                                            )
                                         )
-                                    )
-                            )
+                                )
+                            }
                         }
                     }
                 }

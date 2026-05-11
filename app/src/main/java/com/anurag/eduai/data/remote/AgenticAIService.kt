@@ -374,7 +374,7 @@ data class SimConceptsInfo(
 )
 
 data class SimConcept(
-    val id: Int,
+    val id: String,
     val title: String,
     val description: String,
     @SerializedName("key_insight") val keyInsight: String,
@@ -382,7 +382,7 @@ data class SimConcept(
 )
 
 data class SimPreviousConcept(
-    val id: Int,
+    val id: String,
     val title: String,
     val completed: Boolean
 )

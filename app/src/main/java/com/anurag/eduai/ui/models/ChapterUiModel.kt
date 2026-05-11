@@ -1,24 +1,17 @@
 package com.anurag.eduai.ui.models
 
+import com.anurag.eduai.domain.progress.model.ProgressStatus
+
 /**
  * UI Model for Chapter data
  */
 data class ChapterUiModel(
     val id: String,
-    val name: String,  // Localized name for display (English or Kannada)
-    val englishName: String,  // English name for API calls (always English)
-    val orderIndex:Int,
+    val name: String,
+    val englishName: String,
+    val orderIndex: Int,
     val totalConcepts: Int,
     val completedConcepts: Int,
-    val status: ChapterStatus
+    val status: ProgressStatus
 )
-
-/**
- * Chapter completion status for UI
- */
-enum class ChapterStatus {
-    COMPLETED,
-    IN_PROGRESS,
-    NOT_STARTED
-}
 

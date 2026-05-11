@@ -34,7 +34,7 @@ import com.anurag.eduai.ui.screens.simulation_agent.components.SimulationConvers
 import com.anurag.eduai.ui.theme.LocalDimensions
 import com.anurag.eduai.ui.screens.simulation_agent.viewmodel.SimAgentUiState
 import com.anurag.eduai.ui.screens.simulation_agent.viewmodel.SimulationAgentViewModel
-import com.anurag.eduai.ui.screens.simulation_agent.viewmodel.SimulationIntent
+import com.anurag.eduai.domain.simulation.usecase.SimulationIntent
 import com.anurag.eduai.ui.viewModel.SpeechToText
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 
@@ -71,6 +71,8 @@ fun SimulationAgentScreen(
     val shouldTriggerTts by viewModel.shouldTriggerTts.collectAsState()
     val currentLanguage by viewModel.currentLanguage.collectAsState()
     val showSessionResumeDialog by viewModel.showSessionResumeDialog.collectAsState()
+    val simulationUrls by viewModel.simulationUrls.collectAsState()
+    val sessionData by viewModel.sessionData.collectAsState()
 
     // TTS/STT states
     val ttsState by ttsController.state.collectAsState()
@@ -222,12 +224,8 @@ fun SimulationAgentScreen(
              * Header icons
              */
             ChatHeaderIcons(
-                isKannada = false,
                 isSpeaking = ttsState.isSpeaking,
-                showResourceCard = false,
-                ttsPausedForResource = false,
                 showSettingsMenu = showSettingsMenu,
-                onKannadaToggle = { /* Not used */ },
                 onVolumeClick = {
                     if (ttsState.isSpeaking) {
                         ttsController.stop()
@@ -357,6 +355,8 @@ fun SimulationAgentScreen(
                 isLoading = uiState is SimAgentUiState.Loading,
                 ttsController = ttsController,
                 onParamsChanged = { viewModel.handleIntent(SimulationIntent.ParametersChanged(it)) },
+                simulationUrl = sessionData?.simulation?.htmlUrl,
+                onPageFinished = { viewModel.onSimulationUrlLoaded(simulationId) },
                 modifier = Modifier.weight(1f).background(White),
             )
 
@@ -400,9 +400,9 @@ fun SimulationAgentScreen(
         confirmText = stringResource(R.string.continue_session),
         dismissText = stringResource(R.string.start_new),
         onConfirm = {
-            viewModel.handleIntent(SimulationIntent.ContinueExistingSession)
+            viewModel.handleIntent(SimulationIntent.ContinueExistingSession(simulationId))
         },
         onDismiss = {
-            viewModel.handleIntent(SimulationIntent.StartFreshSession)
+            viewModel.handleIntent(SimulationIntent.StartFreshSession(simulationId))
         }
     )}

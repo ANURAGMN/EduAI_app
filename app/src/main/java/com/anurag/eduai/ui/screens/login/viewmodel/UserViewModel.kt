@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.anurag.eduai.data.firebase.model.User
-import com.anurag.eduai.data.local.EduAiDatabase
+import com.anurag.eduai.data.local.database.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
 import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.debug.DebugLogger
@@ -117,7 +117,8 @@ class UserViewModel @Inject constructor(
 
     /**
      * Handle Google login flow
-     * Checks if user exists in Firebase and updates login state accordingly
+     * Checks if user exists in Firebase by email and appName
+     * Updates login state accordingly
      */
     fun handleGoogleLogin(firebaseUser: User) {
         viewModelScope.launch {
@@ -129,16 +130,18 @@ class UserViewModel @Inject constructor(
                 // Update language for new users
                 updateLanguage(currentLanguage)
 
-                // Check if user exists in Firebase
-                when (val result = repo.checkUserExists(firebaseUser.id)) {
+                // Check if user exists in Firebase by email
+                // firebaseUser.id contains the email from GoogleIdTokenCredential
+                when (val result = repo.checkUserExists(firebaseUser.email)) {
                     is UserCheckResult.Found -> {
                         _user.value = result.user
                         _loginState.value = LoginState.ExistingUser(result.user)
+                        DebugLogger.debugLog("UserViewModel", "Existing user found - Email: ${firebaseUser.email}")
                     }
 
                     is UserCheckResult.NotFound -> {
                         _user.value = firebaseUser.copy(language = currentLanguage)
-                        DebugLogger.debugLog("UserViewModel", "New user detected - ID: ${firebaseUser.id}, Email: ${firebaseUser.email}")
+                        DebugLogger.debugLog("UserViewModel", "New user detected - Email: ${firebaseUser.email}")
                         _loginState.value = LoginState.NewUser
                     }
 
@@ -202,6 +205,9 @@ class UserViewModel @Inject constructor(
                 sharedPreference.setLoggedIn(true)
                 sharedPreference.setLanguagePreference(currentUser.language)
                 sharedPreference.setUserId(currentUser.id)
+
+                // Trigger restoration of user-specific data (Progress, Streaks, etc.)
+                com.anurag.eduai.service.sync.DataSyncService.restoreUserData(context, currentUser.id)
 
                 _existingUserSyncState.value = ExistingUserSyncState.Success
             } catch (e: Exception) {

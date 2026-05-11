@@ -28,11 +28,13 @@ import androidx.room.PrimaryKey
 data class AppAnalyticsEntity(
     @PrimaryKey(autoGenerate = true)
     val analyticsId: Long = 0,
+    val studentId: String = "",
     val sessionId: String,
     val screenName: String, // "LOGIN", "HOME", "SUBJECT", "CONCEPT", "SIMULATION","PROGRESS", "SETTINGS","PROFILE"
     val eventType: String?, // "ENTRY" when entered, updates to "EXIT" when exited
     val entryTime: Long, // Timestamp when screen was entered
     val exitTime: Long? = null, // Timestamp when screen was exited (null if still active)
     val durationMillis: Long = 0, // Time spent on screen (exitTime - entryTime)
+    val appName: String = "",
     val isSynced: Boolean = false
 )

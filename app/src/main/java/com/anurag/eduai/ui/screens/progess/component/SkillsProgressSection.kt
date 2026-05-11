@@ -19,12 +19,11 @@ import com.anurag.eduai.data.local.entities.SubjectEntity
 import com.anurag.eduai.ui.theme.*
 import com.anurag.eduai.ui.screens.progess.viewmodel.ProgressColorType
 import com.anurag.eduai.utils.getLocalizedName
+import com.anurag.eduai.utils.isKannada
 
 /**
  * Skills Progress Section Component
  * Pure UI component - displays subject dropdown and chapter progress
- * NO business logic, NO data manipulation, NO hardcoded values
- * All logic handled by ViewModel
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +40,7 @@ fun SkillsProgressSection(
     capitalizeSubjectName: (String) -> String
 ) {
     val dimes = LocalDimensions.current
+    val isKannadaMode = isKannada()
     var expanded by remember { mutableStateOf(false) }
 
     Column {
@@ -72,7 +72,7 @@ fun SkillsProgressSection(
                         ?: stringResource(R.string.select_subject),
                     onValueChange = {},
                     modifier = Modifier
-                        .menuAnchor()
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                         .fillMaxWidth()
                         .height(dimes.buttonHeightLarge),
                     colors = TextFieldDefaults.colors(
@@ -139,8 +139,14 @@ fun SkillsProgressSection(
                     // Chapter progress bars
                     Column(verticalArrangement = Arrangement.spacedBy(dimes.spaceMedium)) {
                         chaptersToShow.forEach { chapter ->
+                            // Use the localized chapter name when app is in Kannada
+                            val displayName = if (isKannadaMode && chapter.chapterNameKannada.isNotBlank()) {
+                                chapter.chapterNameKannada
+                            } else {
+                                chapter.chapterName
+                            }
                             ChapterProgressBar(
-                                chapterName = chapter.chapterName,
+                                chapterName = displayName,
                                 progress = chapter.completionPercentage.toInt(),
                                 completedConcepts = chapter.completedConcepts,
                                 totalConcepts = chapter.totalConcepts,
@@ -225,15 +231,15 @@ private fun ChapterProgressBar(
                 color = TextPrimary,
                 modifier = Modifier.weight(1f)
             )
-            Text(
-                text = stringResource(
-                    R.string.completed_concepts_format,
-                    completedConcepts,
-                    totalConcepts
-                ),
-                style = MaterialTheme.typography.labelSmall,
-                color = ColorHint
-            )
+//            Text(
+//                text = stringResource(
+//                    R.string.completed_concepts_format,
+//                    completedConcepts,
+//                    totalConcepts
+//                ),
+//                style = MaterialTheme.typography.labelSmall,
+//                color = ColorHint
+//            )
         }
 
         Row(

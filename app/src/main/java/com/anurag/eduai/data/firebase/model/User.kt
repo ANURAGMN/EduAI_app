@@ -2,6 +2,7 @@ package com.anurag.eduai.data.firebase.model
 
 import android.os.Parcelable
 import com.anurag.eduai.data.local.entities.StudentEntity
+import com.google.firebase.firestore.PropertyName
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -15,6 +16,7 @@ data class User(
     val studentClass: Int= 7, // input from user
     val language: String = "en", // default english
     val createdAt: Long = System.currentTimeMillis(),
+    @PropertyName("updatedAt")
     val lastLogin: Long = System.currentTimeMillis(),
     val jwtToken: String = "", // JWT token from auth provider
     val appName: String = "", // app identifier for tracking which app user comes from

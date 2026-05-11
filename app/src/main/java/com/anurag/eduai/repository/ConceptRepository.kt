@@ -1,5 +1,6 @@
 package com.anurag.eduai.repository
 
+import com.anurag.eduai.config.AppConfig
 import com.anurag.eduai.data.local.dao.ConceptDao
 import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.data.local.entities.ConceptEntity
@@ -41,7 +42,7 @@ class ConceptRepository(
      * returns ProgressEntity or null if not found
      */
     suspend fun getProgress(studentId: String, itemType: String, itemId: String): ProgressEntity? {
-        return progressDao.getProgress(studentId, itemType, itemId)
+        return progressDao.getProgress(studentId, itemType, itemId, AppConfig.APP_NAME)
     }
 
     /**
@@ -55,7 +56,7 @@ class ConceptRepository(
         progressPercentage: Int,
         timestamp: Long
     ) {
-        progressDao.updateProgressStatus(studentId, itemType, itemId, newStatus, progressPercentage,timestamp)
+        progressDao.updateProgressStatus(studentId, itemType, itemId, AppConfig.APP_NAME, newStatus, progressPercentage, timestamp)
     }
 
     /**

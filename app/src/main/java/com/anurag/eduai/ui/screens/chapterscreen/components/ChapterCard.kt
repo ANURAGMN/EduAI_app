@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.anurag.eduai.R
-import com.anurag.eduai.ui.models.ChapterStatus
+import com.anurag.eduai.domain.progress.model.ProgressStatus
 import com.anurag.eduai.ui.models.ChapterUiModel
 import com.anurag.eduai.ui.theme.CardBackground
 import com.anurag.eduai.ui.theme.ColorHint
@@ -78,7 +78,7 @@ fun ChapterCard(
             .padding(dimens.cardPadding)
     ) {
         // Status Badge - positioned above the card
-        if (chapter.status != ChapterStatus.NOT_STARTED) {
+        if (chapter.status != ProgressStatus.NOT_STARTED) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -261,16 +261,22 @@ fun ChapterCard(
 
 // Helper functions for status badge
 @Composable
-private fun getChapterStatusText(status: ChapterStatus): String = when (status) {
-    ChapterStatus.COMPLETED -> stringResource(R.string.status_completed)
-    ChapterStatus.IN_PROGRESS -> stringResource(R.string.status_in_progress)
-    ChapterStatus.NOT_STARTED -> stringResource(R.string.status_not_started)
+private fun getChapterStatusText(status: ProgressStatus): String = when (status) {
+    ProgressStatus.COMPLETED -> stringResource(R.string.status_completed)
+    ProgressStatus.IN_PROGRESS -> stringResource(R.string.status_in_progress)
+    ProgressStatus.NOT_STARTED -> stringResource(R.string.status_not_started)
+    else -> {
+        stringResource(R.string.status_not_started)
+    }
 }
 
-private fun getChapterStatusColor(status: ChapterStatus): Color = when (status) {
-    ChapterStatus.COMPLETED -> CompleteTextColor
-    ChapterStatus.IN_PROGRESS -> InProgressTextColor
-    ChapterStatus.NOT_STARTED -> Color.Gray
+private fun getChapterStatusColor(status: ProgressStatus): Color = when (status) {
+    ProgressStatus.COMPLETED -> CompleteTextColor
+    ProgressStatus.IN_PROGRESS -> InProgressTextColor
+    ProgressStatus.NOT_STARTED -> Color.Gray
+    else -> {
+       InProgressTextColor
+    }
 }
 
 @Preview
@@ -284,7 +290,7 @@ fun ChapterCardPreview() {
             englishName = "Number Systems",
             totalConcepts = 8,
             completedConcepts = 5,
-            status = ChapterStatus.IN_PROGRESS
+            status = ProgressStatus.IN_PROGRESS
         )
     )
 }

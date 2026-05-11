@@ -2,43 +2,56 @@ package com.anurag.eduai.ui.screens.progess.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.anurag.eduai.data.local.dao.ChapterDao
 import com.anurag.eduai.data.local.dao.ChapterProgressSummary
 import com.anurag.eduai.data.local.dao.DailyConceptCount
-import com.anurag.eduai.data.local.dao.ProgressDao
-import com.anurag.eduai.data.local.dao.StudentDao
-import com.anurag.eduai.data.local.dao.SubjectDao
 import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.data.local.entities.SubjectEntity
 import com.anurag.eduai.debug.DebugLogger
+import com.anurag.eduai.repository.ChapterRepository
+import com.anurag.eduai.repository.ProgressRepository
+import com.anurag.eduai.repository.StreakRepository
+import com.anurag.eduai.repository.StudentLocalRepository
+import com.anurag.eduai.repository.SubjectRepository
 import com.anurag.eduai.utils.StreakManager
-import com.anurag.eduai.utils.getLocalizedName
+import com.anurag.eduai.utils.isKannada
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
 /**
- * ViewModel for Progress Screen
- * Contains ALL business logic, data fetching, and state management
- * UI layer should only observe state and trigger actions
+ * ViewModel for Progress Screen.
+ *
+ * Uses repositories only — no direct DAO access.
+ *
+ * Chapter progress display uses ChapterRepository.getChapterWiseProgress()
+ * which correctly returns totalConcepts and completedConcepts from the
  */
 @HiltViewModel
 class ProgressScreenViewModel @Inject constructor(
-    private val progressDao: ProgressDao,
-    private val subjectDao: SubjectDao,
-    private val chapterDao: ChapterDao,
-    private val streakManager: StreakManager,
-    private val studentDao: StudentDao,
-    private val userId: String
+    private val progressRepository: ProgressRepository,
+    private val chapterRepository: ChapterRepository,
+    private val subjectRepository: SubjectRepository,
+    private val studentRepository: StudentLocalRepository,
+    private val streakRepository: StreakRepository,
+    private val sharedPrefs: com.anurag.eduai.data.local.SharedPreferenceUtils
 ) : ViewModel() {
+
+    private val userId: String
+        get() = sharedPrefs.getUserId() ?: ""
+
 
     // --- State holders ---
     private val _totalCompletedConcept = MutableStateFlow(0)
     val totalCompletedConcept: StateFlow<Int> = _totalCompletedConcept.asStateFlow()
+
+    private val _totalCompletedSimulation = MutableStateFlow(0)
+    val totalCompletedSimulation: StateFlow<Int> = _totalCompletedSimulation.asStateFlow()
 
     private val _streakCount = MutableStateFlow(0)
     val streakCount: StateFlow<Int> = _streakCount.asStateFlow()
@@ -46,6 +59,13 @@ class ProgressScreenViewModel @Inject constructor(
     private val _sevenDayProgress = MutableStateFlow<List<DailyConceptCount>>(emptyList())
     val sevenDayProgress: StateFlow<List<DailyConceptCount>> = _sevenDayProgress.asStateFlow()
 
+    /**
+     * Chapter-wise progress using ProgressDao.ChapterProgressSummary which includes:
+     *   - chapterId, chapterName
+     *   - totalConcepts (real count from concepts table)
+     *   - completedConcepts (concepts with status=COMPLETED in progress table)
+     *   - completionPercentage (Float)
+     */
     private val _chapterProgressSummary = MutableStateFlow<List<ChapterProgressSummary>>(emptyList())
     val chapterProgressSummary: StateFlow<List<ChapterProgressSummary>> = _chapterProgressSummary.asStateFlow()
 
@@ -64,6 +84,10 @@ class ProgressScreenViewModel @Inject constructor(
 
     private val _maxWeeklyValue = MutableStateFlow(1)
     val maxWeeklyValue: StateFlow<Int> = _maxWeeklyValue.asStateFlow()
+
+    // totalScore: derived from completed concepts (each concept = 10 pts, each sim = 20 pts)
+    private val _totalScore = MutableStateFlow(0)
+    val totalScore: StateFlow<Int> = _totalScore.asStateFlow()
 
     // --- Chapter Progress Categorization (UI-ready) ---
     private val _inProgressChapters = MutableStateFlow<List<ChapterProgressSummary>>(emptyList())
@@ -86,148 +110,156 @@ class ProgressScreenViewModel @Inject constructor(
 
     init {
         getStudent()
-        getStreak()
-        getTotalCompletedConcept()
+        observeStreak()
+        observeConceptCount()
+        observeSimulationCount()
+        observeTotalScore()
     }
 
-    // --- Data Loading Functions ---
+    // --- Reactive Data Observation ---
 
-    fun getTotalCompletedConcept() {
+    private fun observeConceptCount() {
         viewModelScope.launch {
-            val result = progressDao.getTotalCompletedConcepts(userId)
-            _totalCompletedConcept.value = result
+            progressRepository.getTotalCompletedConceptsFlow(userId)
+                .collectLatest { count ->
+                    _totalCompletedConcept.value = count
+                }
+        }
+    }
+
+    private fun observeSimulationCount() {
+        viewModelScope.launch {
+            progressRepository.getTotalCompletedSimulationsFlow(userId)
+                .collectLatest { count ->
+                    _totalCompletedSimulation.value = count
+                }
+        }
+    }
+
+    private fun observeTotalScore() {
+        viewModelScope.launch {
+            kotlinx.coroutines.flow.combine(
+                progressRepository.getTotalCompletedConceptsFlow(userId),
+                progressRepository.getTotalCompletedSimulationsFlow(userId)
+            ) { concepts, sims ->
+                (concepts * 10) + (sims * 20)
+            }.collectLatest { score ->
+                _totalScore.value = score
+            }
+        }
+    }
+
+    private fun observeStreak() {
+        viewModelScope.launch {
+            if (userId.isEmpty()) return@launch
+            // Use Flow for seamless sync - UI updates immediately when DB updates
+            streakRepository.getStreakFlow(userId).collectLatest { streak ->
+                // Default to 1 as requested for better initial experience
+                _streakCount.value = streak?.streakCount ?: 1
+            }
         }
     }
 
     fun getSevenDayProgress(sevenDaysAgoTimeStamp: Long) {
         viewModelScope.launch {
-            val result = progressDao.getConceptsClearedLast7Days(userId, sevenDaysAgoTimeStamp)
-            _sevenDayProgress.value = result
-            processWeeklyData(result)
-        }
-    }
-
-    fun getStreak() {
-        viewModelScope.launch {
-            val result = streakManager.getCurrentStreak()
-            _streakCount.value = result
-        }
-    }
-
-    fun getChapterProgressSummary(classLevel: Int, subject: String) {
-        viewModelScope.launch {
-            val result = progressDao.getChapterWiseProgress(userId, classLevel, subject)
-
-            // Get localized chapter names
-            val localizedResult = result.map { summary ->
-                val chapter = chapterDao.getChapter(summary.chapterId)
-                summary.copy(
-                    chapterName = chapter?.getLocalizedName() ?: summary.chapterName
-                )
+            try {
+                // Count ALL activities (concepts + simulations + revision) for the weekly chart
+                val result = progressRepository.getDailyCompletedActivityLast7Days(userId, sevenDaysAgoTimeStamp)
+                DebugLogger.debugLog("ProgressVM", "Weekly Activity Data: $result")
+                _sevenDayProgress.value = result
+                processWeeklyData(result)
+            } catch (e: Exception) {
+                DebugLogger.errorLog("ProgressVM", "Error loading weekly activity: ${e.message}")
             }
+        }
+    }
 
-            _chapterProgressSummary.value = localizedResult
-            categorizeChapters(localizedResult)
+    /**
+     * Load chapter-wise progress for a given subject.
+     *
+     * Uses ChapterRepository.getChapterWiseProgress() which queries the `progress` table
+     * via a LEFT JOIN — giving real totalConcepts + completedConcepts counts for every chapter,
+     * even those with no progress rows yet (they show 0%).
+     *
+     * Collects as a Flow so the UI updates automatically when progress changes.
+     */
+    // Holds the active collection Job so we can cancel it when subject changes
+    private var chapterProgressJob: Job? = null
 
-            DebugLogger.debugLog(
-                "ProgressScreenViewModel",
-                "ChapterWiseProgress = $localizedResult"
-            )
+    fun getChapterProgressSummary(classLevel: Int, subjectId: String) {
+        // Cancel the previous flow collection before starting a new one
+        chapterProgressJob?.cancel()
+        chapterProgressJob = viewModelScope.launch {
+            val language = if (isKannada()) "kn" else "en"
+            chapterRepository.getChapterWiseProgress(userId, subjectId, language)
+                .collectLatest { result ->
+                    _chapterProgressSummary.value = result
+                    categorizeChapters(result)
+                    DebugLogger.debugLog(
+                        "ProgressScreenViewModel",
+                        "Loaded ${result.size} chapters for subject=$subjectId " +
+                        "(${result.count { it.completionPercentage > 0 }} with progress)"
+                    )
+                }
         }
     }
 
     fun loadSubjects(classLevel: Int) {
         viewModelScope.launch {
-            val subjectList = subjectDao.getSubjectsForClassSync(classLevel)
-            // Subjects already have localized names via getLocalizedName() extension
+            // Hardcode to class 7 to ensure syllabus is independent of user's profile class level
+            val subjectList = subjectRepository.getSubjectsForClass(7)
             _subjects.value = subjectList
-
-            // Auto-select first subject if available and none selected
             if (subjectList.isNotEmpty() && _selectedSubject.value == null) {
                 _selectedSubject.value = subjectList.first()
             }
-
-            DebugLogger.debugLog(
-                "ProgressScreenViewModel",
-                "Loaded ${subjectList.size} subjects for class $classLevel"
-            )
+            DebugLogger.debugLog("ProgressScreenViewModel", "Loaded ${subjectList.size} subjects for class $classLevel")
         }
     }
 
     fun selectSubject(subject: SubjectEntity) {
         _selectedSubject.value = subject
-        _showAllChapters.value = false // Reset show all when subject changes
-        DebugLogger.debugLog(
-            "ProgressScreenViewModel",
-            "Selected subject: ${subject.subjectName}"
-        )
+        _showAllChapters.value = false
     }
 
     fun getStudent() {
         viewModelScope.launch {
-            val result = studentDao.getStudentSync(userId)
-            _student.value = result
+            _student.value = studentRepository.getStudentSync(userId)
         }
     }
 
-    // --- Business Logic Functions ---
+    // --- Business Logic ---
 
-    /**
-     * Process weekly data to create UI-ready list
-     * Converts raw data into structured DayProgress objects with proper labels
-     */
     private fun processWeeklyData(rawData: List<DailyConceptCount>) {
         val today = LocalDate.now()
         val last7Days = (6 downTo 0).map { today.minusDays(it.toLong()).toString() }
-
-        // Convert to map for easy lookup
         val progressMap = rawData.associateBy { it.date }
-
-        // Build full 7-day dataset
         val weeklyData = last7Days.map { date ->
-            DayProgress(
-                dayLabel = getDayOfWeek(date),
-                count = progressMap[date]?.count ?: 0
-            )
+            DayProgress(dayLabel = getDayOfWeek(date), count = progressMap[date]?.count ?: 0)
         }
-
         _weeklyProgressData.value = weeklyData
         _maxWeeklyValue.value = (weeklyData.maxOfOrNull { it.count } ?: 1).coerceAtLeast(1)
     }
 
-    /**
-     * Get day of week abbreviation from date string
-     * Logic moved from WeeklyProgressUtils to ViewModel
-     */
     private fun getDayOfWeek(dateString: String): String {
         return try {
             val date = LocalDate.parse(dateString)
             date.dayOfWeek.name.take(3).lowercase()
                 .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-        } catch (e: Exception) {
-            "???"
-        }
+        } catch (e: Exception) { "???" }
     }
 
-    /**
-     * Categorize chapters into in-progress, completed, and not-started
-     * Determines which chapters to show based on showAll state
-     */
     private fun categorizeChapters(chapters: List<ChapterProgressSummary>) {
-        val inProgress = chapters.filter { it.completionPercentage > 0 && it.completionPercentage < 100 }
-        val completed = chapters.filter { it.completionPercentage >= 100 }
-        val notStarted = chapters.filter { it.completionPercentage == 0f }
+        val inProgress  = chapters.filter { it.completionPercentage > 0 && it.completionPercentage < 100 }
+        val completed   = chapters.filter { it.completionPercentage >= 100 }
+        val notStarted  = chapters.filter { it.completionPercentage <= 0f }
 
-        _inProgressChapters.value = inProgress
-        _completedChapters.value = completed
-        _notStartedChapters.value = notStarted
+        _inProgressChapters.value  = inProgress
+        _completedChapters.value   = completed
+        _notStartedChapters.value  = notStarted
 
         updateChaptersToShow(chapters, inProgress, notStarted)
     }
 
-    /**
-     * Update which chapters should be displayed based on showAll state
-     */
     private fun updateChaptersToShow(
         allChapters: List<ChapterProgressSummary>,
         inProgress: List<ChapterProgressSummary>,
@@ -236,107 +268,49 @@ class ProgressScreenViewModel @Inject constructor(
         val chaptersToDisplay = if (_showAllChapters.value) {
             allChapters
         } else {
-            // Show first 4 in-progress chapters
             val selected = inProgress.take(4).toMutableList()
-            // If less than 4 in-progress, fill with not started
-            if (selected.size < 4) {
-                val remaining = 4 - selected.size
-                selected.addAll(notStarted.take(remaining))
-            }
+            if (selected.size < 4) selected.addAll(notStarted.take(4 - selected.size))
             selected
         }
-
-        _chaptersToShow.value = chaptersToDisplay
+        _chaptersToShow.value  = chaptersToDisplay
         _hasMoreChapters.value = allChapters.size > chaptersToDisplay.size
     }
 
-    /**
-     * Toggle show all chapters state
-     */
     fun toggleShowAllChapters() {
         _showAllChapters.value = !_showAllChapters.value
         categorizeChapters(_chapterProgressSummary.value)
     }
 
-    /**
-     * Calculate progress bar height for weekly activity
-     * Returns percentage of max value (minimum 4% for visibility)
-     */
     fun calculateBarHeight(count: Int): Float {
         val maxValue = _maxWeeklyValue.value
         return (count.toFloat() / maxValue * 100).coerceAtLeast(4f)
     }
 
-    /**
-     * Get progress color based on percentage
-     */
-    fun getProgressColor(percentage: Float): ProgressColorType {
-        return when {
-            percentage >= 100 -> ProgressColorType.COMPLETED
-            percentage >= 80 -> ProgressColorType.HIGH_PROGRESS
-            percentage >= 50 -> ProgressColorType.MEDIUM_PROGRESS
-            percentage > 0 -> ProgressColorType.STARTED
-            else -> ProgressColorType.NOT_STARTED
-        }
+    fun getProgressColor(percentage: Float): ProgressColorType = when {
+        percentage >= 100 -> ProgressColorType.COMPLETED
+        percentage >= 80  -> ProgressColorType.HIGH_PROGRESS
+        percentage >= 50  -> ProgressColorType.MEDIUM_PROGRESS
+        percentage > 0    -> ProgressColorType.STARTED
+        else              -> ProgressColorType.NOT_STARTED
     }
 
-    /**
-     * Capitalize first letter of string (for subject names)
-     */
-    fun capitalizeFirstLetter(text: String): String {
-        return text.replaceFirstChar {
-            if (it.isLowerCase()) it.titlecase()
-            else it.toString()
-        }
-    }
+    fun capitalizeFirstLetter(text: String): String =
+        text.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
 
-    /**
-     * Get show more/less button text
-     */
-    fun getShowMoreButtonText(): String {
-        val hiddenCount = _chapterProgressSummary.value.size - _chaptersToShow.value.size
-        return if (_showAllChapters.value) {
-            "show_less"
-        } else {
-            "show_more_count"  // Will be formatted with count in UI using string resource
-        }
-    }
+    fun getShowMoreButtonText(): String =
+        if (_showAllChapters.value) "show_less" else "show_more_count"
 
-    /**
-     * Get hidden chapters count
-     */
-    fun getHiddenChaptersCount(): Int {
-        return _chapterProgressSummary.value.size - _chaptersToShow.value.size
-    }
+    fun getHiddenChaptersCount(): Int =
+        _chapterProgressSummary.value.size - _chaptersToShow.value.size
 
-    /**
-     * Calculate seven days ago timestamp
-     * Logic moved from WeeklyProgressUtils to ViewModel
-     */
     fun getSevenDaysAgoInMillis(): Long {
-        val today = LocalDate.now()
-        val sevenDaysAgo = today.minusDays(7)
+        val sevenDaysAgo = LocalDate.now().minusDays(7)
         return sevenDaysAgo.toEpochDay() * 24 * 60 * 60 * 1000
     }
 }
 
-/**
- * Data model for daily progress
- * Moved from WeeklyActivitySection to ViewModel
- */
-data class DayProgress(
-    val dayLabel: String,
-    val count: Int
-)
+data class DayProgress(val dayLabel: String, val count: Int)
 
-/**
- * Enum for progress color types
- * Allows UI to map to actual colors without ViewModel knowing about colors
- */
 enum class ProgressColorType {
-    COMPLETED,
-    HIGH_PROGRESS,
-    MEDIUM_PROGRESS,
-    STARTED,
-    NOT_STARTED
+    COMPLETED, HIGH_PROGRESS, MEDIUM_PROGRESS, STARTED, NOT_STARTED
 }

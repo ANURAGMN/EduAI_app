@@ -17,6 +17,8 @@ class SharedPreferenceUtils(context: Context) {
         private const val KEY_IS_LOGGED_IN = "key_is_logged_in"
         private const val KEY_SELECTED_SUBJECT = "selected_subject"
         private const val KEY_SESSION = "key_current_session"
+        private const val KEY_SIM_OPEN_COUNT = "key_sim_open_count"
+        private const val KEY_SIM_OPEN_DATE = "key_sim_open_date"
     }
 
     fun setIdToken(idToken: String) {
@@ -137,6 +139,42 @@ class SharedPreferenceUtils(context: Context) {
             remove(KEY_SELECTED_SUBJECT)
             remove(KEY_SESSION)
             remove(KEY_IS_LOGGED_IN)
+            remove(KEY_SIM_OPEN_COUNT)
+            remove(KEY_SIM_OPEN_DATE)
+        }
+    }
+
+    /**
+     * Increments the count of simulations opened today.
+     * Returns true if the user has reached the daily ad-free limit (5).
+     */
+    fun incrementSimulationOpenCount(): Int {
+        val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+        val lastDate = prefs.getString(KEY_SIM_OPEN_DATE, "")
+        
+        var currentCount = if (today == lastDate) {
+            prefs.getInt(KEY_SIM_OPEN_COUNT, 0)
+        } else {
+            0
+        }
+        
+        currentCount++
+        
+        prefs.edit {
+            putInt(KEY_SIM_OPEN_COUNT, currentCount)
+            putString(KEY_SIM_OPEN_DATE, today)
+        }
+        
+        return currentCount
+    }
+
+    fun getSimulationOpenCount(): Int {
+        val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+        val lastDate = prefs.getString(KEY_SIM_OPEN_DATE, "")
+        return if (today == lastDate) {
+            prefs.getInt(KEY_SIM_OPEN_COUNT, 0)
+        } else {
+            0
         }
     }
 }

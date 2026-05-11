@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.data.local.entities.ProgressEntity
-import com.anurag.eduai.ui.models.ConceptStatus
+import com.anurag.eduai.domain.progress.model.ProgressStatus
 import com.anurag.eduai.ui.models.ConceptUiModel
 import com.anurag.eduai.ui.screens.conceptscreen.components.ConceptCard
 import com.anurag.eduai.ui.theme.BackgroundPrimary
@@ -31,7 +31,7 @@ import com.anurag.eduai.utils.isKannada
 fun PracticeSimulationCard(
     progressSimulations: List<Pair<ProgressEntity?, ConceptEntity?>>,
     onSimulationClick: (String) -> Unit, // Click agent button - navigates to simulation agent
-    onSimulationUrlClick: (String, String) -> Unit = { _, _ -> } // Click simulation button - opens URL viewer
+    onSimulationUrlClick: (String, String, String) -> Unit = { _, _, _ -> } // Click simulation button - opens URL viewer
 ) {
     val dimes = LocalDimensions.current
 
@@ -57,16 +57,16 @@ fun PracticeSimulationCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(dimes.spaceSmall)
             ) {
-                progressSimulations.forEach { (progress, concept) ->
+                progressSimulations.forEachIndexed { index, (progress, concept) ->
                     concept?.let { sim ->
                         val conceptUiModel = ConceptUiModel(
                             id = sim.conceptId,
                             name = sim.getLocalizedName(),
                             order = sim.orderIndex,
                             status = when (progress?.status) {
-                                "COMPLETED" -> ConceptStatus.COMPLETED
-                                "IN_PROGRESS" -> ConceptStatus.IN_PROGRESS
-                                else -> ConceptStatus.NOT_STARTED
+                                "COMPLETED" -> ProgressStatus.COMPLETED
+                                "IN_PROGRESS" -> ProgressStatus.IN_PROGRESS
+                                else -> ProgressStatus.NOT_STARTED
                             },
                             type = sim.type,
                             // Pass only the correct language-based URL and ID
@@ -76,6 +76,7 @@ fun PracticeSimulationCard(
 
                         ConceptCard(
                             concept = conceptUiModel,
+                            serialNumber = index + 1,
                             onClick = {
                                 // Clicking the card itself opens simulation agent
                                 onSimulationClick(sim.conceptId)
@@ -84,9 +85,9 @@ fun PracticeSimulationCard(
                                 // Clicking "Agent" button opens simulation agent
                                 onSimulationClick(simulationId)
                             },
-                            onSimulationClick = { title, url ->
+                            onSimulationClick = { title, url, conceptId ->
                                 // Clicking "Simulation" button opens URL viewer
-                                onSimulationUrlClick(title, url)
+                                onSimulationUrlClick(title, url, conceptId)
                             }
                         )
                     }

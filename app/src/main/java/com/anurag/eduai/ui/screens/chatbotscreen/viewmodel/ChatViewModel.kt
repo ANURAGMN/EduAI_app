@@ -1,7 +1,10 @@
 package com.anurag.eduai.ui.screens.chatbotscreen.viewmodel
 
+import androidx.compose.ui.res.stringResource
+import androidx.core.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+
 import com.anurag.eduai.data.remote.SessionMetadata
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.domain.chatbot.controller.IdleTimerController
@@ -18,6 +21,7 @@ import com.anurag.eduai.domain.chatbot.usecase.ResourceDecisionUseCase
 import com.anurag.eduai.domain.chatbot.usecase.SendMessageUseCase
 import com.anurag.eduai.domain.chatbot.usecase.SessionUseCase
 import com.anurag.eduai.domain.chatbot.usecase.TranslationUseCase
+import com.anurag.eduai.domain.progress.ProgressEventTracker
 import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatUiState
@@ -32,6 +36,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
@@ -47,8 +52,11 @@ class ChatViewModel @Inject constructor(
     private val translationUseCase: TranslationUseCase,
     private val conceptRepository: ConceptRepository,
     private val conceptProgressUseCase: ConceptProgressUseCase,
-    private val avatarChangeUseCase: AvatarChangeUseCase
-) : ViewModel() {
+    private val avatarChangeUseCase: AvatarChangeUseCase,
+    private val progressEventTracker: ProgressEventTracker,
+    @ApplicationContext private val context: android.content.Context,
+
+    ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
@@ -358,6 +366,13 @@ class ChatViewModel @Inject constructor(
         val conceptEntity = conceptRepository.getAllConcepts().find { it.conceptName == concept }
         if (conceptEntity != null && userId.isNotEmpty()) {
             conceptProgressUseCase.markConceptInProgress(userId, conceptEntity.conceptId)
+
+            // ✅ Track study start with ProgressEventTracker
+            // This marks study as in progress and triggers streak update
+            progressEventTracker.markStudyInProgress(
+                studentId = userId,
+                conceptId = conceptEntity.conceptId
+            )
         }
 
         // Translate autosuggestions if Kannada mode is enabled
@@ -533,27 +548,32 @@ class ChatViewModel @Inject constructor(
             )
             _uiState.update { it.copy(currentProgressPercentage = continuedProgress) }
 
-            // Update progress in database for persistence
-            // Match by English concept name since selectedConcept is always in English
+            // Look up concept entity to get conceptId for progress tracking
+            // Match against both English and Kannada names to ensure progress is tracked in all languages
             val conceptEntity = conceptRepository.getAllConcepts().find {
-                it.conceptName == _uiState.value.selectedConcept
-            }
-            if (conceptEntity != null && userId.isNotEmpty()) {
-                conceptRepository.updateProgressStatus(
-                    studentId = userId,
-                    itemType = "CONCEPT",
-                    itemId = conceptEntity.conceptId,
-                    newStatus = if (continuedProgress == 100) "COMPLETED" else "IN_PROGRESS",
-                    progressPercentage = continuedProgress,
-                    timestamp = System.currentTimeMillis()
-                )
+                it.conceptName == _uiState.value.selectedConcept || 
+                it.conceptNameKannada == _uiState.value.selectedConcept
             }
 
-            // Check if END node and mark as completed
-            if (response.currentState?.uppercase() == "END") {
-                if (conceptEntity != null && userId.isNotEmpty()) {
+            // Route ALL progress updates through ProgressEventTracker so that:
+            //   - chapter_agent_progress table is always recalculated
+            //   - streak is updated
+            //   - single source of truth for DB writes
+            if (conceptEntity != null && userId.isNotEmpty()) {
+                if (response.currentState?.uppercase() == "END") {
+                    // Mark as COMPLETED when END node is reached
+                    progressEventTracker.markStudyCompleted(
+                        studentId = userId,
+                        conceptId = conceptEntity.conceptId
+                    )
                     conceptProgressUseCase.markConceptCompleted(userId, conceptEntity.conceptId)
-                    DebugLogger.debugLog("ChatViewModel", "Concept ${conceptEntity.conceptId} marked as COMPLETED - END node reached")
+                    DebugLogger.debugLog("ChatViewModel", "Concept ${conceptEntity.conceptId} marked COMPLETED - END node reached")
+                } else {
+                    // Mark as IN_PROGRESS for all intermediate exchanges
+                    progressEventTracker.markStudyInProgress(
+                        studentId = userId,
+                        conceptId = conceptEntity.conceptId
+                    )
                 }
             }
 
@@ -578,10 +598,11 @@ class ChatViewModel @Inject constructor(
      */
     private fun appendError() = _uiState.update {
         it.copy(
-            messages = it.messages + sendMessageUseCase.createAIMessage("Sorry, I couldn't process that. Please try again."),
+            messages = it.messages + sendMessageUseCase.createAIMessage(
+                context.getString(com.anurag.eduai.R.string.sorry_i_couldn_t_process_that_please_try_again)
+            ),
             isLoading = false)
     }
-
     /**
      * Processes the agent's response text,
      * updates the chat messages with the new response, and starts the typing animation.

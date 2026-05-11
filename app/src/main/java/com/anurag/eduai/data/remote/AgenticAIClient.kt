@@ -566,9 +566,9 @@ class AgenticAIClient(
         DebugLogger.debugLog("AgenticAIClient", "imageUri is null: ${imageUri == null}")
 
         // Build multipart form data
-        val threadIdPart = okhttp3.RequestBody.create("text/plain".toMediaType(), threadId)
-        val userMessagePart = okhttp3.RequestBody.create("text/plain".toMediaType(), userMessage)
-        val isKannadaPart = okhttp3.RequestBody.create("text/plain".toMediaType(), isKannada.toString())
+        val threadIdPart = RequestBody.create("text/plain".toMediaType(), threadId)
+        val userMessagePart = RequestBody.create("text/plain".toMediaType(), userMessage)
+        val isKannadaPart = RequestBody.create("text/plain".toMediaType(), isKannada.toString())
 
         // Image part (optional) - read file from URI and create proper MultipartBody.Part
         val imagePart: okhttp3.MultipartBody.Part? = imageUri?.let { uriStr ->

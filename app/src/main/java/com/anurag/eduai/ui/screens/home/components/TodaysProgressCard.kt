@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.anurag.eduai.R
 import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.data.local.entities.ProgressEntity
-import com.anurag.eduai.data.model.ProgressStatus
+import com.anurag.eduai.domain.progress.model.ProgressStatus
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.ui.theme.AccentBlue
 import com.anurag.eduai.ui.theme.AccentGreen
@@ -142,6 +142,7 @@ fun TodayProgressCard(
             Spacer(modifier = Modifier.padding(dimes.spaceSmall))
 
             progressConcepts.forEach { (progress, concept) ->
+                if (concept == null) return@forEach
                 val progressStatus = ProgressStatus.fromString(progress?.status ?: "NOT_STARTED")
                 val isCompleted = progressStatus == ProgressStatus.COMPLETED
                 val isInProgress = progressStatus == ProgressStatus.IN_PROGRESS

@@ -9,6 +9,7 @@ import com.anurag.eduai.domain.mathagent.usecase.MathImageHandlingUseCase
 import com.anurag.eduai.domain.mathagent.usecase.MathProblemsUseCase
 import com.anurag.eduai.domain.mathagent.usecase.MathSendMessageUseCase
 import com.anurag.eduai.domain.mathagent.usecase.MathSessionUseCase
+import com.anurag.eduai.domain.progress.ProgressEventTracker
 import com.anurag.eduai.ui.screens.mathagentscreen.dataclass.MathUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +26,8 @@ class MathViewModel @Inject constructor(
     private val mathProblemsUseCase: MathProblemsUseCase,
     private val mathSendMessageUseCase: MathSendMessageUseCase,
     private val mathImageHandlingUseCase: MathImageHandlingUseCase,
-    private val sharedPreferenceUtils: SharedPreferenceUtils
+    private val sharedPreferenceUtils: SharedPreferenceUtils,
+    private val progressEventTracker: ProgressEventTracker
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MathUiState())
@@ -114,7 +116,10 @@ class MathViewModel @Inject constructor(
                             errorMessage = exception.message
                         )
                     }
-                    DebugLogger.errorLog("MathViewModel", "Failed to load problems: ${exception.message}")
+                    DebugLogger.errorLog(
+                        "MathViewModel",
+                        "Failed to load problems: ${exception.message}"
+                    )
                 }
             } catch (e: Exception) {
                 _uiState.update {
@@ -156,7 +161,10 @@ class MathViewModel @Inject constructor(
                         startMathSession(problemId)
                     }
                 } catch (e: Exception) {
-                    DebugLogger.errorLog("MathViewModel", "Error checking for existing session: ${e.message}")
+                    DebugLogger.errorLog(
+                        "MathViewModel",
+                        "Error checking for existing session: ${e.message}"
+                    )
                     startMathSession(problemId)
                 }
             }
@@ -193,7 +201,10 @@ class MathViewModel @Inject constructor(
                         startMathSession(problemId)
                     }
                 } catch (e: Exception) {
-                    DebugLogger.errorLog("MathViewModel", "Error checking for existing session: ${e.message}")
+                    DebugLogger.errorLog(
+                        "MathViewModel",
+                        "Error checking for existing session: ${e.message}"
+                    )
                     startMathSession(problemId)
                 }
             }
@@ -231,9 +242,20 @@ class MathViewModel @Inject constructor(
                         )
                     }
 
+                    // Track Math Agent progress
+                    // markMathAgentCompleted also marks CONCEPT/COMPLETED for the study component
+                    viewModelScope.launch {
+                        try {
+                            progressEventTracker.markMathAgentCompleted(userId, problemId)
+                            DebugLogger.debugLog("MathViewModel", "Math agent progress tracked for problem: $problemId")
+                        } catch (e: Exception) {
+                            DebugLogger.errorLog("MathViewModel", "Error tracking math progress: ${e.message}")
+                        }
+                    }
+
                     // Verify state was updated
                     val updatedState = _uiState.value
-                    DebugLogger.debugLog("MathViewModel", "✓ State verified after session start - problemId: '${updatedState.problemId}', threadId: '${updatedState.threadId}', sessionStarted: ${updatedState.sessionStarted}")
+                    DebugLogger.debugLog("MathViewModel", "State verified after session start - problemId: '${updatedState.problemId}', threadId: '${updatedState.threadId}', sessionStarted: ${updatedState.sessionStarted}")
                 } else {
                     _uiState.update {
                         it.copy(
@@ -241,7 +263,10 @@ class MathViewModel @Inject constructor(
                             errorMessage = sessionResult.agentResponse
                         )
                     }
-                    DebugLogger.errorLog("MathViewModel", "✗ Failed to start session: ${sessionResult.agentResponse}")
+                    DebugLogger.errorLog(
+                        "MathViewModel",
+                        "✗ Failed to start session: ${sessionResult.agentResponse}"
+                    )
                 }
             } catch (e: Exception) {
                 _uiState.update {
@@ -250,7 +275,10 @@ class MathViewModel @Inject constructor(
                         errorMessage = e.message
                     )
                 }
-                DebugLogger.errorLog("MathViewModel", "✗ Exception starting session: ${e.message}\n${e.stackTraceToString()}")
+                DebugLogger.errorLog(
+                    "MathViewModel",
+                    "✗ Exception starting session: ${e.message}\n${e.stackTraceToString()}"
+                )
             }
         }
     }
@@ -263,7 +291,7 @@ class MathViewModel @Inject constructor(
 
         // Check if session is started
         if (!currentState.sessionStarted) {
-            DebugLogger.errorLog("MathViewModel", "Cannot send message: Session not started yet")
+            DebugLogger.errorLog("MathViewModel", "Cannot send message: Session not started yet", )
             _uiState.update {
                 it.copy(errorMessage = "Session not initialized. Please wait for the session to start.")
             }
@@ -276,7 +304,10 @@ class MathViewModel @Inject constructor(
         DebugLogger.debugLog("MathViewModel", "sendMessage - problemId: '$problemId', threadId: '$threadId', sessionStarted: ${currentState.sessionStarted}")
 
         if (problemId.isNullOrEmpty()) {
-            DebugLogger.errorLog("MathViewModel", "✗ Cannot send message: problemId is null or empty. Current state: problemId='$problemId'")
+            DebugLogger.errorLog(
+                "MathViewModel",
+                " Cannot send message: problemId is null or empty. Current state: problemId='$problemId'"
+            )
             _uiState.update {
                 it.copy(errorMessage = "Problem ID not set. Please try again.")
             }
@@ -284,7 +315,10 @@ class MathViewModel @Inject constructor(
         }
 
         if (threadId.isNullOrEmpty()) {
-            DebugLogger.errorLog("MathViewModel", "✗ Cannot send message: threadId is null or empty. Current state: threadId='$threadId'")
+            DebugLogger.errorLog(
+                "MathViewModel",
+                "✗ Cannot send message: threadId is null or empty. Current state: threadId='$threadId'"
+            )
             _uiState.update {
                 it.copy(errorMessage = "Session thread ID not set. Please start a new session.")
             }
@@ -310,7 +344,10 @@ class MathViewModel @Inject constructor(
                 val finalThreadId = _uiState.value.threadId
 
                 if (finalThreadId.isNullOrEmpty()) {
-                    DebugLogger.errorLog("MathViewModel", "✗ ThreadId is null or empty when attempting to continue session. Cannot proceed.")
+                    DebugLogger.errorLog(
+                        "MathViewModel",
+                        "✗ ThreadId is null or empty when attempting to continue session. Cannot proceed."
+                    )
                     val errorMessage = mathSendMessageUseCase.createErrorMessage("Session thread ID is missing. Please restart the session.")
                     _uiState.update {
                         it.copy(
@@ -357,7 +394,10 @@ class MathViewModel @Inject constructor(
                             errorMessage = sessionResult.agentResponse
                         )
                     }
-                    DebugLogger.errorLog("MathViewModel", "✗ Failed to send message: ${sessionResult.agentResponse}")
+                    DebugLogger.errorLog(
+                        "MathViewModel",
+                        " Failed to send message: ${sessionResult.agentResponse}"
+                    )
                 }
             } catch (e: Exception) {
                 val errorMessage = mathSendMessageUseCase.createErrorMessage("Error: ${e.message}")
@@ -369,7 +409,10 @@ class MathViewModel @Inject constructor(
                         errorMessage = e.message
                     )
                 }
-                DebugLogger.errorLog("MathViewModel", "✗ Exception sending message: ${e.message}")
+                DebugLogger.errorLog(
+                    "MathViewModel",
+                    "✗ Exception sending message: ${e.message}"
+                )
             }
         }
     }
@@ -421,7 +464,10 @@ class MathViewModel @Inject constructor(
                                 errorMessage = "Failed to resume session"
                             )
                         }
-                        DebugLogger.errorLog("MathViewModel", "Failed to resume session: ${sessionResult.agentResponse}")
+                        DebugLogger.errorLog(
+                            "MathViewModel",
+                            "Failed to resume session: ${sessionResult.agentResponse}"
+                        )
                     }
                 } else {
                     // No mapping found, start fresh
@@ -435,7 +481,10 @@ class MathViewModel @Inject constructor(
                         errorMessage = "Error resuming session: ${e.message}"
                     )
                 }
-                DebugLogger.errorLog("MathViewModel", "Exception continuing previous session: ${e.message}")
+                DebugLogger.errorLog(
+                    "MathViewModel",
+                    "Exception continuing previous session: ${e.message}"
+                )
             }
         }
     }
@@ -481,7 +530,10 @@ class MathViewModel @Inject constructor(
                         errorMessage = "Error starting fresh session: ${e.message}"
                     )
                 }
-                DebugLogger.errorLog("MathViewModel", "Exception starting fresh session: ${e.message}")
+                DebugLogger.errorLog(
+                    "MathViewModel",
+                    "Exception starting fresh session: ${e.message}"
+                )
             }
         }
     }

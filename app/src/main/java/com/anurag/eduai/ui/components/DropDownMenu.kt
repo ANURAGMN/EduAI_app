@@ -53,7 +53,7 @@ fun DropDownMenu(
             value = selectedValue,
             onValueChange = {},
             modifier = Modifier
-                .menuAnchor()
+                .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
                 .height(56.dp),
             label = { Text(label) },

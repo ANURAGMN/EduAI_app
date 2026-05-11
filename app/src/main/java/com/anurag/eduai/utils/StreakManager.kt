@@ -6,13 +6,20 @@ import java.util.Calendar
 
 /**
  * StreakManager is responsible for tracking the user's learning streak
- * based on when the Concept screen is opened.
+ * based on ANY learning activity: concept screen opens, agent sessions, simulations, etc.
  *
  * Streak Logic:
- * - A streak continues if the user opens a concept on consecutive calendar days
- * - Opening multiple times on the same day doesn't increase the streak
- * - Missing a day breaks the streak (resets to 1 on next open)
+ * - A streak continues if ANY learning activity happens on consecutive calendar days
+ * - Multiple activities on the same day don't increase the streak
+ * - Missing a day breaks the streak (resets to 1 on next activity)
  * - The streak is calendar-day based, not 24-hour based
+ *
+ * Activities that trigger streak:
+ * - Concept screen opened
+ * - Study agent session completed
+ * - Simulation agent session started
+ * - Simulation URL loaded
+ * - Revision session started
  */
 class StreakManager(context: Context) {
 
@@ -25,20 +32,28 @@ class StreakManager(context: Context) {
     private companion object {
         const val KEY_LAST_STREAK_DAY = "last_streak_day"
         const val KEY_STREAK_COUNT = "streak_count"
+        private const val TAG = "StreakManager"
     }
 
     /**
-     * Records a Concept screen open and updates the streak accordingly.
+     * Records ANY learning activity and updates the streak accordingly.
+     * This is the primary method for recording all types of learning activities:
+     * - Concept screen opens
+     * - Study agent completed
+     * - Simulation agent started
+     * - Simulation URL loaded
+     * - Revision session started
      *
      * Streak behavior:
      * - First time: streak = 1
-     * - Same day: streak unchanged
+     * - Same day: streak unchanged (multiple activities same day don't increase streak)
      * - Next consecutive day: streak + 1
      * - Day(s) skipped: streak resets to 1
      *
+     * @param activityName Optional name of the activity for logging
      * @return The current streak count after update
      */
-    fun onConceptOpened(): Int {
+    fun recordActivity(activityName: String = "UNKNOWN"): Int {
         val now = System.currentTimeMillis()
         val today = getDayIdentifier(now)
 
@@ -48,26 +63,26 @@ class StreakManager(context: Context) {
         val newStreak = when {
             // First ever streak event
             lastStreakDay == 0L -> {
-                DebugLogger.debugLog("StreakManager", "First streak event - starting at 1")
+                DebugLogger.debugLog(TAG, "[$activityName] First streak event - starting at 1")
                 1
             }
 
             // Same calendar day → do NOT increment
             isSameDay(lastStreakDay, now) -> {
-                DebugLogger.debugLog("StreakManager", "Same day - streak remains $oldStreak")
+                DebugLogger.debugLog(TAG, "[$activityName] Same day - streak remains $oldStreak")
                 oldStreak
             }
 
             // Next consecutive day → continue streak
             isConsecutiveDay(lastStreakDay, now) -> {
                 val newCount = oldStreak + 1
-                DebugLogger.debugLog("StreakManager", "Consecutive day - streak increased to $newCount")
+                DebugLogger.debugLog(TAG, "[$activityName] Consecutive day - streak increased to $newCount")
                 newCount
             }
 
             // Days were skipped → reset streak
             else -> {
-                DebugLogger.debugLog("StreakManager", "Day(s) skipped - streak reset to 1 (was $oldStreak)")
+                DebugLogger.debugLog(TAG, "[$activityName] Day(s) skipped - streak reset to 1 (was $oldStreak)")
                 1
             }
         }
@@ -78,6 +93,16 @@ class StreakManager(context: Context) {
             .apply()
 
         return newStreak
+    }
+
+    /**
+     * Records a Concept screen open and updates the streak accordingly.
+     * This is a convenience method that calls recordActivity().
+     *
+     * @return The current streak count after update
+     */
+    fun onConceptOpened(): Int {
+        return recordActivity("CONCEPT_SCREEN_OPEN")
     }
 
     /**

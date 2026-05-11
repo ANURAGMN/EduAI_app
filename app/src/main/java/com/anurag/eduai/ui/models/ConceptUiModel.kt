@@ -1,5 +1,7 @@
 package com.anurag.eduai.ui.models
 
+import com.anurag.eduai.domain.progress.model.ProgressStatus
+
 /**
  * UI Model for Concept data
  */
@@ -7,18 +9,10 @@ data class ConceptUiModel(
     val id: String,
     val name: String,
     val order: Int,
-    val status: ConceptStatus,
-    val type: String = "study",
-    val simulationUrl: String? = null,
-    val simulationId: String? = null
+    val status: ProgressStatus,
+    val type: String = "STUDY",
+    val simulationId: String? = null,
+    val simulationUrl: String? = null
 )
 
-/**
- * Concept completion status for UI
- */
-enum class ConceptStatus {
-    COMPLETED,
-    IN_PROGRESS,
-    NOT_STARTED
-}
 

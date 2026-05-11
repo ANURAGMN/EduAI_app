@@ -1,24 +1,24 @@
-package com.anurag.eduai.data.local
+package com.anurag.eduai.data.local.database
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.anurag.eduai.data.local.dao.AppAnalyticsDao
+import com.anurag.eduai.data.local.dao.ChapterAgentProgressDao
 import com.anurag.eduai.data.local.dao.ChapterDao
 import com.anurag.eduai.data.local.dao.ConceptDao
 import com.anurag.eduai.data.local.dao.ProgressDao
 import com.anurag.eduai.data.local.dao.SessionDao
-import com.anurag.eduai.data.local.dao.SimulationDao
 import com.anurag.eduai.data.local.dao.StreakDao
 import com.anurag.eduai.data.local.dao.StudentDao
 import com.anurag.eduai.data.local.dao.SubjectDao
 import com.anurag.eduai.data.local.entities.AppAnalyticsEntity
+import com.anurag.eduai.data.local.entities.ChapterAgentProgressEntity
 import com.anurag.eduai.data.local.entities.ChapterEntity
 import com.anurag.eduai.data.local.entities.ConceptEntity
 import com.anurag.eduai.data.local.entities.ProgressEntity
 import com.anurag.eduai.data.local.entities.SessionEntity
-import com.anurag.eduai.data.local.entities.SimulationEntity
 import com.anurag.eduai.data.local.entities.StreakEntity
 import com.anurag.eduai.data.local.entities.StudentEntity
 import com.anurag.eduai.data.local.entities.SubjectEntity
@@ -32,14 +32,14 @@ import com.anurag.eduai.data.local.entities.SubjectEntity
         SubjectEntity::class,
         ChapterEntity::class,
         ConceptEntity::class,
-        SimulationEntity::class,
         SessionEntity::class,
         AppAnalyticsEntity::class,
         ProgressEntity::class,
-        StreakEntity::class
+        StreakEntity::class,
+        ChapterAgentProgressEntity::class
     ],
     version = 1,
-    exportSchema = true
+    exportSchema = false
 )
 abstract class EduAiDatabase : RoomDatabase() {
 
@@ -48,11 +48,10 @@ abstract class EduAiDatabase : RoomDatabase() {
     abstract fun chapterDao(): ChapterDao
     abstract fun conceptDao(): ConceptDao
     abstract fun progressDao(): ProgressDao
-    abstract fun simulationDao(): SimulationDao
     abstract fun sessionDao(): SessionDao
     abstract fun appAnalyticsDao(): AppAnalyticsDao
     abstract fun streakDao(): StreakDao
-
+    abstract fun chapterAgentProgressDao(): ChapterAgentProgressDao
 
     companion object {
         @Volatile

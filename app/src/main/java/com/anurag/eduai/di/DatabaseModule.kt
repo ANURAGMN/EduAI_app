@@ -1,8 +1,9 @@
 package com.anurag.eduai.di
 
 import android.content.Context
-import com.anurag.eduai.data.local.EduAiDatabase
+import com.anurag.eduai.data.local.database.EduAiDatabase
 import com.anurag.eduai.data.local.SharedPreferenceUtils
+import com.anurag.eduai.data.local.dao.ChapterAgentProgressDao
 import com.anurag.eduai.data.local.dao.ChapterDao
 import com.anurag.eduai.data.local.dao.ConceptDao
 import com.anurag.eduai.data.local.dao.ProgressDao
@@ -70,6 +71,12 @@ object DatabaseModule {
     @Singleton
     fun provideStreakDao(database: EduAiDatabase): StreakDao {
         return database.streakDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideChapterAgentProgressDao(database: EduAiDatabase): ChapterAgentProgressDao {
+        return database.chapterAgentProgressDao()
     }
     @Provides
     @Singleton

@@ -141,7 +141,7 @@
     <string name="level_medium">ಮಧ್ಯಮ</string>
     <string name="level_advanced">ಉನ್ನತ</string>
     <string name="student_level">ವಿದ್ಯಾರ್ಥಿ ಮಟ್ಟ</string>
-    <string name="agent">ಏಜೆಂಟ್</string>
+    <string name="agent">ಶಿಕ್ಷಕ</string>
     <string name="no_response">ಯಾವುದೇ ಪ್ರತಿಕ್ರಿಯೆ ಇಲ್ಲ</string>
     <string name="sorry_i_couldn_t_process_that_please_try_again">ಕ್ಷಮಿಸಿ, ಅದನ್ನು ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
     <string name="close_settings">ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಮುಚ್ಚಿ\n</string>
@@ -322,4 +322,26 @@
     <string name="math_session_resumed">ಸೆಶನ್ ಪುನರಾರಂಭ ಮಾಡಲಾಯಿತು</string>
     <string name="math_session_failed_resume">ಸೆಶನ್ ಪುನರಾರಂಭಿಸಲು ವಿಫಲವಾಗಿದೆ</string>
     <string name="math_error_prefix">ದೋಷ: %1$s</string>
+
+    <!-- Progress Status Strings -->
+    <string name="progress_status_completed">ಪೂರ್ಣಗೊಂಡಿದೆ</string>
+    <string name="progress_status_in_progress">ಪ್ರಗತಿಯಲ್ಲಿದೆ</string>
+    <string name="progress_status_not_started">ಪ್ರಾರಂಭಿಸಿಲ್ಲ</string>
+    <string name="progress_status_locked">ಲಾಕ್ ಮಾಡಲಾಗಿದೆ</string>
+    
+    <!-- ErrorHandler Strings -->
+    <string name="authentication_failed_please_log_in_again">ದೃಢೀಕರಣ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಲಾಗ್ ಇನ್ ಮಾಡಿ.</string>
+    <string name="access_denied_you_don_t_have_permission_to_access_this_resource">ಪ್ರವೇಶ ನಿರಾಕರಿಸಲಾಗಿದೆ. ಈ ಸಂಪನ್ಮೂಲವನ್ನು ಪ್ರವೇಶಿಸಲು ನಿಮಗೆ ಅನುಮತಿ ಇಲ್ಲ.</string>
+    <string name="resource_not_found">ಸಂಪನ್ಮೂಲ ಕಂಡುಬಂದಿಲ್ಲ.</string>
+    <string name="please_try_after_some_time">ದಯವಿಟ್ಟು ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="please_try_tomorrow">ದಯವಿಟ್ಟು ನಾಳೆ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="an_unexpected_error_occurred_please_try_again">ನಿರೀಕ್ಷಿತವಲ್ಲದ ದೋಷ ಸಂಭವಿಸಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
+    
+    <string name="error_connection_timeout">ಸಂಪರ್ಕ ಕಾಲಮಿತಿ ಮೀರಿದೆ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ.</string>
+    <string name="error_unable_to_reach_server">ಸರ್ವರ್ ತಲುಪಲು ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ.</string>
+    <string name="error_server_try_later">ಸರ್ವರ್ ದೋಷ. ದಯವಿಟ್ಟು ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="error_request_error">ವಿನಂತಿ ದೋಷ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="error_network_error_with_code">ನೆಟ್‌ವರ್ಕ್ ದೋಷ (%1$d). ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="error_connection_error">ಸಂಪರ್ಕ ದೋಷ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಇಂಟರ್ನೆಟ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="error_unknown">ದೋಷ ಸಂಭವಿಸಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
 </resources>

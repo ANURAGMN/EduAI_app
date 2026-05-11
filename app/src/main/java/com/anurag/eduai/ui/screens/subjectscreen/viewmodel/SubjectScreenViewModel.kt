@@ -32,7 +32,8 @@ class SubjectViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
-                val subjectEntities = repository.getSubjectsForClass(_state.value.classLevel)
+                // Hardcode to class 7 to ensure syllabus is independent of user's profile class level
+                val subjectEntities = repository.getSubjectsForClass(7)
 
                 val subjectUiModels = subjectEntities.map { entity ->
                     SubjectUiModel(

@@ -23,7 +23,7 @@ fun StatusCardGrid(
     streakCount: Int,
     completedConceptCount: Int,
     completedSimulationCount: Int,
-    score: Int
+    totalScore: Int = 0,
 ) {
     val dimes = LocalDimensions.current
 
@@ -57,15 +57,6 @@ fun StatusCardGrid(
                 title = stringResource(R.string.simulation),
                 iconColor = IconColorUnspecified,
                 iconContentDescription = stringResource(R.string.simulation_icon),
-                modifier = Modifier.weight(0.5f)
-            )
-            Spacer(modifier = Modifier.padding(dimes.spaceSmall))
-            StatusCardItem(
-                icon = painterResource(R.drawable.ic_graph),
-                value = score,
-                title = stringResource(R.string.average_score),
-                iconColor = IconColorUnspecified,
-                iconContentDescription = stringResource(R.string.graph_icon),
                 modifier = Modifier.weight(0.5f)
             )
         }

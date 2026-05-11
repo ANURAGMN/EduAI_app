@@ -3,16 +3,28 @@ package com.anurag.eduai.ui.screens.simulation_agent.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import com.anurag.eduai.data.local.SharedPreferenceUtils
-import com.anurag.eduai.data.remote.AgenticAIClient
+import com.anurag.eduai.data.local.dao.ConceptDao
 import com.anurag.eduai.data.remote.SimSessionResponse
 import com.anurag.eduai.debug.DebugLogger
 import com.anurag.eduai.domain.chatbot.usecase.AvatarChangeUseCase
+import com.anurag.eduai.domain.progress.ProgressEventTracker
+import com.anurag.eduai.domain.simulation.model.SimulationScreenState
+import com.anurag.eduai.domain.simulation.usecase.SimulationIntent
+import com.anurag.eduai.domain.simulation.usecase.LoadSimulationsUseCase
+import com.anurag.eduai.domain.simulation.usecase.SendSimulationResponseUseCase
+import com.anurag.eduai.domain.simulation.usecase.SimulationSessionUseCase
+import com.anurag.eduai.domain.simulation.usecase.SimulationInfo
+import com.anurag.eduai.repository.ConceptRepository
 import com.anurag.eduai.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.anurag.eduai.ui.viewModel.TextToSpeech
 import com.anurag.eduai.utils.ErrorHandler
 import com.anurag.eduai.utils.isKannada
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,9 +38,14 @@ import kotlinx.coroutines.launch
  */
 @HiltViewModel
 class SimulationAgentViewModel @Inject constructor(
-    private val agenticAIClient: AgenticAIClient,
+    @ApplicationContext private val context: Context,
     private val sharedPrefs: SharedPreferenceUtils,
-    private val avatarChangeUseCase: AvatarChangeUseCase
+    private val avatarChangeUseCase: AvatarChangeUseCase,
+    private val simulationSessionUseCase: SimulationSessionUseCase,
+    private val sendSimulationResponseUseCase: SendSimulationResponseUseCase,
+    private val loadSimulationsUseCase: LoadSimulationsUseCase,
+    private val progressEventTracker: ProgressEventTracker,
+    private val conceptRepository: ConceptRepository
 ) : ViewModel() {
 
     // API/Session State
@@ -99,6 +116,9 @@ class SimulationAgentViewModel @Inject constructor(
 
     private val _pendingSimulationForDialog = MutableStateFlow<String?>(null)
     val pendingSimulationForDialog: StateFlow<String?> = _pendingSimulationForDialog.asStateFlow()
+
+    // Track the conceptId associated with this simulation
+    private var currentConceptId: String? = null
 
     //Consolidated screen state for unified rendering
     private val _screenState = MutableStateFlow(SimulationScreenState())
@@ -243,38 +263,8 @@ class SimulationAgentViewModel @Inject constructor(
             is SimulationIntent.SpeedChanged -> onSpeedChanged()
             is SimulationIntent.SubmitQuizAnswer -> submitQuizAnswer(intent.answer)
             is SimulationIntent.DismissSessionDialog -> dismissSessionDialog()
-            is SimulationIntent.ContinueExistingSession -> continueWithExistingSession()
-            is SimulationIntent.StartFreshSession -> startFreshSession()
-        }
-    }
-
-    /**
-     * Dismiss the session resume dialog
-     */
-    private fun dismissSessionDialog() {
-        _showSessionResumeDialog.value = false
-        _pendingSimulationForDialog.value = null
-    }
-
-    /**
-     * Continue with existing session (keep current session ID)
-     */
-    private fun continueWithExistingSession() {
-        dismissSessionDialog()
-        // Session is already active, just show UI
-        _isSessionStarted.value = true
-        DebugLogger.debugLog(TAG, "Continuing with existing session")
-    }
-
-    /**
-     * Start a fresh session (clear old session and create new one)
-     */
-    private fun startFreshSession() {
-        val simulationId = _pendingSimulationForDialog.value
-        if (simulationId != null) {
-            dismissSessionDialog()
-            resetSessionForNavigation()
-            startNewSession(simulationId)
+            is SimulationIntent.ContinueExistingSession -> continueExistingSession(intent.simulationId)
+            is SimulationIntent.StartFreshSession -> startFreshSession(intent.simulationId)
         }
     }
 
@@ -498,12 +488,58 @@ class SimulationAgentViewModel @Inject constructor(
      * Handle exceptions
      */
     private fun handleError(e: Exception, operation: String): String {
-        return ErrorHandler.handleException(e, operation, TAG)
+        return ErrorHandler.handleException(context, e, operation, TAG)
     }
 
     /**
      * API OPERATIONS
      */
+
+    /**
+     * Called when simulation webview finishes loading
+     * Marks the simulation URL as completed for progress tracking (50% of simulation component)
+     */
+    fun onSimulationUrlLoaded(simulationId: String) {
+        viewModelScope.launch {
+            try {
+                val conceptId = currentConceptId ?: fetchConceptIdForSimulation(simulationId)
+                if (conceptId != null) {
+                    val studentId = sharedPrefs.getUserId()
+                    if (studentId != null) {
+                        progressEventTracker.markSimulationUrlCompleted(studentId, conceptId)
+                        DebugLogger.debugLog(TAG, " Marked Simulation URL as completed for concept: $conceptId")
+                    } else {
+                        DebugLogger.errorLog(TAG, "Could not retrieve studentId for progress tracking")
+                    }
+                } else {
+                    DebugLogger.errorLog(TAG, "Could not find conceptId for simulationId: $simulationId")
+                }
+            } catch (e: Exception) {
+                DebugLogger.errorLog(TAG, "Error tracking simulation URL completion: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Helper function to fetch conceptId from simulationId
+     * Needed for progress tracking
+     * Queries concepts table by matching simulationId field
+     */
+    private suspend fun fetchConceptIdForSimulation(simulationId: String): String? {
+        return try {
+            withContext(Dispatchers.IO) {
+                // Get all concepts and find the one with matching simulationId
+                val allConcepts = conceptRepository.getAllConcepts()
+                val concept = allConcepts.find {
+                    it.simulationId == simulationId || it.simulationIdKannada == simulationId
+                }
+                concept?.conceptId
+            }
+        } catch (e: Exception) {
+            DebugLogger.errorLog(TAG, "Error fetching conceptId for simulation $simulationId: ${e.message}")
+            null
+        }
+    }
 
     /**
      * Load all available simulations from the API
@@ -514,22 +550,10 @@ class SimulationAgentViewModel @Inject constructor(
                 _simulationsLoading.value = true
                 DebugLogger.debugLog(TAG, "Loading available simulations...")
 
-                val result = agenticAIClient.getAvailableSimulations()
+                val result = loadSimulationsUseCase.loadSimulations()
                 if (result.isSuccess) {
-                    val response = result.getOrNull()!!
-                    val simulations = response.simulations.map { sim ->
-                        SimulationInfo(
-                            id = sim.id,
-                            title = sim.title,
-                            description = sim.description
-                        )
-                    }
-
-                    _availableSimulations.value = simulations
-                    DebugLogger.debugLog(TAG, "Loaded ${simulations.size} simulations")
-                    simulations.forEach {
-                        DebugLogger.debugLog(TAG, "  - ${it.title} (${it.id})")
-                    }
+                    _availableSimulations.value = result.getOrNull() ?: emptyList()
+                    DebugLogger.debugLog(TAG, "Loaded ${_availableSimulations.value.size} simulations")
                 } else {
                     throw result.exceptionOrNull() ?: Exception("Failed to load simulations")
                 }
@@ -564,12 +588,66 @@ class SimulationAgentViewModel @Inject constructor(
             return
         }
 
+        // Check if there's a saved session for this simulation ID
+        if (simulationSessionUseCase.hasExistingSession(simulationId)) {
+            DebugLogger.debugLog(TAG, "Found existing session for $simulationId")
+            _pendingSimulationForDialog.value = simulationId
+            _showSessionResumeDialog.value = true
+            DebugLogger.debugLog(TAG, "Showing session resume dialog for saved session")
+            return
+        }
+
         currentSimulationId = simulationId
         performStartNewSession(simulationId)
     }
 
     /**
-     * Internal method to actually start the session
+     * Continue with existing session
+     * Loads the stored session ID and resumes with history
+     */
+    fun continueExistingSession(simulationId: String) {
+        DebugLogger.debugLog(TAG, "User chose to continue existing session for $simulationId")
+        dismissSessionDialog()
+
+        val existingSessionId = simulationSessionUseCase.getSessionId(simulationId)
+        if (existingSessionId != null) {
+            DebugLogger.debugLog(TAG, "Resuming session: $existingSessionId")
+            currentSimulationId = simulationId
+            performResumeSession(simulationId, existingSessionId)
+        } else {
+            DebugLogger.errorLog(TAG, "No saved session found for $simulationId")
+            // Fallback to starting new session
+            currentSimulationId = simulationId
+            performStartNewSession(simulationId)
+        }
+    }
+
+    /**
+     * Start fresh session
+     * Clears old session mapping and starts new one
+     */
+    fun startFreshSession(simulationId: String) {
+        DebugLogger.debugLog(TAG, "User chose to start fresh session for $simulationId")
+        dismissSessionDialog()
+
+        // Delete existing session mapping
+        simulationSessionUseCase.clearSession(simulationId)
+
+        currentSimulationId = simulationId
+        performStartNewSession(simulationId)
+    }
+
+    /**
+     * Dismiss session resume dialog
+     */
+    fun dismissSessionDialog() {
+        _showSessionResumeDialog.value = false
+        _pendingSimulationForDialog.value = null
+        DebugLogger.debugLog(TAG, "Session dialog dismissed")
+    }
+
+    /**
+     * Internal method to actually start the session and save mapping
      */
     private fun performStartNewSession(simulationId: String) {
         viewModelScope.launch {
@@ -577,19 +655,7 @@ class SimulationAgentViewModel @Inject constructor(
                 _uiState.value = SimAgentUiState.Loading
                 DebugLogger.debugLog(TAG, "Starting new session for simulation: $simulationId")
 
-                // Get current app language
-                val currentLanguage = if (isKannada()) "kannada" else "english"
-                DebugLogger.debugLog(TAG, "Starting session with language: $currentLanguage")
-
-                // Get logged-in user ID from shared preferences
-                val studentId = sharedPrefs.getUserId()
-                DebugLogger.debugLog(TAG, "Starting session with student ID: $studentId")
-
-                val result = agenticAIClient.startSimulationSession(
-                    simulationId = simulationId,
-                    studentId = studentId,
-                    language = currentLanguage
-                )
+                val result = simulationSessionUseCase.startNewSession(simulationId)
 
                 if (result.isSuccess) {
                     val response = result.getOrNull()!!
@@ -597,6 +663,22 @@ class SimulationAgentViewModel @Inject constructor(
                     DebugLogger.debugLog(TAG, "Session ID: ${response.sessionId}")
                     DebugLogger.debugLog(TAG, "Teacher Message: ${response.teacherMessage.text}")
                     DebugLogger.debugLog(TAG, "Simulation URL: ${response.simulation.htmlUrl}")
+
+
+                    //  Track Simulation Agent Progress
+                    val conceptId = fetchConceptIdForSimulation(simulationId)
+                    if (conceptId != null) {
+                        currentConceptId = conceptId
+                        val studentId = sharedPrefs.getUserId()
+                        if (studentId != null) {
+                            progressEventTracker.markSimulationAgentCompleted(studentId, conceptId)
+                            DebugLogger.debugLog(TAG, " Marked Simulation Agent as completed for concept: $conceptId")
+                        } else {
+                            DebugLogger.errorLog(TAG, "Could not retrieve studentId for progress tracking")
+                        }
+                    } else {
+                        DebugLogger.errorLog(TAG, "Could not find conceptId for simulationId: $simulationId")
+                    }
 
                     _sessionData.value = response
                     processSessionResponse(response)
@@ -609,6 +691,42 @@ class SimulationAgentViewModel @Inject constructor(
                 val errorMsg = handleError(e, "start_session")
                 _errorMessage.value = errorMsg
                 _uiState.value = SimAgentUiState.Error(errorMsg)
+            }
+        }
+    }
+
+    /**
+     * Internal method to resume an existing session with history
+     */
+    private fun performResumeSession(simulationId: String, sessionId: String) {
+        viewModelScope.launch {
+            try {
+                _uiState.value = SimAgentUiState.Loading
+                DebugLogger.debugLog(TAG, "Resuming session for simulation: $simulationId with session ID: $sessionId")
+
+                val result = simulationSessionUseCase.resumeExistingSession(simulationId)
+
+                if (result.isSuccess) {
+                    val response = result.getOrNull()!!
+                    DebugLogger.debugLog(TAG, "Session resumed successfully")
+                    DebugLogger.debugLog(TAG, "Session ID: ${response.sessionId}")
+                    DebugLogger.debugLog(TAG, "Teacher Message: ${response.teacherMessage.text}")
+                    DebugLogger.debugLog(TAG, "Exchange count: ${response.learningState.exchangeCount}")
+
+                    _sessionData.value = response
+                    processSessionResponse(response)
+                    _uiState.value = SimAgentUiState.Success(response)
+                } else {
+                    throw result.exceptionOrNull() ?: Exception("Failed to resume simulation session")
+                }
+
+            } catch (e: Exception) {
+                val errorMsg = handleError(e, "resume_session")
+                DebugLogger.errorLog(TAG, "Failed to resume session: $errorMsg")
+                _errorMessage.value = errorMsg
+                _uiState.value = SimAgentUiState.Error(errorMsg)
+                // Fallback to starting new session
+                performStartNewSession(simulationId)
             }
         }
     }
@@ -637,10 +755,10 @@ class SimulationAgentViewModel @Inject constructor(
                     DebugLogger.debugLog(TAG, "Student changed parameters: $changedParams")
                 }
 
-                val result = agenticAIClient.sendSimulationResponse(
+                val result = sendSimulationResponseUseCase.sendResponse(
                     sessionId = currentSessionId,
                     studentResponse = response,
-                    studentChangedParams = changedParams
+                    changedParams = changedParams
                 )
 
                 if (result.isSuccess) {
@@ -697,7 +815,7 @@ class SimulationAgentViewModel @Inject constructor(
                 _uiState.value = SimAgentUiState.Loading
                 DebugLogger.debugLog(TAG, "Submitting quiz answer: $answer")
 
-                val result = agenticAIClient.submitSimulationQuiz(
+                val result = sendSimulationResponseUseCase.submitQuizAnswer(
                     sessionId = currentSessionId,
                     answer = answer
                 )
@@ -725,8 +843,9 @@ class SimulationAgentViewModel @Inject constructor(
     /**
      * Reset session data
      */
-    fun resetSession() {
+    fun resetSession(): Boolean {
         resetSessionForNavigation()
+        return false // not consumed - navigate back
     }
 
     /**
@@ -794,11 +913,3 @@ sealed class SimAgentUiState {
     data class Error(val message: String) : SimAgentUiState()
 }
 
-/**
- * Simulation info data class
- */
-data class SimulationInfo(
-    val id: String,
-    val title: String,
-    val description: String
-)

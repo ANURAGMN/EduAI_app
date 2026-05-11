@@ -22,12 +22,8 @@ import com.anurag.eduai.ui.theme.LocalDimensions
  */
 @Composable
 fun ChatHeaderIcons(
-    isKannada: Boolean,
     isSpeaking: Boolean,
-    showResourceCard: Boolean,
-    ttsPausedForResource: Boolean,
     showSettingsMenu: Boolean,
-    onKannadaToggle: () -> Unit,
     onVolumeClick: () -> Unit,
     onSettingsClick: () -> Unit,
     settingsContent: @Composable () -> Unit,
@@ -41,16 +37,6 @@ fun ChatHeaderIcons(
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Kannada Toggle
-        IconButton(onClick = onKannadaToggle) {
-            Icon(
-                imageVector = Icons.Default.ClosedCaption,
-                contentDescription = if (isKannada) stringResource(R.string.kannada_enabled) else stringResource(
-                    R.string.kannada_disabled
-                ),
-                tint = if (isKannada) IconPrimary else IconSecondary
-            )
-        }
 
         // Volume/TTS Control
         IconButton(onClick = onVolumeClick) {

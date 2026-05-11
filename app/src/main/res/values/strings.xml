@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">EduAI</string>
+    <string name="app_name"> NCERT Class 7 AI Tutor &amp; Labs</string>
 
     <!--   Login Screen -->
     <string name="choose_your_language">Choose Your Language</string>
@@ -212,7 +212,7 @@
 
     <!--    Simulation Screen-->
     <string name="sim_title">Simulation AI</string>
-    <string name="agent">Agent</string>
+    <string name="agent">Tutor</string>
     <string name="sim_type_or_speak">Type or speak...</string>
     <string name="sim_send_message">Send message</string>
     <string name="sim_start_listening">Start listening</string>
@@ -270,11 +270,13 @@
     <string name="fire_icon">Fire Icon</string>
     <string name="book_icon">Book Icon</string>
     <string name="simulation_icon">Simulation Icon</string>
+    <string name="score_icon">Star Icon</string>
     <string name="graph_icon">Graph Icon</string>
 
     <!-- Progress Text -->
     <string name="completed_concepts_format">%1$d/%2$d</string>
     <string name="percentage_format">%1$d%%</string>
+    <string name="score">Score</string>
     <string name="loading_concept_map">Loading concept map...</string>
     <string name="image_is_loading">Image is loading...</string>
     <string name="zoom_in">Zoom In</string>
@@ -324,4 +326,25 @@
     <string name="math_session_resumed">Session resumed</string>
     <string name="math_session_failed_resume">Failed to resume session</string>
     <string name="math_error_prefix">Error: %1$s</string>
+
+    <!-- Progress Status Strings -->
+    <string name="progress_status_completed">Completed</string>
+    <string name="progress_status_in_progress">In Progress</string>
+    <string name="progress_status_not_started">Not Started</string>
+    <string name="progress_status_locked">Locked</string>
+    <string name="authentication_failed_please_log_in_again">Authentication failed. Please log in again.</string>
+    <string name="access_denied_you_don_t_have_permission_to_access_this_resource">Access denied. You don\'t have permission to access this resource.</string>
+    <string name="resource_not_found">Resource not found.</string>
+    <string name="please_try_after_some_time">Please try after some time.</string>
+    <string name="please_try_tomorrow">Please try tomorrow.</string>
+    <string name="an_unexpected_error_occurred_please_try_again">An unexpected error occurred. Please try again.</string>
+
+    <!-- ErrorHandler Strings -->
+    <string name="error_connection_timeout">Connection timed out. Please check your internet connection.</string>
+    <string name="error_unable_to_reach_server">Unable to reach server. Please check your internet connection.</string>
+    <string name="error_server_try_later">Server error. Please try again later.</string>
+    <string name="error_request_error">Request error. Please try again.</string>
+    <string name="error_network_error_with_code">Network error (%1$d). Please try again.</string>
+    <string name="error_connection_error">Connection error. Please check your internet and try again.</string>
+    <string name="error_unknown">An error occurred. Please try again.</string>
 </resources>

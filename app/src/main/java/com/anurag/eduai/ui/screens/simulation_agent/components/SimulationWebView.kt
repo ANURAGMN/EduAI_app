@@ -8,12 +8,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 
+/**
+ * Custom WebViewClient to track when simulation page finishes loading
+ */
+class SimulationWebViewClient(
+    private val onPageFinished: () -> Unit
+) : WebViewClient() {
+    override fun onPageFinished(view: WebView?, url: String?) {
+        super.onPageFinished(view, url)
+        onPageFinished()
+    }
+}
+
 /** WebView component for rendering simulation HTML  */
 @Composable
 fun SimulationWebView(
     url: String,
     modifier: Modifier = Modifier,
-    onParamsChanged: (Map<String, Any>) -> Unit = {}
+    onParamsChanged: (Map<String, Any>) -> Unit = {},
+    onPageFinished: () -> Unit = {}
 ) {
     AndroidView(
         factory = { context ->
@@ -26,7 +39,7 @@ fun SimulationWebView(
                     loadWithOverviewMode = true
                     useWideViewPort = true
                 }
-                webViewClient = WebViewClient()
+                webViewClient = SimulationWebViewClient(onPageFinished)
 
                 // Add JavaScript interface for receiving parameter changes from the simulation
                 addJavascriptInterface(
