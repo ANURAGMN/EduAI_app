@@ -1,0 +1,48 @@
+package com.ncert7.aitutorandlab.di
+
+import android.content.Context
+import com.ncert7.aitutorandlab.BuildConfig
+import com.ncert7.aitutorandlab.data.remote.AgenticAIClient
+import com.ncert7.aitutorandlab.data.remote.GeminiLLMClient
+import com.ncert7.aitutorandlab.data.remote.LLMClient
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+object NetworkModule {
+
+    @Provides
+    @Singleton
+    fun provideAgenticAIClient(@ApplicationContext context: Context): AgenticAIClient {
+        return AgenticAIClient(BuildConfig.AGENTIC_AI_BASE_URL, context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGeminiLLMClient(): GeminiLLMClient {
+        return GeminiLLMClient(
+            BuildConfig.GEMINI_API_KEY,
+            "7",
+            "8",
+            "250",
+            "gemma-3-27b-it"
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideGroqLLMClient(): LLMClient {
+        return LLMClient(
+            BuildConfig.GEMINI_API_KEY,
+            "7",
+            "8",
+            "250",
+            "gemma-3-27b-it"
+        )
+    }
+}

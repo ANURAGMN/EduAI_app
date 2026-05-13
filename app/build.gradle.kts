@@ -6,17 +6,18 @@ plugins {
     alias(libs.plugins.kotlin.android)
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"
     id("com.google.gms.google-services")
+    alias(libs.plugins.firebase.crashlytics)
     id("kotlin-parcelize")
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.21"
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
 android {
-    namespace = "com.anurag.eduai"
+    namespace = "com.ncert7.aitutorandlab"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.anurag.eduai"
+        applicationId = "com.ncert7.aitutorandlab"
         minSdk = 28
         targetSdk = 35
         versionCode = 1
@@ -47,10 +48,25 @@ android {
         buildConfig = true
     }
 
+    signingConfigs {
+        create("release") {
+            val localProps = Properties().apply {
+                val f = rootProject.file("local.properties")
+                if (f.exists()) load(f.inputStream())
+            }
+            storeFile = file(localProps.getProperty("KEYSTORE_PATH", "keystore.jks"))
+            storePassword = localProps.getProperty("KEYSTORE_PASSWORD")
+            keyAlias = localProps.getProperty("KEY_ALIAS")
+            keyPassword = localProps.getProperty("KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
+            isDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -65,6 +81,11 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+}
+
+// KSP Configuration for Room Schema Export
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -105,6 +126,7 @@ dependencies {
 // Firebase
     implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
     implementation("com.google.firebase:firebase-firestore-ktx:25.0.0")
+    implementation(libs.firebase.crashlytics)
 
 
 // Legacy / AppCompat / AndroidX Libs from Version Catalog

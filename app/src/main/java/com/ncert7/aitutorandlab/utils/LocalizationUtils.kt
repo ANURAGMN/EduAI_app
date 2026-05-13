@@ -1,0 +1,66 @@
+package com.ncert7.aitutorandlab.utils
+
+import androidx.appcompat.app.AppCompatDelegate
+import com.ncert7.aitutorandlab.data.local.entities.ChapterEntity
+import com.ncert7.aitutorandlab.data.local.entities.ConceptEntity
+import com.ncert7.aitutorandlab.data.local.entities.SubjectEntity
+
+/**
+ * Extension functions to get localized names based on current app language
+ */
+
+fun SubjectEntity.getLocalizedName(): String {
+    return if (isKannada()) {
+        // Hardcoded Kannada name for Science subject as mapping is not done yet
+        if (subjectNameKannada.isBlank() && subjectName.equals("science", ignoreCase = true)) {
+            "ವಿಜ್ಞಾನ"  // Science in Kannada
+        } else {
+            subjectNameKannada.ifBlank { subjectName }
+        }
+    } else {
+        subjectName
+    }
+}
+
+fun ChapterEntity.getLocalizedName(): String {
+    return if (isKannada()) {
+        chapterNameKannada.ifBlank { chapterName }
+    } else {
+        chapterName
+    }
+}
+
+fun ConceptEntity.getLocalizedName(): String {
+    return if (isKannada()) {
+        conceptNameKannada.ifBlank { conceptName }
+    } else {
+        conceptName
+    }
+}
+
+//temporary function to get localized subject name for hardcoded cases where mapping is not done yet
+fun getLocalizedSubjectName(subjectName: String): String {
+    if (!isKannada()) return subjectName
+
+    return when (subjectName.lowercase()) {
+        "science" -> "ವಿಜ್ಞಾನ"
+        else -> subjectName
+    }
+}
+
+/**
+ * Check if the app is currently in Kannada language
+ */
+fun isKannada(): Boolean {
+    val currentLocale = AppCompatDelegate.getApplicationLocales()[0]?.language
+    return currentLocale == "kn"
+}
+
+/**
+ * Get current app language code
+ */
+fun getCurrentLanguageCode(): String {
+    val currentLocale = AppCompatDelegate.getApplicationLocales()[0]?.language
+    return currentLocale ?: "en"
+}
+

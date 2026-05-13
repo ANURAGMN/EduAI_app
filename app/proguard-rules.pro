@@ -71,18 +71,18 @@
 
 # ========== API DATA CLASSES ==========
 # Keep all API request/response models
--keep class com.anurag.eduai.data.remote.** { *; }
--keep class com.anurag.eduai.data.model.** { *; }
--keep class com.anurag.eduai.data.firebase.** { *; }
+-keep class com.ncert7.aitutorandlab.data.remote.** { *; }
+-keep class com.ncert7.aitutorandlab.data.model.** { *; }
+-keep class com.ncert7.aitutorandlab.data.firebase.** { *; }
 
 # ========== KOTLINX SERIALIZATION ==========
 # Keep serializers for kotlinx.serialization (used for other purposes, not Retrofit)
 -keepattributes InnerClasses
--keep,includedescriptorclasses class com.anurag.eduai.**$$serializer { *; }
--keepclassmembers class com.anurag.eduai.** {
+-keep,includedescriptorclasses class com.ncert7.aitutorandlab.**$$serializer { *; }
+-keepclassmembers class com.ncert7.aitutorandlab.** {
     *** Companion;
 }
--keepclasseswithmembers class com.anurag.eduai.** {
+-keepclasseswithmembers class com.ncert7.aitutorandlab.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
 
