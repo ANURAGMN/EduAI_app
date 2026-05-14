@@ -8,6 +8,7 @@ import com.ncert7.aitutorandlab.repository.ConceptRepository
 import com.ncert7.aitutorandlab.repository.ProgressRepository
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.round
 
 /**
  * Chapter Progress Calculator - Unified progress computation engine
@@ -81,7 +82,8 @@ class ChapterProgressCalculator @Inject constructor(
             if (hasRevisionAgent) divisor++
 
             val overall = if (divisor > 0) {
-                (study + simulation + revision) / divisor
+                // Use proper rounding instead of integer division truncation
+                kotlin.math.round((study + simulation + revision).toFloat() / divisor).toInt()
             } else {
                 0
             }
@@ -191,7 +193,7 @@ class ChapterProgressCalculator @Inject constructor(
             counted++
         }
 
-        val pct = if (counted > 0) (totalScore / counted).toInt() else 0
+        val pct = if (counted > 0) round(totalScore / counted).toInt() else 0
         DebugLogger.debugLog(TAG, "Simulation: $totalScore/$counted concepts = $pct%")
         return pct.coerceIn(0, 100)
     }

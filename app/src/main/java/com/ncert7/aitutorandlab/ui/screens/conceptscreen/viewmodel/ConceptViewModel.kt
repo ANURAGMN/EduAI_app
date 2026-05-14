@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -112,12 +113,18 @@ class ConceptViewModel @Inject constructor(
                     conceptRepository.getConceptsForChapter(chapterId, type)
                 }
 
-                // 2. Reactively collect progress changes for this chapter
-                // Combine individual progress and aggregated chapter progress
-                val progressFlow = progressDao.getAllProgress(studentId, AppConfig.APP_NAME)
-                val chapterFlow = chapterProgressService.getChapterProgressFlow(studentId, chapterId, language)
+                // 2. Get subject ID to fetch chapter progress from the same source as Progress Screen
+                val subjectId = chapter?.subjectId ?: ""
 
-                kotlinx.coroutines.flow.combine(progressFlow, chapterFlow) { allProgress, overallPct ->
+                // 3. Reactively collect progress changes for this chapter
+                // Combine individual progress and chapter-wise progress summary (from Progress Screen's source)
+                val progressFlow = progressDao.getAllProgress(studentId, AppConfig.APP_NAME)
+                val chapterProgressFlow = chapterRepository.getChapterWiseProgress(studentId, subjectId, language)
+
+                combine(progressFlow, chapterProgressFlow) { allProgress, chapterProgressList ->
+                    // Find the progress summary for current chapter to get consistent data with Progress Screen
+                    val chapterSummary = chapterProgressList.find { it.chapterId == chapterId }
+
                     val conceptUiModels = concepts.mapIndexed { index, concept ->
                         val simId = if (isKannada()) concept.simulationIdKannada else concept.simulationId
                         val simUrl = if (isKannada()) concept.simulationUrlKannada else concept.simulationUrl
@@ -197,18 +204,21 @@ class ConceptViewModel @Inject constructor(
                         unlockFirstConcept(studentId, conceptUiModels[0].id)
                     }
 
-                    // Calculate header progress consistently with Chapter/Progress screens
-                    val chapterTotalConcepts = if ((chapter?.totalConcepts ?: 0) > 0) chapter!!.totalConcepts else concepts.size
-                    val derivedCompletedCount = if (chapterTotalConcepts > 0) {
-                        ((overallPct.toFloat() / 100f) * chapterTotalConcepts).toInt()
-                    } else 0
+                    // Use the same progress data as Progress Screen for consistency
+                    // If chapter summary available, use it; otherwise fall back to deriving from concepts
+                    val progressUiModel = if (chapterSummary != null) {
+                        buildProgressUiModel(chapterSummary.completedConcepts, chapterSummary.totalConcepts)
+                    } else {
+                        val chapterTotalConcepts = if ((chapter?.totalConcepts ?: 0) > 0) chapter!!.totalConcepts else concepts.size
+                        buildProgressUiModel(0, chapterTotalConcepts)
+                    }
 
                     _state.value = _state.value.copy(
                         concepts = conceptUiModels,
                         chapterName = chapter?.getLocalizedName() ?: "",
                         chapterId = chapterId,
                         type = type,
-                        progressUiModel = buildProgressUiModel(derivedCompletedCount, chapterTotalConcepts),
+                        progressUiModel = progressUiModel,
                         subjectName = subject?.getLocalizedName() ?: "",
                         classLevel = classLevel,
                         isLoading = false,
