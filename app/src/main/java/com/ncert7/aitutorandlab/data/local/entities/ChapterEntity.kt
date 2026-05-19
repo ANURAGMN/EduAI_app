@@ -26,6 +26,8 @@ data class ChapterEntity(
     val subjectId: String,
     val chapterName: String,
     val chapterNameKannada: String,
+    val revisionId:String,
+    val problemId: List<String>,
     val orderIndex: Int,
     val totalConcepts: Int = 0,
     val syncAt: Long = System.currentTimeMillis(),

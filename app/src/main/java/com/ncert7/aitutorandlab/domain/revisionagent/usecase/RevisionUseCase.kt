@@ -1,11 +1,13 @@
 package com.ncert7.aitutorandlab.domain.revisionagent.usecase
 
+import android.content.Context
 import com.ncert7.aitutorandlab.data.remote.AgenticAIClient
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.domain.chatbot.model.SessionResult
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
 import com.ncert7.aitutorandlab.utils.getCurrentLanguageCode
 import com.ncert7.aitutorandlab.utils.isKannada
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -16,6 +18,8 @@ import javax.inject.Inject
  */
 class RevisionUseCase @Inject constructor(
     private val agenticAIClient: AgenticAIClient,
+    @ApplicationContext private val context: Context
+
 ) {
     private val revisionThreadMap = mutableMapOf<String, String>()
     private val revisionSessionMap = mutableMapOf<String, String>()
@@ -53,34 +57,35 @@ class RevisionUseCase @Inject constructor(
         }
     }
 
-    fun hasExistingRevisionSession(chapter: String): Boolean {
-        return revisionThreadMap.containsKey(chapter)
+    fun hasExistingRevisionSession(revisionId: String): Boolean {
+        return revisionThreadMap.containsKey(revisionId)
     }
 
-    fun getRevisionThreadId(chapter: String): String? {
-        return revisionThreadMap[chapter]
+    fun getRevisionThreadId(revisionId: String): String? {
+        return revisionThreadMap[revisionId]
     }
 
-    private fun saveRevisionThreadMapping(chapter: String, threadId: String, sessionId: String) {
-        revisionThreadMap[chapter] = threadId
-        revisionSessionMap[chapter] = sessionId
-        DebugLogger.debugLog("RevisionUseCase", "Saved revision mapping: chapter=$chapter, threadId=$threadId, sessionId=$sessionId")
+    private fun saveRevisionThreadMapping(revisionId: String, threadId: String, sessionId: String) {
+        revisionThreadMap[revisionId] = threadId
+        revisionSessionMap[revisionId] = sessionId
+        DebugLogger.debugLog("RevisionUseCase", "Saved revision mapping: revisionId=$revisionId, threadId=$threadId, sessionId=$sessionId")
     }
 
-    fun deleteRevisionSessionMapping(chapter: String) {
-        revisionThreadMap.remove(chapter)
-        revisionSessionMap.remove(chapter)
-        DebugLogger.debugLog("RevisionUseCase", "Deleted revision session mapping for chapter: $chapter")
+    fun deleteRevisionSessionMapping(revisionId: String) {
+        revisionThreadMap.remove(revisionId)
+        revisionSessionMap.remove(revisionId)
+        DebugLogger.debugLog("RevisionUseCase", "Deleted revision session mapping for revisionId: $revisionId")
     }
 
     suspend fun startRevisionSession(
-        chapter: String,
+        revisionId: String,
         userId: String,
         isKannada: Boolean
     ): SessionResult {
         return try {
+            // Use revisionId as the chapter identifier for the API
             val result = agenticAIClient.startRevisionSession(
-                chapter = chapter,
+                chapter = revisionId,
                 studentId = userId,
                 isKannada = isKannada
             )
@@ -89,7 +94,7 @@ class RevisionUseCase @Inject constructor(
                 val response = result.getOrNull() ?: return SessionResult(false)
                 if (!response.success) return SessionResult(false)
 
-                saveRevisionThreadMapping(chapter, response.threadId, response.sessionId)
+                saveRevisionThreadMapping(revisionId, response.threadId, response.sessionId)
                 agenticAIClient.setCurrentThreadAndSession(response.threadId, response.sessionId)
 
                 SessionResult(
@@ -136,15 +141,15 @@ class RevisionUseCase @Inject constructor(
     }
 
     suspend fun continueRevisionSession(
-        chapter: String,
+        revisionId: String,
         userMessage: String,
         isKannada: Boolean
     ): SessionResult = withContext(Dispatchers.IO) {
         try {
-            val threadId = revisionThreadMap[chapter]
+            val threadId = revisionThreadMap[revisionId]
                 ?: return@withContext SessionResult(
                     false,
-                    agentResponse = "No active revision session"
+                    agentResponse = context.getString(R.string.no_active_revision_session, revisionId)
                 )
 
             val result = agenticAIClient.continueRevisionSession(

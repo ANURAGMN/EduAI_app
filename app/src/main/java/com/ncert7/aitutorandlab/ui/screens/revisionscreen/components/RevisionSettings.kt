@@ -36,7 +36,7 @@ fun RevisionSettings(
     val dimens = LocalDimensions.current
 
     if (expanded) {
-        Box(
+        Box(   
             modifier = modifier
                 .fillMaxWidth()
                 .background(White)

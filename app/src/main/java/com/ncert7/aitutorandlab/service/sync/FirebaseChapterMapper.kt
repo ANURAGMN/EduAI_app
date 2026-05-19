@@ -14,6 +14,8 @@ object FirebaseChapterMapper {
         val subjectId = document.getString("subject_id") ?: error("subjectId missing for concept ${document.id}")
         val chapterName = document.getString("unit_name") ?: error("chapterName missing for concept ${document.id}")
         val kannadaChapterName = document.getString("unit_name_kn") ?: error("Kannada chapter Name missing for concept ${document.id}")
+        val revisionId = document.getString("revision_id") ?: error("revisionId missing for concept ${document.id}")
+        val problemId = document.get("problem_ids") as? List<String> ?: emptyList()
         val orderIndex = document.getLong("chapter_order")?.toInt()
             ?: 0
 
@@ -24,6 +26,8 @@ object FirebaseChapterMapper {
             subjectId = subjectId,
             chapterName = chapterName,
             chapterNameKannada = kannadaChapterName,
+            revisionId =revisionId,
+            problemId = problemId,
             orderIndex = orderIndex,
             totalConcepts = totalConcepts,
             syncAt = System.currentTimeMillis(),

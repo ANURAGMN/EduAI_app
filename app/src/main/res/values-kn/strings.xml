@@ -195,6 +195,7 @@
     <string name="progress">ಪ್ರಗತಿ</string>
     <string name="study">ಅಧ್ಯಯನ</string>
     <string name="revision">ಪುನರಾವರ್ತನೆ</string>
+    <string name="no_active_revision_session">ಸಕ್ರಿಯ ಪರಿಷ್ಕರಣೆ ಅಧಿವೇಶನವಿಲ್ಲ: %1$s</string>
     <string name="select_chapter">ಅಧ್ಯಾಯವನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="chapter">ಅಧ್ಯಾಯ</string>
     <string name="loading_chapters">ಅಧ್ಯಾಯಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ…</string>

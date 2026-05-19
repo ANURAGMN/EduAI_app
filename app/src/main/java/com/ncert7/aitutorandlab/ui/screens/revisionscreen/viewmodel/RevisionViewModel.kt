@@ -51,35 +51,7 @@ class RevisionViewModel @Inject constructor(
     private var userId = ""
     private var initialized = false
     private var currentChapter = ""
-
-    /**
-     * Normalize chapter name to match API format.
-     * Converts "Light: Shadows And Reflections" to "Light Shadows And Reflections"
-     * - Removes emojis and special characters
-     * - Removes dashes/hyphens
-     * - Removes colons
-     * - Normalizes spacing and handles "and" capitalization
-     */
-    private fun normalizeChapterName(chapterName: String): String {
-        var normalized = chapterName
-
-        // Remove emojis and special Unicode characters (keep only ASCII and common text)
-        normalized = normalized.replace(Regex("[^\\p{L}\\p{N}\\s,&]"), " ")
-
-        // Remove commas and normalize spacing
-        normalized = normalized.replace(", ", " ").replace(",", " ")
-
-        // Remove dashes/hyphens and normalize spacing
-        normalized = normalized.replace("-", " ")
-
-        // Handle "and" capitalization: "and" should be "And" when it's a word separator
-        normalized = normalized.replace(Regex("\\band\\b"), "And")
-
-        // Clean up extra spaces
-        normalized = normalized.replace(Regex("\\s+"), " ").trim()
-
-        return normalized
-    }
+    private var currentRevisionId = ""
 
     /**
      * Initialize the ViewModel with userId and auto-start revision session
@@ -88,7 +60,7 @@ class RevisionViewModel @Inject constructor(
         if (initialized) return
         initialized = true
         this.userId = userId
-        this.currentChapter = normalizeChapterName(chapterName)
+        this.currentChapter = chapterName
 
         // Use LocalizationUtils for language detection
         val appLanguage = getCurrentLanguageCode()
@@ -107,8 +79,21 @@ class RevisionViewModel @Inject constructor(
         // Fetch available chapters from backend
         fetchAvailableChapters()
 
-        // Auto-start the revision session with normalized chapter name
-        autoStartRevision(currentChapter)
+        // Auto-start the revision session by fetching revisionId from database
+        viewModelScope.launch {
+            try {
+                val chapterEntity = chapterDao.getChapterByName(chapterName)
+                if (chapterEntity != null) {
+                    currentRevisionId = chapterEntity.revisionId
+                    DebugLogger.debugLog("RevisionViewModel", "Fetched revisionId: $currentRevisionId for chapter: $chapterName")
+                    autoStartRevision(currentRevisionId)
+                } else {
+                    DebugLogger.errorLog("RevisionViewModel", "Could not find chapter in database: $chapterName")
+                }
+            } catch (e: Exception) {
+                DebugLogger.errorLog("RevisionViewModel", "Error fetching revisionId: ${e.message}")
+            }
+        }
     }
 
     /**
@@ -132,35 +117,18 @@ class RevisionViewModel @Inject constructor(
     }
 
     /**
-     * Toggle language between English and Kannada
-     */
-    fun toggleLanguage() {
-        val newIsKannada = !_uiState.value.isKannada
-        val newLanguage = if (newIsKannada) "kn" else "en"
-        _uiState.update {
-            it.copy(
-                isKannada = newIsKannada,
-                currentLanguage = newLanguage
-            )
-        }
-        DebugLogger.debugLog("RevisionViewModel", "Language toggled to: $newLanguage")
-    }
-
-    /**
      * Change to a different chapter
      */
     fun changeChapter(newChapter: String) = viewModelScope.launch {
-        val normalizedNewChapter = normalizeChapterName(newChapter)
+        if (newChapter == currentChapter) return@launch
 
-        if (normalizedNewChapter == currentChapter) return@launch
-
-        DebugLogger.debugLog("RevisionViewModel", "Changing chapter from '$currentChapter' to '$normalizedNewChapter'")
+        DebugLogger.debugLog("RevisionViewModel", "Changing chapter from '$currentChapter' to '$newChapter'")
 
         // Delete old session
-        revisionUseCase.deleteRevisionSessionMapping(currentChapter)
+        revisionUseCase.deleteRevisionSessionMapping(currentRevisionId)
 
-        // Reset state
-        currentChapter = normalizedNewChapter
+        // Reset state and fetch new revisionId
+        currentChapter = newChapter
         _uiState.update {
             ChatUiState(
                 selectedConcept = newChapter,
@@ -169,37 +137,47 @@ class RevisionViewModel @Inject constructor(
             )
         }
 
-        // Start new session with new chapter
-        autoStartRevision(normalizedNewChapter)
-    }
-
-    /**
-     * Auto-start revision session for the given chapter
-     */
-    private fun autoStartRevision(chapter: String) = viewModelScope.launch {
-        _uiState.update { it.copy(isLoading = true, selectedConcept = chapter) }
-
-        // Check if there's an existing session
-        val existingThreadId = revisionUseCase.getRevisionThreadId(chapter)
-        if (existingThreadId != null) {
-            DebugLogger.debugLog("RevisionViewModel", "Found existing revision session, resuming...")
-            resumeRevisionSession(existingThreadId)
-        } else {
-            DebugLogger.debugLog("RevisionViewModel", "No existing session found, starting new revision session")
-            startRevisionSession(chapter)
+        // Fetch revisionId for new chapter from database
+        try {
+            val chapterEntity = chapterDao.getChapterByName(newChapter)
+            if (chapterEntity != null) {
+                currentRevisionId = chapterEntity.revisionId
+                autoStartRevision(currentRevisionId)
+            } else {
+                DebugLogger.errorLog("RevisionViewModel", "Could not find chapter in database: $newChapter")
+            }
+        } catch (e: Exception) {
+            DebugLogger.errorLog("RevisionViewModel", "Error fetching revisionId for new chapter: ${e.message}")
         }
     }
 
     /**
-     * Start a new revision session
+     * Auto-start revision session for the given revisionId
      */
-    private suspend fun startRevisionSession(chapter: String) {
-        DebugLogger.debugLog("RevisionViewModel", "startRevisionSession called for chapter: $chapter")
+    private fun autoStartRevision(revisionId: String) = viewModelScope.launch {
+        _uiState.update { it.copy(isLoading = true, selectedConcept = currentChapter) }
+
+        // Check if there's an existing session using revisionId
+        val existingThreadId = revisionUseCase.getRevisionThreadId(revisionId)
+        if (existingThreadId != null) {
+            DebugLogger.debugLog("RevisionViewModel", "Found existing revision session for revisionId: $revisionId, resuming...")
+            resumeRevisionSession(existingThreadId)
+        } else {
+            DebugLogger.debugLog("RevisionViewModel", "No existing session found for revisionId: $revisionId, starting new revision session")
+            startRevisionSession(revisionId)
+        }
+    }
+
+    /**
+     * Start a new revision session using revisionId
+     */
+    private suspend fun startRevisionSession(revisionId: String) {
+        DebugLogger.debugLog("RevisionViewModel", "startRevisionSession called for revisionId: $revisionId")
         val currentIsKannada = _uiState.value.isKannada
-        val result = revisionUseCase.startRevisionSession(chapter, userId, currentIsKannada)
+        val result = revisionUseCase.startRevisionSession(revisionId, userId, currentIsKannada)
 
         if (!result.success) {
-            DebugLogger.errorLog("RevisionViewModel", "Failed to start revision session for chapter: $chapter")
+            DebugLogger.errorLog("RevisionViewModel", "Failed to start revision session for revisionId: $revisionId")
             return _uiState.update { it.copy(isLoading = false) }
         }
 
@@ -224,14 +202,11 @@ class RevisionViewModel @Inject constructor(
             }
         }
 
-        // ✅ Track Revision Progress - mark each concept in this chapter as REVISION_AGENT completed
-        // The chapter name is used to look up the chapter in the DB, then all concepts are fetched.
-        // ChapterProgressCalculator.calculateRevisionProgress() checks per-concept REVISION_AGENT status.
+        // Track Revision Progress - mark each concept in this chapter as REVISION_AGENT completed
         viewModelScope.launch {
             try {
-                // Try to find chapter by normalized name first, then by original name
-                val matchedChapter = chapterDao.getChapterByName(chapter)
-                    ?: chapterDao.getChapterByName(currentChapter)
+                // Fetch chapter entity using currentChapter name to get chapterId
+                val matchedChapter = chapterDao.getChapterByName(currentChapter)
 
                 if (matchedChapter != null) {
                     // Get all STUDY concepts in the chapter and mark each as REVISION_AGENT COMPLETED
@@ -239,9 +214,9 @@ class RevisionViewModel @Inject constructor(
                     concepts.forEach { concept ->
                         progressEventTracker.markRevisionCompleted(userId, concept.conceptId)
                     }
-                    DebugLogger.debugLog("RevisionViewModel", "✅ Marked ${concepts.size} concepts as revision-completed for chapter: $chapter")
+                    DebugLogger.debugLog("RevisionViewModel", " Marked ${concepts.size} concepts as revision-completed for revisionId: $revisionId")
                 } else {
-                    DebugLogger.errorLog("RevisionViewModel", "Could not find chapter in DB for name: $chapter — revision progress not tracked")
+                    DebugLogger.errorLog("RevisionViewModel", "Could not find chapter in DB for name: $currentChapter — revision progress not tracked")
                 }
             } catch (e: Exception) {
                 DebugLogger.errorLog("RevisionViewModel", "Error tracking revision progress: ${e.message}")
@@ -337,9 +312,9 @@ class RevisionViewModel @Inject constructor(
             )
         }
 
-        // Send message to revision agent with current language setting
-        val currentIsKannada = _uiState.value.isKannada
-        val result = revisionUseCase.continueRevisionSession(currentChapter, message, currentIsKannada)
+        // Send message to revision agent with current language setting using revisionId
+        val isKannada = _uiState.value.isKannada
+        val result = revisionUseCase.continueRevisionSession(currentRevisionId, message, isKannada)
 
         if (!result.success) {
             DebugLogger.errorLog("RevisionViewModel", "Failed to send message in revision session")
@@ -349,7 +324,7 @@ class RevisionViewModel @Inject constructor(
         val agentResponse = result.agentResponse ?: ""
 
         // Smart translation: Only translate if needed based on current app language
-        val translatedResponse = if (currentIsKannada) {
+        val translatedResponse = if (isKannada) {
             // App is in Kannada - translate if response is in English
             if (isTextInKannada(agentResponse)) {
                 agentResponse // Already in Kannada
