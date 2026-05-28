@@ -101,6 +101,7 @@ data class Dimensions(
 
     // Progress Indicator
     val progressIndicatorStrokeWidth: Dp,
+    val progressIndicatorStrokeHeight: Dp,
     val timerLength: Dp
 ) {
     companion object {
@@ -185,6 +186,7 @@ data class Dimensions(
 
             // Progress Indicator
             progressIndicatorStrokeWidth = 4.dp,
+            progressIndicatorStrokeHeight =6.dp,
             timerLength= 60.dp
         )
 
@@ -267,6 +269,7 @@ data class Dimensions(
             weeklyActivityCardHeight = 140.dp,
             // Progress Indicator
             progressIndicatorStrokeWidth = 6.dp,
+            progressIndicatorStrokeHeight =8.dp,
             timerLength= 64.dp
         )
 
@@ -352,6 +355,7 @@ data class Dimensions(
             weeklyActivityCardHeight = 160.dp,
             //progress indicator
             progressIndicatorStrokeWidth = 8.dp,
+            progressIndicatorStrokeHeight =12.dp,
             timerLength= 68.dp
         )
     }

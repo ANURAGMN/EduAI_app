@@ -2,6 +2,7 @@ package com.ncert7.aitutorandlab
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import com.google.android.gms.ads.MobileAds
+import com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
+import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.service.logging.ErrorLoggerInitializer
 import com.ncert7.aitutorandlab.service.logging.FirestoreErrorLogger
 import com.ncert7.aitutorandlab.ui.navigation.LoginNavigator
@@ -26,8 +29,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Enable edge-to-edge
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-
+        enableEdgeToEdge()
         // Initialize Google Mobile Ads SDK
         MobileAds.initialize(this)
 
@@ -35,16 +37,10 @@ class MainActivity : AppCompatActivity() {
         // This enables error logging to Firebase in both debug and release modes
         ErrorLoggerInitializer.initialize(firestoreErrorLogger)
 
-        setContent {
+         setContent {
             AdaptiveTheme {
                 AppTheme {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .statusBarsPadding() // This adds padding for status bar
-                    ) {
                         LoginNavigator()
-                    }
                 }
             }
         }

@@ -38,6 +38,9 @@ fun PracticeSimulationCard(
     // Don't show card if no simulations
     if (progressSimulations.isEmpty()) return
 
+    // Limit to top 4 simulations - NO INFINITE SCROLL
+    val limitedSimulations = progressSimulations.take(4)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = BackgroundPrimary),
@@ -57,7 +60,7 @@ fun PracticeSimulationCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(dimes.spaceSmall)
             ) {
-                progressSimulations.forEachIndexed { index, (progress, concept) ->
+                limitedSimulations.forEachIndexed { index, (progress, concept) ->
                     concept?.let { sim ->
                         val conceptUiModel = ConceptUiModel(
                             id = sim.conceptId,
@@ -77,8 +80,7 @@ fun PracticeSimulationCard(
                         ConceptCard(
                             concept = conceptUiModel,
                             serialNumber = index + 1,
-                            onClick = {
-                                // Clicking the card itself opens simulation agent
+                            onClick = { conceptId, problemId, conceptType ->
                                 onSimulationClick(sim.conceptId)
                             },
                             onSimulationAgentClick = { simulationId ->

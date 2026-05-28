@@ -46,6 +46,12 @@ interface ChapterDao {
     suspend fun deleteChapter(chapterId: String)
 
     /**
+     * Get all chapters synchronously (for debugging)
+     */
+    @Query("SELECT * FROM chapters ORDER BY orderIndex ASC")
+    suspend fun getAllChaptersSync(): List<ChapterEntity>
+
+    /**
      * Get all concepts for a chapter
      * Used for progress calculation
      */

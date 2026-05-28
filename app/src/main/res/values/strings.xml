@@ -327,6 +327,8 @@
     <string name="math_session_resumed">Session resumed</string>
     <string name="math_session_failed_resume">Failed to resume session</string>
     <string name="math_error_prefix">Error: %1$s</string>
+    <string name="problem_to_solve">Problems to Solve</string>
+
 
     <!-- Progress Status Strings -->
     <string name="progress_status_completed">Completed</string>

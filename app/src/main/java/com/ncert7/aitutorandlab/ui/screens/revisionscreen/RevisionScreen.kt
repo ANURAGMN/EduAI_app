@@ -40,6 +40,7 @@ import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.dataclass.is
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.dataclass.lastAiMessage
 import com.ncert7.aitutorandlab.ui.theme.White
 import com.ncert7.aitutorandlab.ui.screens.revisionscreen.viewmodel.RevisionViewModel
+import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.AppDialog
 import com.ncert7.aitutorandlab.ui.viewModel.SpeechToText
 import com.ncert7.aitutorandlab.ui.viewModel.TextToSpeech
 
@@ -49,13 +50,13 @@ import com.ncert7.aitutorandlab.ui.viewModel.TextToSpeech
  */
 @Composable
 fun RevisionScreen(
-    chapterName: String,
+    chapterId: String,
     onBackClick: () -> Unit = {},
     revisionViewModel: RevisionViewModel = hiltViewModel(),
     sttController: SpeechToText = hiltViewModel(),
     ttsController: TextToSpeech = hiltViewModel()
 ) {
-    DebugLogger.debugLog("RevisionScreen", "RevisionScreen composable - chapter: $chapterName")
+    DebugLogger.debugLog("RevisionScreen", "RevisionScreen composable - chapterId: $chapterId")
 
     TrackScreenEvent(ScreenName.REVISION)
 
@@ -66,14 +67,13 @@ fun RevisionScreen(
     val chatState by revisionViewModel.uiState.collectAsState()
     val sttState by sttController.state.collectAsState()
     val ttsState by ttsController.state.collectAsState()
-    val availableChapters by revisionViewModel.availableChapters.collectAsState()
-    val isLoadingChapters by revisionViewModel.isLoadingChapters.collectAsState()
 
     // Local UI state
     var permissionGranted by remember { mutableStateOf(false) }
     var lastProcessedSpeechText by remember { mutableStateOf("") }
     var showSettingsMenu by remember { mutableStateOf(false) }
     var settingsState by remember { mutableStateOf(ChatBotSettingsState()) }
+    var showSessionResumeDialog by remember { mutableStateOf(false) }
 
     val lastAIMessage = chatState.lastAiMessage
     val isConversationStarted = chatState.isConversationStarted
@@ -121,7 +121,7 @@ fun RevisionScreen(
     // Initialize
     LaunchedEffect(Unit) {
         val userId = sharedPrefs.getUserId() ?: "guest"
-        revisionViewModel.initialize(userId, chapterName)
+        revisionViewModel.initialize(userId, chapterId)
         sttController.initialize(context)
         ttsController.initialize(context)
 
@@ -133,6 +133,11 @@ fun RevisionScreen(
             disableDisplayName = disableDisplayName,
             currentState = settingsState
         )
+    }
+
+    // Observe dialog state from ViewModel
+    LaunchedEffect(chatState.showSessionResumeDialog) {
+        showSessionResumeDialog = chatState.showSessionResumeDialog
     }
 
     // Handle speech recognition - populate input field, DON'T auto-send
@@ -236,10 +241,7 @@ fun RevisionScreen(
                             state = settingsState.copy(
                                 voiceOptions = voiceOptions,
                                 displayedVoiceName = displayedVoiceName,
-                                availableConcepts = availableChapters,
-                                displayConcepts = availableChapters,
-                                selectedConcept = chatState.selectedConcept,
-                                isLoadingConcepts = isLoadingChapters
+                                selectedConcept = chatState.selectedConcept
                             ),
                             onAvatarChange = { displayName ->
                                 settingsState = revisionViewModel.handleAvatarChange(
@@ -307,4 +309,21 @@ fun RevisionScreen(
             }
         }
     }
+
+    // Session resume dialog
+    AppDialog(
+        show = showSessionResumeDialog,
+        title = stringResource(R.string.existing_session_found),
+        message = stringResource(R.string.resume_or_start_fresh),
+        confirmText = stringResource(R.string.continue_session),
+        dismissText = stringResource(R.string.start_new),
+        onConfirm = {
+            revisionViewModel.resumeExistingSession()
+            showSessionResumeDialog = false
+        },
+        onDismiss = {
+            revisionViewModel.startFreshSession()
+            showSessionResumeDialog = false
+        }
+    )
 }

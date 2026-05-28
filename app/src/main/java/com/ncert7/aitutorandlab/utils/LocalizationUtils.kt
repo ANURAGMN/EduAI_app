@@ -10,16 +10,8 @@ import com.ncert7.aitutorandlab.data.local.entities.SubjectEntity
  */
 
 fun SubjectEntity.getLocalizedName(): String {
-    return if (isKannada()) {
-        // Hardcoded Kannada name for Science subject as mapping is not done yet
-        if (subjectNameKannada.isBlank() && subjectName.equals("science", ignoreCase = true)) {
-            "ವಿಜ್ಞಾನ"  // Science in Kannada
-        } else {
-            subjectNameKannada.ifBlank { subjectName }
-        }
-    } else {
-        subjectName
-    }
+    return if (isKannada())
+        subjectNameKannada else subjectName
 }
 
 fun ChapterEntity.getLocalizedName(): String {
@@ -35,16 +27,6 @@ fun ConceptEntity.getLocalizedName(): String {
         conceptNameKannada.ifBlank { conceptName }
     } else {
         conceptName
-    }
-}
-
-//temporary function to get localized subject name for hardcoded cases where mapping is not done yet
-fun getLocalizedSubjectName(subjectName: String): String {
-    if (!isKannada()) return subjectName
-
-    return when (subjectName.lowercase()) {
-        "science" -> "ವಿಜ್ಞಾನ"
-        else -> subjectName
     }
 }
 

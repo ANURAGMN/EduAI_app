@@ -176,7 +176,7 @@ fun TodayProgressCard(
                     progressPercentage = progressPercentage,
                     onClick = {
                         DebugLogger.debugLog("TodayProgressCard", "Concept Clicked id ${concept?.conceptId}")
-                        concept?.let { onLessonClick(it.conceptId) }
+                        onLessonClick(concept.conceptId)
                     })
                 Spacer(modifier = Modifier.padding(dimes.spaceSmall))
             }

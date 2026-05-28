@@ -20,6 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.ui.screens.chapterscreen.ChapterScreen
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.ChatbotScreen
 import com.ncert7.aitutorandlab.ui.screens.conceptscreen.ConceptScreen
@@ -30,6 +31,7 @@ import com.ncert7.aitutorandlab.ui.screens.setting.SettingScreen
 import com.ncert7.aitutorandlab.ui.screens.simulation_agent.SimulationAgentScreen
 import com.ncert7.aitutorandlab.ui.screens.subjectscreen.SubjectScreen
 import com.ncert7.aitutorandlab.ui.screens.mathagentscreen.MathAgentScreen
+import com.ncert7.aitutorandlab.ui.screens.revisionscreen.RevisionScreen
 import com.ncert7.aitutorandlab.ui.theme.BackgroundPrimary
 import com.ncert7.aitutorandlab.ui.theme.TextPrimary
 import com.ncert7.aitutorandlab.ui.theme.TextSecondary
@@ -91,7 +93,7 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "learning",
+            startDestination = BottomNavItem.Home.route,
             modifier = Modifier.padding(innerPadding),
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
@@ -136,7 +138,6 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
             }
             composable(BottomNavItem.Setting.route) {
                 SettingScreen(
-                    navController = navController,
                     onNavigateBack = {
                         navController.navigate("home") {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
@@ -158,7 +159,7 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                     onGoSetting = {
                         navController.navigate("setting") {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                            launchSingleTop =  true
+                            launchSingleTop = true
                             restoreState = true
                         }
                     },
@@ -182,15 +183,9 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                     onSimulationClick = { chapterId, type ->
                         navController.navigate("concepts/$chapterId/$type")
                     },
-                    onMathAgentClick = { chapterId, problemId ->
-                        val problemIdParam = problemId ?: "null"
-                        navController.navigate("math_agent?chapterId=$chapterId&problemId=$problemIdParam")
-                    },
-                    onRevisionClick = { chapterName ->
-                        com.ncert7.aitutorandlab.debug.DebugLogger.debugLog("BottomNavBar", "Navigating to revision with chapter: $chapterName")
-                        val encodedChapter = java.net.URLEncoder.encode(chapterName, "UTF-8")
-                        com.ncert7.aitutorandlab.debug.DebugLogger.debugLog("BottomNavBar", "Encoded chapter name: $encodedChapter")
-                        navController.navigate("revision/$encodedChapter")
+                    onRevisionClick = { chapterId ->
+                        com.ncert7.aitutorandlab.debug.DebugLogger.debugLog("BottomNavBar", "Navigating to revision with chapterId: $chapterId")
+                        navController.navigate("revision/$chapterId")
                     },
                     onGoHome = {
                         navController.navigate("home") {
@@ -221,8 +216,11 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                     chapterId = chapterId,
                     type = type,
                     onBackClick = { navController.popBackStack() },
-                    onConceptClick = { conceptId ->
-                        navController.navigate("chatbot?conceptId=$conceptId")
+                    onConceptClick = { conceptId, problemId, conceptType ->
+                        when (conceptType) {
+                            "MATH PROBLEM" -> navController.navigate("math_agent?chapterId=$chapterId&problemId=$problemId")
+                            else -> navController.navigate("chatbot?conceptId=$conceptId")
+                        }
                     },
                     onGoHome = {
                         navController.navigate("home") {
@@ -287,18 +285,17 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                 ChatbotScreen(conceptId = conceptId)
             }
 
-            composable("revision/{chapterName}") { backStackEntry ->
-                val encodedChapterName = backStackEntry.arguments?.getString("chapterName") ?: return@composable
-                val chapterName = java.net.URLDecoder.decode(encodedChapterName, "UTF-8")
-                com.ncert7.aitutorandlab.debug.DebugLogger.debugLog("BottomNavBar", "Revision route - Encoded: $encodedChapterName, Decoded: $chapterName")
-                com.ncert7.aitutorandlab.ui.screens.revisionscreen.RevisionScreen(
-                    chapterName = chapterName,
+            composable("revision/{chapterId}") { backStackEntry ->
+                val chapterId = backStackEntry.arguments?.getString("chapterId") ?: return@composable
+                DebugLogger.debugLog("BottomNavBar", "Revision route - chapterId: $chapterId")
+                RevisionScreen(
+                    chapterId = chapterId,
                     onBackClick = { navController.popBackStack() }
                 )
             }
 
             composable(
-                route = "math_agent?chapterId={chapterId}&problemId={problemId}",
+                route = LearningRoutes.MATH_AGENT,
                 arguments = listOf(
                     navArgument("chapterId") {
                         type = NavType.StringType
@@ -312,7 +309,6 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                     }
                 )
             ) { backStackEntry ->
-                val chapterId = backStackEntry.arguments?.getString("chapterId")
                 val problemId = backStackEntry.arguments?.getString("problemId")
                 MathAgentScreen(
                     problemId = problemId
@@ -328,7 +324,7 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
             }
 
             composable(
-                route = "concept_sim_view/{url}/{title}/{conceptId}",
+                route = LearningRoutes.CONCEPT_SIM_VIEW,
                 arguments = listOf(
                     navArgument("url") { type = NavType.StringType },
                     navArgument("title") { type = NavType.StringType },

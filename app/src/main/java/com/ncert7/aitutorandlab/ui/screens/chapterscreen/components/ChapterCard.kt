@@ -65,12 +65,10 @@ fun ChapterCard(
     onStudyClick: () -> Unit = {},
     onSimulationClick: () -> Unit = {},
     onRevisionClick: () -> Unit = {},
-    subjectName: String = "" // Added to check subject type
 ) {
     val dimens = LocalDimensions.current
-    val progress = if (chapter.totalConcepts > 0) {
-        chapter.completedConcepts.toFloat() / chapter.totalConcepts.toFloat()
-    } else 0f
+    val progress = chapter.progressUiModel
+        ?: throw IllegalStateException("ChapterProgressUiModel must be provided by ViewModel")
 
     Box(
         modifier = modifier
@@ -114,7 +112,7 @@ fun ChapterCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(dimens.spaceMedium)
             ) {
                 // Chapter Order + name
                 Row(
@@ -158,47 +156,37 @@ fun ChapterCard(
 
                         Spacer(modifier = Modifier.height(dimens.spaceMedium))
 
-                        // TODO: TEMPORARY - Hide progress and some buttons for Math. Remove this check when needed.
-                        val isMathSubject = subjectName.contains("Math", ignoreCase = true) ||
-                                          subjectName.contains("ಗಣಿತ", ignoreCase = true)
-
-                        // Progress section - hidden for Math
-                        if (!isMathSubject) {
-                            // Progress label and percentage
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.progress),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = TextPrimary
-                                )
-                                Text(
-                                    text = "${(progress * 100).toInt()}%",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(dimens.spaceSmall))
-
+                        // Progress Bar with percentage
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall)
+                        ) {
                             // Progress bar
                             LinearProgressIndicator(
-                                progress = { progress },
+                                progress = { progress.progressFraction },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(dimens.spaceSmall)
-                                    .clip(RoundedCornerShape(dimens.cornerRadiusRound)),
-                                color = HeaderGradientStart,
+                                    .height(dimens.progressIndicatorStrokeHeight)
+                                    .clip(RoundedCornerShape(dimens.cornerRadiusSmall)),
                                 trackColor = ColorHint,
+                                color = getProgressBarColor(chapter.status)
                             )
 
-                            Spacer(modifier = Modifier.height(dimens.spaceMedium))
+                            // Progress text
+                            Text(
+                                text = stringResource(
+                                    R.string.progress_status,
+                                    progress.completed,
+                                    progress.total,
+                                    progress.remaining
+                                ),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
+
+                        Spacer(modifier = Modifier.height(dimens.spaceSmall))
 
                         Column(
                             modifier = Modifier.fillMaxWidth(),
@@ -236,21 +224,18 @@ fun ChapterCard(
                                 )
                             }
 
-                            // Second row - Revision button (full width) - hidden for Math
-                            if (!isMathSubject) {
-                                ChapterActionButton(
-                                    label = stringResource(R.string.revision),
-                                    icon = {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                                            contentDescription = stringResource(R.string.revision),
-                                            tint = TextPrimary
-                                        )
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = onRevisionClick
-                                )
-                            }
+                            ChapterActionButton(
+                                label = stringResource(R.string.revision),
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                                        contentDescription = stringResource(R.string.revision),
+                                        tint = TextPrimary
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = onRevisionClick
+                            )
                         }
                     }
                 }
@@ -279,18 +264,9 @@ private fun getChapterStatusColor(status: ProgressStatus): Color = when (status)
     }
 }
 
-@Preview
-@Composable
-fun ChapterCardPreview() {
-    ChapterCard(
-        chapter = ChapterUiModel(
-            id = "1",
-            orderIndex =1,
-            name = "Number Systems",
-            englishName = "Number Systems",
-            totalConcepts = 8,
-            completedConcepts = 5,
-            status = ProgressStatus.IN_PROGRESS
-        )
-    )
+private fun getProgressBarColor(status: ProgressStatus): Color = when (status) {
+    ProgressStatus.COMPLETED -> CompleteTextColor
+    ProgressStatus.IN_PROGRESS -> InProgressTextColor
+    ProgressStatus.NOT_STARTED -> Color.Gray
+    ProgressStatus.LOCKED -> Color.Gray
 }

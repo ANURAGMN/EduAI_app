@@ -27,7 +27,6 @@ import com.ncert7.aitutorandlab.ui.theme.SubjectCardGradientCenter
 import com.ncert7.aitutorandlab.ui.theme.SubjectCardGradientEnd
 import com.ncert7.aitutorandlab.ui.theme.SubjectCardGradientStart
 import com.ncert7.aitutorandlab.ui.theme.White
-import com.ncert7.aitutorandlab.utils.getLocalizedSubjectName
 
 @Composable
 fun HomeScreenSubjectCard(
@@ -68,7 +67,7 @@ fun HomeScreenSubjectCard(
                 color = White.copy(alpha = 0.7f)
             )
             Text(
-                text = getLocalizedSubjectName(subject),
+                text = subject,
                 style = MaterialTheme.typography.titleLarge,
                 color = White
             )

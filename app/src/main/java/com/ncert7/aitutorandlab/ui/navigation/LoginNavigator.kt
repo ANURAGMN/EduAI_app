@@ -1,6 +1,10 @@
 package com.ncert7.aitutorandlab.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -10,21 +14,29 @@ import com.ncert7.aitutorandlab.ui.screens.login.LoginScreen
 import com.ncert7.aitutorandlab.ui.screens.login.UserDetailEntryScreen
 import com.ncert7.aitutorandlab.ui.screens.login.viewmodel.UserViewModel
 import androidx.compose.ui.platform.LocalContext
-import com.ncert7.aitutorandlab.debug.DebugLogger
 
 @Composable
 fun LoginNavigator() {
     val navController = rememberNavController()
     val context = LocalContext.current
     val sharedPreferenceUtils = SharedPreferenceUtils(context)
-    var isLoggedIn: Boolean = sharedPreferenceUtils.isLoggedIn()
+    val logoutTriggered = remember { mutableStateOf(false) }
+    // Read login status - recompose when logout happens
+    var isLoggedIn by remember {
+        mutableStateOf(sharedPreferenceUtils.isLoggedIn())
+    }
 
-    // Create ViewModel using Hilt
+    // Create ViewModel using factory
     val userViewModel: UserViewModel = hiltViewModel()
+
+    // When logout is triggered, update the login status
+    if (logoutTriggered.value) {
+        isLoggedIn = sharedPreferenceUtils.isLoggedIn()
+    }
 
     NavHost(
         navController = navController,
-        startDestination = if (isLoggedIn) "main" else "login"
+        startDestination = if (isLoggedIn && !logoutTriggered.value) "main" else "login"
     ) {
         composable("login") {
             LoginScreen(
@@ -41,14 +53,14 @@ fun LoginNavigator() {
         composable("main") {
             BottomNavBar(
                 onLogout = {
-                    DebugLogger.debugLog("LoginNavigator", "User logged out, navigating to login screen")
-                    // Navigate back to login and clear the back stack completely
-                    navController.navigate("login") {
-                        // Clear entire back stack
-                        popUpTo(0) { inclusive = true }
-                    }
+                    logoutTriggered.value = true
                     // Reset user ViewModel state
-                    userViewModel.resetUserState()
+                    userViewModel.resetLoginState()
+                    userViewModel.resetUserSaveState()
+
+                    navController.navigate("login") {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
                 }
             )
         }

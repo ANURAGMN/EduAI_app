@@ -28,8 +28,6 @@ class FirebaseSyncManager(
     private val chapterDao: ChapterDao,
     private val conceptDao: ConceptDao,
     private val progressDao: ProgressDao? = null,
-    private val analyticsDao: AppAnalyticsDao? = null,
-    private val sessionDao: SessionDao? = null,
     private val streakDao: StreakDao? = null,
     private val chapterProgressDao: ChapterAgentProgressDao? = null,
     private val context: Context? = null
@@ -37,8 +35,6 @@ class FirebaseSyncManager(
     companion object {
         private const val CONCEPTS_COLLECTION = "Concept"
         private const val PROGRESS_COLLECTION = "progress"
-        private const val ANALYTICS_COLLECTION = "analytics"
-        private const val SESSIONS_COLLECTION = "sessions"
         private const val STREAK_COLLECTION = "streak"
         private const val CHAPTER_PROGRESS_COLLECTION = "chapterprogress"
         private const val TAG = "FirebaseSyncManager"
@@ -62,9 +58,21 @@ class FirebaseSyncManager(
             val subjects = mutableMapOf<String, SubjectEntity>()
             val chapters = mutableMapOf<String, ChapterEntity>()
             val concepts = mutableListOf<ConceptEntity>()
+            val failedConcepts = mutableListOf<Pair<String, String>>() // id to error message
+
+            DebugLogger.debugLog(TAG, " Processing ${snapshot.size()} concept documents from Firestore...")
+
+            var simulationCount = 0
+            var studyCount = 0
+            var mathCount = 0
 
             for (document in snapshot.documents) {
                 try {
+                    val conceptType = document.getString("type")?.trim() ?: ""
+                    val conceptName = document.getString("concept_name") ?: "UNKNOWN"
+
+                    DebugLogger.debugLog(TAG, "Processing [${document.id}]: type='$conceptType', name='$conceptName'")
+
                     val subjectId = document.getString("subject_id")
                     if (subjectId != null && !subjects.containsKey(subjectId)) {
                         subjects[subjectId] = FirebaseSubjectMapper.map(document)
@@ -75,14 +83,32 @@ class FirebaseSyncManager(
                         chapters[chapterId] = FirebaseChapterMapper.map(document)
                     }
 
-                    concepts.add(FirebaseConceptMapper.map(document))
+                    val mappedConcept = FirebaseConceptMapper.map(document)
+                    concepts.add(mappedConcept)
+
+                    // Count by type
+                    when (mappedConcept.type) {
+                        "SIMULATION" -> simulationCount++
+                        "STUDY" -> studyCount++
+                        "MATH PROBLEM" -> mathCount++
+                        else -> {}
+                    }
+
+                    DebugLogger.debugLog(TAG, "✓ Mapped [$conceptType] $conceptName")
                 } catch (e: Exception) {
-                    DebugLogger.errorLog(TAG, "Error mapping document ${document.id}: ${e.message}")
+                    val errorMsg = e.message ?: "Unknown error"
+                    DebugLogger.errorLog(TAG, "✗ Failed to map ${document.id}: $errorMsg")
+                    failedConcepts.add(Pair(document.id, errorMsg))
                 }
             }
 
+            DebugLogger.debugLog(TAG, "Concept type breakdown: SIMULATION=$simulationCount, STUDY=$studyCount, MATH PROBLEM=$mathCount")
+
             // Insert content
+            DebugLogger.debugLog(TAG, " Inserting ${subjects.size} subjects...")
             subjectDao.insertSubjects(subjects.values.toList())
+
+            DebugLogger.debugLog(TAG, " Inserting ${chapters.size} chapters...")
             chapterDao.insertChapters(chapters.values.toList())
 
             // Detect and Notify about new simulations
@@ -90,13 +116,27 @@ class FirebaseSyncManager(
                 NewSimulationNotifier.getNewSimulations(concepts, conceptDao)
             } else emptyList()
 
+            DebugLogger.debugLog(TAG, " Inserting ${concepts.size} concepts (${simulationCount} SIMULATION, ${studyCount} STUDY, ${mathCount} MATH PROBLEM)...")
             conceptDao.insertConcepts(concepts)
 
             if (context != null && newSimulations.isNotEmpty()) {
                 NewSimulationNotifier.showNotification(context, newSimulations)
             }
 
-            val message = "Synced ${subjects.size} subjects, ${chapters.size} chapters, ${concepts.size} concepts"
+            val message = buildString {
+                append(" Synced ${subjects.size} subjects, ${chapters.size} chapters, ${concepts.size} concepts")
+                append(" [SIMULATION=$simulationCount, STUDY=$studyCount, MATH PROBLEM=$mathCount]")
+                if (failedConcepts.isNotEmpty()) {
+                    append(" Failed ${failedConcepts.size} concepts:")
+                    failedConcepts.take(3).forEach { (id, error) ->
+                        append("\n  - $id: $error")
+                    }
+                    if (failedConcepts.size > 3) {
+                        append("\n  ... and ${failedConcepts.size - 3} more")
+                    }
+                }
+            }
+
             DebugLogger.debugLog(TAG, message)
             SyncResult(success = true, message = message)
         } catch (e: Exception) {

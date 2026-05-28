@@ -31,38 +31,6 @@ object FirebaseProgressMapper {
     }
 }
 
-object FirebaseAnalyticsMapper {
-    fun map(document: DocumentSnapshot, studentId: String): AppAnalyticsEntity {
-        return AppAnalyticsEntity(
-            analyticsId = document.getLong("analyticsId") ?: 0L,
-            studentId = studentId,
-            sessionId = document.getString("sessionId") ?: "",
-            screenName = document.getString("screenName") ?: "",
-            eventType = document.getString("eventType"),
-            entryTime = document.getLong("entryTime") ?: 0L,
-            exitTime = document.getLong("exitTime"),
-            durationMillis = document.getLong("durationMillis") ?: 0L,
-            appName = document.getString("appName") ?: "",
-            isSynced = true
-        )
-    }
-}
-
-object FirebaseSessionMapper {
-    fun map(document: DocumentSnapshot, studentId: String): SessionEntity {
-        return SessionEntity(
-            sessionId = document.getString("sessionId") ?: "",
-            studentId = studentId,
-            sessionDate = document.getString("sessionDate") ?: "",
-            sessionStartTime = document.getLong("sessionStartTime") ?: 0L,
-            sessionEndTime = document.getLong("sessionEndTime"),
-            durationMillis = document.getLong("durationMillis") ?: 0L,
-            appName = document.getString("appName") ?: "",
-            isSynced = true
-        )
-    }
-}
-
 object FirebaseStreakMapper {
     fun map(document: DocumentSnapshot, studentId: String): StreakEntity {
         return StreakEntity(

@@ -180,9 +180,35 @@ interface ProgressDao {
     ): Flow<List<DailyConceptCount>>
 
     /**
+     * Get the total number of simulations completed today
+     * Only counts simulation concepts with valid URLs
+     * Uses local date to determine "today"
+     */
+    @Query(
+        """
+        SELECT COUNT(*) 
+        FROM progress p
+        INNER JOIN concepts c ON p.itemId = c.conceptId
+        WHERE p.studentId = :studentId 
+        AND p.itemType = 'CONCEPT' 
+        AND p.status = 'COMPLETED'
+        AND c.type = 'SIMULATION'
+        AND DATE(p.completedAt / 1000, 'unixepoch', 'localtime') = DATE('now', 'localtime')
+        AND (
+            (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'Not found')
+            OR
+            (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'Not found')
+        )
+    """
+    )
+    suspend fun getTodayCompletedSimulations(studentId: String): Int
+
+
+    /**
      * Get chapter-wise progress as Flow for real-time updates.
      * Calculates totalConcepts and completedConcepts dynamically from the concepts and progress tables,
      * using chapter_agent_progress for the overall precomputed percentage.
+     * Now counts BOTH STUDY and SIMULATION type concepts for total count.
      */
     @Query(
         """
@@ -190,8 +216,8 @@ interface ProgressDao {
             ch.chapterId AS chapterId,
             ch.chapterName AS chapterName,
             ch.chapterNameKannada AS chapterNameKannada,
-            (SELECT COUNT(*) FROM concepts c WHERE c.chapterId = ch.chapterId AND c.type = 'STUDY') AS totalConcepts,
-            CAST(ROUND((COALESCE(cap.overallPercentage, 0) / 100.0) * (SELECT COUNT(*) FROM concepts c WHERE c.chapterId = ch.chapterId AND c.type = 'STUDY')) AS INTEGER) AS completedConcepts,
+            (SELECT COUNT(*) FROM concepts c WHERE c.chapterId = ch.chapterId AND c.type IN ('STUDY', 'SIMULATION')) AS totalConcepts,
+            CAST(ROUND((COALESCE(cap.overallPercentage, 0) / 100.0) * (SELECT COUNT(*) FROM concepts c WHERE c.chapterId = ch.chapterId AND c.type IN ('STUDY', 'SIMULATION'))) AS INTEGER) AS completedConcepts,
             COALESCE(cap.overallPercentage, 0) AS completionPercentage
         FROM chapters ch
         LEFT JOIN chapter_agent_progress cap 

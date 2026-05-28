@@ -65,3 +65,4 @@ interface StreakDao {
     @Query("DELETE FROM streak")
     suspend fun clearAll()
 }
+

@@ -11,7 +11,6 @@ import com.ncert7.aitutorandlab.data.local.entities.StudentEntity
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.repository.FirebaseRepository
 import com.ncert7.aitutorandlab.utils.LanguageHelper
-import com.ncert7.aitutorandlab.utils.StreakManager
 import com.ncert7.aitutorandlab.utils.TokenManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -28,6 +27,12 @@ sealed class UpdateProfileState {
     data class Error(val message: String) : UpdateProfileState()
 }
 
+sealed class LogoutState {
+    object Idle : LogoutState()
+    object Loading : LogoutState()
+    object Success : LogoutState()
+    data class Error(val message: String) : LogoutState()
+}
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     private val sharedPref: SharedPreferenceUtils,
@@ -36,9 +41,7 @@ class SettingViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     val userId: String
 ) : ViewModel() {
-
-    // ...existing code...
-
+    
     private val _student = MutableStateFlow<StudentEntity?>(null)
     val student: StateFlow<StudentEntity?> = _student.asStateFlow()
 
@@ -51,8 +54,9 @@ class SettingViewModel @Inject constructor(
     )
     val selectedLanguage: StateFlow<String> = _selectedLanguage.asStateFlow()
 
-    private val _logoutState = MutableStateFlow(false)
-    val logoutState: StateFlow<Boolean> = _logoutState.asStateFlow()
+    private val _logoutState = MutableStateFlow<LogoutState>(
+        LogoutState.Idle)
+    val logoutState: StateFlow<LogoutState> = _logoutState.asStateFlow()
 
     init {
         // Load student profile
@@ -129,27 +133,19 @@ class SettingViewModel @Inject constructor(
         _updateState.value = UpdateProfileState.Idle
     }
 
-    fun updateProfilePhoto(localPath: String) {
-        viewModelScope.launch {
-            val existing = studentDao.getStudentSync(userId) ?: return@launch
-
-            val updated =
-                existing.copy(
-                    profilePhotoUrl = localPath,
-                    updatedAt = System.currentTimeMillis(),
-                    isSynced = false
-                )
-
-            studentDao.updateStudent(updated)
-            // Reload student data
-            loadStudent()
-        }
-    }
-
     fun logout() {
         viewModelScope.launch {
             try {
+                _logoutState.value = LogoutState.Loading
                 DebugLogger.debugLog("SettingViewModel", "Starting logout process")
+
+                // Clear student data
+                studentDao.deleteAllStudents()
+                DebugLogger.debugLog("SettingViewModel", "Cleared student data")
+
+                // Clear shared preferences
+                sharedPref.clearAllUserData()
+                DebugLogger.debugLog("SettingViewModel", "Cleared user preferences")
 
                 // Clear Google authentication tokens
                 TokenManager.clearAllTokens(context)
@@ -159,31 +155,18 @@ class SettingViewModel @Inject constructor(
                 ConceptSessionRepository(context).clearAllMappings()
                 DebugLogger.debugLog("SettingViewModel", "Cleared concept session mappings")
 
-                // Clear streak data
-                StreakManager(context).resetStreak()
-                DebugLogger.debugLog("SettingViewModel", "Reset streak data")
-
-                // Clear shared preferences (user data, login status, etc.)
-                sharedPref.clearAllUserData()
-                DebugLogger.debugLog("SettingViewModel", "Cleared user preferences")
-
                 // Clear all sessions from database
                 val db = EduAiDatabase.getInstance(context)
                 db.sessionDao().deleteAllSessions()
                 DebugLogger.debugLog("SettingViewModel", "Cleared database sessions")
 
-                // Clear all student data from local database
-                studentDao.deleteAllStudents()
-                DebugLogger.debugLog("SettingViewModel", "Cleared local student data")
-
-                // Set logout state to trigger navigation
-                _logoutState.value = true
+                _logoutState.value = LogoutState.Success
                 DebugLogger.debugLog("SettingViewModel", "Logout completed successfully")
 
             } catch (e: Exception) {
                 DebugLogger.errorLog("SettingViewModel", "Error during logout: ${e.message}")
                 // Still set logout state even if there's an error
-                _logoutState.value = true
+                _logoutState.value = LogoutState.Error(e.message ?: "Logout failed")
             }
         }
     }

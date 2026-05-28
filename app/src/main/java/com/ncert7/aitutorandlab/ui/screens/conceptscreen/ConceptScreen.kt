@@ -16,6 +16,7 @@ import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.domain.chatbot.usecase.ChatIntent
 import com.ncert7.aitutorandlab.service.analytics.ScreenName
 import com.ncert7.aitutorandlab.service.analytics.TrackScreenEvent
+import com.ncert7.aitutorandlab.ui.components.AdDialog
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.AppDialog
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.viewmodel.ChatViewModel
 import com.ncert7.aitutorandlab.ui.screens.conceptscreen.components.ConceptCard
@@ -25,14 +26,13 @@ import com.ncert7.aitutorandlab.ui.screens.simulation_agent.viewmodel.Simulation
 import com.ncert7.aitutorandlab.ui.theme.BackgroundPrimary
 import com.ncert7.aitutorandlab.ui.theme.LocalDimensions
 import com.ncert7.aitutorandlab.ui.theme.TextPrimary
-import com.ncert7.aitutorandlab.utils.StreakManager
 
 @Composable
 fun ConceptScreen(
     chapterId: String,
     type: String,
     onBackClick: () -> Unit = {},
-    onConceptClick: (String) -> Unit = {},
+    onConceptClick: (conceptId: String, problemId: String, conceptType: String) -> Unit = { _, _, _ -> },
     onSimulationAgentClick: (String) -> Unit = {},
     onSimulationClick: (title: String, url: String, conceptId: String) -> Unit = { _, _, _ -> },
     onGoHome:() -> Unit = {},
@@ -70,11 +70,7 @@ fun ConceptScreen(
 
     val simulationViewModel: SimulationAgentViewModel = hiltViewModel()
 
-    // streak update
-    val streakManager = remember { StreakManager(context) }
-
     LaunchedEffect(Unit) {
-        streakManager.onConceptOpened()
         simulationViewModel.loadAvailableSimulations()
     }
     LaunchedEffect(chapterId, type) {
@@ -109,17 +105,20 @@ fun ConceptScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = stringResource(R.string.unable_to_load_concepts), color = TextPrimary)
+                    Text(
+                        text = stringResource(R.string.unable_to_load_concepts),
+                        color = TextPrimary
+                    )
                 }
             } else {
                 Column(
                     modifier = Modifier.padding(dimes.spaceMedium),
                 ) {
                     Text(
-                        text = if (state.type.equals("SIMULATION", ignoreCase = true))
-                            stringResource(R.string.simulations_to_explore)
-                        else
-                            stringResource(R.string.lessons_to_master),
+                        text = when {
+                            state.type.equals("SIMULATION", ignoreCase = true) -> stringResource(R.string.simulations_to_explore)
+                            state.type.equals("MATH PROBLEM", ignoreCase = true) -> stringResource(R.string.problem_to_solve)                            else -> stringResource(R.string.lessons_to_master)
+                        },
                         style = MaterialTheme.typography.titleMedium,
                         color = TextPrimary,
                         modifier = Modifier.padding(bottom = dimes.spaceSmall)
@@ -133,10 +132,10 @@ fun ConceptScreen(
                             ConceptCard(
                                 concept = conceptUiModel,
                                 serialNumber = index + 1,
-                                onClick = {
+                                onClick = { conceptId, problemId, conceptType ->
                                     chatViewModel.selectConceptWithDialog(conceptUiModel.name)
                                     if (!chatViewModel.hasExistingSession(conceptUiModel.name)) {
-                                        onConceptClick(conceptUiModel.id)
+                                        onConceptClick(conceptId, problemId, conceptType)
                                     }
                                 },
                                 onSimulationAgentClick = { simId ->
@@ -150,43 +149,43 @@ fun ConceptScreen(
                     }
                 }
             }
-        }
 
-        // Ad Banner Dialog - Shown after 5 free simulations
-        if (pendingNavigation != null && !pendingNavigation!!.isDirect) {
-            com.ncert7.aitutorandlab.ui.components.AdDialog(
-                context = context,
+            // Ad Banner Dialog - Shown after 5 free simulations
+            if (pendingNavigation != null && !pendingNavigation!!.isDirect) {
+                AdDialog(
+                    context = context,
+                    onDismiss = {
+                        viewModel.markAdShown()
+                    }
+                )
+            }
+
+            // Session Resume Dialog
+            AppDialog(
+                show = chatState.pendingConceptForDialog != null,
+                title = stringResource(R.string.existing_session_found),
+                message = stringResource(R.string.resume_or_start_fresh),
+                confirmText = stringResource(R.string.continue_session),
+                dismissText = stringResource(R.string.start_new),
+                onConfirm = {
+                    chatState.pendingConceptForDialog?.let { conceptName ->
+                        chatViewModel.onIntent(ChatIntent.SelectConcept(conceptName))
+                        chatViewModel.dismissSessionDialog()
+                        state.concepts.find { it.name == conceptName }?.let { concept ->
+                            onConceptClick(concept.id, concept.problemId, concept.type)
+                        }
+                    }
+                },
                 onDismiss = {
-                    viewModel.markAdShown()
+                    chatState.pendingConceptForDialog?.let { conceptName ->
+                        chatViewModel.onIntent(ChatIntent.StartFreshSession(conceptName))
+                        chatViewModel.dismissSessionDialog()
+                        state.concepts.find { it.name == conceptName }?.let { concept ->
+                            onConceptClick(concept.id, concept.problemId, concept.type)
+                        }
+                    }
                 }
             )
         }
-
-        // Session Resume Dialog
-        AppDialog(
-            show = chatState.pendingConceptForDialog != null,
-            title = stringResource(R.string.existing_session_found),
-            message = stringResource(R.string.resume_or_start_fresh),
-            confirmText = stringResource(R.string.continue_session),
-            dismissText = stringResource(R.string.start_new),
-            onConfirm = {
-                chatState.pendingConceptForDialog?.let { conceptName ->
-                    chatViewModel.onIntent(ChatIntent.SelectConcept(conceptName))
-                    chatViewModel.dismissSessionDialog()
-                    state.concepts.find { it.name == conceptName }?.let { concept ->
-                        onConceptClick(concept.id)
-                    }
-                }
-            },
-            onDismiss = {
-                chatState.pendingConceptForDialog?.let { conceptName ->
-                    chatViewModel.onIntent(ChatIntent.StartFreshSession(conceptName))
-                    chatViewModel.dismissSessionDialog()
-                    state.concepts.find { it.name == conceptName }?.let { concept ->
-                        onConceptClick(concept.id)
-                    }
-                }
-            }
-        )
     }
 }

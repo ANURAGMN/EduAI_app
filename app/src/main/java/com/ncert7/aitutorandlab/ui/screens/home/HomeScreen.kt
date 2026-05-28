@@ -16,7 +16,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ncert7.aitutorandlab.R
 import com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.service.analytics.ScreenName
@@ -86,13 +88,13 @@ fun HomeScreen(
             // Show loading state if student is null
             if (student == null) {
                 LoadingHomeHeader(
-                    subject = selectedSubject ?: "Science",
+                    subject = selectedSubject ?: stringResource(R.string.select_subject),
                     onChangeSubject = { onNavigateToLearning() }
                 )
             } else {
                 HomeScreenTopBar(
-                    userName = student?.studentName ?: "John Doe",
-                    subject = selectedSubject ?: "Science",
+                    userName = student?.studentName ?: "",
+                    subject = selectedSubject ?: stringResource(R.string.select_subject),
                     streakDays = streakCount,
                     greeting = greeting,
                     onChangeSubject = { onNavigateToLearning() }
@@ -106,7 +108,7 @@ fun HomeScreen(
                     todayCompletedConcept = todayCompletedConceptCount,
                     todayCompletedSimulation = todayCompletedSimulationCount,
                     onShowAllChapters = {
-                        val subjectId = sharedPreferenceUtils.getSubjectSelection() ?: "science"
+                        val subjectId = sharedPreferenceUtils.getSubjectSelection() ?: "9a7d0d20-7b8d-4b8c-8c12-5a1a8a55f002"
                         onNavigateToChapters(subjectId)
                     }
                 )

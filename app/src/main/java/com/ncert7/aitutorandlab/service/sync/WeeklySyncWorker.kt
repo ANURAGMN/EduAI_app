@@ -10,6 +10,7 @@ import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import kotlin.math.pow
 
 /**
  * Weekly background worker responsible for syncing new Firebase data
@@ -20,14 +21,20 @@ class WeeklySyncWorker(
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
 
+    companion object {
+        private const val TAG = "WeeklySyncWorker"
+        private const val MAX_RETRY_ATTEMPTS = 3
+    }
     override suspend fun doWork(): Result {
         return try {
             val database = EduAiDatabase.getInstance(applicationContext)
             val sharedPrefs = SharedPreferenceUtils(applicationContext)
             val studentId = sharedPrefs.getUserId()
+            val retryAttempt = inputData.getInt("retry_attempt", 0)
+            DebugLogger.debugLog(TAG, "Starting sync work (Attempt ${retryAttempt + 1}/${MAX_RETRY_ATTEMPTS})")
 
             // 1. Initialize Content Sync Manager
-            val contentSyncManager = FirebaseSyncManager(
+            val SyncManager = FirebaseSyncManager(
                 subjectDao = database.subjectDao(),
                 chapterDao = database.chapterDao(),
                 conceptDao = database.conceptDao(),
@@ -38,15 +45,19 @@ class WeeklySyncWorker(
             )
 
             // 2. Sync all content (Subjects, Chapters, Concepts)
-            val contentResult = contentSyncManager.syncAllContent()
-            if (contentResult.success) {
-                DebugLogger.debugLog("WeeklySync", "Content sync successful: ${contentResult.message}")
+            val result = SyncManager.syncAllContent()
+            if (result.success) {
+                DebugLogger.debugLog("WeeklySync", "Content sync successful: ${result.message}")
+            }else {
+                DebugLogger.errorLog(TAG, "Sync failed: ${result.message}")
+                // Retry if sync was unsuccessful
+                return handleRetry(retryAttempt)
             }
 
             // 3. If user is logged in, sync/upload their progress data
             if (!studentId.isNullOrBlank()) {
                 // A. Upload unsynced local data to Cloud
-                val uploadManager = ProgressAnalyticsSyncManager(
+                val uploadManager = ProgressAnalyticsSessionSyncManager(
                     progressDao = database.progressDao(),
                     analyticsDao = database.appAnalyticsDao(),
                     sessionDao = database.sessionDao(),
@@ -58,9 +69,9 @@ class WeeklySyncWorker(
                 DebugLogger.debugLog("WeeklySync", "Data upload result: ${uploadResult.message}")
 
                 // B. Restore any progress from Cloud (for cross-device sync)
-                contentSyncManager.syncUserProgress(studentId)
-                contentSyncManager.syncUserStreak(studentId)
-                contentSyncManager.syncChapterAgentProgress(studentId)
+                SyncManager.syncUserProgress(studentId)
+                SyncManager.syncUserStreak(studentId)
+                SyncManager.syncChapterAgentProgress(studentId)
             }
 
             // 4. Log worker execution for debugging
@@ -83,5 +94,34 @@ class WeeklySyncWorker(
             DebugLogger.errorLog("WeeklySyncWorker", "Sync Error: ${e.message}")
             Result.retry()
         }
+    }
+    /**
+     * Handles retry logic with exponential backoff.
+     * @param currentAttempt The current retry attempt number (0-indexed)
+     * @return Result.retry() if attempts remain, Result.failure() otherwise
+     */
+    private fun handleRetry(currentAttempt: Int): Result {
+        return if (currentAttempt < MAX_RETRY_ATTEMPTS) {
+            val nextAttempt = currentAttempt + 1
+            val delayMillis = calculateBackoffDelay(nextAttempt)
+
+            DebugLogger.debugLog(TAG, "Scheduling retry attempt $nextAttempt after ${delayMillis}ms")
+
+            // Use exponential backoff: 2^n * base_delay
+            Result.retry()
+        } else {
+            DebugLogger.errorLog(TAG, "Max retry attempts (${MAX_RETRY_ATTEMPTS}) reached. Giving up.")
+            Result.failure()
+        }
+    }
+
+    /**
+     * Calculates exponential backoff delay.
+     * Attempt 1: 1 minute, Attempt 2: 2 minutes, Attempt 3: 4 minutes
+     */
+    private fun calculateBackoffDelay(attemptNumber: Int): Long {
+        val baseDelayMinutes = 1L
+        val delayMultiplier = 2.0.pow((attemptNumber - 1).toDouble()).toLong()
+        return baseDelayMinutes * delayMultiplier * 60 * 1000 // Convert to milliseconds
     }
 }

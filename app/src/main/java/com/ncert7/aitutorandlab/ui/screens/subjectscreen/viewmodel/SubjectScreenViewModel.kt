@@ -64,7 +64,7 @@ class SubjectViewModel @Inject constructor(
         loadSubjects()
     }
 
-    fun onSubjectSelected(subjectId: String) {
-        sharedPreferenceUtils.setSubjectSelection(subjectId)
+    fun onSubjectSelected(subjectName: String) {
+        sharedPreferenceUtils.setSubjectSelection(subjectName)
     }
 }

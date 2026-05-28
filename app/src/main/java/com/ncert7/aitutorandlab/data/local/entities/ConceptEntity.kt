@@ -30,6 +30,9 @@ data class ConceptEntity(
     val description: String? = null,
     val hasSimulation: Boolean = false,
     val type: String, // simulation , study
+    val problemId: String,
+    val problemTopicName:String,
+    val problemTopicNameKn:String,
     val simulationId: String, //simulation id
     val simulationIdKannada: String, //simulation id
     val simulationUrl: String? = null,

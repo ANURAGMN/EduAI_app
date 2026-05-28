@@ -20,8 +20,10 @@ interface ConceptDao {
 
     @Update
     suspend fun updateConcept(concept: ConceptEntity)
+
     @Query("SELECT * FROM concepts ORDER BY chapterId ASC, orderIndex ASC")
     suspend fun getAllConceptsSync(): List<ConceptEntity>
+
     @Query("SELECT * FROM concepts WHERE chapterId = :chapterId ORDER BY orderIndex ASC")
     fun getConceptsForChapter(chapterId: String): Flow<List<ConceptEntity>>
 
@@ -36,7 +38,11 @@ interface ConceptDao {
 
     // Get next 2 concepts to show as "locked" in UI
     @Query("SELECT * FROM concepts WHERE chapterId = :chapterId AND orderIndex > :currentIndex ORDER BY orderIndex ASC LIMIT :limit")
-    suspend fun getNextConcepts(chapterId: String, currentIndex: Int, limit: Int = 2): List<ConceptEntity>
+    suspend fun getNextConcepts(
+        chapterId: String,
+        currentIndex: Int,
+        limit: Int = 2
+    ): List<ConceptEntity>
 
     @Query("DELETE FROM concepts WHERE chapterId = :chapterId")
     suspend fun deleteConceptsForChapter(chapterId: String)
@@ -46,6 +52,9 @@ interface ConceptDao {
 
     @Query("DELETE FROM concepts WHERE conceptId = :conceptId")
     suspend fun deleteConcept(conceptId: String)
+
+    @Query("DELETE FROM concepts")
+    suspend fun deleteAllConcepts()
 
     /**
      * Progress for home screen today progress section
@@ -64,32 +73,128 @@ interface ConceptDao {
         limit: Int
     ): List<ConceptEntity>
 
+    // ============================
+    // STUDY TYPE CONCEPTS
+    // ============================
     /**
-     * Get simulation concepts for English (with valid simulationId or simulationUrl)
+     * Get all STUDY type concepts for a chapter
+     * Study concepts have no language filtering - they load the same regardless of language
+     * These are used for non-math subjects
      */
     @Query(
         """
-    SELECT * FROM concepts 
-    WHERE chapterId = :chapterId 
-    AND type = 'SIMULATION'
-    AND (simulationId IS NOT NULL AND simulationId != '' OR simulationUrl IS NOT NULL AND simulationUrl != '')
-    ORDER BY orderIndex ASC
-    """
+        SELECT * FROM concepts 
+        WHERE chapterId = :chapterId 
+        AND type = 'STUDY'
+        ORDER BY orderIndex ASC
+        """
     )
-    suspend fun getSimulationConceptsEnglish(chapterId: String): List<ConceptEntity>
+    suspend fun getStudyConceptsForChapter(chapterId: String): List<ConceptEntity>
 
+    // ============================
+    // MATH PROBLEM TYPE CONCEPTS
+    // ============================
     /**
-     * Get simulation concepts for Kannada (with valid simulationIdKannada or simulationUrlKannada)
+     * Get all MATH PROBLEM type concepts for a chapter
+     * Only loads concepts that have a valid problemId (not null, not empty)
+     * Language filtering happens at backend API level
+     * Used exclusively for Math subject
      */
     @Query(
         """
-    SELECT * FROM concepts 
-    WHERE chapterId = :chapterId 
-    AND type = 'SIMULATION'
-    AND (simulationIdKannada IS NOT NULL AND simulationIdKannada != '' OR simulationUrlKannada IS NOT NULL AND simulationUrlKannada != '')
-    ORDER BY orderIndex ASC
-    """
+        SELECT * FROM concepts 
+        WHERE chapterId = :chapterId 
+        AND type = 'MATH PROBLEM'
+        AND (problemId IS NOT NULL AND problemId != '')
+        ORDER BY orderIndex ASC
+        """
     )
-    suspend fun getSimulationConceptsKannada(chapterId: String): List<ConceptEntity>
+    suspend fun getMathProblemConceptsForChapter(chapterId: String): List<ConceptEntity>
 
+    // ============================
+    // SIMULATION TYPE CONCEPTS
+    // ============================
+    /**
+     * Get all SIMULATION type concepts for a chapter filtered by language
+     * For English (language = 'en'): only load concepts that have simulationId OR simulationUrl (English fields)
+     * For Kannada (language = 'kn'): only load concepts that have simulationIdKannada OR simulationUrlKannada
+     * This ensures we don't display incomplete simulations
+     */
+    @Query(
+        """
+        SELECT * FROM concepts 
+        WHERE chapterId = :chapterId 
+        AND type = 'SIMULATION'
+        AND (
+            CASE 
+                WHEN :language = 'en' THEN
+                    (simulationId IS NOT NULL AND simulationId != '') 
+                    OR (simulationUrl IS NOT NULL AND simulationUrl != '')
+                WHEN :language = 'kn' THEN
+                    (simulationIdKannada IS NOT NULL AND simulationIdKannada != '') 
+                    OR (simulationUrlKannada IS NOT NULL AND simulationUrlKannada != '')
+                ELSE 1
+            END
+        )
+        ORDER BY orderIndex ASC
+        """
+    )
+    suspend fun getSimulationConceptsForChapter(chapterId: String, language: String): List<ConceptEntity>
+
+    // ============================
+    // COUNT QUERIES FOR CHAPTER FILTERING
+    // ============================
+    /**
+     * Check if a chapter has any STUDY type concepts
+     * Used to determine if "Study" button should be shown on ChapterCard
+     * Returns count of available STUDY concepts
+     */
+    @Query(
+        """
+        SELECT COUNT(*) FROM concepts 
+        WHERE chapterId = :chapterId 
+        AND type = 'STUDY'
+        """
+    )
+    suspend fun getStudyConceptCount(chapterId: String): Int
+
+    /**
+     * Check if a chapter has any MATH PROBLEM type concepts with valid problemId
+     * Used to determine if "Study" button should be shown on ChapterCard for Math subject
+     * Returns count of available MATH PROBLEM concepts
+     */
+    @Query(
+        """
+        SELECT COUNT(*) FROM concepts 
+        WHERE chapterId = :chapterId 
+        AND type = 'MATH PROBLEM'
+        AND (problemId IS NOT NULL AND problemId != '')
+        """
+    )
+    suspend fun getMathProblemConceptCount(chapterId: String): Int
+
+    /**
+     * Check if a chapter has any SIMULATION type concepts for a specific language
+     * Used to determine if "Simulation" button should be shown on ChapterCard
+     * Returns count of available SIMULATION concepts for the language
+     */
+    @Query(
+        """
+        SELECT COUNT(*) FROM concepts 
+        WHERE chapterId = :chapterId 
+        AND type = 'SIMULATION'
+        AND (
+            CASE 
+                WHEN :language = 'en' THEN
+                    (simulationId IS NOT NULL AND simulationId != '') 
+                    OR (simulationUrl IS NOT NULL AND simulationUrl != '')
+                WHEN :language = 'kn' THEN
+                    (simulationIdKannada IS NOT NULL AND simulationIdKannada != '') 
+                    OR (simulationUrlKannada IS NOT NULL AND simulationUrlKannada != '')
+                ELSE 1
+            END
+        )
+        """
+    )
+    suspend fun getSimulationConceptCount(chapterId: String, language: String): Int
 }

@@ -18,6 +18,7 @@ import com.ncert7.aitutorandlab.domain.progress.buildProgressUiModel
 import com.ncert7.aitutorandlab.domain.progress.ChapterProgressService
 import com.ncert7.aitutorandlab.data.local.dao.ProgressDao
 import com.ncert7.aitutorandlab.config.AppConfig
+import com.ncert7.aitutorandlab.domain.progress.ProgressEventTracker
 import com.ncert7.aitutorandlab.domain.progress.model.ProgressStatus as DomainProgressStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,7 +44,7 @@ class ConceptViewModel @Inject constructor(
     private val subjectRepository: SubjectRepository,
     private val studentRepository: StudentLocalRepository,
     private val chapterProgressService: ChapterProgressService,
-    private val progressEventTracker: com.ncert7.aitutorandlab.domain.progress.ProgressEventTracker,
+    private val progressEventTracker: ProgressEventTracker,
     private val progressDao: ProgressDao,
     private val sharedPrefs: SharedPreferenceUtils
 ) : ViewModel() {
@@ -105,88 +106,94 @@ class ConceptViewModel @Inject constructor(
                 val subject = chapter?.let { subjectRepository.getSubject(it.subjectId) }
                 val classLevel = 7 // Force class 7 syllabus display
 
-                // 1. Get base concepts
-                val concepts = if (type.equals("SIMULATION", ignoreCase = true)) {
-                    if (isKannada()) conceptRepository.getSimulationConceptsKannada(chapterId)
-                    else conceptRepository.getSimulationConceptsEnglish(chapterId)
-                } else {
-                    conceptRepository.getConceptsForChapter(chapterId, type)
+                DebugLogger.debugLog("ConceptVM", " Loading concepts: chapterId=$chapterId, type=$type, language=$language")
+
+                // Load concepts based on type using specialized repository methods
+                val concepts = when {
+                    type.equals("SIMULATION", ignoreCase = true) -> {
+                        val simConcepts = conceptRepository.getSimulationConceptsForChapter(chapterId, language)
+                        DebugLogger.debugLog("ConceptVM", " Loaded SIMULATION concepts: ${simConcepts.size}")
+                        simConcepts
+                    }
+                    type.equals("MATH PROBLEM", ignoreCase = true) -> {
+                        val mathConcepts = conceptRepository.getMathProblemConceptsForChapter(chapterId)
+                        DebugLogger.debugLog("ConceptVM", " Loaded MATH PROBLEM concepts: ${mathConcepts.size}")
+                        mathConcepts
+                    }
+                    type.equals("STUDY", ignoreCase = true) -> {
+                        val studyConcepts = conceptRepository.getStudyConceptsForChapter(chapterId)
+                        DebugLogger.debugLog("ConceptVM", " Loaded STUDY concepts: ${studyConcepts.size}")
+                        studyConcepts
+                    }
+                    else -> {
+                        DebugLogger.warnLog("ConceptVM", " Unknown type: $type, returning empty list")
+                        emptyList()
+                    }
                 }
 
-                // 2. Get subject ID to fetch chapter progress from the same source as Progress Screen
+                if (concepts.isEmpty()) {
+                    DebugLogger.warnLog("ConceptVM", " No concepts found for chapter=$chapterId, type=$type")
+                }
+
                 val subjectId = chapter?.subjectId ?: ""
 
-                // 3. Reactively collect progress changes for this chapter
-                // Combine individual progress and chapter-wise progress summary (from Progress Screen's source)
+                // Reactively collect progress changes for this chapter
                 val progressFlow = progressDao.getAllProgress(studentId, AppConfig.APP_NAME)
-                val chapterProgressFlow = chapterRepository.getChapterWiseProgress(studentId, subjectId, language)
 
-                combine(progressFlow, chapterProgressFlow) { allProgress, chapterProgressList ->
-                    // Find the progress summary for current chapter to get consistent data with Progress Screen
-                    val chapterSummary = chapterProgressList.find { it.chapterId == chapterId }
-
+                progressFlow.collect { allProgress ->
                     val conceptUiModels = concepts.mapIndexed { index, concept ->
-                        val simId = if (isKannada()) concept.simulationIdKannada else concept.simulationId
-                        val simUrl = if (isKannada()) concept.simulationUrlKannada else concept.simulationUrl
+                        // Determine display text based on concept type
+                        val displayName = when {
+                            type.equals("MATH PROBLEM", ignoreCase = true) -> {
+                                // For Math Problems: Show problemTopicName (localized)
+                                if (isKannada()) {
+                                    concept.problemTopicNameKn.ifEmpty { concept.conceptName }
+                                } else {
+                                    concept.problemTopicName.ifEmpty { concept.conceptName }
+                                }
+                            }
+                            else -> {
+                                // For STUDY and SIMULATION: Show conceptName (localized)
+                                concept.getLocalizedName()
+                            }
+                        }
+
+                        // Get appropriate fields based on language and type
+                        val simId = if (isKannada()) {
+                            concept.simulationIdKannada
+                        } else {
+                            concept.simulationId
+                        }
+
+                        val simUrl = if (isKannada()) {
+                            concept.simulationUrlKannada
+                        } else {
+                            concept.simulationUrl
+                        }
 
                         val hasAgent = !simId.isNullOrBlank() && !simId.equals("null", ignoreCase = true)
                         val hasUrl = !simUrl.isNullOrBlank() && !simUrl.equals("null", ignoreCase = true)
 
-                        val status = if (concept.type.equals("SIMULATION", ignoreCase = true)) {
-                            val agentDone = allProgress.find { it.itemType == "SIMULATION_AGENT" && it.itemId == concept.conceptId }
-                                ?.status == ProgressStatus.COMPLETED.value
-                            val urlDone = allProgress.find { it.itemType == "SIMULATION" && it.itemId == concept.conceptId }
-                                ?.status == ProgressStatus.COMPLETED.value
-
-                            when {
-                                hasAgent && hasUrl -> {
-                                    if (agentDone && urlDone) ProgressStatus.COMPLETED.value
-                                    else if (agentDone || urlDone) ProgressStatus.IN_PROGRESS.value
-                                    else {
-                                        val prevStatus = if (index > 0) {
-                                            val pc = concepts[index - 1]
-                                            val pt = if (pc.type.equals("SIMULATION", ignoreCase = true)) "SIMULATION" else "CONCEPT"
-                                            allProgress.find { (it.itemType == pt || it.itemType == "SIMULATION_AGENT") && it.itemId == pc.conceptId }?.status
-                                        } else null
-                                        determineConceptStatus(null, index == 0, prevStatus)
-                                    }
-                                }
-                                hasAgent -> if (agentDone) ProgressStatus.COMPLETED.value else {
-                                    val prevStatus = if (index > 0) {
-                                        val pc = concepts[index - 1]
-                                        val pt = if (pc.type.equals("SIMULATION", ignoreCase = true)) "SIMULATION" else "CONCEPT"
-                                        allProgress.find { (it.itemType == pt || it.itemType == "SIMULATION_AGENT") && it.itemId == pc.conceptId }?.status
-                                    } else null
-                                    determineConceptStatus(null, index == 0, prevStatus)
-                                }
-                                hasUrl -> if (urlDone) ProgressStatus.COMPLETED.value else {
-                                    val prevStatus = if (index > 0) {
-                                        val pc = concepts[index - 1]
-                                        val pt = if (pc.type.equals("SIMULATION", ignoreCase = true)) "SIMULATION" else "CONCEPT"
-                                        allProgress.find { (it.itemType == pt || it.itemType == "SIMULATION_AGENT") && it.itemId == pc.conceptId }?.status
-                                    } else null
-                                    determineConceptStatus(null, index == 0, prevStatus)
-                                }
-                                else -> ProgressStatus.NOT_STARTED.value
+                        // Determine concept status based on progress tracking
+                        val status = when {
+                            type.equals("SIMULATION", ignoreCase = true) -> {
+                                determineSimulationStatus(
+                                    allProgress, concept.conceptId, hasAgent, hasUrl, index, concepts
+                                )
                             }
-                        } else {
-                            val progress = allProgress.find { it.itemType == "CONCEPT" && it.itemId == concept.conceptId }
-                            val prevStatus = if (index > 0) {
-                                val pc = concepts[index - 1]
-                                val pt = if (pc.type.equals("SIMULATION", ignoreCase = true)) "SIMULATION" else "CONCEPT"
-                                allProgress.find { (it.itemType == pt || it.itemType == "SIMULATION_AGENT") && it.itemId == pc.conceptId }?.status
-                            } else null
-
-                            determineConceptStatus(
-                                progress = progress,
-                                isFirstConcept = index == 0,
-                                previousConceptStatus = prevStatus
-                            )
+                            else -> {
+                                // For STUDY and MATH PROBLEM types
+                                val progress = allProgress.find { it.itemType == "CONCEPT" && it.itemId == concept.conceptId }
+                                val prevStatus = if (index > 0) {
+                                    allProgress.find { it.itemType == "CONCEPT" && it.itemId == concepts[index - 1].conceptId }?.status
+                                } else null
+                                determineConceptStatus(progress, index == 0, prevStatus)
+                            }
                         }
 
                         ConceptUiModel(
                             id = concept.conceptId,
-                            name = concept.getLocalizedName(),
+                            name = displayName,
                             order = concept.orderIndex,
                             status = when (status) {
                                 ProgressStatus.COMPLETED.value -> DomainProgressStatus.COMPLETED
@@ -194,8 +201,10 @@ class ConceptViewModel @Inject constructor(
                                 else -> DomainProgressStatus.NOT_STARTED
                             },
                             type = concept.type,
-                            simulationUrl = simUrl,
-                            simulationId = simId
+                            simulationUrl = simUrl ?: "",
+                            simulationId = simId ?: "",
+                            problemId = concept.problemId,
+                            problemTopicName = if (isKannada()) concept.problemTopicNameKn else concept.problemTopicName
                         )
                     }
 
@@ -204,14 +213,14 @@ class ConceptViewModel @Inject constructor(
                         unlockFirstConcept(studentId, conceptUiModels[0].id)
                     }
 
-                    // Use the same progress data as Progress Screen for consistency
-                    // If chapter summary available, use it; otherwise fall back to deriving from concepts
-                    val progressUiModel = if (chapterSummary != null) {
-                        buildProgressUiModel(chapterSummary.completedConcepts, chapterSummary.totalConcepts)
-                    } else {
-                        val chapterTotalConcepts = if ((chapter?.totalConcepts ?: 0) > 0) chapter!!.totalConcepts else concepts.size
-                        buildProgressUiModel(0, chapterTotalConcepts)
-                    }
+                    // Progress calculation based on loaded concepts
+                    val completedLoadedConcepts = conceptUiModels.count { it.status == DomainProgressStatus.COMPLETED }
+                    val progressUiModel = buildProgressUiModel(completedLoadedConcepts, conceptUiModels.size)
+
+                    DebugLogger.debugLog(
+                        "ConceptVM",
+                        "Progress: completed=$completedLoadedConcepts of ${conceptUiModels.size} concepts (type=$type)"
+                    )
 
                     _state.value = _state.value.copy(
                         concepts = conceptUiModels,
@@ -224,44 +233,102 @@ class ConceptViewModel @Inject constructor(
                         isLoading = false,
                         error = null
                     )
-                }.collect()
+                }
             } catch (e: Exception) {
+                DebugLogger.errorLog("ConceptVM", "Error loading concepts: ${e.message}")
                 _state.value = _state.value.copy(isLoading = false, error = e.message)
             }
         }
     }
 
+    /**
+     * Determine the status for SIMULATION type concepts
+     * Both Agent and URL must be completed for SIMULATION to be marked COMPLETED
+     */
+    private fun determineSimulationStatus(
+        allProgress: List<ProgressEntity>,
+        conceptId: String,
+        hasAgent: Boolean,
+        hasUrl: Boolean,
+        index: Int,
+        concepts: List<com.ncert7.aitutorandlab.data.local.entities.ConceptEntity>
+    ): String {
+        return when {
+            hasAgent && hasUrl -> {
+                val agentDone = allProgress.find { it.itemType == "SIMULATION_AGENT" && it.itemId == conceptId }
+                    ?.status == ProgressStatus.COMPLETED.value
+                val urlDone = allProgress.find { it.itemType == "SIMULATION" && it.itemId == conceptId }
+                    ?.status == ProgressStatus.COMPLETED.value
+
+                when {
+                    agentDone && urlDone -> ProgressStatus.COMPLETED.value
+                    agentDone || urlDone -> ProgressStatus.IN_PROGRESS.value
+                    else -> {
+                        val prevStatus = if (index > 0) {
+                            allProgress.find { it.itemId == concepts[index - 1].conceptId }?.status
+                        } else null
+                        determineConceptStatus(null, index == 0, prevStatus)
+                    }
+                }
+            }
+            hasAgent -> {
+                val agentDone = allProgress.find { it.itemType == "SIMULATION_AGENT" && it.itemId == conceptId }
+                    ?.status == ProgressStatus.COMPLETED.value
+                if (agentDone) ProgressStatus.COMPLETED.value else {
+                    val prevStatus = if (index > 0) {
+                        allProgress.find { it.itemId == concepts[index - 1].conceptId }?.status
+                    } else null
+                    determineConceptStatus(null, index == 0, prevStatus)
+                }
+            }
+            hasUrl -> {
+                val urlDone = allProgress.find { it.itemType == "SIMULATION" && it.itemId == conceptId }
+                    ?.status == ProgressStatus.COMPLETED.value
+                if (urlDone) ProgressStatus.COMPLETED.value else {
+                    val prevStatus = if (index > 0) {
+                        allProgress.find { it.itemId == concepts[index - 1].conceptId }?.status
+                    } else null
+                    determineConceptStatus(null, index == 0, prevStatus)
+                }
+            }
+            else -> ProgressStatus.NOT_STARTED.value
+        }
+    }
+
+    /**
+     * Determine the status for STUDY and MATH PROBLEM type concepts
+     * First concept is always unlocked
+     * Subsequent concepts unlock only when previous is completed
+     */
     private fun determineConceptStatus(
         progress: ProgressEntity?,
         isFirstConcept: Boolean,
         previousConceptStatus: String?
     ): String {
-        // If progress exists, use its status
         if (progress != null) {
             return progress.status
         }
 
-        // First concept is always unlocked (IN_PROGRESS)
         if (isFirstConcept) {
             return ProgressStatus.IN_PROGRESS.value
         }
 
-        // Unlock next concept only if previous is completed
         if (previousConceptStatus == ProgressStatus.COMPLETED.value) {
             return ProgressStatus.IN_PROGRESS.value
         }
 
-        // Otherwise, keep locked
         return ProgressStatus.NOT_STARTED.value
     }
+
+
 
     private suspend fun unlockFirstConcept(studentId: String, conceptId: String) {
         try {
             val language = if (isKannada()) "kn" else "en"
             progressEventTracker.markStudyInProgress(studentId, conceptId, language)
-            DebugLogger.debugLog("ConceptViewModel", "First concept unlocked via tracker: $conceptId")
+            DebugLogger.debugLog("ConceptVM", "First concept unlocked: $conceptId")
         } catch (e: Exception) {
-            DebugLogger.debugLog("ConceptViewModel", "Error unlocking first concept: ${e.message}")
+            DebugLogger.debugLog("ConceptVM", "Error unlocking first concept: ${e.message}")
         }
     }
 }

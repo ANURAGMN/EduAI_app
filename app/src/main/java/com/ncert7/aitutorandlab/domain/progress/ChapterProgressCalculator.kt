@@ -58,14 +58,10 @@ class ChapterProgressCalculator @Inject constructor(
     ): Int {
         return try {
             // 1. Get STUDY concepts for this chapter
-            val studyConcepts = conceptRepository.getConceptsForChapter(chapterId, "STUDY")
+                val studyConcepts = conceptRepository.getStudyConceptsForChapter(chapterId)
 
             // 2. Get SIMULATION concepts filtered by language
-            val simulationConcepts = if (language.equals("kn", ignoreCase = true)) {
-                conceptRepository.getSimulationConceptsKannada(chapterId)
-            } else {
-                conceptRepository.getSimulationConceptsEnglish(chapterId)
-            }
+            val simulationConcepts = conceptRepository.getSimulationConceptsForChapter(chapterId, language)
 
             // 3. Check for revision agent
             val hasRevisionAgent = checkChapterHasRevisionAgent(chapterId)
@@ -83,7 +79,7 @@ class ChapterProgressCalculator @Inject constructor(
 
             val overall = if (divisor > 0) {
                 // Use proper rounding instead of integer division truncation
-                kotlin.math.round((study + simulation + revision).toFloat() / divisor).toInt()
+                round((study + simulation + revision).toFloat() / divisor).toInt()
             } else {
                 0
             }
@@ -166,8 +162,8 @@ class ChapterProgressCalculator @Inject constructor(
             val simId = if (language.equals("kn", ignoreCase = true)) concept.simulationIdKannada else concept.simulationId
             val simUrl = if (language.equals("kn", ignoreCase = true)) concept.simulationUrlKannada else concept.simulationUrl
 
-            val hasAgent = !simId.isNullOrBlank() && !simId.equals("null", ignoreCase = true)
-            val hasUrl = !simUrl.isNullOrBlank() && !simUrl.equals("null", ignoreCase = true)
+            val hasAgent = simId.isNotBlank() && simId != "null"
+            val hasUrl = simUrl?.isNotBlank() == true && simUrl != "null"
 
             // Skip if no component exists for this language
             if (!hasAgent && !hasUrl) continue
@@ -185,8 +181,7 @@ class ChapterProgressCalculator @Inject constructor(
                     score
                 }
                 hasAgent -> if (agentDone) 100f else 0f
-                hasUrl -> if (urlDone) 100f else 0f
-                else -> 0f
+                else -> if (urlDone) 100f else 0f
             }
 
             totalScore += conceptScore

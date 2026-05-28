@@ -50,12 +50,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.ncert7.aitutorandlab.R
+import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.service.analytics.ScreenName
 import com.ncert7.aitutorandlab.service.analytics.TrackScreenEvent
 import com.ncert7.aitutorandlab.ui.screens.setting.components.CenterPopupCard
 import com.ncert7.aitutorandlab.ui.screens.setting.components.ContactSupportCard
 import com.ncert7.aitutorandlab.ui.screens.setting.components.EditProfileScreen
 import com.ncert7.aitutorandlab.ui.screens.setting.components.ProfileCard
+import com.ncert7.aitutorandlab.ui.screens.setting.viewmodel.LogoutState
 import com.ncert7.aitutorandlab.ui.theme.AccentBlue
 import com.ncert7.aitutorandlab.ui.theme.BackgroundSecondary
 import com.ncert7.aitutorandlab.ui.theme.BrandPrimary
@@ -77,7 +79,6 @@ sealed class PopupScreen {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingScreen(
-    navController: NavController,
     onNavigateBack: () -> Unit,
     onLogout: () -> Unit = {}
 ) {
@@ -92,13 +93,6 @@ fun SettingScreen(
     val student by viewModel.student.collectAsState()
     val selectedLanguage by viewModel.selectedLanguage.collectAsState()
     val logoutState by viewModel.logoutState.collectAsState()
-
-    // Handle logout state changes
-    LaunchedEffect(logoutState) {
-        if (logoutState) {
-            onLogout()
-        }
-    }
 
     val scrollState = rememberScrollState()
 
@@ -253,6 +247,20 @@ fun SettingScreen(
                         emailButtonText = stringResource(R.string.open_email_app_msg)
                     ) { activeScreen = null }
                 null -> {}
+            }
+        }
+        // Handle logout success
+        LaunchedEffect(logoutState) {
+            when (logoutState) {
+                is LogoutState.Success -> {
+                    onLogout()
+                }
+                is LogoutState.Error -> {
+                    // Log error or show toast if needed
+                    val error = (logoutState as? LogoutState.Error)?.message
+                    DebugLogger.errorLog("SettingScreen", "Logout failed: $error")
+                }
+                else -> {}
             }
         }
     }

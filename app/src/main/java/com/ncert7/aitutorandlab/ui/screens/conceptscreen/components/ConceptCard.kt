@@ -1,6 +1,5 @@
 package com.ncert7.aitutorandlab.ui.screens.conceptscreen.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -40,28 +39,34 @@ import com.ncert7.aitutorandlab.ui.theme.TextSecondary
 import com.ncert7.aitutorandlab.ui.theme.White
 
 /**
- * Composable function to display a Concept Card with status badge, title, concept completion status, and an icon.
+ * Composable function to display a Concept Card with status badge, title, concept completion status, and action buttons.
+ *
+ * The buttons displayed depend on the concept type:
+ * - STUDY: Single clickable card (navigates to chat screen)
+ * - MATH PROBLEM: Shows "Start Problem" button (navigates to math agent with problemId)
+ * - SIMULATION: Shows "Agent" button (if simulationId exists) and "Simulation" button (if simulationUrl exists)
  *
  * @param concept The Concept data to display.
  * @param serialNumber The serial number (1, 2, 3, ...) to display in the badge.
- * @param onClick Lambda function to handle card click events.
+ * @param onClick Lambda function to handle main card click (STUDY type).
+ * @param onSimulationAgentClick Lambda to handle simulation agent button click.
+ * @param onSimulationClick Lambda to handle simulation URL button click.
  */
 @Composable
 fun ConceptCard(
     concept: ConceptUiModel,
     serialNumber: Int = 1,
-    onClick: () -> Unit = {},
+    onClick: (conceptId: String, problemId: String, conceptType: String) -> Unit = { _, _, _ -> },
     onSimulationAgentClick: (String) -> Unit = {},
-    onSimulationClick: (title: String, url: String, conceptId: String) -> Unit = { _, _, _ -> }
+    onSimulationClick: (title: String, url: String, conceptId: String) -> Unit = { _, _, _ -> },
 ) {
     val dimens = LocalDimensions.current
 
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .fillMaxWidth(),
         shape = CardDefaults.shape,
-        colors =CardDefaults.cardColors(
+        colors = CardDefaults.cardColors(
             containerColor = CardBackground,
         ),
         elevation = CardDefaults.cardElevation(
@@ -85,10 +90,9 @@ fun ConceptCard(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal =dimens.inputHorizontalPadding),
+                    .padding(horizontal = dimens.inputHorizontalPadding),
                 verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
             ) {
-                // Title
                 Text(
                     text = concept.name,
                     style = MaterialTheme.typography.titleMedium,
@@ -96,7 +100,6 @@ fun ConceptCard(
                     color = TextPrimary
                 )
 
-                // Concept Completion status
                 Text(
                     text = getStatus(concept.status),
                     style = MaterialTheme.typography.labelMedium,
@@ -104,82 +107,207 @@ fun ConceptCard(
                     color = getStatusColor(concept.status)
                 )
 
-                // Simulation Buttons
-                if (concept.type.equals("SIMULATION", ignoreCase = true)) {
-                    // At this point, concepts are already filtered by the repository
-                    // based on language, so we only render what's present
-                    val hasSimulationId = !concept.simulationId.isNullOrBlank()
-                    val hasSimulationUrl = !concept.simulationUrl.isNullOrBlank()
-
-                    // Only show buttons row if at least one button will be visible
-                    if (hasSimulationId || hasSimulationUrl) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = dimens.spaceSmall),
-                            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
-                        ) {
-                            // Agent button - only show if simulationId exists
-                            if (hasSimulationId) {
-                                Button(
-                                    onClick = {
-                                        concept.simulationId?.let { onSimulationAgentClick(it) }
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
-                                    shape = MaterialTheme.shapes.small,
-                                    colors = buttonColors(
-                                        containerColor = AccentBlue,
-                                        contentColor = TextPrimary
-                                    )
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.agent),
-                                        textAlign = TextAlign.Center,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        color = White
-                                    )
-                                }
-                            }
-
-                            // Simulation button - only show if URL exists
-                            if (hasSimulationUrl) {
-                                OutlinedButton(
-                                    onClick = {
-                                        concept.simulationUrl?.let {
-                                            onSimulationClick(concept.name, it, concept.id)
-                                        }
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
-                                    shape = MaterialTheme.shapes.small,
-                                    colors = outlinedButtonColors(
-                                        containerColor = White,
-                                        contentColor = TextPrimary,
-                                    )
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.simulation),
-                                        textAlign = TextAlign.Center,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-                            }
-                        }
+                when {
+                    concept.type.equals("STUDY", ignoreCase = true) -> {
+                        StudyConceptButtons(
+                            conceptId = concept.id,
+                            onClick = onClick
+                        )
+                    }
+                    concept.type.equals("MATH PROBLEM", ignoreCase = true) -> {
+                        MathProblemButtons(
+                            conceptId = concept.id,
+                            problemId = concept.problemId,
+                            onClick = onClick
+                        )
+                    }
+                    concept.type.equals("SIMULATION", ignoreCase = true) -> {
+                        SimulationConceptButtons(
+                            concept = concept,
+                            onSimulationAgentClick = onSimulationAgentClick,
+                            onSimulationClick = onSimulationClick
+                        )
                     }
                 }
             }
 
-
-            // Right side: Chevron or Lock icon
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = stringResource(R.string.open_concept),
-                tint = TextSecondary ,
+                tint = TextSecondary,
                 modifier = Modifier.size(dimens.iconLarge)
             )
+        }
+    }
+}
+
+
+/**
+ * Buttons for STUDY type concepts
+ * Single button that navigates to chat/tutoring screen
+ */
+@Composable
+private fun StudyConceptButtons(
+    conceptId: String,
+    onClick: (conceptId: String, problemId: String, conceptType: String) -> Unit
+) {
+    val dimens = LocalDimensions.current
+
+    Button(
+        onClick = { onClick(conceptId, "", "STUDY") },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = dimens.spaceSmall),
+        contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
+        shape = MaterialTheme.shapes.small,
+        colors = buttonColors(
+            containerColor = AccentBlue,
+            contentColor = White
+        )
+    ) {
+        Text(
+            text = stringResource(R.string.start_learning),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.labelSmall,
+            color = White
+        )
+    }
+}
+
+/**
+ * Buttons for MATH PROBLEM type concepts
+ * Single button labeled "Start Problem" that opens math agent with problemId
+ */
+@Composable
+private fun MathProblemButtons(
+    conceptId: String,
+    problemId: String,
+    onClick: (conceptId: String, problemId: String, conceptType: String) -> Unit
+) {
+    val dimens = LocalDimensions.current
+
+    Button(
+        onClick = { onClick(conceptId, problemId, "MATH PROBLEM") },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = dimens.spaceSmall),
+        contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
+        shape = MaterialTheme.shapes.small,
+        colors = buttonColors(
+            containerColor = AccentBlue,
+            contentColor = White
+        )
+    ) {
+        Text(
+            text = stringResource(R.string.problem_to_solve),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.labelSmall,
+            color = White
+        )
+    }
+}
+
+/**
+ * Buttons for SIMULATION type concepts
+ * Shows "Agent" button (if simulationId exists) and "Simulation" button (if simulationUrl exists)
+ */
+@Composable
+private fun SimulationConceptButtons(
+    concept: ConceptUiModel,
+    onSimulationAgentClick: (String) -> Unit,
+    onSimulationClick: (title: String, url: String, conceptId: String) -> Unit
+) {
+    val dimens = LocalDimensions.current
+
+    val hasAgent = concept.simulationId?.isNotBlank() == true && concept.simulationId != "null"
+    val hasUrl = concept.simulationUrl?.isNotBlank() == true && concept.simulationUrl != "null"
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = dimens.spaceSmall),
+        verticalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
+    ) {
+        // Row for Agent and Simulation buttons if both exist
+        if (hasAgent && hasUrl) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
+            ) {
+                // Agent button
+                Button(
+                    onClick = { onSimulationAgentClick(concept.simulationId) },
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
+                    shape = MaterialTheme.shapes.small,
+                    colors = buttonColors(
+                        containerColor = AccentBlue,
+                        contentColor = White
+                    )
+                ) {
+                    Text(
+                        text = stringResource(R.string.agent),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = White
+                    )
+                }
+
+                // Simulation button
+                OutlinedButton(
+                    onClick = { onSimulationClick(concept.name, concept.simulationUrl, concept.id) },
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
+                    shape = MaterialTheme.shapes.small,
+                    colors = outlinedButtonColors(
+                        containerColor = White,
+                        contentColor = TextPrimary,
+                    )
+                ) {
+                    Text(
+                        text = stringResource(R.string.simulation),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+            }
+        } else if (hasAgent && concept.simulationId.isNotEmpty()) {
+            // Only Agent button
+            Button(
+                onClick = { onSimulationAgentClick(concept.simulationId) },
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
+                shape = MaterialTheme.shapes.small,
+                colors = buttonColors(
+                    containerColor = AccentBlue,
+                    contentColor = White
+                )
+            ) {
+                Text(
+                    text = stringResource(R.string.agent),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = White
+                )
+            }
+        } else if (hasUrl && concept.simulationUrl.isNotEmpty()) {
+            // Only Simulation button
+            OutlinedButton(
+                onClick = { onSimulationClick(concept.name, concept.simulationUrl, concept.id) },
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
+                shape = MaterialTheme.shapes.small,
+                colors = outlinedButtonColors(
+                    containerColor = White,
+                    contentColor = TextPrimary,
+                )
+            ) {
+                Text(
+                    text = stringResource(R.string.simulation),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
         }
     }
 }

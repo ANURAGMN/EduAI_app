@@ -58,7 +58,10 @@ data class ChatUiState(
 
     // Session Resume Dialog (for ConceptScreen) - stores conceptName when dialog should be shown
     val pendingConceptForDialog: String? = null,
-    val currentProgressPercentage: Int = 0
+    val currentProgressPercentage: Int = 0,
+
+    // Session Resume Dialog for Revision Screen
+    val showSessionResumeDialog: Boolean = false
 
 )
 

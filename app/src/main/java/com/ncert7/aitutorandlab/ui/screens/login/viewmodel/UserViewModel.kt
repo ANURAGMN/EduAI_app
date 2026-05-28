@@ -9,8 +9,10 @@ import com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
 import com.ncert7.aitutorandlab.data.local.entities.StudentEntity
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.repository.FirebaseRepository
+import com.ncert7.aitutorandlab.repository.StreakRepository
 import com.ncert7.aitutorandlab.repository.StudentLocalRepository
 import com.ncert7.aitutorandlab.repository.UserCheckResult
+import com.ncert7.aitutorandlab.service.sync.DataSyncService
 import com.ncert7.aitutorandlab.service.sync.FirebaseSyncManager
 import com.ncert7.aitutorandlab.utils.LanguageHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,8 +26,8 @@ import javax.inject.Inject
 @HiltViewModel
 class UserViewModel @Inject constructor(
     private val repo: FirebaseRepository,
+    private val streakRepository: StreakRepository,
     private val sharedPreferenceUtils: SharedPreferenceUtils,
-    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
@@ -37,7 +39,8 @@ class UserViewModel @Inject constructor(
     private val _userSaveState = MutableStateFlow<UserSaveState>(UserSaveState.Idle)
     val userSaveState = _userSaveState.asStateFlow()
 
-    private val _existingUserSyncState = MutableStateFlow<ExistingUserSyncState>(ExistingUserSyncState.Idle)
+    private val _existingUserSyncState =
+        MutableStateFlow<ExistingUserSyncState>(ExistingUserSyncState.Idle)
     val existingUserSyncState = _existingUserSyncState.asStateFlow()
 
     private val _selectedLanguage = MutableStateFlow(
@@ -196,18 +199,26 @@ class UserViewModel @Inject constructor(
                 val syncManager = FirebaseSyncManager(
                     subjectDao = db.subjectDao(),
                     chapterDao = db.chapterDao(),
-                    conceptDao = db.conceptDao()
+                    conceptDao = db.conceptDao(),
+                    progressDao = db.progressDao(),
+                    context = context
                 )
-                val result = syncManager.syncAllContent()
-                DebugLogger.debugLog("UserViewModel", "Content sync: ${result.message}")
+                // Sync user progress from Firebase
+                val progressResult = syncManager.syncUserProgress(currentUser.id)
+                DebugLogger.debugLog("UserViewModel", "Progress sync: ${progressResult.message}")
+
+                DebugLogger.debugLog("UserViewModel", "Starting streak sync for existing user")
+                streakRepository.syncStreakOnLogin(currentUser.id)
+                DebugLogger.debugLog("UserViewModel", "Streak sync completed")
 
                 // Save preferences
                 sharedPreference.setLoggedIn(true)
                 sharedPreference.setLanguagePreference(currentUser.language)
                 sharedPreference.setUserId(currentUser.id)
 
-                // Trigger restoration of user-specific data (Progress, Streaks, etc.)
-                com.ncert7.aitutorandlab.service.sync.DataSyncService.restoreUserData(context, currentUser.id)
+                // Initialize DataSyncService with the student ID for real-time sync
+                DataSyncService.updateStudentId(currentUser.id)
+                DebugLogger.debugLog("UserViewModel", "DataSyncService initialized with studentId: ${currentUser.id}")
 
                 _existingUserSyncState.value = ExistingUserSyncState.Success
             } catch (e: Exception) {
@@ -260,15 +271,26 @@ class UserViewModel @Inject constructor(
                     val syncManager = FirebaseSyncManager(
                         subjectDao = db.subjectDao(),
                         chapterDao = db.chapterDao(),
-                        conceptDao = db.conceptDao()
+                        conceptDao = db.conceptDao(),
+                        progressDao = db.progressDao(),
+                        context = context
                     )
                     val result = syncManager.syncAllContent()
                     DebugLogger.debugLog("UserViewModel", "Content sync: ${result.message}")
+
+                    // Create initial streak for new user
+                    DebugLogger.debugLog("UserViewModel", "Creating initial streak for new user")
+                    streakRepository.syncStreakOnLogin(currentUser.id)
+                    DebugLogger.debugLog("UserViewModel", "Initial streak created")
 
                     // Save preferences
                     sharedPreference.setLoggedIn(true)
                     sharedPreference.setLanguagePreference(currentUser.language)
                     sharedPreference.setUserId(currentUser.id)
+
+                    // Initialize DataSyncService with the student ID for real-time sync
+                    DataSyncService.updateStudentId(currentUser.id)
+                    DebugLogger.debugLog("UserViewModel", "DataSyncService initialized with studentId: ${currentUser.id}")
 
                     _userSaveState.value = UserSaveState.Success
                 } else {

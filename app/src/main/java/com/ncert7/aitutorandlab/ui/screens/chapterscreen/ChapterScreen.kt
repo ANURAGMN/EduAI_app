@@ -34,44 +34,10 @@ import com.ncert7.aitutorandlab.ui.screens.mathagentscreen.viewmodel.MathViewMod
 import com.ncert7.aitutorandlab.domain.mathagent.usecase.MathIntent
 
 /**
- * Mapping of chapter display names to their API-compatible names.
- * Format: Display Name (from UI) -> API Name (for revision endpoint)
- * Add the real API names as values here.
- */
-private val chapterNameMapping = mapOf(
-    "Adolescence: A Stage of Growth and Change" to "Adolescence",
-    "Earth, Moon, and the Sun" to "Earth Moon And Sum",
-    "Electricity: Circuits and their components" to "Electricity",
-    "Evolving world of Science" to "Evolving World Of Science",
-    "Exploring Substances Acids, Bases and Neutral" to "Exploring Substances Acids Bases And Neutral",
-    "Heat Transfer in Nature" to "Heat Transfer In Nature",
-    "Life Processes in Animals" to "Life Processes In Animals",
-    "Life Processes in Plants" to "Life Processes In Plants",
-    "Light: Shadows and Reflections" to "Light Shadows And Reflection",
-    "Measurement of Time and Motion" to "Measurement Of Time And Motion",
-    "The World of Metals and Non-Metals" to "Metals And Non Metals",
-    "Changes Around Us: Physical and Chemical" to "Physical And Chemical Changes"
-)
-
-/**
- * Get the API-compatible chapter name based on the display name.
- * If no mapping exists, returns the display name with "and" -> "And" conversion.
- */
-private fun String.getRevisionChapterName(): String {
-    return chapterNameMapping[this]?.let { mappedName ->
-        mappedName
-    } ?: run {
-        // Fallback: Simple conversion - replace "and" with "And" if no mapping exists
-        this.replace(Regex("\\band\\b"), "And")
-    }
-}
-
-/**
  * ChapterScreen displays a list of chapters for a given subject.
  *
  * @param subjectId The ID of the subject whose chapters are to be displayed.
  * @param onBackClick Callback function to be invoked when the back button is clicked.
- * @param onChapterClick Callback function to be invoked when a chapter is clicked, passing the chapter ID.
  * @param onSimulationClick Callback function to be invoked when simulation button is clicked, passing chapter info.
  * @param onRevisionClick Callback function to be invoked when revision button is clicked, passing chapter name.
  * @param onGoHome Callback function to navigate to the home screen.
@@ -86,7 +52,6 @@ fun ChapterScreen(
     onStudyClick: (String, String) -> Unit = {_, _ -> },
     onSimulationClick: (String, String) -> Unit = {_, _ -> },
     onRevisionClick: (String) -> Unit = {},
-    onMathAgentClick: (String, String?) -> Unit = {_, _ -> },
     onGoHome: () -> Unit = {},
     onGoSetting: () -> Unit = {},
     onProgressClick: () -> Unit = {},
@@ -147,7 +112,6 @@ fun ChapterScreen(
                 CircularProgressIndicator()
             }
         } else if (state.error != null) {
-            DebugLogger.errorLog("ChapterScreen", "Error loading chapters: ${state.error}")
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -156,8 +120,7 @@ fun ChapterScreen(
             }
         } else {
             // Check if this is a Math subject
-            val isMathSubject = state.subjectName.contains("Math", ignoreCase = true) ||
-                    state.subjectName.contains("ಗಣಿತ", ignoreCase = true)
+            val isMathSubject = subjectId == "5c0a6b6d-7c6b-4f35-9d5b-9fd0fd8e8a01"//subject id of math subject
 
             LazyColumn(
                 modifier = Modifier
@@ -168,32 +131,28 @@ fun ChapterScreen(
                 items(state.chapters, { it.id }) { chapterUiModel ->
                     ChapterCard(
                         chapter = chapterUiModel,
-                        subjectName = state.subjectName, // Pass subject name for conditional rendering
                         onStudyClick = {
                             if (isMathSubject) {
-                                // For Math: go directly to MathAgentScreen with first problem ID
-                                val firstProblemId = mathState.problems.firstOrNull()?.id
-                                DebugLogger.debugLog("ChapterScreen", "Math Study clicked. First problem ID: $firstProblemId")
-                                onMathAgentClick(chapterUiModel.id, firstProblemId)
+                                // For Math: go to ConceptScreen with MATH_PROBLEM type
+                                onStudyClick(chapterUiModel.id, "MATH PROBLEM")
                             } else {
-                                // For other subjects: go to ConceptScreen
+                                // For other subjects: go to ConceptScreen with STUDY type
                                 onStudyClick(chapterUiModel.id, "STUDY")
                             }
                         },
                         onSimulationClick = { onSimulationClick(chapterUiModel.id, "SIMULATION") },
                         onRevisionClick = {
-                            // Use the English name from the model to get the API-compatible name
-                            val chapterName = chapterUiModel.englishName.getRevisionChapterName()
-                            DebugLogger.debugLog("ChapterScreen", "Revision button clicked for chapter: ${chapterUiModel.name}, english name: ${chapterUiModel.englishName}, mapped: $chapterName")
+                            // Check for existing session using revisionId
+                            val revisionId = chapterUiModel.revisionId
+                            DebugLogger.debugLog("ChapterScreen", "Revision button clicked for chapter: ${chapterUiModel.name}, revisionId: $revisionId")
 
-                            // Check if session exists
-                            if (revisionViewModel.hasExistingSession(chapterName)) {
+                            if (revisionViewModel.hasExistingSession(revisionId)) {
                                 DebugLogger.debugLog("ChapterScreen", "Existing revision session found, showing dialog")
-                                pendingRevisionChapter = chapterName
+                                pendingRevisionChapter = chapterUiModel.id  // Store chapterId for navigation
                                 showRevisionDialog = true
                             } else {
                                 DebugLogger.debugLog("ChapterScreen", "No existing revision session, navigating directly")
-                                onRevisionClick(chapterName)
+                                onRevisionClick(chapterUiModel.id)  // Pass chapterId for navigation
                             }
                         }
                     )
@@ -209,20 +168,19 @@ fun ChapterScreen(
             confirmText = stringResource(R.string.continue_session),
             dismissText = stringResource(R.string.start_new),
             onConfirm = {
-                // Resume existing session
-                pendingRevisionChapter?.let { chapterName ->
-                    DebugLogger.debugLog("ChapterScreen", "User chose to resume revision session")
-                    onRevisionClick(chapterName)
+                // Resume existing session - navigate to revision with chapterId
+                pendingRevisionChapter?.let { chapterId ->
+                    DebugLogger.debugLog("ChapterScreen", "User chose to resume revision session for chapterId: $chapterId")
+                    onRevisionClick(chapterId)
                 }
                 showRevisionDialog = false
                 pendingRevisionChapter = null
             },
             onDismiss = {
-                // Start fresh session
-                pendingRevisionChapter?.let { chapterName ->
-                    DebugLogger.debugLog("ChapterScreen", "User chose to start fresh revision session")
-                    revisionViewModel.startFreshSession()
-                    onRevisionClick(chapterName)
+                // Start fresh session - navigate to revision with chapterId
+                pendingRevisionChapter?.let { chapterId ->
+                    DebugLogger.debugLog("ChapterScreen", "User chose to start fresh revision session for chapterId: $chapterId")
+                    onRevisionClick(chapterId)
                 }
                 showRevisionDialog = false
                 pendingRevisionChapter = null

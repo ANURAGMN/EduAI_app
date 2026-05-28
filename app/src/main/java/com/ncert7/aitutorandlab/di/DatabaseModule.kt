@@ -10,6 +10,7 @@ import com.ncert7.aitutorandlab.data.local.dao.ProgressDao
 import com.ncert7.aitutorandlab.data.local.dao.StreakDao
 import com.ncert7.aitutorandlab.data.local.dao.StudentDao
 import com.ncert7.aitutorandlab.data.local.dao.SubjectDao
+import com.ncert7.aitutorandlab.repository.StreakRepository
 import com.ncert7.aitutorandlab.utils.StreakManager
 import dagger.Module
 import dagger.Provides
@@ -80,8 +81,16 @@ object DatabaseModule {
     }
     @Provides
     @Singleton
-    fun provideStreakManager(@ApplicationContext context: Context): StreakManager {
-        return StreakManager(context)
+    fun provideStreakManager(
+        @ApplicationContext context: Context,
+        streakRepository: StreakRepository,
+        userId: String
+    ): StreakManager {
+        return StreakManager(
+            context,
+            streakRepository,
+            userId
+        )
     }
 
     @Provides

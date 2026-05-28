@@ -3,6 +3,7 @@ package com.ncert7.aitutorandlab.ui.screens.home.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ncert7.aitutorandlab.config.AppConfig
+import com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
 import com.ncert7.aitutorandlab.data.local.dao.ConceptDao
 import com.ncert7.aitutorandlab.data.local.dao.ProgressDao
 import com.ncert7.aitutorandlab.data.local.dao.StudentDao
@@ -28,7 +29,7 @@ class HomeViewModel @Inject constructor(
     private val progressDao: ProgressDao,
     private val studentDao: StudentDao,
     private val streakRepository: StreakRepository,
-    private val sharedPrefs: com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
+    private val sharedPrefs: SharedPreferenceUtils
 ) : ViewModel(){
 
     private val userId: String

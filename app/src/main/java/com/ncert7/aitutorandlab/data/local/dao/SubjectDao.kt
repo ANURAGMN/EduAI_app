@@ -29,6 +29,9 @@ interface SubjectDao {
     @Query("SELECT * FROM subjects WHERE classLevel = :classLevel ORDER BY orderIndex ASC")
     suspend fun getSubjectsForClassSync(classLevel: Int): List<SubjectEntity>
 
+    @Query("SELECT * FROM subjects ORDER BY orderIndex ASC")
+    suspend fun getAllSubjectsSync(): List<SubjectEntity>
+
     @Query("SELECT * FROM subjects WHERE subjectId = :subjectId")
     suspend fun getSubject(subjectId: String): SubjectEntity?
 

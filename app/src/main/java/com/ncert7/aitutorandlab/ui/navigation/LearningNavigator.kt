@@ -25,11 +25,12 @@ object LearningRoutes {
     const val SUBJECTS = "subjects"
     const val CHAPTERS = "chapters/{subjectId}"
     const val CONCEPTS = "concepts/{chapterId}/{type}"
-    const val CONCEPT_DETAIL = "concept_detail/{conceptId}"
     const val CHATBOT = "chatbot?conceptId={conceptId}"
-    const val SIMULATION_LIST = "simulation_list/{chapterId}/{classLevel}/{subjectName}/{chapterName}"
-    const val SIMULATION_VIEWER = "simulation_viewer/{simulationId}/{htmlFileName}/{simulationTitle}"
-}
+    const val MATH_AGENT = "math_agent?chapterId={chapterId}&problemId={problemId}"
+    const val SIMULATION_AGENT = "simulation_agent/{simulationId}"
+    const val CONCEPT_SIM_VIEW = "concept_sim_view/{url}/{title}/{conceptId}"
+    const val REVISION = "revision/{chapterId}"
+  }
 
 @Composable
 fun LearningNavigator(
@@ -49,15 +50,27 @@ fun LearningNavigator(
     ) {
         composable(LearningRoutes.HOME) {
             HomeScreen(
+                onNavigateToLearning = { navController.navigate("learning") },
+                onNavigateToChapters = { subjectId ->
+                    navController.navigate("chapters/$subjectId")
+                },
                 onLessonClick = { conceptId ->
                     navController.navigate("chatbot?conceptId=$conceptId")
+                },
+                onSimulationClick = { simulationId ->
+                    navController.navigate("simulation_agent/$simulationId")
+                },
+                onSimulationUrlClick = { title, url, conceptId ->
+                    val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
+                    val encodedConceptId = if (conceptId.isNotBlank()) java.net.URLEncoder.encode(conceptId, "UTF-8") else "empty"
+                    navController.navigate("concept_sim_view/$encodedUrl/$title/$encodedConceptId")
                 }
             )
         }
 
         composable(LearningRoutes.SUBJECTS) {
             SubjectScreen(
-                onBackClick = onGoHome,
+                onBackClick = onBackToHome,
                 onSubjectClick = { subjectId ->
                     navController.navigate("chapters/${subjectId}")
                 },
@@ -77,15 +90,9 @@ fun LearningNavigator(
                 onSimulationClick = { chapterId, type ->
                     navController.navigate("concepts/$chapterId/$type")
                 },
-                onMathAgentClick = { chapterId, problemId ->
-                    val problemIdParam = problemId ?: "null"
-                    navController.navigate("math_agent?chapterId=$chapterId&problemId=$problemIdParam")
-                },
-                onRevisionClick = { chapterName ->
-                    DebugLogger.debugLog("LearningNavigator", "Navigating to revision with chapter: $chapterName")
-                    val encodedChapter = java.net.URLEncoder.encode(chapterName, "UTF-8")
-                    DebugLogger.debugLog("LearningNavigator", "Encoded chapter name: $encodedChapter")
-                    navController.navigate("revision/$encodedChapter")
+                onRevisionClick = { chapterId ->
+                    DebugLogger.debugLog("LearningNavigator", "Navigating to revision with chapterId: $chapterId")
+                    navController.navigate("revision/$chapterId")
                 },
                 onGoHome = onGoHome,
                 onGoSetting = onGoSetting,
@@ -100,8 +107,11 @@ fun LearningNavigator(
                 chapterId = chapterId,
                 type = type,
                 onBackClick = { navController.popBackStack() },
-                onConceptClick = { conceptId ->
-                    navController.navigate("chatbot?conceptId=$conceptId")
+                onConceptClick = { conceptId, problemId, conceptType ->
+                    when (conceptType) {
+                        "MATH PROBLEM" -> navController.navigate("math_agent?chapterId=$chapterId&problemId=$problemId")
+                        else -> navController.navigate("chatbot?conceptId=$conceptId")
+                    }
                 },
                 onSimulationAgentClick = {simulationId->
                     navController.navigate("simulation_agent/$simulationId")
@@ -129,7 +139,7 @@ fun LearningNavigator(
         }
 
         composable(
-            route = "math_agent?chapterId={chapterId}&problemId={problemId}",
+            route = LearningRoutes.MATH_AGENT,
             arguments = listOf(
                 navArgument("chapterId") {
                     type = NavType.StringType
@@ -143,7 +153,6 @@ fun LearningNavigator(
                 }
             )
         ) { backStackEntry ->
-            val chapterId = backStackEntry.arguments?.getString("chapterId")
             val problemId = backStackEntry.arguments?.getString("problemId")
             MathAgentScreen(
                 problemId = problemId
@@ -151,7 +160,7 @@ fun LearningNavigator(
         }
 
         composable(
-            route = "concept_sim_view/{url}/{title}/{conceptId}",
+            route = LearningRoutes.CONCEPT_SIM_VIEW,
             arguments = listOf(
                 navArgument("url") { type = NavType.StringType },
                 navArgument("title") { type = NavType.StringType },
@@ -170,7 +179,7 @@ fun LearningNavigator(
             )
         }
 
-        composable(route = "simulation_agent/{simulationId}") { backStackEntry ->
+        composable(route = LearningRoutes.SIMULATION_AGENT) { backStackEntry ->
             val simulationId = backStackEntry.arguments?.getString("simulationId")!!
             SimulationAgentScreen(
                 simulationId = simulationId,
@@ -178,12 +187,11 @@ fun LearningNavigator(
             )
         }
 
-        composable("revision/{chapterName}") { backStackEntry ->
-            val encodedChapterName = backStackEntry.arguments?.getString("chapterName") ?: return@composable
-            val chapterName = java.net.URLDecoder.decode(encodedChapterName, "UTF-8")
-            DebugLogger.debugLog("LearningNavigator", "Revision route - Encoded: $encodedChapterName, Decoded: $chapterName")
-           RevisionScreen(
-                chapterName = chapterName,
+        composable(LearningRoutes.REVISION) { backStackEntry ->
+            val chapterId = backStackEntry.arguments?.getString("chapterId") ?: return@composable
+            DebugLogger.debugLog("LearningNavigator", "Revision route - chapterId: $chapterId")
+            RevisionScreen(
+                chapterId = chapterId,
                 onBackClick = { navController.popBackStack() }
             )
         }

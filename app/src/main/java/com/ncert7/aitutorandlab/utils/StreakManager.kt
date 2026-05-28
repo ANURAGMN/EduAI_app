@@ -2,6 +2,10 @@ package com.ncert7.aitutorandlab.utils
 
 import android.content.Context
 import com.ncert7.aitutorandlab.debug.DebugLogger
+import com.ncert7.aitutorandlab.repository.StreakRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 /**
@@ -21,7 +25,12 @@ import java.util.Calendar
  * - Simulation URL loaded
  * - Revision session started
  */
-class StreakManager(context: Context) {
+class StreakManager(
+    context: Context,
+    private val streakRepository: StreakRepository,
+    private val userId: String,
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+) {
 
     /**
      * Private SharedPreferences file used only for streak-related state.
@@ -97,12 +106,59 @@ class StreakManager(context: Context) {
 
     /**
      * Records a Concept screen open and updates the streak accordingly.
-     * This is a convenience method that calls recordActivity().
+     *
+     * Streak behavior:
+     * - First time: streak = 1
+     * - Same day: streak unchanged
+     * - Next consecutive day: streak + 1
+     * - Day(s) skipped: streak resets to 1
      *
      * @return The current streak count after update
      */
-    fun onConceptOpened(): Int {
-        return recordActivity("CONCEPT_SCREEN_OPEN")
+    fun onConceptOpened(onStreakUpdated: (Int) -> Unit = {}) {
+        scope.launch {
+            try {
+                val now = System.currentTimeMillis()
+                val today = getDayIdentifier(now)
+
+                // Get current streak from repository
+                val currentStreak = streakRepository.getUserStreak(userId)
+
+                val newStreak = when {
+                    // First ever streak event for this user
+                    currentStreak == null -> {
+                        DebugLogger.debugLog("StreakManager", "First streak event - starting at 1")
+                        streakRepository.createStreakForUser(userId)
+                        1
+                    }
+
+                    // Same calendar day → do NOT increment
+                    isSameDay(currentStreak.lastStreakDate, now) -> {
+                        DebugLogger.debugLog("StreakManager", "Same day - streak remains ${currentStreak.streakCount}")
+                        currentStreak.streakCount
+                    }
+
+                    // Next consecutive day → continue streak
+                    isConsecutiveDay(currentStreak.lastStreakDate, now) -> {
+                        val newCount = currentStreak.streakCount + 1
+                        DebugLogger.debugLog("StreakManager", "Consecutive day - streak increased to $newCount")
+                        streakRepository.updateStreak(userId, newCount, today)
+                        newCount
+                    }
+
+                    // Days were skipped → reset streak
+                    else -> {
+                        DebugLogger.debugLog("StreakManager", "Day(s) skipped - streak reset to 1 (was ${currentStreak.streakCount})")
+                        streakRepository.updateStreak(userId, 1, today)
+                        1
+                    }
+                }
+
+                onStreakUpdated(newStreak)
+            } catch (e: Exception) {
+                DebugLogger.errorLog("StreakManager", "Error updating streak: ${e.message}")
+            }
+        }
     }
 
     /**

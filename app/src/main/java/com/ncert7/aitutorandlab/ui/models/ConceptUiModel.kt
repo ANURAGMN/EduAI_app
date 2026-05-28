@@ -12,7 +12,12 @@ data class ConceptUiModel(
     val status: ProgressStatus,
     val type: String = "STUDY",
     val simulationId: String? = null,
-    val simulationUrl: String? = null
+    val simulationIdKannada: String? = null,
+    val simulationUrl: String? =null,
+    val simulationUrlKannada: String? = null,
+    val problemTopicName:String?=null,
+    val problemTopicNameKannada:String?=null,
+    val problemId: String = ""
 )
 
 

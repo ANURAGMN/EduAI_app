@@ -7,7 +7,9 @@ import com.ncert7.aitutorandlab.data.local.dao.ProgressDao
 import com.ncert7.aitutorandlab.data.local.entities.ChapterAgentProgressEntity
 import com.ncert7.aitutorandlab.data.local.entities.ProgressEntity
 import com.ncert7.aitutorandlab.domain.progress.model.ProgressStatus
+import com.ncert7.aitutorandlab.service.sync.DataSyncService
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /**
  * Repository for all progress-related data access.
@@ -47,7 +49,7 @@ class ProgressRepository(
             newStatus, progressPercentage, timestamp
         )
         // Trigger real-time sync
-        com.ncert7.aitutorandlab.service.sync.DataSyncService.triggerFullSync()
+        DataSyncService.triggerFullSync()
     }
 
     /** Get a reactive Flow of progress for a single item */
@@ -103,6 +105,7 @@ class ProgressRepository(
         endOfDay: Long
     ): Int = progressDao.getTodayCompletedSimulationCount(studentId, startOfDay, endOfDay, AppConfig.APP_NAME)
 
+
     // ===== CHAPTER AGENT PROGRESS =====
 
     /** Get the aggregated chapter-level progress row */
@@ -155,7 +158,6 @@ class ProgressRepository(
     ): Flow<ChapterAgentProgressEntity?> =
         chapterAgentProgressDao.getChapterProgressFlow(studentId, chapterId, language, AppConfig.APP_NAME)
 
-    /** Count chapters marked COMPLETED */
     suspend fun getCompletedChaptersCount(
         studentId: String,
         language: String = "en"

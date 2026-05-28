@@ -79,7 +79,7 @@ fun SubjectScreen(
                     SubjectCard(
                         subject = subject,
                         onClick = {
-                            viewModel.onSubjectSelected(subject.id)
+                            viewModel.onSubjectSelected(subject.name)
                             onSubjectClick(subject.id)
                         }
                     )

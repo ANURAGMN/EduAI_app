@@ -11,6 +11,7 @@ import com.ncert7.aitutorandlab.domain.mathagent.usecase.MathSendMessageUseCase
 import com.ncert7.aitutorandlab.domain.mathagent.usecase.MathSessionUseCase
 import com.ncert7.aitutorandlab.domain.progress.ProgressEventTracker
 import com.ncert7.aitutorandlab.ui.screens.mathagentscreen.dataclass.MathUiState
+import com.ncert7.aitutorandlab.utils.isKannada
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -220,11 +221,13 @@ class MathViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isLoading = true) }
+                val isKannada = isKannada()
+                DebugLogger.debugLog("MathViewModel", "Starting session with isKannada: $isKannada (from app language)")
 
                 val sessionResult = mathSessionUseCase.startSession(
                     problemId = problemId,
                     studentId = userId,
-                    isKannada = _uiState.value.isKannada
+                    isKannada = isKannada
                 )
 
                 if (sessionResult.success) {
@@ -362,11 +365,15 @@ class MathViewModel @Inject constructor(
 
                 DebugLogger.debugLog("MathViewModel", "Calling continueSession with problemId='$problemId', threadId='$finalThreadId', imageUri: ${imageUri != null}")
 
+                // Use actual app language setting instead of UI state
+                val isKannada = isKannada()
+                DebugLogger.debugLog("MathViewModel", "Continuing session with isKannada: $isKannada (from app language)")
+
                 // Continue session with optional image URI
                 val sessionResult = mathSessionUseCase.continueSession(
                     problemId = problemId,
                     userMessage = message,
-                    isKannada = currentState.isKannada,
+                    isKannada = isKannada,
                     imageUri = imageUri
                 )
 
@@ -411,7 +418,7 @@ class MathViewModel @Inject constructor(
                 }
                 DebugLogger.errorLog(
                     "MathViewModel",
-                    "✗ Exception sending message: ${e.message}"
+                    " Exception sending message: ${e.message}"
                 )
             }
         }

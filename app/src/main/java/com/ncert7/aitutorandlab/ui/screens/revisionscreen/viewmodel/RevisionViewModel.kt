@@ -42,25 +42,19 @@ class RevisionViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
-    private val _availableChapters = MutableStateFlow<List<String>>(emptyList())
-    val availableChapters: StateFlow<List<String>> = _availableChapters.asStateFlow()
-
-    private val _isLoadingChapters = MutableStateFlow(false)
-    val isLoadingChapters: StateFlow<Boolean> = _isLoadingChapters.asStateFlow()
-
     private var userId = ""
     private var initialized = false
-    private var currentChapter = ""
+    private var currentChapterId = ""
     private var currentRevisionId = ""
 
     /**
-     * Initialize the ViewModel with userId and auto-start revision session
+     * Initialize the ViewModel with userId and chapterId, then check for existing session
      */
-    fun initialize(userId: String, chapterName: String) {
+    fun initialize(userId: String, chapterId: String) {
         if (initialized) return
         initialized = true
         this.userId = userId
-        this.currentChapter = chapterName
+        this.currentChapterId = chapterId
 
         // Use LocalizationUtils for language detection
         val appLanguage = getCurrentLanguageCode()
@@ -70,25 +64,33 @@ class RevisionViewModel @Inject constructor(
             it.copy(
                 isKannada = isKannadaMode,
                 currentLanguage = appLanguage,
-                selectedConcept = chapterName
+                selectedConcept = chapterId
             )
         }
 
-        DebugLogger.debugLog("RevisionViewModel", "Initialized with chapter: $chapterName, userId: $userId, language: $appLanguage, isKannada: $isKannadaMode")
+        DebugLogger.debugLog("RevisionViewModel", "Initialized with chapterId: $chapterId, userId: $userId, language: $appLanguage, isKannada: $isKannadaMode")
 
-        // Fetch available chapters from backend
-        fetchAvailableChapters()
-
-        // Auto-start the revision session by fetching revisionId from database
+        // Fetch revisionId from database and check for existing session
         viewModelScope.launch {
             try {
-                val chapterEntity = chapterDao.getChapterByName(chapterName)
+                val chapterEntity = chapterDao.getChapter(chapterId)
                 if (chapterEntity != null) {
                     currentRevisionId = chapterEntity.revisionId
-                    DebugLogger.debugLog("RevisionViewModel", "Fetched revisionId: $currentRevisionId for chapter: $chapterName")
-                    autoStartRevision(currentRevisionId)
+                    DebugLogger.debugLog("RevisionViewModel", "Fetched revisionId: $currentRevisionId for chapterId: $chapterId")
+
+                    // Check if there's an existing session
+                    val existingThreadId = revisionUseCase.getRevisionThreadId(currentRevisionId)
+                    if (existingThreadId != null) {
+                        DebugLogger.debugLog("RevisionViewModel", "Found existing session for revisionId: $currentRevisionId, showing dialog")
+                        // Show dialog to ask continue or start fresh
+                        _uiState.update { it.copy(showSessionResumeDialog = true) }
+                    } else {
+                        DebugLogger.debugLog("RevisionViewModel", "No existing session found, starting new revision session")
+                        // No existing session, start directly
+                        autoStartRevision(currentRevisionId)
+                    }
                 } else {
-                    DebugLogger.errorLog("RevisionViewModel", "Could not find chapter in database: $chapterName")
+                    DebugLogger.errorLog("RevisionViewModel", "Could not find chapter in database: $chapterId")
                 }
             } catch (e: Exception) {
                 DebugLogger.errorLog("RevisionViewModel", "Error fetching revisionId: ${e.message}")
@@ -96,42 +98,23 @@ class RevisionViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Fetch available chapters from backend /revision/chapters endpoint
-     */
-    private fun fetchAvailableChapters() = viewModelScope.launch {
-        _isLoadingChapters.value = true
-        try {
-            val result = revisionUseCase.getAvailableChapters()
-            if (result.isNotEmpty()) {
-                _availableChapters.value = result
-                DebugLogger.debugLog("RevisionViewModel", "Fetched ${result.size} chapters from backend")
-            } else {
-                DebugLogger.errorLog("RevisionViewModel", "No chapters received from backend")
-            }
-        } catch (e: Exception) {
-            DebugLogger.errorLog("RevisionViewModel", "Error fetching chapters: ${e.message}")
-        } finally {
-            _isLoadingChapters.value = false
-        }
-    }
 
     /**
      * Change to a different chapter
      */
-    fun changeChapter(newChapter: String) = viewModelScope.launch {
-        if (newChapter == currentChapter) return@launch
+    fun changeChapter(newChapterId: String) = viewModelScope.launch {
+        if (newChapterId == currentChapterId) return@launch
 
-        DebugLogger.debugLog("RevisionViewModel", "Changing chapter from '$currentChapter' to '$newChapter'")
+        DebugLogger.debugLog("RevisionViewModel", "Changing chapter from '$currentChapterId' to '$newChapterId'")
 
         // Delete old session
         revisionUseCase.deleteRevisionSessionMapping(currentRevisionId)
 
         // Reset state and fetch new revisionId
-        currentChapter = newChapter
+        currentChapterId = newChapterId
         _uiState.update {
             ChatUiState(
-                selectedConcept = newChapter,
+                selectedConcept = newChapterId,
                 isKannada = it.isKannada,
                 currentLanguage = it.currentLanguage
             )
@@ -139,12 +122,12 @@ class RevisionViewModel @Inject constructor(
 
         // Fetch revisionId for new chapter from database
         try {
-            val chapterEntity = chapterDao.getChapterByName(newChapter)
+            val chapterEntity = chapterDao.getChapter(newChapterId)
             if (chapterEntity != null) {
                 currentRevisionId = chapterEntity.revisionId
                 autoStartRevision(currentRevisionId)
             } else {
-                DebugLogger.errorLog("RevisionViewModel", "Could not find chapter in database: $newChapter")
+                DebugLogger.errorLog("RevisionViewModel", "Could not find chapter in database: $newChapterId")
             }
         } catch (e: Exception) {
             DebugLogger.errorLog("RevisionViewModel", "Error fetching revisionId for new chapter: ${e.message}")
@@ -155,7 +138,7 @@ class RevisionViewModel @Inject constructor(
      * Auto-start revision session for the given revisionId
      */
     private fun autoStartRevision(revisionId: String) = viewModelScope.launch {
-        _uiState.update { it.copy(isLoading = true, selectedConcept = currentChapter) }
+        _uiState.update { it.copy(isLoading = true, selectedConcept = currentChapterId) }
 
         // Check if there's an existing session using revisionId
         val existingThreadId = revisionUseCase.getRevisionThreadId(revisionId)
@@ -205,19 +188,12 @@ class RevisionViewModel @Inject constructor(
         // Track Revision Progress - mark each concept in this chapter as REVISION_AGENT completed
         viewModelScope.launch {
             try {
-                // Fetch chapter entity using currentChapter name to get chapterId
-                val matchedChapter = chapterDao.getChapterByName(currentChapter)
-
-                if (matchedChapter != null) {
-                    // Get all STUDY concepts in the chapter and mark each as REVISION_AGENT COMPLETED
-                    val concepts = conceptDao.getConceptsForChapterSync(matchedChapter.chapterId, "STUDY")
-                    concepts.forEach { concept ->
-                        progressEventTracker.markRevisionCompleted(userId, concept.conceptId)
-                    }
-                    DebugLogger.debugLog("RevisionViewModel", " Marked ${concepts.size} concepts as revision-completed for revisionId: $revisionId")
-                } else {
-                    DebugLogger.errorLog("RevisionViewModel", "Could not find chapter in DB for name: $currentChapter — revision progress not tracked")
+                // Get all STUDY concepts in the chapter and mark each as REVISION_AGENT COMPLETED
+                val concepts = conceptDao.getConceptsForChapterSync(currentChapterId, "STUDY")
+                concepts.forEach { concept ->
+                    progressEventTracker.markRevisionCompleted(userId, concept.conceptId)
                 }
+                DebugLogger.debugLog("RevisionViewModel", "Marked ${concepts.size} concepts as revision-completed for revisionId: $revisionId")
             } catch (e: Exception) {
                 DebugLogger.errorLog("RevisionViewModel", "Error tracking revision progress: ${e.message}")
             }
@@ -379,13 +355,6 @@ class RevisionViewModel @Inject constructor(
     }
 
     /**
-     * Check if there's an existing revision session for a chapter
-     */
-    fun hasExistingSession(chapter: String): Boolean {
-        return revisionUseCase.getRevisionThreadId(chapter) != null
-    }
-
-    /**
      * Update input text
      */
     fun updateInputText(text: String) {
@@ -393,19 +362,31 @@ class RevisionViewModel @Inject constructor(
     }
 
     /**
-     * Start a fresh revision session (delete existing and start new)
+     * Resume an existing revision session
+     */
+    fun resumeExistingSession() = viewModelScope.launch {
+        _uiState.update { it.copy(showSessionResumeDialog = false) }
+
+        val existingThreadId = revisionUseCase.getRevisionThreadId(currentRevisionId)
+        if (existingThreadId != null) {
+            DebugLogger.debugLog("RevisionViewModel", "Resuming existing revision session for revisionId: $currentRevisionId")
+            resumeRevisionSession(existingThreadId)
+        } else {
+            DebugLogger.errorLog("RevisionViewModel", "Could not find existing thread for revisionId: $currentRevisionId")
+        }
+    }
+
+    /**
+     * Start a fresh revision session (delete old and start new)
      */
     fun startFreshSession() = viewModelScope.launch {
-        revisionUseCase.deleteRevisionSessionMapping(currentChapter)
-        _uiState.update {
-            ChatUiState(
-                selectedConcept = currentChapter,
-                isKannada = it.isKannada,
-                currentLanguage = it.currentLanguage
-            )
-        }
-        startRevisionSession(currentChapter)
+        _uiState.update { it.copy(showSessionResumeDialog = false) }
+
+        DebugLogger.debugLog("RevisionViewModel", "Starting fresh revision session, deleting old session for revisionId: $currentRevisionId")
+        revisionUseCase.deleteRevisionSessionMapping(currentRevisionId)
+        autoStartRevision(currentRevisionId)
     }
+
 
     /**
      * Handle avatar change
@@ -455,5 +436,12 @@ class RevisionViewModel @Inject constructor(
             selectedAvatar = avatarCode,
             selectedAvatarDisplayName = displayName
         )
+    }
+
+    /**
+     * Check if there's an existing revision session for a revisionId
+     */
+    fun hasExistingSession(revisionId: String): Boolean {
+        return revisionUseCase.getRevisionThreadId(revisionId) != null
     }
 }

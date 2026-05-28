@@ -3,34 +3,23 @@ package com.ncert7.aitutorandlab.ui.screens.conceptscreen.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.ncert7.aitutorandlab.R
+import com.ncert7.aitutorandlab.debug.DebugLogger
+import com.ncert7.aitutorandlab.ui.components.AdDialog
 import com.ncert7.aitutorandlab.ui.screens.conceptscreen.viewmodel.ConceptSimulationViewModel
 import com.ncert7.aitutorandlab.ui.screens.simulation_agent.components.SimulationWebView
-import com.ncert7.aitutorandlab.ui.theme.HeaderGradientStart
-import com.ncert7.aitutorandlab.ui.theme.LocalDimensions
-import com.ncert7.aitutorandlab.ui.theme.TextOnPrimary
+import java.net.URLDecoder
 
 /**
  * ConceptSimulationViewer displays a simulation in a WebView for the concept screen.
@@ -51,58 +40,86 @@ fun ConceptSimulationViewer(
     onBackClick: () -> Unit = {},
     viewModel: ConceptSimulationViewModel = hiltViewModel()
 ) {
-    val dimens = LocalDimensions.current
+    val context = LocalContext.current
+    val showAdDialog by viewModel.showAdBeforeSimulation.collectAsState()
+
+    // Decode URL-encoded title to show original name (URL stays encoded for web requests)
+    val decodedTitle = try {
+        URLDecoder.decode(simulationTitle, "UTF-8")
+    } catch (e: Exception) {
+        simulationTitle
+    }
+
+    val decodedUrl = try {
+        URLDecoder.decode(simulationUrl, "UTF-8")
+    } catch (e: Exception) {
+        simulationUrl
+    }
     // Prevent double-marking if the WebView fires onPageFinished multiple times
     var progressMarked by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(HeaderGradientStart)
-    ) {
-        // Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(dimens.spaceSmall),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.back),
-                    tint = TextOnPrimary,
-                    modifier = Modifier.size(dimens.iconMedium)
-                )
-            }
-
-            Text(
-                text = simulationTitle,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = TextOnPrimary,
-                modifier = Modifier.weight(1f)
+    LaunchedEffect(conceptId, decodedUrl, decodedTitle) {
+        if (conceptId.isNotEmpty() && decodedUrl.isNotEmpty() && decodedTitle.isNotEmpty()) {
+            DebugLogger.debugLog(
+                "ConceptSimulationViewer",
+                "LaunchedEffect: Initializing ad check for conceptId=$conceptId"
+            )
+            viewModel.initializeSimulationWithAdCheck(
+                conceptId = conceptId,
+                simulationUrl = decodedUrl,
+                simulationTitle = decodedTitle
             )
         }
-
-
-        // WebView
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-        ) {
-            SimulationWebView(
-                url = simulationUrl,
-                modifier = Modifier.fillMaxSize(),
-                onPageFinished = {
-                    // Mark simulation URL completed once when page loads (only if conceptId known)
-                    if (conceptId.isNotBlank() && !progressMarked) {
-                        progressMarked = true
-                        viewModel.markSimulationUrlCompleted(conceptId)
-                    }
-                }
+    }
+    // Handle page loaded
+    val handlePageLoaded = {
+        if (conceptId.isNotEmpty()) {
+            viewModel.markSimulationCompleted(conceptId)
+            DebugLogger.debugLog(
+                "ConceptSimulationViewer",
+                "Simulation page loaded for concept: $conceptId"
             )
+        }
+    }
+
+    val handleBackClick = {
+        onBackClick()
+    }
+
+    val handleAdDismiss = {
+        viewModel.dismissAd()
+    }
+
+    // Show ad dialog if needed
+    if (showAdDialog) {
+        AdDialog(
+            context = context,
+            onDismiss = handleAdDismiss
+        )
+    }
+    if (!showAdDialog) {
+
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Header
+            SimulationHeader(
+                title = decodedTitle,
+                onBackClick = handleBackClick
+            )
+
+            // WebView
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+            ) {
+                SimulationWebView(
+                    url = simulationUrl,
+                    modifier = Modifier.fillMaxSize(),
+                    onPageFinished = handlePageLoaded
+                )
+            }
         }
     }
 }
