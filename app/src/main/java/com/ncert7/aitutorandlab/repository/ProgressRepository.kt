@@ -4,6 +4,7 @@ import com.ncert7.aitutorandlab.config.AppConfig
 import com.ncert7.aitutorandlab.data.local.dao.ChapterAgentProgressDao
 import com.ncert7.aitutorandlab.data.local.dao.ChapterProgressSummaryDto
 import com.ncert7.aitutorandlab.data.local.dao.ProgressDao
+import com.ncert7.aitutorandlab.data.local.dao.ChapterProgressSummary
 import com.ncert7.aitutorandlab.data.local.entities.ChapterAgentProgressEntity
 import com.ncert7.aitutorandlab.data.local.entities.ProgressEntity
 import com.ncert7.aitutorandlab.domain.progress.model.ProgressStatus
@@ -31,21 +32,23 @@ class ProgressRepository(
     suspend fun getProgress(
         studentId: String,
         itemType: String,
-        itemId: String
+        itemId: String,
+        language: String
     ): ProgressEntity? =
-        progressDao.getProgress(studentId, itemType, itemId, AppConfig.APP_NAME)
+        progressDao.getProgress(studentId, itemType, itemId, language, AppConfig.APP_NAME)
 
     /** Update (upsert) progress status for an item */
     suspend fun updateProgressStatus(
         studentId: String,
         itemType: String,
         itemId: String,
+        language: String,
         newStatus: String,
         progressPercentage: Int,
         timestamp: Long = System.currentTimeMillis()
     ) {
         progressDao.updateProgressStatus(
-            studentId, itemType, itemId, AppConfig.APP_NAME,
+            studentId, itemType, itemId, AppConfig.APP_NAME, language,
             newStatus, progressPercentage, timestamp
         )
         // Trigger real-time sync
@@ -56,17 +59,18 @@ class ProgressRepository(
     fun getProgressFlow(
         studentId: String,
         itemType: String,
-        itemId: String
+        itemId: String,
+        language: String
     ): Flow<ProgressEntity?> =
-        progressDao.getProgressFlow(studentId, itemType, itemId, AppConfig.APP_NAME)
+        progressDao.getProgressFlow(studentId, itemType, itemId, language, AppConfig.APP_NAME)
 
     /** Count completed concepts for a student (Reactive Flow) */
-    fun getTotalCompletedConceptsFlow(studentId: String): Flow<Int> =
-        progressDao.getTotalCompletedConceptsFlow(studentId, AppConfig.APP_NAME)
+    fun getTotalCompletedConceptsFlow(studentId: String, language: String): Flow<Int> =
+        progressDao.getTotalCompletedConceptsFlow(studentId, language, AppConfig.APP_NAME)
 
     /** Count completed simulations for a student (Reactive Flow) */
-    fun getTotalCompletedSimulationsFlow(studentId: String): Flow<Int> =
-        progressDao.getTotalCompletedSimulationsFlow(studentId, AppConfig.APP_NAME)
+    fun getTotalCompletedSimulationsFlow(studentId: String, language: String): Flow<Int> =
+        progressDao.getTotalCompletedSimulationsFlow(studentId, language, AppConfig.APP_NAME)
 
     /** 7-day daily concept completion summary */
     suspend fun getConceptsClearedLast7Days(
@@ -106,7 +110,36 @@ class ProgressRepository(
     ): Int = progressDao.getTodayCompletedSimulationCount(studentId, startOfDay, endOfDay, AppConfig.APP_NAME)
 
 
-    // ===== CHAPTER AGENT PROGRESS =====
+    // ===== CHAPTER-WISE PROGRESS (REAL-TIME) =====
+
+    /**
+     * ✅ NEW: Get chapter-wise progress with REAL-TIME updates
+     *
+     * This is the KEY FIX for real-time progress tracking.
+     *
+     * Returns a Flow<List<ChapterProgressSummary>> that:
+     * - Counts actual concept completions from progress table
+     * - Emits new data whenever progress table changes
+     * - Provides real-time updates to ProgressScreenViewModel
+     * - Calculates progress directly from data (no aggregation needed)
+     *
+     * @param studentId Student ID
+     * @param subjectId Subject ID to filter chapters
+     * @return Flow emitting list of chapters with their progress
+     */
+    fun getChapterWiseProgress(
+        studentId: String,
+        subjectId: String,
+        language: String
+    ): Flow<List<ChapterProgressSummary>> =
+        progressDao.getChapterWiseProgressFlow(
+            studentId = studentId,
+            subjectId = subjectId,
+            language = language,
+            appName = AppConfig.APP_NAME
+        )
+
+    // ===== CHAPTER AGENT PROGRESS (LEGACY - kept for backward compatibility) =====
 
     /** Get the aggregated chapter-level progress row */
     suspend fun getChapterAgentProgress(
@@ -164,49 +197,49 @@ class ProgressRepository(
     ): Int = chapterAgentProgressDao.getCompletedChaptersCount(studentId, language, AppConfig.APP_NAME)
 
     /** Mark study as IN_PROGRESS (quick helper) */
-    suspend fun markStudyInProgress(studentId: String, conceptId: String) {
+    suspend fun markStudyInProgress(studentId: String, conceptId: String, language: String) {
         updateProgressStatus(
-            studentId, "CONCEPT", conceptId,
+            studentId, "CONCEPT", conceptId, language,
             ProgressStatus.IN_PROGRESS.value, 5
         )
     }
 
     /** Mark study as COMPLETED (quick helper) */
-    suspend fun markStudyCompleted(studentId: String, conceptId: String) {
+    suspend fun markStudyCompleted(studentId: String, conceptId: String, language: String) {
         updateProgressStatus(
-            studentId, "CONCEPT", conceptId,
+            studentId, "CONCEPT", conceptId, language,
             ProgressStatus.COMPLETED.value, 100
         )
     }
 
     /** Mark simulation agent as COMPLETED */
-    suspend fun markSimulationAgentCompleted(studentId: String, conceptId: String) {
+    suspend fun markSimulationAgentCompleted(studentId: String, conceptId: String, language: String) {
         updateProgressStatus(
-            studentId, "SIMULATION_AGENT", conceptId,
+            studentId, "SIMULATION_AGENT", conceptId, language,
             ProgressStatus.COMPLETED.value, 100
         )
     }
 
     /** Mark simulation URL loaded (COMPLETED) */
-    suspend fun markSimulationUrlCompleted(studentId: String, conceptId: String) {
+    suspend fun markSimulationUrlCompleted(studentId: String, conceptId: String, language: String) {
         updateProgressStatus(
-            studentId, "SIMULATION", conceptId,
+            studentId, "SIMULATION", conceptId, language,
             ProgressStatus.COMPLETED.value, 100
         )
     }
 
     /** Mark revision agent as COMPLETED */
-    suspend fun markRevisionCompleted(studentId: String, conceptId: String) {
+    suspend fun markRevisionCompleted(studentId: String, conceptId: String, language: String) {
         updateProgressStatus(
-            studentId, "REVISION_AGENT", conceptId,
+            studentId, "REVISION_AGENT", conceptId, language,
             ProgressStatus.COMPLETED.value, 100
         )
     }
 
     /** Mark math agent as COMPLETED */
-    suspend fun markMathAgentCompleted(studentId: String, conceptId: String) {
+    suspend fun markMathAgentCompleted(studentId: String, conceptId: String, language: String) {
         updateProgressStatus(
-            studentId, "MATH_AGENT", conceptId,
+            studentId, "MATH_AGENT", conceptId, language,
             ProgressStatus.COMPLETED.value, 100
         )
     }

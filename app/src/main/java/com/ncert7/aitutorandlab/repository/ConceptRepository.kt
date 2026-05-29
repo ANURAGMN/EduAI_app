@@ -3,6 +3,7 @@ package com.ncert7.aitutorandlab.repository
 import com.ncert7.aitutorandlab.config.AppConfig
 import com.ncert7.aitutorandlab.data.local.dao.ConceptDao
 import com.ncert7.aitutorandlab.data.local.dao.ProgressDao
+import com.ncert7.aitutorandlab.data.local.entities.ChapterEntity
 import com.ncert7.aitutorandlab.data.local.entities.ConceptEntity
 import com.ncert7.aitutorandlab.data.local.entities.ProgressEntity
 import com.ncert7.aitutorandlab.utils.DatabaseRetryHelper
@@ -44,8 +45,8 @@ import kotlinx.coroutines.flow.first
      * Retrieves the progress of a student for a specific item.
      * returns ProgressEntity or null if not found
      */
-    suspend fun getProgress(studentId: String, itemType: String, itemId: String): ProgressEntity? {
-        return progressDao.getProgress(studentId, itemType, itemId, AppConfig.APP_NAME)
+    suspend fun getProgress(studentId: String, itemType: String, itemId: String, language: String): ProgressEntity? {
+        return progressDao.getProgress(studentId, itemType, itemId, language, AppConfig.APP_NAME)
     }
 
     /**
@@ -55,11 +56,12 @@ import kotlinx.coroutines.flow.first
         studentId: String,
         itemType: String,
         itemId: String,
+        language: String,
         newStatus: String,
         progressPercentage: Int,
         timestamp: Long
     ) {
-        progressDao.updateProgressStatus(studentId, itemType, itemId, AppConfig.APP_NAME, newStatus, progressPercentage, timestamp)
+        progressDao.updateProgressStatus(studentId, itemType, itemId, AppConfig.APP_NAME, language, newStatus, progressPercentage, timestamp)
     }
 
     /**
@@ -134,6 +136,8 @@ import kotlinx.coroutines.flow.first
             0
         }
     }
+
+
     /**
      * Check if a chapter has SIMULATION concepts for a specific language
      * Used by ChapterViewModel to determine if "Simulation" button should be enabled
@@ -189,5 +193,18 @@ import kotlinx.coroutines.flow.first
     suspend fun deleteConceptsForChapter(chapterId: String) {
         conceptDao.deleteConceptsForChapter(chapterId)
     }
-}
 
+    /**
+     * Get a chapter by its ID
+     */
+    suspend fun getChapter(chapterId: String): ChapterEntity? {
+        return conceptDao.getChapter(chapterId)
+    }
+
+    /**
+     * Get the chapter that contains a specific concept.
+     */
+    suspend fun getChapterForConcept(conceptId: String): ChapterEntity? {
+        return conceptDao.getChapterForConcept(conceptId)
+    }
+}

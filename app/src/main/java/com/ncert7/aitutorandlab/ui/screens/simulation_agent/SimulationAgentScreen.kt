@@ -49,6 +49,7 @@ import com.ncert7.aitutorandlab.ui.viewModel.TextToSpeech
 @Composable
 fun SimulationAgentScreen(
     simulationId: String,
+    conceptId: String = "",
     onNavigateBack: () -> Unit,
     ttsController: TextToSpeech = viewModel(),
     sttController: SpeechToText = viewModel()
@@ -139,6 +140,7 @@ fun SimulationAgentScreen(
      * ViewModel internally checks if session is already started for this ID
      */
     LaunchedEffect(simulationId) {
+        viewModel.setConceptId(conceptId)
         viewModel.startNewSession(simulationId)
     }
 
@@ -355,7 +357,7 @@ fun SimulationAgentScreen(
                 isLoading = uiState is SimAgentUiState.Loading,
                 ttsController = ttsController,
                 onParamsChanged = { viewModel.handleIntent(SimulationIntent.ParametersChanged(it)) },
-                simulationUrl = sessionData?.simulation?.htmlUrl,
+                simulationUrl = sessionData?.simulation?.htmlUrl?.takeIf { it.isNotBlank() },
                 onPageFinished = { viewModel.onSimulationUrlLoaded(simulationId) },
                 modifier = Modifier.weight(1f).background(White),
             )

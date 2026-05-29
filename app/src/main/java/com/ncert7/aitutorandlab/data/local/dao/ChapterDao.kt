@@ -39,6 +39,17 @@ interface ChapterDao {
     @Query("SELECT * FROM chapters WHERE chapterId = :chapterId")
     suspend fun getChapterById(chapterId: String): ChapterEntity?
 
+    /**
+     * Get the chapter that contains a specific concept.
+     * Unified query to jump from conceptId -> ChapterEntity.
+     */
+    @Query("""
+        SELECT chapters.* FROM chapters 
+        INNER JOIN concepts ON chapters.chapterId = concepts.chapterId 
+        WHERE concepts.conceptId = :conceptId
+    """)
+    suspend fun getChapterForConcept(conceptId: String): ChapterEntity?
+
     @Query("DELETE FROM chapters WHERE subjectId = :subjectId")
     suspend fun deleteChaptersForSubject(subjectId: String)
 

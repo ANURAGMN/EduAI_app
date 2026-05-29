@@ -42,112 +42,110 @@ class ChapterViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                val userId = sharedPrefs.getUserId() ?: ""
+                val userId   = sharedPrefs.getUserId() ?: ""
                 val language = if (isKannada()) "kn" else "en"
-                val subject = subjectRepository.getSubject(subjectId)
+                val subject  = subjectRepository.getSubject(subjectId)
                 val chapters = chapterRepository.getChaptersForSubject(subjectId)
-                val classLevel = 7 // Force class 7 syllabus display
                 val isMathSubject = subjectId == MATH_SUBJECT_ID
 
                 DebugLogger.debugLog(TAG, "loadChapters: subjectId=$subjectId, isMath=$isMathSubject, language=$language")
-                // Seed the progress table in the background if needed
+
+                // ── Background seed: ensure a chapter_agent_progress row exists ──────────
+                // This is fire-and-forget; the reactive Flow below drives the UI.
                 viewModelScope.launch {
                     chapters.forEach { chapter ->
-                        val existing = chapterProgressService.getChapterProgressBreakdown(userId, chapter.chapterId, language)
+                        val existing = chapterProgressService.getChapterProgressBreakdown(
+                            userId, chapter.chapterId, language
+                        )
                         if (existing.overallPercentage == 0 && existing.studyPercentage == 0) {
                             chapterProgressService.updateChapterProgress(userId, chapter.chapterId, language)
                         }
                     }
                 }
 
-                // Check if this is a Math subject
-
-                // Step 1: Filter chapters based on available concepts
+                // ── Filter chapters that have at least one learning component ─────────────
                 val filteredChapters = chapters.filter { chapter ->
-
                     val hasStudy = if (isMathSubject) {
-                        // For Math: check if chapter has MATH PROBLEM concepts with valid problemId
                         conceptRepository.getMathProblemConceptCount(chapter.chapterId) > 0
                     } else {
-                        // For other subjects: check if chapter has STUDY concepts
                         conceptRepository.getStudyConceptCount(chapter.chapterId) > 0
                     }
+                    val hasSimulation = conceptRepository.getSimulationConceptCount(chapter.chapterId, language) > 0
+                    val hasRevision   = chapter.revisionId.isNotEmpty()
 
-                    val studyConcepts = if (isMathSubject) {
-                        conceptRepository.getConceptsForChapter(chapter.chapterId, "MATH PROBLEM")
-                            .filter { it.problemId.isNotEmpty() }
-                    } else {
-                        conceptRepository.getConceptsForChapter(chapter.chapterId, "STUDY")
-                    }
-
-                    val hasSimulation = conceptRepository.getSimulationConceptCount(
-                        chapter.chapterId,
-                        language
-                    ) > 0
-
-                    val hasRevision = chapter.revisionId.isNotEmpty()
-
-                    // Include chapter if it has at least one of: study, simulation, or revision
                     val shouldInclude = hasStudy || hasSimulation || hasRevision
-
                     DebugLogger.debugLog(
                         TAG,
-                        "Chapter ${chapter.chapterId}: hasStudy=$hasStudy, hasSimulation=$hasSimulation, hasRevision=$hasRevision, include=$shouldInclude"
+                        "Chapter ${chapter.chapterId}: study=$hasStudy sim=$hasSimulation rev=$hasRevision → $shouldInclude"
                     )
-
                     shouldInclude
                 }
 
-                DebugLogger.debugLog(
-                    TAG,
-                    "Filtered chapters: ${filteredChapters.size} / ${chapters.size} (isMath=$isMathSubject)"
-                )
+                DebugLogger.debugLog(TAG, "Filtered: ${filteredChapters.size}/${chapters.size} chapters")
 
-                // Step 2: Collect progress from the reactive Flow
-                // This ensures the UI updates immediately when progress changes
+                // Pre-calculate flags for filtered chapters
+                val chapterFlags = filteredChapters.associate { chapter ->
+                    val hasStudy = if (isMathSubject) {
+                        conceptRepository.getMathProblemConceptCount(chapter.chapterId) > 0
+                    } else {
+                        conceptRepository.getStudyConceptCount(chapter.chapterId) > 0
+                    }
+                    val hasSimulation = conceptRepository.getSimulationConceptCount(chapter.chapterId, language) > 0
+                    val hasRevision   = chapter.revisionId.isNotEmpty()
+
+                    chapter.chapterId to Triple(hasStudy, hasSimulation, hasRevision)
+                }
+
+                // ── Reactive collection: updates every time progress changes ──────────────
+                // getChapterWiseProgress() returns a Flow backed by ProgressDao — so whenever
+                // ANY progress row for this subject changes, the Flow emits and the UI redraws.
                 chapterRepository.getChapterWiseProgress(userId, subjectId, language)
                     .collect { progressSummaries ->
                         val progressMap = progressSummaries.associateBy { it.chapterId }
 
                         val chapterUiModels = filteredChapters.map { chapter ->
                             val summary = progressMap[chapter.chapterId]
-                            val totalConcepts = summary?.totalConcepts ?: chapter.totalConcepts
+                            val flags = chapterFlags[chapter.chapterId] ?: Triple(false, false, false)
+
+                            // Prefer live summary data; fall back to chapter metadata
+                            val totalConcepts     = summary?.totalConcepts ?: chapter.totalConcepts
                             val completedConcepts = summary?.completedConcepts ?: 0
-                            val overallPct = summary?.completionPercentage ?: 0f
+                            val overallPct        = summary?.completionPercentage ?: 0
 
                             val status = when {
-                                overallPct >= 100f -> ProgressStatus.COMPLETED
-                                overallPct > 0f -> ProgressStatus.IN_PROGRESS
-                                else -> ProgressStatus.NOT_STARTED
+                                overallPct >= 100 -> ProgressStatus.COMPLETED
+                                overallPct > 0    -> ProgressStatus.IN_PROGRESS
+                                else               -> ProgressStatus.NOT_STARTED
                             }
-                            val progressUiModel = buildProgressUiModel(
-                                completed = completedConcepts,
-                                total = totalConcepts
-                            )
+
                             ChapterUiModel(
-                                id = chapter.chapterId,
-                                orderIndex = chapter.orderIndex,
-                                name = chapter.getLocalizedName(),
-                                englishName = chapter.chapterName,
-                                totalConcepts = totalConcepts,
+                                id               = chapter.chapterId,
+                                orderIndex       = chapter.orderIndex,
+                                name             = chapter.getLocalizedName(),
+                                englishName      = chapter.chapterName,
+                                totalConcepts    = totalConcepts,
                                 completedConcepts = completedConcepts,
-                                status = status,
-                                revisionId = chapter.revisionId,
-                                subjectId = chapter.subjectId,
-                                progressUiModel = progressUiModel
+                                status           = status,
+                                revisionId       = chapter.revisionId,
+                                subjectId        = chapter.subjectId,
+                                progressUiModel  = buildProgressUiModel(completedConcepts, totalConcepts),
+                                hasStudy         = flags.first,
+                                hasSimulation    = flags.second,
+                                hasRevision      = flags.third
                             )
                         }
 
                         _state.value = _state.value.copy(
-                            chapters = chapterUiModels,
+                            chapters    = chapterUiModels,
                             subjectName = subject?.getLocalizedName() ?: "",
-                            classLevel = classLevel,
-                            isLoading = false,
-                            error = null
+                            classLevel  = 7,
+                            isLoading   = false,
+                            error       = null
                         )
                     }
+
             } catch (e: Exception) {
-                DebugLogger.errorLog("ChapterViewModel", "Error loading chapters: ${e.message}")
+                DebugLogger.errorLog(TAG, "Error loading chapters: ${e.message}")
                 _state.value = _state.value.copy(isLoading = false, error = e.message)
             }
         }

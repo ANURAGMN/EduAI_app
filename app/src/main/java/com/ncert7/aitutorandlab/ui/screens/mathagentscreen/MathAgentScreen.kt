@@ -175,17 +175,13 @@ fun MathAgentScreen(
         )
 
         if (!problemId.isNullOrEmpty() && problemId != "null") {
-            DebugLogger.debugLog("MathAgentScreen", "Auto-starting with provided problemId: $problemId")
-            mathViewModel.onIntent(MathIntent.AutoStartWithProblem(problemId))
-        } else if (mathState.problems.isNotEmpty() && !mathState.sessionStarted) {
-            DebugLogger.debugLog(
-                "MathAgentScreen",
-                "Auto-starting with first problem from list: ${mathState.problems.first().id}"
-            )
-            val firstProblem = mathState.problems.first()
-            mathViewModel.onIntent(MathIntent.AutoStartWithProblem(firstProblem.id))
+            // Only start when problems have been loaded (so findProblemById can work)
+            if (mathState.problems.isNotEmpty()) {
+                DebugLogger.debugLog("MathAgentScreen", "Auto-starting with provided problemId: $problemId")
+                mathViewModel.onIntent(MathIntent.AutoStartWithProblem(problemId))
+            }
         } else {
-            DebugLogger.debugLog("MathAgentScreen", "Session already started or waiting for problems to load")
+            DebugLogger.debugLog("MathAgentScreen", "No problemId provided — waiting for concept click")
         }
     }
 

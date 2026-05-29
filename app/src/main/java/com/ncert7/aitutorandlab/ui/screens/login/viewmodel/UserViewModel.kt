@@ -195,17 +195,23 @@ class UserViewModel @Inject constructor(
                 )
                 localRepo.saveStudentLocally(studentEntity)
 
-                // Sync content from Firebase
+                // Sync content from Firebase (with all DAOs so full restore is possible)
                 val syncManager = FirebaseSyncManager(
                     subjectDao = db.subjectDao(),
                     chapterDao = db.chapterDao(),
                     conceptDao = db.conceptDao(),
                     progressDao = db.progressDao(),
+                    streakDao = db.streakDao(),
+                    chapterProgressDao = db.chapterAgentProgressDao(),
                     context = context
                 )
-                // Sync user progress from Firebase
+                // Sync user progress from Firebase (restores concept/simulation progress rows)
                 val progressResult = syncManager.syncUserProgress(currentUser.id)
                 DebugLogger.debugLog("UserViewModel", "Progress sync: ${progressResult.message}")
+
+                // Sync chapter agent progress (restores chapter-level aggregated progress)
+                val chapterProgressResult = syncManager.syncChapterAgentProgress(currentUser.id)
+                DebugLogger.debugLog("UserViewModel", "Chapter progress sync: ${chapterProgressResult.message}")
 
                 DebugLogger.debugLog("UserViewModel", "Starting streak sync for existing user")
                 streakRepository.syncStreakOnLogin(currentUser.id)

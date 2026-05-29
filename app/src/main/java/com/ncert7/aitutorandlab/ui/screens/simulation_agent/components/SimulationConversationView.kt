@@ -81,30 +81,6 @@ fun SimulationConversationView(
                     modifier = Modifier.fillMaxSize(),
                     reduceTextSize = true
                 )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(dimens.spaceLarge)
-                        .align(Alignment.TopCenter)
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(White, White.copy(alpha = 0f))
-                            )
-                        )
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(dimens.spaceLarge)
-                        .align(Alignment.BottomCenter)
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(White.copy(alpha = 0f), White)
-                            )
-                        )
-                )
             }
         }
 

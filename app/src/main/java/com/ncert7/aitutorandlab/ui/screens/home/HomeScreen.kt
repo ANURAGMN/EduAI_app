@@ -36,7 +36,7 @@ fun HomeScreen(
     onNavigateToLearning: () -> Unit = {},
     onNavigateToChapters: (String) -> Unit = {},
     onLessonClick: (String) -> Unit = {},
-    onSimulationClick: (String) -> Unit = {},
+    onSimulationClick: (String, String) -> Unit = { _, _ -> },
     onSimulationUrlClick: (String, String, String) -> Unit = { _, _, _ -> }
 ) {
     // Analytics Tracking
@@ -56,6 +56,8 @@ fun HomeScreen(
     val streakCount by viewModel.streakCount.collectAsState()
     val todayCompletedConceptCount by viewModel.todayConceptCount.collectAsState()
     val todayCompletedSimulationCount by viewModel.todaySimulationCount.collectAsState()
+    val totalCompletedConceptCount by viewModel.totalCompletedConcept.collectAsState()
+    val totalCompletedSimulationCount by viewModel.totalCompletedSimulation.collectAsState()
     val student by viewModel.student.collectAsState()
     val greeting by viewModel.greeting.collectAsState()
 
@@ -105,8 +107,8 @@ fun HomeScreen(
                 TodayProgressCard(
                     progressConcepts = progressConcepts,
                     onLessonClick = onLessonClick,
-                    todayCompletedConcept = todayCompletedConceptCount,
-                    todayCompletedSimulation = todayCompletedSimulationCount,
+                    todayCompletedConcept = totalCompletedConceptCount,
+                    todayCompletedSimulation = totalCompletedSimulationCount,
                     onShowAllChapters = {
                         val subjectId = sharedPreferenceUtils.getSubjectSelection() ?: "9a7d0d20-7b8d-4b8c-8c12-5a1a8a55f002"
                         onNavigateToChapters(subjectId)
@@ -115,8 +117,8 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(dimens.spaceSmall))
                 PracticeSimulationCard(
                     progressSimulations = progressSimulations,
-                    onSimulationClick = { simulationId ->
-                        onSimulationClick(simulationId)
+                    onSimulationClick = { simulationId, conceptId ->
+                        onSimulationClick(simulationId, conceptId)
                     },
                     onSimulationUrlClick = { title, url, conceptId ->
                         onSimulationUrlClick(title, url, conceptId)

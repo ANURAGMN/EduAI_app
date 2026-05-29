@@ -57,7 +57,7 @@ fun ConceptCard(
     concept: ConceptUiModel,
     serialNumber: Int = 1,
     onClick: (conceptId: String, problemId: String, conceptType: String) -> Unit = { _, _, _ -> },
-    onSimulationAgentClick: (String) -> Unit = {},
+    onSimulationAgentClick: (String, String) -> Unit = { _, _ -> },
     onSimulationClick: (title: String, url: String, conceptId: String) -> Unit = { _, _, _ -> },
 ) {
     val dimens = LocalDimensions.current
@@ -214,7 +214,7 @@ private fun MathProblemButtons(
 @Composable
 private fun SimulationConceptButtons(
     concept: ConceptUiModel,
-    onSimulationAgentClick: (String) -> Unit,
+    onSimulationAgentClick: (String, String) -> Unit,
     onSimulationClick: (title: String, url: String, conceptId: String) -> Unit
 ) {
     val dimens = LocalDimensions.current
@@ -236,7 +236,7 @@ private fun SimulationConceptButtons(
             ) {
                 // Agent button
                 Button(
-                    onClick = { onSimulationAgentClick(concept.simulationId) },
+                    onClick = { onSimulationAgentClick(concept.simulationId ?: "", concept.id) },
                     modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
                     shape = MaterialTheme.shapes.small,
@@ -274,7 +274,7 @@ private fun SimulationConceptButtons(
         } else if (hasAgent && concept.simulationId.isNotEmpty()) {
             // Only Agent button
             Button(
-                onClick = { onSimulationAgentClick(concept.simulationId) },
+                onClick = { onSimulationAgentClick(concept.simulationId, concept.id) },
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
                 shape = MaterialTheme.shapes.small,

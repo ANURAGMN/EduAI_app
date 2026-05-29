@@ -104,12 +104,9 @@ class MathViewModel @Inject constructor(
                         )
                     }
                     DebugLogger.debugLog("MathViewModel", "Problems loaded: ${problems.size}")
-
-                    // Auto-start with first problem if available
-                    if (problems.isNotEmpty()) {
-                        val firstProblem = problems.first()
-                        autoStartWithProblem(firstProblem.id)
-                    }
+                    // NOTE: We do NOT auto-start here.
+                    // The screen's LaunchedEffect will call AutoStartWithProblem
+                    // with the correct problemId passed from the concept click.
                 }.onFailure { exception ->
                     _uiState.update {
                         it.copy(

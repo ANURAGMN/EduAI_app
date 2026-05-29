@@ -34,7 +34,8 @@ data class PendingNavigation(
     val isDirect: Boolean = false,
     val simulationUrl: String? = null,
     val simulationTitle: String? = null,
-    val conceptId: String? = null
+    val conceptId: String? = null,
+    val simulationId: String? = null
 )
 
 @HiltViewModel
@@ -55,16 +56,16 @@ class ConceptViewModel @Inject constructor(
     private val _pendingNavigation = MutableStateFlow<PendingNavigation?>(null)
     val pendingNavigation: StateFlow<PendingNavigation?> = _pendingNavigation.asStateFlow()
 
-    fun onSimulationOpened(simId: String) {
-        val count = sharedPrefs.getSimulationOpenCount()
-        DebugLogger.debugLog("ConceptVM", "Simulation Agent Clicked. Current Count: $count")
-        val nav = PendingNavigation(route = "simulation_agent", conceptId = simId)
-        if (count >= 5) {
-            _pendingNavigation.value = nav
-        } else {
-            sharedPrefs.incrementSimulationOpenCount()
-            _pendingNavigation.value = nav.copy(isDirect = true)
-        }
+    fun onSimulationOpened(simId: String, conceptId: String) {
+        // Simulation Agent navigates directly - no ad interception here.
+        // The ad is shown inside ConceptSimulationViewer (URL viewer) only.
+        DebugLogger.debugLog("ConceptVM", "Simulation Agent Clicked: simId=$simId, conceptId=$conceptId")
+        _pendingNavigation.value = PendingNavigation(
+            route = "simulation_agent",
+            simulationId = simId,
+            conceptId = conceptId,
+            isDirect = true
+        )
     }
 
     fun onSimulationUrlOpened(title: String, url: String, conceptId: String) {
@@ -137,10 +138,11 @@ class ConceptViewModel @Inject constructor(
 
                 val subjectId = chapter?.subjectId ?: ""
 
-                // Reactively collect progress changes for this chapter
+                // Reactively collect progress changes for this chapter and overall chapter progress
                 val progressFlow = progressDao.getAllProgress(studentId, AppConfig.APP_NAME)
+                val chapterProgressFlow = progressDao.getChapterWiseProgressFlow(studentId, subjectId, language, AppConfig.APP_NAME)
 
-                progressFlow.collect { allProgress ->
+                combine(progressFlow, chapterProgressFlow) { allProgress, progressSummaries ->
                     val conceptUiModels = concepts.mapIndexed { index, concept ->
                         // Determine display text based on concept type
                         val displayName = when {
@@ -178,14 +180,15 @@ class ConceptViewModel @Inject constructor(
                         val status = when {
                             type.equals("SIMULATION", ignoreCase = true) -> {
                                 determineSimulationStatus(
-                                    allProgress, concept.conceptId, hasAgent, hasUrl, index, concepts
+                                    allProgress, concept.conceptId, hasAgent, hasUrl, index, concepts, language
                                 )
                             }
                             else -> {
                                 // For STUDY and MATH PROBLEM types
-                                val progress = allProgress.find { it.itemType == "CONCEPT" && it.itemId == concept.conceptId }
+                                // Relaxed language filter: also accept entries with empty language for backward compatibility
+                                val progress = allProgress.find { it.itemType == "CONCEPT" && it.itemId == concept.conceptId && (it.language == language || it.language.isEmpty()) }
                                 val prevStatus = if (index > 0) {
-                                    allProgress.find { it.itemType == "CONCEPT" && it.itemId == concepts[index - 1].conceptId }?.status
+                                    allProgress.find { it.itemType == "CONCEPT" && it.itemId == concepts[index - 1].conceptId && (it.language == language || it.language.isEmpty()) }?.status
                                 } else null
                                 determineConceptStatus(progress, index == 0, prevStatus)
                             }
@@ -213,13 +216,15 @@ class ConceptViewModel @Inject constructor(
                         unlockFirstConcept(studentId, conceptUiModels[0].id)
                     }
 
-                    // Progress calculation based on loaded concepts
-                    val completedLoadedConcepts = conceptUiModels.count { it.status == DomainProgressStatus.COMPLETED }
-                    val progressUiModel = buildProgressUiModel(completedLoadedConcepts, conceptUiModels.size)
+                    // Calculate overall chapter progress using the chapter summary flow
+                    val summary = progressSummaries.find { it.chapterId == chapterId }
+                    val totalConcepts = summary?.totalConcepts ?: concepts.size
+                    val completedConcepts = summary?.completedConcepts ?: 0
+                    val progressUiModel = buildProgressUiModel(completedConcepts, totalConcepts)
 
                     DebugLogger.debugLog(
                         "ConceptVM",
-                        "Progress: completed=$completedLoadedConcepts of ${conceptUiModels.size} concepts (type=$type)"
+                        "Progress for Chapter $chapterId [$language]: completed=$completedConcepts of $totalConcepts (overall chapter progress)"
                     )
 
                     _state.value = _state.value.copy(
@@ -233,7 +238,7 @@ class ConceptViewModel @Inject constructor(
                         isLoading = false,
                         error = null
                     )
-                }
+                }.collect()
             } catch (e: Exception) {
                 DebugLogger.errorLog("ConceptVM", "Error loading concepts: ${e.message}")
                 _state.value = _state.value.copy(isLoading = false, error = e.message)
@@ -251,13 +256,18 @@ class ConceptViewModel @Inject constructor(
         hasAgent: Boolean,
         hasUrl: Boolean,
         index: Int,
-        concepts: List<com.ncert7.aitutorandlab.data.local.entities.ConceptEntity>
+        concepts: List<com.ncert7.aitutorandlab.data.local.entities.ConceptEntity>,
+        language: String
     ): String {
+        // Helper: find progress by itemType and conceptId, accepting both exact language and empty-language entries
+        fun findProgress(itemType: String, id: String): com.ncert7.aitutorandlab.data.local.entities.ProgressEntity? =
+            allProgress.find { it.itemType == itemType && it.itemId == id && (it.language == language || it.language.isEmpty()) }
+
         return when {
             hasAgent && hasUrl -> {
-                val agentDone = allProgress.find { it.itemType == "SIMULATION_AGENT" && it.itemId == conceptId }
+                val agentDone = findProgress("SIMULATION_AGENT", conceptId)
                     ?.status == ProgressStatus.COMPLETED.value
-                val urlDone = allProgress.find { it.itemType == "SIMULATION" && it.itemId == conceptId }
+                val urlDone = findProgress("SIMULATION", conceptId)
                     ?.status == ProgressStatus.COMPLETED.value
 
                 when {
@@ -265,28 +275,28 @@ class ConceptViewModel @Inject constructor(
                     agentDone || urlDone -> ProgressStatus.IN_PROGRESS.value
                     else -> {
                         val prevStatus = if (index > 0) {
-                            allProgress.find { it.itemId == concepts[index - 1].conceptId }?.status
+                            allProgress.find { it.itemId == concepts[index - 1].conceptId && (it.language == language || it.language.isEmpty()) }?.status
                         } else null
                         determineConceptStatus(null, index == 0, prevStatus)
                     }
                 }
             }
             hasAgent -> {
-                val agentDone = allProgress.find { it.itemType == "SIMULATION_AGENT" && it.itemId == conceptId }
+                val agentDone = findProgress("SIMULATION_AGENT", conceptId)
                     ?.status == ProgressStatus.COMPLETED.value
                 if (agentDone) ProgressStatus.COMPLETED.value else {
                     val prevStatus = if (index > 0) {
-                        allProgress.find { it.itemId == concepts[index - 1].conceptId }?.status
+                        allProgress.find { it.itemId == concepts[index - 1].conceptId && (it.language == language || it.language.isEmpty()) }?.status
                     } else null
                     determineConceptStatus(null, index == 0, prevStatus)
                 }
             }
             hasUrl -> {
-                val urlDone = allProgress.find { it.itemType == "SIMULATION" && it.itemId == conceptId }
+                val urlDone = findProgress("SIMULATION", conceptId)
                     ?.status == ProgressStatus.COMPLETED.value
                 if (urlDone) ProgressStatus.COMPLETED.value else {
                     val prevStatus = if (index > 0) {
-                        allProgress.find { it.itemId == concepts[index - 1].conceptId }?.status
+                        allProgress.find { it.itemId == concepts[index - 1].conceptId && (it.language == language || it.language.isEmpty()) }?.status
                     } else null
                     determineConceptStatus(null, index == 0, prevStatus)
                 }

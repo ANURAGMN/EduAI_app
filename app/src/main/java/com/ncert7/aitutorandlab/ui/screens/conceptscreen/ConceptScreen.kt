@@ -33,7 +33,7 @@ fun ConceptScreen(
     type: String,
     onBackClick: () -> Unit = {},
     onConceptClick: (conceptId: String, problemId: String, conceptType: String) -> Unit = { _, _, _ -> },
-    onSimulationAgentClick: (String) -> Unit = {},
+    onSimulationAgentClick: (String, String) -> Unit = { _, _ -> },
     onSimulationClick: (title: String, url: String, conceptId: String) -> Unit = { _, _, _ -> },
     onGoHome:() -> Unit = {},
     onGoSetting:() -> Unit = {},
@@ -55,7 +55,11 @@ fun ConceptScreen(
                 DebugLogger.debugLog("ConceptScreen", "Performing Direct Navigation: ${nav.route}")
                 when (nav.route) {
                     "simulation_agent" -> {
-                        nav.conceptId?.let { onSimulationAgentClick(it) }
+                        val simId = nav.simulationId
+                        val conceptId = nav.conceptId
+                        if (simId != null && conceptId != null) {
+                            onSimulationAgentClick(simId, conceptId)
+                        }
                     }
                     "concept_sim_view" -> {
                         if (nav.simulationTitle != null && nav.simulationUrl != null && nav.conceptId != null) {
@@ -138,8 +142,8 @@ fun ConceptScreen(
                                         onConceptClick(conceptId, problemId, conceptType)
                                     }
                                 },
-                                onSimulationAgentClick = { simId ->
-                                    viewModel.onSimulationOpened(simId)
+                                onSimulationAgentClick = { simId, conceptId ->
+                                    viewModel.onSimulationOpened(simId, conceptId)
                                 },
                                 onSimulationClick = { title, url, conceptId ->
                                     viewModel.onSimulationUrlOpened(title, url, conceptId)

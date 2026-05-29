@@ -1,6 +1,11 @@
 package com.ncert7.aitutorandlab.data.local.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Update
 import com.ncert7.aitutorandlab.data.local.entities.ProgressEntity
 import com.ncert7.aitutorandlab.domain.progress.model.ProgressStatus
 import kotlinx.coroutines.flow.Flow
@@ -19,14 +24,14 @@ interface ProgressDao {
     suspend fun updateProgress(progress: ProgressEntity)
 
     @Query(
-        "SELECT * FROM progress WHERE studentId = :studentId AND itemType = :itemType AND itemId = :itemId AND appName = :appName"
+        "SELECT * FROM progress WHERE studentId = :studentId AND itemType = :itemType AND itemId = :itemId AND language = :language AND appName = :appName"
     )
-    suspend fun getProgress(studentId: String, itemType: String, itemId: String, appName: String): ProgressEntity?
+    suspend fun getProgress(studentId: String, itemType: String, itemId: String, language: String, appName: String): ProgressEntity?
 
     @Query(
-        "SELECT * FROM progress WHERE studentId = :studentId AND itemType = :itemType AND itemId = :itemId AND appName = :appName"
+        "SELECT * FROM progress WHERE studentId = :studentId AND itemType = :itemType AND itemId = :itemId AND language = :language AND appName = :appName"
     )
-    fun getProgressFlow(studentId: String, itemType: String, itemId: String, appName: String): Flow<ProgressEntity?>
+    fun getProgressFlow(studentId: String, itemType: String, itemId: String, language: String, appName: String): Flow<ProgressEntity?>
 
     @Query("SELECT * FROM progress WHERE studentId = :studentId AND appName = :appName")
     fun getAllProgress(studentId: String, appName: String): Flow<List<ProgressEntity>>
@@ -56,17 +61,21 @@ interface ProgressDao {
     )
     suspend fun deleteProgress(studentId: String, itemType: String, itemId: String, appName: String)
 
+    @Query("DELETE FROM progress")
+    suspend fun clearAllProgress()
+
     @Transaction
     suspend fun updateProgressStatus(
         studentId: String,
         itemType: String,
         itemId: String,
         appName: String,
+        language: String,
         newStatus: String,
         progressPercentage: Int,
         timestamp: Long = System.currentTimeMillis()
     ) {
-        val existing = getProgress(studentId, itemType, itemId, appName)
+        val existing = getProgress(studentId, itemType, itemId, language, appName)
         if (existing != null) {
             val updated =
                 existing.copy(
@@ -75,7 +84,7 @@ interface ProgressDao {
                         if (newStatus == ProgressStatus.COMPLETED.value) timestamp
                         else existing.completedAt,
                     startedAt = existing.startedAt ?:
-                        if (newStatus == ProgressStatus.IN_PROGRESS.value) timestamp else null,
+                    if (newStatus == ProgressStatus.IN_PROGRESS.value) timestamp else null,
                     lastAccessedAt = timestamp,
                     updatedAt = timestamp,
                     progressPercentage = progressPercentage.coerceIn(0, 100),
@@ -90,6 +99,7 @@ interface ProgressDao {
                     itemId = itemId,
                     appName = appName,
                     status = newStatus,
+                    language = language,
                     progressPercentage = progressPercentage.coerceIn(0, 100),
                     startedAt = if (newStatus == ProgressStatus.IN_PROGRESS.value) timestamp else null,
                     completedAt = if (newStatus == ProgressStatus.COMPLETED.value) timestamp else null,
@@ -152,7 +162,6 @@ interface ProgressDao {
 
     // ===== FLOW-BASED QUERIES FOR REAL-TIME UPDATES =====
 
-
     /**
      * Get concepts cleared last 7 days as Flow for real-time updates
      * Emits updated list whenever progress changes
@@ -203,30 +212,248 @@ interface ProgressDao {
     )
     suspend fun getTodayCompletedSimulations(studentId: String): Int
 
-
     /**
-     * Get chapter-wise progress as Flow for real-time updates.
-     * Calculates totalConcepts and completedConcepts dynamically from the concepts and progress tables,
-     * using chapter_agent_progress for the overall precomputed percentage.
-     * Now counts BOTH STUDY and SIMULATION type concepts for total count.
+     *
+     * we calculate progress directly from concepts and progress tables.
+     *
+     * Returns Flow<List<ChapterProgressSummary>> that emits updates whenever
+     * the progress table changes (real-time updates).
+     *
+     * Logic:
+     * - totalConcepts: Count of STUDY + SIMULATION + MATH PROBLEM concepts in chapter
+     * - completedConcepts: Count of those concepts with status = COMPLETED in progress table
+     * - completionPercentage: (completedConcepts / totalConcepts) * 100
      */
     @Query(
         """
         SELECT 
-            ch.chapterId AS chapterId,
-            ch.chapterName AS chapterName,
-            ch.chapterNameKannada AS chapterNameKannada,
-            (SELECT COUNT(*) FROM concepts c WHERE c.chapterId = ch.chapterId AND c.type IN ('STUDY', 'SIMULATION')) AS totalConcepts,
-            CAST(ROUND((COALESCE(cap.overallPercentage, 0) / 100.0) * (SELECT COUNT(*) FROM concepts c WHERE c.chapterId = ch.chapterId AND c.type IN ('STUDY', 'SIMULATION'))) AS INTEGER) AS completedConcepts,
-            COALESCE(cap.overallPercentage, 0) AS completionPercentage
+            ch.chapterId,
+            ch.chapterName,
+            ch.chapterNameKannada,
+            COALESCE((
+                SELECT COUNT(*) FROM concepts c 
+                WHERE c.chapterId = ch.chapterId 
+                AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
+                AND (
+                    c.type != 'SIMULATION' OR
+                    (CASE 
+                        WHEN :language = 'en' THEN
+                            (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
+                            OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
+                        WHEN :language = 'kn' THEN
+                            (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
+                            OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
+                        ELSE 1
+                    END)
+                )
+            ), 0) AS totalConcepts,
+            COALESCE((
+                SELECT COUNT(*) FROM concepts c 
+                WHERE c.chapterId = ch.chapterId 
+                AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
+                AND (
+                    -- If STUDY or MATH PROBLEM
+                    (c.type IN ('STUDY', 'MATH PROBLEM') AND EXISTS (
+                        SELECT 1 FROM progress p 
+                        WHERE p.itemId = c.conceptId 
+                        AND p.studentId = :studentId 
+                        AND (p.itemType = 'CONCEPT' OR p.itemType = 'MATH_AGENT')
+                        AND p.status = :completedStatus 
+                        AND p.language = :language
+                        AND p.appName = :appName
+                    ))
+                    OR
+                    -- If SIMULATION
+                    (c.type = 'SIMULATION' AND 
+                        -- Check if simulation is valid for the language
+                        (
+                            CASE 
+                                WHEN :language = 'en' THEN
+                                    (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
+                                    OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
+                                WHEN :language = 'kn' THEN
+                                    (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
+                                    OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
+                                ELSE 1
+                            END
+                        ) AND
+                        -- Check agent component if it exists
+                        (
+                            CASE
+                                WHEN :language = 'en' THEN
+                                    (c.simulationId IS NULL OR c.simulationId = '' OR c.simulationId = 'null' OR EXISTS (
+                                        SELECT 1 FROM progress p 
+                                        WHERE p.itemId = c.conceptId 
+                                        AND p.studentId = :studentId 
+                                        AND p.itemType = 'SIMULATION_AGENT' 
+                                        AND p.status = :completedStatus 
+                                        AND p.language = :language
+                                        AND p.appName = :appName
+                                    ))
+                                WHEN :language = 'kn' THEN
+                                    (c.simulationIdKannada IS NULL OR c.simulationIdKannada = '' OR c.simulationIdKannada = 'null' OR EXISTS (
+                                        SELECT 1 FROM progress p 
+                                        WHERE p.itemId = c.conceptId 
+                                        AND p.studentId = :studentId 
+                                        AND p.itemType = 'SIMULATION_AGENT' 
+                                        AND p.status = :completedStatus 
+                                        AND p.language = :language
+                                        AND p.appName = :appName
+                                    ))
+                                ELSE 1
+                            END
+                        ) AND
+                        -- Check URL component if it exists
+                        (
+                            CASE
+                                WHEN :language = 'en' THEN
+                                    (c.simulationUrl IS NULL OR c.simulationUrl = '' OR c.simulationUrl = 'null' OR EXISTS (
+                                        SELECT 1 FROM progress p 
+                                        WHERE p.itemId = c.conceptId 
+                                        AND p.studentId = :studentId 
+                                        AND p.itemType = 'SIMULATION' 
+                                        AND p.status = :completedStatus 
+                                        AND p.language = :language
+                                        AND p.appName = :appName
+                                    ))
+                                WHEN :language = 'kn' THEN
+                                    (c.simulationUrlKannada IS NULL OR c.simulationUrlKannada = '' OR c.simulationUrlKannada = 'null' OR EXISTS (
+                                        SELECT 1 FROM progress p 
+                                        WHERE p.itemId = c.conceptId 
+                                        AND p.studentId = :studentId 
+                                        AND p.itemType = 'SIMULATION' 
+                                        AND p.status = :completedStatus 
+                                        AND p.language = :language
+                                        AND p.appName = :appName
+                                    ))
+                                ELSE 1
+                            END
+                        )
+                    )
+                )
+            ), 0) AS completedConcepts,
+            CAST(ROUND(COALESCE((
+                SELECT COUNT(*) FROM concepts c 
+                WHERE c.chapterId = ch.chapterId 
+                AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
+                AND (
+                    -- If STUDY or MATH PROBLEM
+                    (c.type IN ('STUDY', 'MATH PROBLEM') AND EXISTS (
+                        SELECT 1 FROM progress p 
+                        WHERE p.itemId = c.conceptId 
+                        AND p.studentId = :studentId 
+                        AND (p.itemType = 'CONCEPT' OR p.itemType = 'MATH_AGENT')
+                        AND p.status = :completedStatus 
+                        AND p.language = :language
+                        AND p.appName = :appName
+                    ))
+                    OR
+                    -- If SIMULATION
+                    (c.type = 'SIMULATION' AND 
+                        -- Check if simulation is valid for the language
+                        (
+                            CASE 
+                                WHEN :language = 'en' THEN
+                                    (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
+                                    OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
+                                WHEN :language = 'kn' THEN
+                                    (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
+                                    OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
+                                ELSE 1
+                            END
+                        ) AND
+                        -- Check agent component if it exists
+                        (
+                            CASE
+                                WHEN :language = 'en' THEN
+                                    (c.simulationId IS NULL OR c.simulationId = '' OR c.simulationId = 'null' OR EXISTS (
+                                        SELECT 1 FROM progress p 
+                                        WHERE p.itemId = c.conceptId 
+                                        AND p.studentId = :studentId 
+                                        AND p.itemType = 'SIMULATION_AGENT' 
+                                        AND p.status = :completedStatus 
+                                        AND p.language = :language
+                                        AND p.appName = :appName
+                                    ))
+                                WHEN :language = 'kn' THEN
+                                    (c.simulationIdKannada IS NULL OR c.simulationIdKannada = '' OR c.simulationIdKannada = 'null' OR EXISTS (
+                                        SELECT 1 FROM progress p 
+                                        WHERE p.itemId = c.conceptId 
+                                        AND p.studentId = :studentId 
+                                        AND p.itemType = 'SIMULATION_AGENT' 
+                                        AND p.status = :completedStatus 
+                                        AND p.language = :language
+                                        AND p.appName = :appName
+                                    ))
+                                ELSE 1
+                            END
+                        ) AND
+                        -- Check URL component if it exists
+                        (
+                            CASE
+                                WHEN :language = 'en' THEN
+                                    (c.simulationUrl IS NULL OR c.simulationUrl = '' OR c.simulationUrl = 'null' OR EXISTS (
+                                        SELECT 1 FROM progress p 
+                                        WHERE p.itemId = c.conceptId 
+                                        AND p.studentId = :studentId 
+                                        AND p.itemType = 'SIMULATION' 
+                                        AND p.status = :completedStatus 
+                                        AND p.language = :language
+                                        AND p.appName = :appName
+                                    ))
+                                WHEN :language = 'kn' THEN
+                                    (c.simulationUrlKannada IS NULL OR c.simulationUrlKannada = '' OR c.simulationUrlKannada = 'null' OR EXISTS (
+                                        SELECT 1 FROM progress p 
+                                        WHERE p.itemId = c.conceptId 
+                                        AND p.studentId = :studentId 
+                                        AND p.itemType = 'SIMULATION' 
+                                        AND p.status = :completedStatus 
+                                        AND p.language = :language
+                                        AND p.appName = :appName
+                                    ))
+                                ELSE 1
+                            END
+                        )
+                    )
+                )
+            ), 0) * 100.0 / 
+            CASE WHEN COALESCE((
+                SELECT COUNT(*) FROM concepts c 
+                WHERE c.chapterId = ch.chapterId 
+                AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
+                AND (
+                    c.type != 'SIMULATION' OR
+                    (CASE 
+                        WHEN :language = 'en' THEN
+                            (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
+                            OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
+                        WHEN :language = 'kn' THEN
+                            (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
+                            OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
+                        ELSE 1
+                    END)
+                )
+            ), 0) = 0 THEN 1 
+            ELSE COALESCE((
+                SELECT COUNT(*) FROM concepts c 
+                WHERE c.chapterId = ch.chapterId 
+                AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
+                AND (
+                    c.type != 'SIMULATION' OR
+                    (CASE 
+                        WHEN :language = 'en' THEN
+                            (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
+                            OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
+                        WHEN :language = 'kn' THEN
+                            (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
+                            OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
+                        ELSE 1
+                    END)
+                )
+            ), 1) END) AS INTEGER) AS completionPercentage
         FROM chapters ch
-        LEFT JOIN chapter_agent_progress cap 
-            ON cap.chapterId = ch.chapterId 
-            AND cap.studentId = :studentId
-            AND cap.language = :language
-            AND cap.appName = :appName
-        WHERE 
-            ch.subjectId = :subjectId
+        LEFT JOIN progress p_dummy ON p_dummy.studentId = :studentId AND 1=0
+        WHERE ch.subjectId = :subjectId
         ORDER BY ch.orderIndex ASC
         """
     )
@@ -234,8 +461,9 @@ interface ProgressDao {
         studentId: String,
         subjectId: String,
         language: String,
-        appName: String
-    ): kotlinx.coroutines.flow.Flow<List<ChapterProgressSummary>>
+        appName: String,
+        completedStatus: String = ProgressStatus.COMPLETED.value
+    ): Flow<List<ChapterProgressSummary>>
 
     @Query(
         """
@@ -244,40 +472,69 @@ interface ProgressDao {
         WHERE studentId = :studentId 
         AND itemType = 'CONCEPT' 
         AND status = :completedStatus
+        AND language = :language
         AND appName = :appName
     """
     )
     fun getTotalCompletedConceptsFlow(
         studentId: String,
+        language: String,
         appName: String,
         completedStatus: String = ProgressStatus.COMPLETED.value
-    ): kotlinx.coroutines.flow.Flow<Int>
+    ): Flow<Int>
 
     /**
-     * Get the total number of fully completed simulation-type concepts.
+     * Get the total number of fully completed simulation-type concepts for a specific language.
      * A simulation concept is COMPLETED only if all its required components (Agent and/or URL) are COMPLETED.
      */
     @Query(
         """
         SELECT COUNT(*) FROM concepts c
         WHERE c.type = 'SIMULATION'
-        -- Ensure it has at least one valid component to be counted
-        AND ( (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
-              OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null') )
+        -- Ensure it has at least one valid component to be counted for this language
         AND (
-            (c.simulationId IS NULL OR c.simulationId = '' OR c.simulationId = 'null' OR 
-             EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'SIMULATION_AGENT' AND p.status = :completedStatus AND p.appName = :appName))
-            AND
-            (c.simulationUrl IS NULL OR c.simulationUrl = '' OR c.simulationUrl = 'null' OR 
-             EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'SIMULATION' AND p.status = :completedStatus AND p.appName = :appName))
+            CASE 
+                WHEN :language = 'en' THEN
+                    (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
+                    OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
+                WHEN :language = 'kn' THEN
+                    (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
+                    OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
+                ELSE 1
+            END
+        )
+        AND (
+            -- Check agent completion
+            CASE
+                WHEN :language = 'en' THEN
+                    (c.simulationId IS NULL OR c.simulationId = '' OR c.simulationId = 'null' OR 
+                     EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'SIMULATION_AGENT' AND p.status = :completedStatus AND p.language = :language AND p.appName = :appName))
+                WHEN :language = 'kn' THEN
+                    (c.simulationIdKannada IS NULL OR c.simulationIdKannada = '' OR c.simulationIdKannada = 'null' OR 
+                     EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'SIMULATION_AGENT' AND p.status = :completedStatus AND p.language = :language AND p.appName = :appName))
+                ELSE 1
+            END
+        )
+        AND (
+            -- Check URL completion
+            CASE
+                WHEN :language = 'en' THEN
+                    (c.simulationUrl IS NULL OR c.simulationUrl = '' OR c.simulationUrl = 'null' OR 
+                     EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'SIMULATION' AND p.status = :completedStatus AND p.language = :language AND p.appName = :appName))
+                WHEN :language = 'kn' THEN
+                    (c.simulationUrlKannada IS NULL OR c.simulationUrlKannada = '' OR c.simulationUrlKannada = 'null' OR 
+                     EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'SIMULATION' AND p.status = :completedStatus AND p.language = :language AND p.appName = :appName))
+                ELSE 1
+            END
         )
     """
     )
     fun getTotalCompletedSimulationsFlow(
         studentId: String,
+        language: String,
         appName: String,
         completedStatus: String = ProgressStatus.COMPLETED.value
-    ): kotlinx.coroutines.flow.Flow<Int>
+    ): Flow<Int>
 
     /**
      * Get the number of concepts cleared in the last 7 days, day-wise Returns a list of
@@ -324,7 +581,7 @@ interface ProgressDao {
         endOfDay: Long,
         appName: String,
         completedStatus: String = ProgressStatus.COMPLETED.value
-    ): kotlinx.coroutines.flow.Flow<Int>
+    ): Flow<Int>
 
     /**
      * Get count of CONCEPT completed today (Synchronous) */
@@ -384,7 +641,7 @@ interface ProgressDao {
         endOfDay: Long,
         appName: String,
         completedStatus: String = ProgressStatus.COMPLETED.value
-    ): kotlinx.coroutines.flow.Flow<Int>
+    ): Flow<Int>
 
     /**
      * Get count of SIMULATION completed today (Synchronous) */
@@ -459,15 +716,16 @@ interface ProgressDao {
     ): Int
 }
 
-
 /** Data class to hold daily concept completion count */
 data class DailyConceptCount(
-        val date: String, // Format: YYYY-MM-DD
-        val count: Int
+    val date: String, // Format: YYYY-MM-DD
+    val count: Int
 )
 
 /**
- * Data class to hold the chapter wise progress
+ *  Data class to hold chapter-wise progress
+ * This is used by ProgressScreenViewModel to display chapter progress
+ * Updated in real-time via Flow from getChapterWiseProgressFlow()
  */
 data class ChapterProgressSummary(
     val chapterId: String,
@@ -475,5 +733,5 @@ data class ChapterProgressSummary(
     val chapterNameKannada: String = "",
     val totalConcepts: Int,
     val completedConcepts: Int,
-    val completionPercentage: Float
+    val completionPercentage: Int  // Changed from Float to Int for consistency
 )

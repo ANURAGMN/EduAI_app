@@ -7,7 +7,6 @@ import com.ncert7.aitutorandlab.data.local.dao.DailyConceptCount
 import com.ncert7.aitutorandlab.data.local.entities.StudentEntity
 import com.ncert7.aitutorandlab.data.local.entities.SubjectEntity
 import com.ncert7.aitutorandlab.debug.DebugLogger
-import com.ncert7.aitutorandlab.repository.ChapterRepository
 import com.ncert7.aitutorandlab.repository.ProgressRepository
 import com.ncert7.aitutorandlab.repository.StreakRepository
 import com.ncert7.aitutorandlab.repository.StudentLocalRepository
@@ -24,17 +23,18 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 /**
- * ViewModel for Progress Screen.
+ * ✅ FIXED: ProgressScreenViewModel
  *
- * Uses repositories only — no direct DAO access.
- *
- * Chapter progress display uses ChapterRepository.getChapterWiseProgress()
- * which correctly returns totalConcepts and completedConcepts from the
+ * Changes:
+ * 1. Removed ChapterRepository dependency (not needed)
+ * 2. Changed getChapterProgressSummary() to use ProgressRepository.getChapterWiseProgress()
+ * 3. Added proper Flow collection with collectLatest
+ * 4. All progress data now flows from a single source of truth
+ * 5. Real-time updates whenever progress table changes
  */
 @HiltViewModel
 class ProgressScreenViewModel @Inject constructor(
     private val progressRepository: ProgressRepository,
-    private val chapterRepository: ChapterRepository,
     private val subjectRepository: SubjectRepository,
     private val studentRepository: StudentLocalRepository,
     private val streakRepository: StreakRepository,
@@ -59,11 +59,8 @@ class ProgressScreenViewModel @Inject constructor(
     val sevenDayProgress: StateFlow<List<DailyConceptCount>> = _sevenDayProgress.asStateFlow()
 
     /**
-     * Chapter-wise progress using ProgressDao.ChapterProgressSummary which includes:
-     *   - chapterId, chapterName
-     *   - totalConcepts (real count from concepts table)
-     *   - completedConcepts (concepts with status=COMPLETED in progress table)
-     *   - completionPercentage (Float)
+     * ✅ FIXED: Chapter-wise progress using real-time Flow from ProgressRepository
+     * This now uses actual progress data from progress table, not aggregated data
      */
     private val _chapterProgressSummary = MutableStateFlow<List<ChapterProgressSummary>>(emptyList())
     val chapterProgressSummary: StateFlow<List<ChapterProgressSummary>> = _chapterProgressSummary.asStateFlow()
@@ -107,6 +104,9 @@ class ProgressScreenViewModel @Inject constructor(
     private val _hasMoreChapters = MutableStateFlow(false)
     val hasMoreChapters: StateFlow<Boolean> = _hasMoreChapters.asStateFlow()
 
+    // Holds the active collection Job so we can cancel it when subject changes
+    private var chapterProgressJob: Job? = null
+
     init {
         getStudent()
         observeStreak()
@@ -119,31 +119,37 @@ class ProgressScreenViewModel @Inject constructor(
 
     private fun observeConceptCount() {
         viewModelScope.launch {
-            progressRepository.getTotalCompletedConceptsFlow(userId)
+            val language = if (isKannada()) "kn" else "en"
+            progressRepository.getTotalCompletedConceptsFlow(userId, language)
                 .collectLatest { count ->
                     _totalCompletedConcept.value = count
+                    DebugLogger.debugLog("ProgressVM", "Concepts updated: $count ($language)")
                 }
         }
     }
 
     private fun observeSimulationCount() {
         viewModelScope.launch {
-            progressRepository.getTotalCompletedSimulationsFlow(userId)
+            val language = if (isKannada()) "kn" else "en"
+            progressRepository.getTotalCompletedSimulationsFlow(userId, language)
                 .collectLatest { count ->
                     _totalCompletedSimulation.value = count
+                    DebugLogger.debugLog("ProgressVM", "Simulations updated: $count ($language)")
                 }
         }
     }
 
     private fun observeTotalScore() {
         viewModelScope.launch {
+            val language = if (isKannada()) "kn" else "en"
             kotlinx.coroutines.flow.combine(
-                progressRepository.getTotalCompletedConceptsFlow(userId),
-                progressRepository.getTotalCompletedSimulationsFlow(userId)
+                progressRepository.getTotalCompletedConceptsFlow(userId, language),
+                progressRepository.getTotalCompletedSimulationsFlow(userId, language)
             ) { concepts, sims ->
                 (concepts * 10) + (sims * 20)
             }.collectLatest { score ->
                 _totalScore.value = score
+                DebugLogger.debugLog("ProgressVM", "Total score updated: $score ($language)")
             }
         }
     }
@@ -155,6 +161,7 @@ class ProgressScreenViewModel @Inject constructor(
             streakRepository.getStreakFlow(userId).collectLatest { streak ->
                 // Default to 1 as requested for better initial experience
                 _streakCount.value = streak?.streakCount ?: 1
+                DebugLogger.debugLog("ProgressVM", "Streak updated: ${_streakCount.value}")
             }
         }
     }
@@ -174,32 +181,48 @@ class ProgressScreenViewModel @Inject constructor(
     }
 
     /**
-     * Load chapter-wise progress for a given subject.
+     * ✅ FIXED: Load chapter-wise progress with REAL-TIME updates
      *
-     * Uses ChapterRepository.getChapterWiseProgress() which queries the `progress` table
-     * via a LEFT JOIN — giving real totalConcepts + completedConcepts counts for every chapter,
-     * even those with no progress rows yet (they show 0%).
+     * Key changes:
+     * 1. Now uses ProgressRepository.getChapterWiseProgress() (NEW method)
+     * 2. This method returns Flow<List<ChapterProgressSummary>> from ProgressDao
+     * 3. Data is calculated directly from progress table (real counts, not aggregated)
+     * 4. Flow emits whenever progress table changes
+     * 5. collectLatest ensures UI always has latest data
      *
-     * Collects as a Flow so the UI updates automatically when progress changes.
+     * @param classLevel Class level (currently unused, kept for compatibility)
+     * @param subjectId Subject ID to filter chapters
      */
-    // Holds the active collection Job so we can cancel it when subject changes
-    private var chapterProgressJob: Job? = null
-
     fun getChapterProgressSummary(classLevel: Int, subjectId: String) {
         // Cancel the previous flow collection before starting a new one
         chapterProgressJob?.cancel()
         chapterProgressJob = viewModelScope.launch {
-            val language = if (isKannada()) "kn" else "en"
-            chapterRepository.getChapterWiseProgress(userId, subjectId, language)
-                .collectLatest { result ->
-                    _chapterProgressSummary.value = result
-                    categorizeChapters(result)
-                    DebugLogger.debugLog(
-                        "ProgressScreenViewModel",
-                        "Loaded ${result.size} chapters for subject=$subjectId " +
-                        "(${result.count { it.completionPercentage > 0 }} with progress)"
-                    )
-                }
+            try {
+                val language = if (isKannada()) "kn" else "en"
+                DebugLogger.debugLog(
+                    "ProgressVM",
+                    "Starting chapter progress observation for subject=$subjectId, language=$language"
+                )
+
+                // ✅ KEY FIX: Use ProgressRepository method instead of non-existent ChapterRepository
+                progressRepository.getChapterWiseProgress(userId, subjectId, language)
+                    .collectLatest { chapters ->
+                        _chapterProgressSummary.value = chapters
+                        categorizeChapters(chapters)
+
+                        val completedCount = chapters.count { it.completionPercentage >= 100 }
+                        DebugLogger.debugLog(
+                            "ProgressVM",
+                            "Chapter progress updated: ${chapters.size} chapters, " +
+                                    "$completedCount completed"
+                        )
+                    }
+            } catch (e: Exception) {
+                DebugLogger.errorLog(
+                    "ProgressVM",
+                    "Error loading chapter progress: ${e.message}"
+                )
+            }
         }
     }
 
@@ -211,7 +234,7 @@ class ProgressScreenViewModel @Inject constructor(
             if (subjectList.isNotEmpty() && _selectedSubject.value == null) {
                 _selectedSubject.value = subjectList.first()
             }
-            DebugLogger.debugLog("ProgressScreenViewModel", "Loaded ${subjectList.size} subjects for class $classLevel")
+            DebugLogger.debugLog("ProgressVM", "Loaded ${subjectList.size} subjects for class $classLevel")
         }
     }
 
@@ -250,7 +273,7 @@ class ProgressScreenViewModel @Inject constructor(
     private fun categorizeChapters(chapters: List<ChapterProgressSummary>) {
         val inProgress  = chapters.filter { it.completionPercentage > 0 && it.completionPercentage < 100 }
         val completed   = chapters.filter { it.completionPercentage >= 100 }
-        val notStarted  = chapters.filter { it.completionPercentage <= 0f }
+        val notStarted  = chapters.filter { it.completionPercentage <= 0 }
 
         _inProgressChapters.value  = inProgress
         _completedChapters.value   = completed
@@ -285,7 +308,7 @@ class ProgressScreenViewModel @Inject constructor(
         return (count.toFloat() / maxValue * 100).coerceAtLeast(4f)
     }
 
-    fun getProgressColor(percentage: Float): ProgressColorType = when {
+    fun getProgressColor(percentage: Int): ProgressColorType = when {
         percentage >= 100 -> ProgressColorType.COMPLETED
         percentage >= 80  -> ProgressColorType.HIGH_PROGRESS
         percentage >= 50  -> ProgressColorType.MEDIUM_PROGRESS

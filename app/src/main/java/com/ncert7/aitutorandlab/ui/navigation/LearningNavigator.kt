@@ -27,7 +27,7 @@ object LearningRoutes {
     const val CONCEPTS = "concepts/{chapterId}/{type}"
     const val CHATBOT = "chatbot?conceptId={conceptId}"
     const val MATH_AGENT = "math_agent?chapterId={chapterId}&problemId={problemId}"
-    const val SIMULATION_AGENT = "simulation_agent/{simulationId}"
+    const val SIMULATION_AGENT = "simulation_agent/{simulationId}?conceptId={conceptId}"
     const val CONCEPT_SIM_VIEW = "concept_sim_view/{url}/{title}/{conceptId}"
     const val REVISION = "revision/{chapterId}"
   }
@@ -57,8 +57,8 @@ fun LearningNavigator(
                 onLessonClick = { conceptId ->
                     navController.navigate("chatbot?conceptId=$conceptId")
                 },
-                onSimulationClick = { simulationId ->
-                    navController.navigate("simulation_agent/$simulationId")
+                onSimulationClick = { simulationId, conceptId ->
+                    navController.navigate("simulation_agent/$simulationId?conceptId=$conceptId")
                 },
                 onSimulationUrlClick = { title, url, conceptId ->
                     val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
@@ -113,8 +113,8 @@ fun LearningNavigator(
                         else -> navController.navigate("chatbot?conceptId=$conceptId")
                     }
                 },
-                onSimulationAgentClick = {simulationId->
-                    navController.navigate("simulation_agent/$simulationId")
+                onSimulationAgentClick = { simulationId, conceptId ->
+                    navController.navigate("simulation_agent/$simulationId?conceptId=$conceptId")
                 },
                 onSimulationClick = { title, url, conceptId ->
                     val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
@@ -179,10 +179,22 @@ fun LearningNavigator(
             )
         }
 
-        composable(route = LearningRoutes.SIMULATION_AGENT) { backStackEntry ->
+        composable(
+            route = LearningRoutes.SIMULATION_AGENT,
+            arguments = listOf(
+                navArgument("simulationId") { type = NavType.StringType },
+                navArgument("conceptId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
             val simulationId = backStackEntry.arguments?.getString("simulationId")!!
+            val conceptId = backStackEntry.arguments?.getString("conceptId") ?: ""
             SimulationAgentScreen(
                 simulationId = simulationId,
+                conceptId = conceptId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

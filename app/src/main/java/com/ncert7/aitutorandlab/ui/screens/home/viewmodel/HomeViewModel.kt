@@ -12,6 +12,7 @@ import com.ncert7.aitutorandlab.data.local.entities.ProgressEntity
 import com.ncert7.aitutorandlab.data.local.entities.StudentEntity
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.repository.StreakRepository
+import com.ncert7.aitutorandlab.utils.isKannada
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -51,6 +52,13 @@ class HomeViewModel @Inject constructor(
     private val _todaySimulationCount = MutableStateFlow(0)
     val todaySimulationCount: StateFlow<Int> = _todaySimulationCount
 
+    // All-time totals — same queries used by ProgressScreenViewModel for consistency
+    private val _totalCompletedConcept = MutableStateFlow(0)
+    val totalCompletedConcept: StateFlow<Int> = _totalCompletedConcept
+
+    private val _totalCompletedSimulation = MutableStateFlow(0)
+    val totalCompletedSimulation: StateFlow<Int> = _totalCompletedSimulation
+
     private val _student = MutableStateFlow<StudentEntity?>(null)
     val student: StateFlow<StudentEntity?> = _student
 
@@ -77,6 +85,7 @@ class HomeViewModel @Inject constructor(
         getGreeting()
         observeStreak()
         observeTodayProgress()
+        observeTotalCounts()
 
         // Load CONCEPTS
         viewModelScope.launch {
@@ -225,6 +234,33 @@ class HomeViewModel @Inject constructor(
                     .collectLatest { count ->
                         _todaySimulationCount.value = count
                         DebugLogger.debugLog("HomeViewModel", "Today's simulation count updated: $count")
+                    }
+            }
+        }
+    }
+
+    /**
+     * Observes all-time total completed concept and simulation counts.
+     * Uses the same queries as ProgressScreenViewModel so both screens show the same numbers.
+     */
+    private fun observeTotalCounts() {
+        viewModelScope.launch {
+            if (userId.isEmpty()) return@launch
+            val language = if (isKannada()) "kn" else "en"
+
+            launch {
+                progressDao.getTotalCompletedConceptsFlow(userId, language, AppConfig.APP_NAME)
+                    .collectLatest { count ->
+                        _totalCompletedConcept.value = count
+                        DebugLogger.debugLog("HomeViewModel", "Total completed concepts: $count")
+                    }
+            }
+
+            launch {
+                progressDao.getTotalCompletedSimulationsFlow(userId, language, AppConfig.APP_NAME)
+                    .collectLatest { count ->
+                        _totalCompletedSimulation.value = count
+                        DebugLogger.debugLog("HomeViewModel", "Total completed simulations: $count")
                     }
             }
         }

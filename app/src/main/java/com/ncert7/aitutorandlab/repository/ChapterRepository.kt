@@ -4,6 +4,7 @@ import com.ncert7.aitutorandlab.config.AppConfig
 import com.ncert7.aitutorandlab.data.local.dao.ChapterDao
 import com.ncert7.aitutorandlab.data.local.dao.ProgressDao
 import com.ncert7.aitutorandlab.data.local.entities.ChapterEntity
+import com.ncert7.aitutorandlab.utils.getCurrentLanguageCode
 
 /**
  * Repository class for managing chapter data and related progress.
@@ -32,15 +33,19 @@ class ChapterRepository(
      * Retrieves chapter-wise progress for a student in a specific subject.
      * Does NOT filter by classLevel — subjectId uniquely identifies the subject.
      * returns Flow of List of ChapterProgressSummary
+     *
+     * @param studentId The student ID
+     * @param subjectId The subject ID
+     * @param language Kept for compatibility with existing callers, but not used in the unified progress query.
      */
     fun getChapterWiseProgress(
         studentId: String,
         subjectId: String,
         language: String
     ) = progressDao.getChapterWiseProgressFlow(
-        studentId = studentId,
-        subjectId = subjectId,
-        language = language,
-        appName = AppConfig.APP_NAME
+        studentId,
+        subjectId,
+        getCurrentLanguageCode(),
+        AppConfig.APP_NAME
     )
 }

@@ -15,6 +15,9 @@ data class ChapterUiModel(
     val completedConcepts: Int,
     val status: ProgressStatus,
     val progressUiModel: ChapterProgressUiModel? = null,
-    val revisionId: String = ""
+    val revisionId: String = "",
+    val hasStudy: Boolean = false,
+    val hasSimulation: Boolean = false,
+    val hasRevision: Boolean = false
 )
 

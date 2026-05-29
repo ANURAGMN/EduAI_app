@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import com.ncert7.aitutorandlab.data.local.entities.ChapterEntity
 import com.ncert7.aitutorandlab.data.local.entities.ConceptEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -55,6 +56,7 @@ interface ConceptDao {
 
     @Query("DELETE FROM concepts")
     suspend fun deleteAllConcepts()
+
 
     /**
      * Progress for home screen today progress section
@@ -139,7 +141,10 @@ interface ConceptDao {
         ORDER BY orderIndex ASC
         """
     )
-    suspend fun getSimulationConceptsForChapter(chapterId: String, language: String): List<ConceptEntity>
+    suspend fun getSimulationConceptsForChapter(
+        chapterId: String,
+        language: String
+    ): List<ConceptEntity>
 
     // ============================
     // COUNT QUERIES FOR CHAPTER FILTERING
@@ -197,4 +202,20 @@ interface ConceptDao {
         """
     )
     suspend fun getSimulationConceptCount(chapterId: String, language: String): Int
+
+    /**
+     * Get a chapter by its ID
+     */
+    @Query("SELECT * FROM chapters WHERE chapterId = :chapterId")
+    suspend fun getChapter(chapterId: String): ChapterEntity?
+
+    /**
+     * Get the chapter that contains a specific concept.
+     */
+    @Query("""
+        SELECT chapters.* FROM chapters 
+        INNER JOIN concepts ON chapters.chapterId = concepts.chapterId 
+        WHERE concepts.conceptId = :conceptId
+    """)
+    suspend fun getChapterForConcept(conceptId: String): ChapterEntity?
 }

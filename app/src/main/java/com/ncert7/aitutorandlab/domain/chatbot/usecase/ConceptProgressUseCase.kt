@@ -4,6 +4,7 @@ import com.ncert7.aitutorandlab.data.remote.SessionMetadata
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.domain.progress.ProgressEventTracker
 import com.ncert7.aitutorandlab.repository.ConceptRepository
+import com.ncert7.aitutorandlab.utils.getCurrentLanguageCode
 import javax.inject.Inject
 
 /**
@@ -106,7 +107,7 @@ class ConceptProgressUseCase @Inject constructor(
             val nextConcept = allConcepts.firstOrNull { it.orderIndex == currentConcept.orderIndex + 1 }
 
             if (nextConcept != null) {
-                val nextProgress = conceptRepository.getProgress(studentId, "CONCEPT", nextConcept.conceptId)
+                val nextProgress = conceptRepository.getProgress(studentId, "CONCEPT", nextConcept.conceptId,getCurrentLanguageCode())
                 if (nextProgress == null || nextProgress.status == "NOT_STARTED") {
                     tracker.markStudyInProgress(studentId, nextConcept.conceptId)
                     DebugLogger.debugLog(TAG, "Unlocked next: ${nextConcept.conceptId}")

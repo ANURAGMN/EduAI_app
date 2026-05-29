@@ -30,7 +30,7 @@ import com.ncert7.aitutorandlab.utils.isKannada
 @Composable
 fun PracticeSimulationCard(
     progressSimulations: List<Pair<ProgressEntity?, ConceptEntity?>>,
-    onSimulationClick: (String) -> Unit, // Click agent button - navigates to simulation agent
+    onSimulationClick: (String, String) -> Unit, // Click agent button - navigates to simulation agent
     onSimulationUrlClick: (String, String, String) -> Unit = { _, _, _ -> } // Click simulation button - opens URL viewer
 ) {
     val dimes = LocalDimensions.current
@@ -81,11 +81,11 @@ fun PracticeSimulationCard(
                             concept = conceptUiModel,
                             serialNumber = index + 1,
                             onClick = { conceptId, problemId, conceptType ->
-                                onSimulationClick(sim.conceptId)
+                                onSimulationClick(conceptUiModel.simulationId ?: "", sim.conceptId)
                             },
-                            onSimulationAgentClick = { simulationId ->
+                            onSimulationAgentClick = { simulationId, conceptId ->
                                 // Clicking "Agent" button opens simulation agent
-                                onSimulationClick(simulationId)
+                                onSimulationClick(simulationId, conceptId)
                             },
                             onSimulationClick = { title, url, conceptId ->
                                 // Clicking "Simulation" button opens URL viewer

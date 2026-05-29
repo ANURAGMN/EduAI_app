@@ -36,7 +36,7 @@ fun SkillsProgressSection(
     hiddenChaptersCount: Int,
     onSubjectSelected: (SubjectEntity) -> Unit,
     onToggleShowAll: () -> Unit,
-    getProgressColor: (Float) -> ProgressColorType,
+    getProgressColor: (Int) -> ProgressColorType,
     capitalizeSubjectName: (String) -> String
 ) {
     val dimes = LocalDimensions.current
@@ -147,7 +147,7 @@ fun SkillsProgressSection(
                             }
                             ChapterProgressBar(
                                 chapterName = displayName,
-                                progress = chapter.completionPercentage.toInt(),
+                                progress = chapter.completionPercentage,
                                 completedConcepts = chapter.completedConcepts,
                                 totalConcepts = chapter.totalConcepts,
                                 colorType = getProgressColor(chapter.completionPercentage)

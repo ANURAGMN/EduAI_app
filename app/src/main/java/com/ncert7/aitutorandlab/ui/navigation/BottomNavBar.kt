@@ -109,8 +109,8 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                     onLessonClick = { conceptId ->
                         navController.navigate("chatbot?conceptId=$conceptId")
                     },
-                    onSimulationClick = { simulationId ->
-                        navController.navigate("simulation_agent/$simulationId")
+                    onSimulationClick = { simulationId, conceptId ->
+                        navController.navigate("simulation_agent/$simulationId?conceptId=$conceptId")
                     },
                     onSimulationUrlClick = { title, url, conceptId ->
                         // Encoded the URL to prevent navigation crashes due to '/'
@@ -228,8 +228,8 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                             restoreState = true
                         }
                     },
-                    onSimulationAgentClick = { simulationId ->
-                        navController.navigate("simulation_agent/$simulationId")
+                    onSimulationAgentClick = { simulationId, conceptId ->
+                        navController.navigate("simulation_agent/$simulationId?conceptId=$conceptId")
                     },
                     onSimulationClick = { title, url, conceptId ->
                         //  Encode the URL to prevent navigation crashes due to '/'
@@ -315,10 +315,22 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                 )
             }
 
-            composable(route = "simulation_agent/{simulationId}") { backStackEntry ->
+            composable(
+                route = "simulation_agent/{simulationId}?conceptId={conceptId}",
+                arguments = listOf(
+                    navArgument("simulationId") { type = NavType.StringType },
+                    navArgument("conceptId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
                 val simulationId = backStackEntry.arguments?.getString("simulationId")!!
+                val conceptId = backStackEntry.arguments?.getString("conceptId") ?: ""
                 SimulationAgentScreen(
                     simulationId = simulationId,
+                    conceptId = conceptId,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

@@ -460,11 +460,19 @@ class SimulationAgentViewModel @Inject constructor(
         }
     }
 
+    fun setConceptId(conceptId: String) {
+        if (conceptId.isNotBlank()) {
+            currentConceptId = conceptId
+            DebugLogger.debugLog(TAG, "Concept ID set to: $conceptId")
+        }
+    }
+
     /**
      * Reset session data (for back navigation)
      */
     private fun resetSessionForNavigation() {
         currentSimulationId = null
+        currentConceptId = null
         _sessionData.value = null
         _uiState.value = SimAgentUiState.Initial
         _currentTeacherMessage.value = ""

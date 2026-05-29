@@ -27,7 +27,7 @@ import androidx.room.PrimaryKey
     indices = [
         Index(value = ["studentId"]),
         Index(value = ["itemType", "itemId"]),
-        Index(value = ["studentId", "itemType", "itemId", "appName"], unique = true),
+        Index(value = ["studentId", "itemType", "itemId", "language", "appName"], unique = true),
         Index(value = ["studentId", "language", "appName"]),
         Index(value = ["appName"])
     ]

@@ -195,17 +195,19 @@ class ConceptSimulationViewModel @Inject constructor(
                 )
 
                 if (studentId.isNotEmpty() && conceptId.isNotEmpty()) {
+                    val language = if (isKannada()) "kn" else "en"
                     conceptRepository.updateProgressStatus(
                         studentId = studentId,
                         itemType = "CONCEPT",
                         itemId = conceptId,
+                        language = language,
                         newStatus = "COMPLETED",
                         progressPercentage = 100,
                         timestamp = currentTime
                     )
                     DebugLogger.debugLog(
                         "ConceptViewModel",
-                        " Simulation marked as COMPLETED for concept: $conceptId at $currentTime"
+                        " Simulation marked as COMPLETED for concept: $conceptId at $currentTime ($language)"
                     )
 
                     // Update user's streak when simulation is completed
@@ -222,7 +224,7 @@ class ConceptSimulationViewModel @Inject constructor(
 
                     // Trigger real-time sync to Firestore
                     // Get the progress ID from the database to sync
-                    val progress = conceptRepository.getProgress(studentId, "CONCEPT", conceptId)
+                    val progress = conceptRepository.getProgress(studentId, "CONCEPT", conceptId, language)
                     if (progress != null) {
                         DataSyncService.syncProgressUpdate(progress.progressId, studentId)
                     }

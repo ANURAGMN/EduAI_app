@@ -2,6 +2,7 @@ package com.ncert7.aitutorandlab.domain.progress.usecase
 
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.repository.ConceptRepository
+import com.ncert7.aitutorandlab.utils.getCurrentLanguageCode
 import javax.inject.Inject
 
 /**
@@ -39,7 +40,8 @@ class ChapterCompletionUseCase @Inject constructor(
                 val studyProgress = conceptRepository.getProgress(
                     studentId = studentId,
                     itemType = "CONCEPT",
-                    itemId = concept.conceptId
+                    itemId = concept.conceptId,
+                    getCurrentLanguageCode()
                 )
 
                 if (studyProgress?.status != "COMPLETED") {
@@ -52,7 +54,8 @@ class ChapterCompletionUseCase @Inject constructor(
                     val simulationProgress = conceptRepository.getProgress(
                         studentId = studentId,
                         itemType = "SIMULATION",
-                        itemId = concept.conceptId
+                        itemId = concept.conceptId,
+                        getCurrentLanguageCode()
                     )
 
                     // If simulation exists but not completed, chapter is incomplete
@@ -65,7 +68,8 @@ class ChapterCompletionUseCase @Inject constructor(
                     val simAgentProgress = conceptRepository.getProgress(
                         studentId = studentId,
                         itemType = "SIMULATION_AGENT",
-                        itemId = concept.conceptId
+                        itemId = concept.conceptId,
+                        getCurrentLanguageCode()
                     )
 
                     if (simAgentProgress?.status != "COMPLETED") {
@@ -78,7 +82,8 @@ class ChapterCompletionUseCase @Inject constructor(
                 val mathProgress = conceptRepository.getProgress(
                     studentId = studentId,
                     itemType = "MATH_AGENT",
-                    itemId = concept.conceptId
+                    itemId = concept.conceptId,
+                    getCurrentLanguageCode()
                 )
 
                 if (concept.type == "math" && mathProgress?.status != "COMPLETED") {
@@ -90,7 +95,8 @@ class ChapterCompletionUseCase @Inject constructor(
                 val scienceProgress = conceptRepository.getProgress(
                     studentId = studentId,
                     itemType = "SCIENCE_AGENT",
-                    itemId = concept.conceptId
+                    itemId = concept.conceptId,
+                    getCurrentLanguageCode()
                 )
 
                 if (concept.type == "science" && (scienceProgress == null || scienceProgress.status != "COMPLETED" || scienceProgress.progressPercentage != 100)) {
@@ -139,35 +145,40 @@ class ChapterCompletionUseCase @Inject constructor(
                 val studyProgress = conceptRepository.getProgress(
                     studentId = studentId,
                     itemType = "CONCEPT",
-                    itemId = concept.conceptId
+                    itemId = concept.conceptId,
+                    getCurrentLanguageCode()
                 )
                 detail = detail.copy(studyAgentComplete = studyProgress?.status == "COMPLETED")
 
                 val mathProgress = conceptRepository.getProgress(
                     studentId = studentId,
                     itemType = "MATH_AGENT",
-                    itemId = concept.conceptId
+                    itemId = concept.conceptId,
+                    getCurrentLanguageCode()
                 )
                 detail = detail.copy(mathAgentComplete = mathProgress?.status == "COMPLETED")
 
                 val simProgress = conceptRepository.getProgress(
                     studentId = studentId,
                     itemType = "SIMULATION",
-                    itemId = concept.conceptId
+                    itemId = concept.conceptId,
+                    getCurrentLanguageCode()
                 )
                 detail = detail.copy(simulationComplete = simProgress?.status == "COMPLETED")
 
                 val simAgentProgress = conceptRepository.getProgress(
                     studentId = studentId,
                     itemType = "SIMULATION_AGENT",
-                    itemId = concept.conceptId
+                    itemId = concept.conceptId,
+                    getCurrentLanguageCode()
                 )
                 detail = detail.copy(simulationAgentComplete = simAgentProgress?.status == "COMPLETED")
 
                 val scienceProgress = conceptRepository.getProgress(
                     studentId = studentId,
                     itemType = "SCIENCE_AGENT",
-                    itemId = concept.conceptId
+                    itemId = concept.conceptId,
+                    getCurrentLanguageCode()
                 )
                 detail = detail.copy(scienceAgentComplete = scienceProgress?.status == "COMPLETED")
 
