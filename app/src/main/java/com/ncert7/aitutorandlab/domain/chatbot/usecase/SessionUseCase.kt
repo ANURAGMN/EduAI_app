@@ -172,13 +172,6 @@ class SessionUseCase @Inject constructor(
         return repository.loadMapping(concept) != null
     }
 
-    /**
-     * Gets the app language preference
-     * Returns "en" or "kn" based on user's app language setting
-     */
-    fun getAppLanguage(): String {
-        return sharedPrefs.getLanguagePreference() ?: "en"
-    }
 
     private fun saveThreadMapping(concept: String, threadId: String, sessionId: String) {
         conceptThreadMap[concept] = threadId

@@ -98,7 +98,7 @@ fun AgentMessage(
             .verticalScroll(scrollState)
     ) {
         Column {
-            Spacer(modifier = Modifier.height(if (reduceTextSize) 12.dp else 50.dp))
+            Spacer(modifier = Modifier.height(if (reduceTextSize) 12.dp else 8.dp))
             // TextWithHighlights final display
             TextWithHighlights(
                 text = if (isTyping) typingText else fullText,
@@ -108,7 +108,7 @@ fun AgentMessage(
                 onTextLayout = { textLayout = it },
                 reduceTextSize = reduceTextSize
             )
-            Spacer(modifier = Modifier.height(if (reduceTextSize) 12.dp else 50.dp))
+            Spacer(modifier = Modifier.height(if (reduceTextSize) 12.dp else 8.dp))
         }
     }
 }

@@ -18,15 +18,15 @@ object DebugLogger {
     }
 
     fun debugLog(tag: String, message: String) {
-        if (BuildConfig.DEBUG) {
+//        if (BuildConfig.DEBUG) {
             Log.d(tag, message)
-        }
+//        }
     }
 
     fun errorLog(tag: String, message: String, exception: Exception? = null) {
-        if (BuildConfig.DEBUG) {
+//        if (BuildConfig.DEBUG) {
             Log.e(tag, message, exception)
-        }
+//        }
 
         // IMPORTANT: Log to Firestore in BOTH debug and release modes
         // Users won't see these errors, only firebase console will have them

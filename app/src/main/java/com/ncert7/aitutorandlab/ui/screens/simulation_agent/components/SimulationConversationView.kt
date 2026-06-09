@@ -50,7 +50,7 @@ fun SimulationConversationView(
                 .fillMaxWidth()
                 .weight(0.25f)
                 .background(White)
-                .padding(dimens.spaceMedium)
+                .padding(horizontal = dimens.spaceMedium, vertical = 0.dp)
         ) {
             if (isLoading) {
                 Column(
@@ -103,6 +103,15 @@ fun SimulationConversationView(
                         modifier = Modifier.size(dimens.iconLarge),
                         color = MaterialTheme.colorScheme.primary,
                         strokeWidth = dimens.inputBorderWidth
+                    )
+                    Spacer(modifier = Modifier.height(dimens.spaceSmall))
+
+                    Text(
+                        text = stringResource(R.string.sim_loading_simulation),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        fontStyle = FontStyle.Italic,
+                        textAlign = TextAlign.Center
                     )
                 }
             } else if (simulationUrl == null) {

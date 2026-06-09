@@ -31,7 +31,7 @@ fun ChatHeaderIcons(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(bottom = dimens.spaceSmall),
+            .wrapContentHeight(),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {

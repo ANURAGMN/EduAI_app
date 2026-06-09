@@ -210,6 +210,7 @@ private fun MathProblemButtons(
 /**
  * Buttons for SIMULATION type concepts
  * Shows "Agent" button (if simulationId exists) and "Simulation" button (if simulationUrl exists)
+ * Filters null/empty values before passing to callbacks to prevent crashes
  */
 @Composable
 private fun SimulationConceptButtons(
@@ -219,8 +220,12 @@ private fun SimulationConceptButtons(
 ) {
     val dimens = LocalDimensions.current
 
-    val hasAgent = concept.simulationId?.isNotBlank() == true && concept.simulationId != "null"
-    val hasUrl = concept.simulationUrl?.isNotBlank() == true && concept.simulationUrl != "null"
+    // Filter null/empty/invalid values - NEVER pass null or "null" string
+    val validSimulationId = concept.simulationId?.takeIf { it.isNotBlank() && it != "null" }
+    val validSimulationUrl = concept.simulationUrl?.takeIf { it.isNotBlank() && it != "null" }
+
+    val hasAgent = validSimulationId != null
+    val hasUrl = validSimulationUrl != null
 
     Column(
         modifier = Modifier
@@ -234,9 +239,13 @@ private fun SimulationConceptButtons(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceSmall)
             ) {
-                // Agent button
+                // Agent button - SAFE: only called if validSimulationId is not null
                 Button(
-                    onClick = { onSimulationAgentClick(concept.simulationId ?: "", concept.id) },
+                    onClick = {
+                        validSimulationId?.let {
+                            onSimulationAgentClick(it, concept.id)
+                        }
+                    },
                     modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
                     shape = MaterialTheme.shapes.small,
@@ -253,9 +262,13 @@ private fun SimulationConceptButtons(
                     )
                 }
 
-                // Simulation button
+                // Simulation button - SAFE: only called if validSimulationUrl is not null
                 OutlinedButton(
-                    onClick = { onSimulationClick(concept.name, concept.simulationUrl, concept.id) },
+                    onClick = {
+                        validSimulationUrl?.let {
+                            onSimulationClick(concept.name, it, concept.id)
+                        }
+                    },
                     modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
                     shape = MaterialTheme.shapes.small,
@@ -271,10 +284,14 @@ private fun SimulationConceptButtons(
                     )
                 }
             }
-        } else if (hasAgent && concept.simulationId.isNotEmpty()) {
+        } else if (hasAgent) {
             // Only Agent button
             Button(
-                onClick = { onSimulationAgentClick(concept.simulationId, concept.id) },
+                onClick = {
+                    validSimulationId?.let {
+                        onSimulationAgentClick(it, concept.id)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
                 shape = MaterialTheme.shapes.small,
@@ -290,10 +307,14 @@ private fun SimulationConceptButtons(
                     color = White
                 )
             }
-        } else if (hasUrl && concept.simulationUrl.isNotEmpty()) {
+        } else if (hasUrl) {
             // Only Simulation button
             OutlinedButton(
-                onClick = { onSimulationClick(concept.name, concept.simulationUrl, concept.id) },
+                onClick = {
+                    validSimulationUrl?.let {
+                        onSimulationClick(concept.name, it, concept.id)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = dimens.spaceExtraSmall),
                 shape = MaterialTheme.shapes.small,
