@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0891b2">
+<title>Decimal Sequence Pulse Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0891b2,#0ea5e9);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#0f172a}
+.mission{background:linear-gradient(135deg,#ecfeff,#e0f2fe);border:2px solid #67e8f9;border-radius:12px;padding:10px;margin-bottom:10px}
+.seq{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.pill{background:#0f172a;color:#fff;border-radius:999px;padding:6px 10px;font-family:'Courier New',monospace;font-weight:900}
+.entry{margin-top:10px;background:#f8fafc;border-radius:10px;padding:10px}
+.entry input{width:100%;margin-top:6px;padding:10px;border:2px solid #cbd5e1;border-radius:8px;font-size:15px;font-weight:800}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.step{padding:10px;border:none;border-radius:10px;font-weight:800;cursor:pointer;background:#e0f2fe;color:#0c4a6e}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#0891b2;color:#fff}
+.btn.next{background:#0f766e;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#ecfeff,#e0f2fe);border-left:4px solid #0891b2;border-radius:12px;padding:12px;font-size:12px;color:#0f172a;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Decimal Sequence Pulse Lab</h1>
+    <p>Decode pattern step and lock next decimal</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> decimal sequences follow fixed increments/decrements like +0.05 or -0.1.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const ROUNDS = [
+  {seq:[4.40,4.45,4.50], step:0.05, next:4.55},
+  {seq:[25.75,26.25,26.75], step:0.50, next:27.25},
+  {seq:[5.00,4.95,4.90], step:-0.05, next:4.85},
+  {seq:[1.20,1.40,1.60], step:0.20, next:1.80},
+  {seq:[9.90,9.70,9.50], step:-0.20, next:9.30},
+  {seq:[3.333,3.433,3.533], step:0.10, next:3.633}
+];
+
+let st = {run:true, idx:0, score:0, lives:3, ans:'', resolved:false, msg:'', msgType:'info'};
+
+function fmt(v){ return Number(v).toFixed(3).replace(/\.?0+$/,''); }
+function setup(){ st.ans=''; st.resolved=false; st.msg=''; st.msgType='info'; }
+function nudge(d){ if(!st.run||st.resolved) return; const cur=parseFloat(st.ans||'0'); st.ans=String(Number((cur+d).toFixed(3))); render(); }
+function check(){
+  if(!st.run||st.resolved) return;
+  const r = ROUNDS[st.idx];
+  const got = parseFloat(st.ans);
+  if(!Number.isFinite(got)){ st.msg='Enter a number first.'; st.msgType='info'; render(); return; }
+  st.resolved = true;
+  if(Math.abs(got-r.next)<1e-9){ st.score+=12; st.msg='Correct next term!'; st.msgType='good'; }
+  else { st.lives--; st.msg=`Expected ${fmt(r.next)} with step ${r.step>=0?'+':''}${fmt(r.step)}.`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Pulse lab complete!'; st.msgType='good'; render(); return; }
+  setup(); render();
+}
+function restart(){ st={run:true,idx:0,score:0,lives:3,ans:'',resolved:false,msg:'',msgType:'info'}; setup(); render(); }
+
+function render(){
+  const done=!st.run;
+  const r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Step</div><div class="v">${r.step>=0?'+':''}${fmt(r.step)}</div></div>
+    </div>
+    <div class="mission">
+      <div style="font-size:12px;color:#155e75">Find next term</div>
+      <div class="seq">${r.seq.map(v=>`<span class="pill">${fmt(v)}</span>`).join('')}<span class="pill">?</span></div>
+    </div>
+    <div class="entry">
+      <div style="font-size:12px;color:#334155">Your next term</div>
+      <input id="ansIn" type="number" step="0.001" value="${st.ans}" placeholder="Type decimal">
+      <div class="steps">
+        <button class="step" id="m05">-0.05</button>
+        <button class="step" id="p05">+0.05</button>
+        <button class="step" id="p10">+0.1</button>
+      </div>
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:(st.resolved?`<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next Round'}</button>`:`<button class="btn check" id="checkBtn">Check Next</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Observe constant step and sign (+/-).</div>`}
+  `;
+  const a=sim.querySelector('#ansIn'); if(a){ a.oninput=()=>{st.ans=a.value;}; a.disabled=st.resolved||done; }
+  const m05=sim.querySelector('#m05'); if(m05) m05.onclick=()=>nudge(-0.05);
+  const p05=sim.querySelector('#p05'); if(p05) p05.onclick=()=>nudge(0.05);
+  const p10=sim.querySelector('#p10'); if(p10) p10.onclick=()=>nudge(0.1);
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+}
+setup();
+render();
+</script>
+</body>
+</html>

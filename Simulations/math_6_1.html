@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<title>Divisibility Signal Studio</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#2563eb,#0ea5e9);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#eff6ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#1d4ed8;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #93c5fd;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission p{font-size:12px;color:#1e3a8a;line-height:1.45}
+.num{font-family:'Courier New',monospace;font-size:28px;font-weight:900;color:#1e3a8a;text-align:center;margin-top:6px}
+.switches{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.sw{padding:10px;border:2px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;font-weight:800}
+.sw.on{border-color:#2563eb;background:#dbeafe;color:#1d4ed8}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#2563eb;color:#fff}
+.btn.next{background:#0ea5e9;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-left:4px solid #2563eb;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Divisibility Signal Studio</h1>
+    <p>Switch ON all valid divisibility rules</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Chapter 6 focus:</b> number-play via divisibility cues (2/3/5/9 rules).</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const ROUNDS = [
+  {n:126, valid:['2','3','9']},
+  {n:245, valid:['5']},
+  {n:360, valid:['2','3','5','9']},
+  {n:111, valid:['3']},
+  {n:999, valid:['3','9']},
+  {n:420, valid:['2','3','5']}
+];
+const RULES = ['2','3','5','9'];
+let st={run:true,idx:0,score:0,lives:3,on:new Set(),resolved:false,msg:'',msgType:'info'};
+function toggle(r){ if(!st.run||st.resolved) return; st.on.has(r)?st.on.delete(r):st.on.add(r); render(); }
+function check(){
+  if(!st.run||st.resolved) return;
+  const v = ROUNDS[st.idx].valid;
+  st.resolved=true;
+  const ok = RULES.every(r => st.on.has(r)===v.includes(r));
+  if(ok){ st.score+=12; st.msg='Perfect signal set.'; st.msgType='good'; }
+  else { st.lives--; st.msg=`Valid rules: ${v.join(', ')}.`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Studio run complete!'; st.msgType='good'; render(); return; }
+  st.on=new Set(); st.resolved=false; st.msg=''; st.msgType='info'; render();
+}
+function restart(){ st={run:true,idx:0,score:0,lives:3,on:new Set(),resolved:false,msg:'',msgType:'info'}; render(); }
+function render(){
+  const done=!st.run;
+  const r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Mode</div><div class="v">Rules</div></div>
+    </div>
+    <div class="mission">
+      <p>Activate every rule that divides this number exactly.</p>
+      <div class="num">${r.n}</div>
+    </div>
+    <div class="switches">
+      ${RULES.map(rule=>`<button class="sw ${st.on.has(rule)?'on':''}" data-rule="${rule}">Divisible by ${rule}</button>`).join('')}
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:(st.resolved?`<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next Round'}</button>`:`<button class="btn check" id="checkBtn">Validate Signals</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Toggle rules, then validate.</div>`}
+  `;
+  sim.querySelectorAll('[data-rule]').forEach(b=>b.onclick=()=>toggle(b.dataset.rule));
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rr=sim.querySelector('#restartBtn'); if(rr) rr.onclick=restart;
+}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Card Sum Difference Duel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0f766e,#2563eb);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;color:#111827;font-weight:800}
+.mission{background:linear-gradient(135deg,#ecfeff,#dbeafe);border:2px solid #7dd3fc;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#134e4a}
+.mission p{font-size:12px;color:#0f766e;line-height:1.45;margin-top:4px}
+.display{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.box{background:#f8fafc;border:2px dashed #cbd5e1;border-radius:10px;padding:8px;text-align:center}
+.box .lbl{font-size:11px;color:#475569}
+.box .num{font-size:18px;font-family:'Courier New',monospace;font-weight:900;color:#0f172a;min-height:22px}
+.deck{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.digit{padding:10px;border:2px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;font-weight:900}
+.digit.used{opacity:.35;cursor:not-allowed}
+.row{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.reset{background:#e2e8f0;color:#334155}
+.btn.check{background:#0f766e;color:#fff}
+.btn.next{background:#0284c7;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#ecfeff,#dbeafe);border-left:4px solid #0f766e;border-radius:12px;padding:12px;font-size:12px;color:#0f172a;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Card Sum Difference Duel</h1>
+    <p>Place digits to maximize or minimize mission metric</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>NCERT link:</b> number-card puzzles on largest sum and smallest difference.</div>
+</div>
+<script>
+const sim = document.getElementById("sim");
+
+const MISSIONS = [
+  {digits:["1","2","3","4","5","6","7","8","9"], lenA:5, lenB:4, mode:"max_sum", label:"Maximize A + B"},
+  {digits:["1","2","3","4","5","6","7","8"], lenA:4, lenB:4, mode:"min_diff", label:"Minimize |A - B|"},
+  {digits:["1","2","3","4","5","6","7","8"], lenA:4, lenB:4, mode:"max_diff", label:"Maximize |A - B|"},
+  {digits:["0","1","2","3","4","5","6","7","8","9"], lenA:5, lenB:5, mode:"max_sum", label:"Maximize A + B"},
+  {digits:["0","1","2","3","4","5","6","7","8","9"], lenA:5, lenB:5, mode:"min_diff", label:"Minimize |A - B|"},
+  {digits:["2","3","4","5","6","7","8","9"], lenA:4, lenB:4, mode:"max_sum", label:"Maximize A + B"}
+];
+
+let st = {run:true, idx:0, score:0, lives:3, A:[], B:[], used:new Set(), resolved:false, msg:"", msgType:"info", best:null};
+
+function toNum(arr){ return arr.length ? parseInt(arr.join(""),10) : 0; }
+
+function metric(mode,a,b){
+  if(mode==="max_sum") return a+b;
+  const d = Math.abs(a-b);
+  if(mode==="min_diff") return -d;
+  return d;
+}
+
+function better(mode,m1,m2){ return m1>m2; }
+
+function computeBest(m){
+  const digits = m.digits;
+  let bestMetric = -Infinity;
+  let bestA = [];
+  let bestB = [];
+  function dfs(i, used, A, B){
+    if(A.length===m.lenA && B.length===m.lenB){
+      const a = toNum(A), b = toNum(B);
+      if((A[0]==="0" || B[0]==="0")) return;
+      const mt = metric(m.mode, a, b);
+      if(better(m.mode, mt, bestMetric)){ bestMetric = mt; bestA = [...A]; bestB = [...B]; }
+      return;
+    }
+    for(let k=0;k<digits.length;k++){
+      if(used.has(k)) continue;
+      if(A.length < m.lenA){
+        if(A.length===0 && digits[k]==="0") continue;
+        used.add(k); A.push(digits[k]); dfs(i+1, used, A, B); A.pop(); used.delete(k);
+      } else {
+        if(B.length===0 && digits[k]==="0") continue;
+        used.add(k); B.push(digits[k]); dfs(i+1, used, A, B); B.pop(); used.delete(k);
+      }
+    }
+  }
+  dfs(0, new Set(), [], []);
+  return {bestMetric, bestA, bestB};
+}
+
+function setupRound(){
+  st.A = [];
+  st.B = [];
+  st.used = new Set();
+  st.resolved = false;
+  st.msg = "";
+  st.msgType = "info";
+  st.best = computeBest(MISSIONS[st.idx]);
+}
+
+function placeDigit(d){
+  if(!st.run || st.resolved || st.used.has(d)) return;
+  const m = MISSIONS[st.idx];
+  if(st.A.length < m.lenA) st.A.push(d);
+  else if(st.B.length < m.lenB) st.B.push(d);
+  else return;
+  st.used.add(d);
+  render();
+}
+
+function backspace(){
+  if(!st.run || st.resolved) return;
+  if(st.B.length){
+    const d = st.B.pop();
+    st.used.delete(d);
+  } else if(st.A.length){
+    const d = st.A.pop();
+    st.used.delete(d);
+  }
+  render();
+}
+
+function resetRound(){ if(!st.run || st.resolved) return; setupRound(); render(); }
+
+function check(){
+  if(!st.run || st.resolved) return;
+  const m = MISSIONS[st.idx];
+  if(st.A.length!==m.lenA || st.B.length!==m.lenB){
+    st.msg = "Fill both numbers before checking.";
+    st.msgType = "info";
+    render();
+    return;
+  }
+  const a = toNum(st.A), b = toNum(st.B);
+  const mt = metric(m.mode, a, b);
+  st.resolved = true;
+  if(mt===st.best.bestMetric){
+    st.score += 14;
+    st.msg = "Optimal arrangement achieved!";
+    st.msgType = "good";
+  } else {
+    st.lives -= 1;
+    const ba = st.best.bestA.join(""), bb = st.best.bestB.join("");
+    st.msg = `Not optimal. One best pair: A=${ba}, B=${bb}.`;
+    st.msgType = "bad";
+    if(st.lives<=0) st.run = false;
+  }
+  render();
+}
+
+function next(){
+  if(!st.resolved) return;
+  st.idx += 1;
+  if(st.idx>=MISSIONS.length){
+    st.run = false;
+    st.msg = "Duel series complete!";
+    st.msgType = "good";
+    render();
+    return;
+  }
+  setupRound();
+  render();
+}
+
+function restart(){
+  st = {run:true, idx:0, score:0, lives:3, A:[], B:[], used:new Set(), resolved:false, msg:"", msgType:"info", best:null};
+  setupRound();
+  render();
+}
+
+function render(){
+  const done = !st.run;
+  const m = MISSIONS[Math.min(st.idx, MISSIONS.length-1)];
+  const a = toNum(st.A), b = toNum(st.B);
+  const showMetric = m.mode==="max_sum" ? (a+b) : Math.abs(a-b);
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1, MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">${m.mode==="max_sum"?"A+B":"|A-B|"}</div><div class="v">${showMetric}</div></div>
+    </div>
+    <div class="mission">
+      <h3>${m.label}</h3>
+      <p>Fill A (${m.lenA} digits) then B (${m.lenB} digits) using each card at most once.</p>
+    </div>
+    <div class="display">
+      <div class="box"><div class="lbl">A</div><div class="num">${st.A.join("") || "_".repeat(m.lenA)}</div></div>
+      <div class="box"><div class="lbl">B</div><div class="num">${st.B.join("") || "_".repeat(m.lenB)}</div></div>
+    </div>
+    <div class="deck">
+      ${m.digits.map(d=>`<button class="digit ${st.used.has(d)?"used":""}" data-d="${d}" ${st.used.has(d)||st.resolved||done?"disabled":""}>${d}</button>`).join("")}
+    </div>
+    <div class="row">
+      ${done ? `<button class="btn next" id="restartBtn">Restart Duel</button>` :
+        (st.resolved ? `<button class="btn next" id="nextBtn">${st.idx===MISSIONS.length-1?"Finish":"Next Round"}</button>` :
+        `<button class="btn reset" id="backBtn">Backspace</button><button class="btn reset" id="resetBtn">Reset</button><button class="btn check" id="checkBtn">Check</button>`)}
+    </div>
+    ${st.msg ? `<div class="msg ${st.msgType}">${st.msg}</div>` : `<div class="msg info">Strategy matters: place high digits in high place values when maximizing sum.</div>`}
+  `;
+
+  sim.querySelectorAll(".digit").forEach(b=>b.onclick=()=>placeDigit(b.dataset.d));
+  const back = sim.querySelector("#backBtn"); if(back) back.onclick = backspace;
+  const rst = sim.querySelector("#resetBtn"); if(rst) rst.onclick = resetRound;
+  const ck = sim.querySelector("#checkBtn"); if(ck) ck.onclick = check;
+  const nx = sim.querySelector("#nextBtn"); if(nx) nx.onclick = next;
+  const rr = sim.querySelector("#restartBtn"); if(rr) rr.onclick = restart;
+}
+
+setupRound();
+render();
+</script>
+</body>
+</html>

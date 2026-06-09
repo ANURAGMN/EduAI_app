@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Factor Chain Builder</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#0f766e,#115e59);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}.v{font-size:17px;font-weight:800;color:#0f172a}
+.mission{background:#ecfeff;border:2px solid #99f6e4;border-radius:12px;padding:10px;margin-bottom:10px;font-size:12px;color:#134e4a}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chip{padding:10px 12px;border:2px solid #99f6e4;border-radius:10px;background:#fff;color:#0f766e;font-weight:900;cursor:pointer}
+.chip.used{opacity:.35;cursor:not-allowed}
+.chain{margin-top:10px;background:#f8fafc;border:2px dashed #94a3b8;border-radius:10px;padding:10px;min-height:46px;font-family:'Courier New',monospace;font-weight:900;color:#0f172a}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.check{background:#0f766e;color:#fff}.next{background:#0ea5e9;color:#fff}.retry{background:#334155;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.4}
+.good{background:#dcfce7;color:#166534}.bad{background:#fef2f2;color:#991b1b}.info{background:#eff6ff;color:#1e3a8a}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Factor Chain Builder</h1>
+    <p>Build a valid divisibility chain to 1</p>
+  </div>
+  <div class="card" id="sim"></div>
+</div>
+<script>
+const sim=document.getElementById('sim');
+const MISSIONS=[36,48,54,72,84,90];
+let st={run:true,idx:0,score:0,lives:3,cur:36,chain:[36],pool:[],resolved:false,msg:'',msgType:'info'};
+function factors(n){const out=[];for(let i=1;i<=n;i++)if(n%i===0&&i!==n)out.push(i);return out;}
+function setup(){const n=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];st.cur=n;st.chain=[n];st.pool=factors(n).sort((a,b)=>a-b);st.resolved=false;st.msg='';st.msgType='info';}
+function pick(v){
+  if(!st.run||st.resolved) return;
+  if(st.cur%v!==0 || v>=st.cur) return;
+  st.cur=v; st.chain.push(v);
+  if(v===1){st.resolved=true; st.score+=15; st.msg='Perfect factor chain!'; st.msgType='good';}
+  render();
+}
+function check(){
+  if(!st.run||st.resolved) return;
+  st.resolved=true;
+  if(st.cur===1){st.score+=15; st.msg='Correct chain to 1.'; st.msgType='good';}
+  else{st.lives--; st.msg='Chain incomplete. Reach 1 through divisibility steps.'; st.msgType='bad'; if(st.lives<=0) st.run=false;}
+  render();
+}
+function undo(){
+  if(!st.run||st.resolved||st.chain.length<=1) return;
+  st.chain.pop(); st.cur=st.chain[st.chain.length-1]; render();
+}
+function next(){if(!st.resolved)return; st.idx++; if(st.idx>=MISSIONS.length){st.run=false;st.msg='Builder complete!';st.msgType='good';render();return;} setup(); render();}
+function retry(){if(st.run&&st.resolved){setup();render();}}
+function restart(){st={run:true,idx:0,score:0,lives:3,cur:36,chain:[36],pool:[],resolved:false,msg:'',msgType:'info'};setup();render();}
+function render(){
+  const done=!st.run,n=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Current</div><div class="v">${st.cur}</div></div>
+    </div>
+    <div class="mission">Mission: Start from <b>${n}</b> and build a chain where each next number is a factor of previous, ending at <b>1</b>.</div>
+    <div class="chips">
+      ${st.pool.map(v=>`<button class="chip ${done||st.resolved||v>=st.cur||st.cur%v!==0?'used':''}" data-v="${v}" ${done||st.resolved||v>=st.cur||st.cur%v!==0?'disabled':''}>${v}</button>`).join('')}
+    </div>
+    <div class="chain">${st.chain.join(' → ')}</div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">${st.idx===MISSIONS.length-1?'Finish':'Next'}</button>`:`<button class="btn retry" id="undoBtn">Undo</button><button class="btn check" id="checkBtn">Check Chain</button>`}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Tap only valid factors of current value.</div>`}
+  `;
+  sim.querySelectorAll('.chip').forEach(b=>b.onclick=()=>pick(parseInt(b.dataset.v,10)));
+  const u=sim.querySelector('#undoBtn'); if(u) u.onclick=undo;
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const nbtn=sim.querySelector('#nextBtn'); if(nbtn) nbtn.onclick=next;
+  const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
+  const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+}
+setup(); render();
+</script>
+</body>
+</html>

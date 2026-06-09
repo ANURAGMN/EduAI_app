@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="kn" dir="ltr">
+<head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#059669">
+<title>ದಶಮಾಂಶ ಏಕಮಾನ ಪರಿವರ್ತಕ — ಅಧ್ಯಾಯ ೩</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans Kannada',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#059669 0%,#0369a1 100%);min-height:100vh;-webkit-font-smoothing:antialiased}#app{max-width:420px;margin:auto;padding:10px;padding-top:max(10px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom))}
+.header{text-align:center;color:#fff;padding:14px}
+.header h1{font-size:20px;font-weight:800;margin-bottom:4px}
+.header p{font-size:13px;opacity:.9}
+.sim-card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.12);margin-bottom:14px}
+.mode-tabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap}
+.mode-tab{flex:1;min-width:60px;padding:10px 2px;border:2px solid #e5e7eb;border-radius:10px;background:#fafafa;font-size:10px;font-weight:600;text-align:center;cursor:pointer}
+.mode-tab.active{border-color:#059669;background:#ecfdf5;color:#065f46}
+/* Converter display */
+.conv-display{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.conv-box{flex:1;background:linear-gradient(135deg,#064e3b,#065f46);border-radius:14px;padding:14px;text-align:center}
+.conv-val{font-size:24px;font-weight:800;color:#fff}
+.conv-unit{font-size:12px;color:rgba(255,255,255,.6);margin-top:2px}
+.conv-arrow{font-size:20px;color:#059669;font-weight:700}
+/* Explanation */
+.explain-card{background:#ecfdf5;border-radius:12px;padding:12px;margin-bottom:12px;border-left:4px solid #059669;font-size:13px;line-height:1.6;color:#334155}
+.explain-card b{color:#059669}
+/* Scale visual */
+.scale-bar{background:#f0fdf4;border-radius:10px;padding:10px;margin-bottom:12px}
+.scale-track{height:24px;background:#e5e7eb;border-radius:12px;position:relative;overflow:hidden;margin:8px 0}
+.scale-fill{height:100%;border-radius:12px;background:linear-gradient(90deg,#10b981,#059669);transition:width .3s}
+.scale-labels{display:flex;justify-content:space-between;font-size:10px;color:#888}
+/* Slider */
+.slider-group{margin-bottom:12px}
+.slider-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.slider-label .name{color:#555}
+.slider-label .val{font-weight:700;color:#059669}
+input[type="range"]{width:100%;height:8px;border-radius:4px;background:#e5e7eb;-webkit-appearance:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#059669;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
+/* Fact cards */
+.fact-card{background:#fffbeb;border-radius:10px;padding:10px;margin-bottom:8px;border-left:4px solid #f59e0b;font-size:12px;color:#92400e;line-height:1.5}
+.fact-card b{color:#78350f}
+/* Insight */
+.insight-box{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:12px;padding:14px;margin-top:14px;border-left:4px solid #059669;font-size:13px;line-height:1.5}
+.insight-title{font-weight:700;color:#065f46;margin-bottom:6px}
+/* Help */
+.help-btn{position:fixed;bottom:20px;right:20px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#059669,#0369a1);color:#fff;border:3px solid #fff;box-shadow:0 4px 15px rgba(5,150,105,.4);font-size:20px;font-weight:700;cursor:pointer;z-index:100;display:flex;align-items:center;justify-content:center}
+.help-btn:active{transform:scale(.9)}
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.help-overlay.open{display:flex}
+.help-panel{background:#fff;border-radius:20px 20px 0 0;max-width:420px;width:100%;max-height:75vh;overflow-y:auto;padding:20px 16px env(safe-area-inset-bottom);animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.help-close{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.help-close h2{font-size:16px;font-weight:700;color:#333}
+.help-close button{width:32px;height:32px;border-radius:50%;border:none;background:#f1f5f9;font-size:18px;cursor:pointer;color:#64748b}
+.help-section{margin-bottom:14px}
+.help-section-title{font-size:12px;font-weight:700;color:#059669;margin-bottom:6px}
+.help-step{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px;line-height:1.5;color:#475569}
+.help-step:last-child{border-bottom:none}
+.help-step .sn{width:22px;height:22px;border-radius:50%;background:#059669;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.help-try{background:#ecfdf5;border-radius:8px;padding:8px 10px;font-size:11px;color:#065f46;line-height:1.5;margin-top:4px}
+.help-key{background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:8px;padding:8px 10px;font-size:11px;color:#92400e;line-height:1.5;margin-top:4px}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="header">
+  <h1>ಏಕಮಾನ ಪರಿವರ್ತಕ</h1>
+  <p>mm, cm, m, g, kg, ಪೈಸೆ, ರೂಪಾಯಿ — ಎಲ್ಲವೂ ದಶಮಾಂಶ!</p>
+</div>
+<div class="sim-card" id="sim"></div>
+<div class="insight-box">
+  <div class="insight-title">ದಶಮಾಂಶ ಅನಾಹುತಗಳು!</div>
+  2013 ರಲ್ಲಿ ಆಮ್ಸ್ಟರ್ಡ್ಯಾಮ್ €1.8 ಮಿಲಿಯನ್ ಬದಲು €188 ಮಿಲಿಯನ್ ಕಳುಹಿಸಿತು — ಯೂರೋ ಬದಲು ಸೆಂಟ್ಗಳನ್ನು ಪ್ರೋಗ್ರಾಂ ಮಾಡಿದ್ದರು. ತಪ್ಪು ಸ್ಥಾನದ ದಶಮಾಂಶ ಬಿಂದು 100× ಹೆಚ್ಚು ಅರ್ಥ! ಔಷಧದಲ್ಲಿ 0.05 mg ಅನ್ನು 0.5 mg ಎಂದು ಓದಿದರೆ 10× ಮೊತ್ತ. <b>ದಶಮಾಂಶ ಮುಖ್ಯ.</b>
+</div>
+
+<button class="help-btn" id="helpBtn">?</button>
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-panel">
+    <div class="help-close"><h2>ಈ ಸಿಮ್ಯುಲೇಶನ್ ಹೇಗೆ ಬಳಸುವುದು</h2><button id="helpClose">&times;</button></div>
+    <div class="help-section">
+      <div class="help-section-title">ಏನು ಮಾಡಬೇಕು</div>
+      <div class="help-step"><span class="sn">1</span><span><b>ಪರಿವರ್ತನೆ ಪ್ರಕಾರ</b> ಆಯ್ಕೆಮಾಡಿ: mm↔cm, cm↔m, g↔kg ಅಥವಾ paise↔₹.</span></div>
+      <div class="help-step"><span class="sn">2</span><span>ಮೌಲ್ಯ ಬದಲಾಯಿಸಲು <b>ಸ್ಲೈಡರ್</b> ಎಳೆಯಿರಿ. ಎರಡೂ ಏಕಮಾನಗಳು ತಕ್ಷಣ ನವೀಕರಿಸುತ್ತವೆ.</span></div>
+      <div class="help-step"><span class="sn">3</span><span>ಭಾಗಾಕಾರ/ಗುಣಾಕಾರ ಹಂತ ತೋರಿಸುವ <b>ವಿವರಣೆ</b> ಓದಿ.</span></div>
+    </div>
+    <div class="help-section">
+      <div class="help-section-title">ಮುಖ್ಯ ಕಲ್ಪನೆ</div>
+      <div class="help-key"><b>mm→cm</b>: ÷10 (ದಶಮಾಂಶ 1 ಎಡ). <b>cm→m</b>: ÷100 (2 ಎಡ). <b>g→kg</b>: ÷1000 (3 ಎಡ). <b>paise→₹</b>: ÷100 (2 ಎಡ). ಎಲ್ಲವೂ 10 ನ ಶಕ್ತಿಗಳ ಬಗ್ಗೆ!</div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+document.getElementById('helpBtn').onclick=()=>document.getElementById('helpOverlay').classList.add('open');
+document.getElementById('helpClose').onclick=()=>document.getElementById('helpOverlay').classList.remove('open');
+document.getElementById('helpOverlay').onclick=e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open')};
+
+const UNITS=[
+  {id:'mm_cm',name:'mm ↔ cm',from:'mm',to:'cm',factor:10,max:500,step:1,val:56,
+   explain:v=>`${v} mm = ${v}/10 cm = <b>${(v/10).toFixed(1)} cm</b><br>ಪ್ರತಿ cm ಗೆ 10 mm, ಆದ್ದರಿಂದ 10 ರಿಂದ ಭಾಗಿಸಿ.`,
+   fact:'ಮಾನವ ಕೂದಲು ಸುಮಾರು 0.1 mm ದಪ್ಪ. ಸಾಸಿವೆ ಬೀಜ 1–2 mm.'},
+  {id:'cm_m',name:'cm ↔ m',from:'cm',to:'m',factor:100,max:1000,step:1,val:325,
+   explain:v=>`${v} cm = ${v}/100 m = <b>${(v/100).toFixed(2)} m</b><br>ಪ್ರತಿ ಮೀಟರ್‌ಗೆ 100 cm, ಆದ್ದರಿಂದ 100 ರಿಂದ ಭಾಗಿಸಿ.`,
+   fact:'ಅತಿ ಚಿಕ್ಕ ಆಕ್ಟೋಪಸ್ (ವೋಲ್ಫಿ) ಕೇವಲ 1–2.5 cm!'},
+  {id:'g_kg',name:'g ↔ kg',from:'g',to:'kg',factor:1000,max:5000,step:1,val:465,
+   explain:v=>`${v} g = ${v}/1000 kg = <b>${(v/1000).toFixed(3)} kg</b><br>ಪ್ರತಿ kg ಗೆ 1000 g, ಆದ್ದರಿಂದ 1000 ರಿಂದ ಭಾಗಿಸಿ.`,
+   fact:'ವೋಲ್ಫಿ ಆಕ್ಟೋಪಸ್ 1 ಗ್ರಾಂಗಿಂತ ಕಡಿಮೆ ತೂಕ!'},
+  {id:'p_r',name:'paise ↔ ₹',from:'paise',to:'₹',factor:100,max:1000,step:1,val:75,
+   explain:v=>`${v} paise = ${v}/100 rupees = <b>₹${(v/100).toFixed(2)}</b><br>100 paise = 1 ರೂಪಾಯಿ, ಆದ್ದರಿಂದ 100 ರಿಂದ ಭಾಗಿಸಿ.`,
+   fact:'1970 ರ ದಶಕದಲ್ಲಿ ಮಸಾಲೆ ದೋಸೆ ಕೇವಲ 50 ಪೈಸೆ (₹0.50)!'}
+];
+
+const T={explore:"ಅನ್ವೇಷಿಸಿ",quiz:"ರಸಪ್ರಶ್ನೆ",score:"ಸ್ಕೋರ್",question:"ಪ್ರಶ್ನೆ",nextQ:"ಮುಂದಿನ ಪ್ರಶ್ನೆ",correct:"ಸರಿ!",answer:"ಉತ್ತರ",funFact:"ರೋಚಕ ತಥ್ಯ"};
+const ct=document.getElementById("sim");
+let uIdx=0,ucMode="explore",ucQIdx=0,ucQScore=0,ucQTotal=0,ucQAns=false;
+
+const UC_QUIZ=[
+  {q:"12 mm = ? cm",opts:["1.2 cm","0.12 cm","12.0 cm","0.012 cm"],ans:"1.2 cm",ex:"12 ÷ 10 = 1.2 (10 mm per cm)"},
+  {q:"56 mm = ? cm",opts:["5.6 cm","0.56 cm","56.0 cm","0.056 cm"],ans:"5.6 cm",ex:"56 ÷ 10 = 5.6"},
+  {q:"36 cm = ? m",opts:["0.36 m","3.6 m","0.036 m","36.0 m"],ans:"0.36 m",ex:"36 ÷ 100 = 0.36 (100 cm per m)"},
+  {q:"325 cm = ? m",opts:["3.25 m","32.5 m","0.325 m","325.0 m"],ans:"3.25 m",ex:"325 ÷ 100 = 3.25"},
+  {q:"465 g = ? kg",opts:["0.465 kg","4.65 kg","46.5 kg","0.0465 kg"],ans:"0.465 kg",ex:"465 ÷ 1000 = 0.465 (1000 g per kg)"},
+  {q:"1560 g = ? kg",opts:["1.56 kg","15.6 kg","0.156 kg","156.0 kg"],ans:"1.56 kg",ex:"1560 ÷ 1000 = 1.56"},
+  {q:"75 paise = ? rupees",opts:["₹0.75","₹7.50","₹0.075","₹75.00"],ans:"₹0.75",ex:"75 ÷ 100 = 0.75 (100 paise per rupee)"},
+  {q:"250 paise = ? rupees",opts:["₹2.50","₹25.00","₹0.25","₹250.00"],ans:"₹2.50",ex:"250 ÷ 100 = 2.50"},
+  {q:"A doctor prescribes 0.05 mg. A nurse reads it as 0.5 mg. How many times more is that?",opts:["10 times","100 times","2 times","5 times"],ans:"10 times",ex:"0.5 ÷ 0.05 = 10. A decimal point error → 10× overdose!"},
+  {q:"How many mm in 1 kilometer?",opts:["1,000,000","100,000","10,000","1,000"],ans:"1,000,000",ex:"1 km = 1000 m, 1 m = 1000 mm → 1,000 × 1,000 = 10,00,000 mm"}
+];
+
+function renderUCQuiz(){
+  if(ucQIdx>=UC_QUIZ.length)ucQIdx=0;
+  const q=UC_QUIZ[ucQIdx];
+  ct.innerHTML=`
+  <div class="mode-tabs">
+    <button class="mode-tab" onclick="ucMode='explore';render()">${T.explore}</button>
+    <button class="mode-tab active">${T.quiz}</button>
+  </div>
+  <div style="text-align:center;font-size:13px;font-weight:600;color:#555;margin-bottom:10px">${T.score}: <b style="color:#059669">${ucQScore}/${ucQTotal}</b> &bull; ${T.question} <b>${ucQIdx+1}/${UC_QUIZ.length}</b></div>
+  <div style="font-size:16px;font-weight:700;color:#1e293b;text-align:center;padding:16px;background:#ecfdf5;border-radius:12px;margin-bottom:12px;line-height:1.5">${q.q}</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px" id="ucqo">${q.opts.map(o=>`<button style="padding:14px;border-radius:12px;border:2px solid #e5e7eb;font-size:14px;font-weight:600;cursor:pointer;background:#fff;text-align:center" class="qopt" data-v="${o}">${o}</button>`).join('')}</div>
+  <div id="ucfb" style="text-align:center;font-size:13px;min-height:20px;margin-bottom:10px"></div>
+  <button id="ucnxt" style="display:none;margin:0 auto;padding:14px 32px;border-radius:12px;border:none;background:linear-gradient(135deg,#059669,#0369a1);color:#fff;font-weight:700;font-size:14px;cursor:pointer">${T.nextQ}</button>`;
+  ucQAns=false;
+  ct.querySelector('#ucqo').addEventListener('click',e=>{
+    const b=e.target.closest('.qopt');if(!b||ucQAns)return;ucQAns=true;ucQTotal++;
+    if(b.dataset.v===q.ans){b.style.borderColor='#16a34a';b.style.background='#dcfce7';b.style.color='#166534';ucQScore++;ct.querySelector('#ucfb').innerHTML=`<div style="background:#dcfce7;color:#166534;padding:12px;border-radius:10px"><b>${T.correct}</b> ${q.ex}</div>`}
+    else{b.style.borderColor='#dc2626';b.style.background='#fef2f2';b.style.color='#991b1b';ct.querySelectorAll('.qopt').forEach(x=>{if(x.dataset.v===q.ans){x.style.borderColor='#16a34a';x.style.background='#dcfce7';x.style.color='#166534'}});ct.querySelector('#ucfb').innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px"><b>${T.answer}: ${q.ans}</b> &mdash; ${q.ex}</div>`}
+    ct.querySelector('#ucnxt').style.display='block';
+  });
+  ct.querySelector('#ucnxt').onclick=()=>{ucQIdx++;renderUCQuiz()};
+}
+
+function render(){
+  if(ucMode==='quiz'){renderUCQuiz();return}
+  const u=UNITS[uIdx];
+  const v=u.val;
+  const converted=v/u.factor;
+  const pct=Math.min(100,v/u.max*100);
+
+  let tabsHtml=UNITS.map((ux,i)=>`<button class="mode-tab${i===uIdx?' active':''}" data-i="${i}">${ux.name}</button>`).join('');
+
+  ct.innerHTML=`
+  <div class="mode-tabs">
+    ${tabsHtml}
+    <button class="mode-tab" onclick="ucMode='quiz';ucQIdx=0;ucQScore=0;ucQTotal=0;renderUCQuiz()" style="background:#fef3c7;border-color:#f59e0b;color:#92400e">${T.quiz}</button>
+  </div>
+  <div class="conv-display">
+    <div class="conv-box"><div class="conv-val">${v}</div><div class="conv-unit">${u.from}</div></div>
+    <div class="conv-arrow">=</div>
+    <div class="conv-box"><div class="conv-val">${parseFloat(converted.toFixed(4))}</div><div class="conv-unit">${u.to}</div></div>
+  </div>
+  <div class="explain-card">${u.explain(v)}</div>
+  <div class="scale-bar">
+    <div class="scale-labels"><span>0 ${u.from}</span><span>${u.max} ${u.from} = ${u.max/u.factor} ${u.to}</span></div>
+    <div class="scale-track"><div class="scale-fill" style="width:${pct}%"></div></div>
+  </div>
+  <div class="slider-group">
+    <div class="slider-label"><span class="name">${u.from}</span><span class="val">${v}</span></div>
+    <input type="range" id="val-sl" min="0" max="${u.max}" step="${u.step}" value="${v}">
+  </div>
+  <div class="fact-card"><b>${T.funFact}:</b> ${u.fact}</div>`;
+
+  ct.querySelectorAll('.mode-tab').forEach(b=>b.onclick=()=>{uIdx=parseInt(b.dataset.i);render()});
+  ct.querySelector('#val-sl').oninput=function(){UNITS[uIdx].val=parseInt(this.value);render()};
+}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<title>Parallel Proof Mission Grid</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#2563eb,#1d4ed8);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#eff6ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#1d4ed8;font-weight:700;text-transform:uppercase}.v{font-size:17px;font-weight:800;color:#0f172a}
+.mission{background:#eff6ff;border:2px solid #bfdbfe;border-radius:12px;padding:10px;margin-bottom:10px;font-size:12px;color:#1e3a8a}
+.stage{height:250px;background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;overflow:hidden}
+svg{width:100%;height:100%;display:block;touch-action:none}
+.row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.nbtn{padding:8px;border:none;border-radius:8px;background:#dbeafe;color:#1d4ed8;font-weight:800;cursor:pointer}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.check{background:#2563eb;color:#fff}.next{background:#0f766e;color:#fff}.retry{background:#334155;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.4}
+.good{background:#dcfce7;color:#166534}.bad{background:#fef2f2;color:#991b1b}.info{background:#eff6ff;color:#1e3a8a}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Parallel Proof Mission Grid</h1>
+    <p>Set a target corresponding angle to prove parallel lines</p>
+  </div>
+  <div class="card" id="sim"></div>
+</div>
+<script>
+const sim=document.getElementById('sim');
+const MISSIONS=[
+  {target:35,tol:2},{target:52,tol:2},{target:78,tol:2},{target:110,tol:2},{target:145,tol:2}
+];
+let st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info',a:20};
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function setup(){ st.a=20+Math.random()*130; st.resolved=false; st.msg=''; st.msgType='info'; }
+function nudge(d){ if(!st.run||st.resolved) return; st.a=clamp(st.a+d,5,175); render(); }
+function setA(v){ if(!st.run||st.resolved) return; st.a=clamp(parseFloat(v)||0,5,175); render(); }
+function check(){
+  if(!st.run||st.resolved) return;
+  const m=MISSIONS[st.idx], got=st.a; st.resolved=true;
+  if(Math.abs(got-m.target)<=m.tol){ st.score+=14; st.msg='Proof locked with matching corresponding angle.'; st.msgType='good'; }
+  else{ st.lives--; st.msg=`Need ${m.target}°; current ${got.toFixed(1)}°`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){ if(!st.resolved) return; st.idx++; if(st.idx>=MISSIONS.length){st.run=false; st.msg='Mission grid complete!'; st.msgType='good'; render(); return;} setup(); render(); }
+function retry(){ if(st.run&&st.resolved){ setup(); render(); } }
+function restart(){ st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info',a:20}; setup(); render(); }
+function render(){
+  const done=!st.run, m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+  const b=180-st.a;
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Target</div><div class="v">${m.target}°</div></div>
+    </div>
+    <div class="mission">Tune the transversal so corresponding angle equals <b>${m.target}° ± ${m.tol}°</b>.</div>
+    <div class="stage">
+      <svg id="svg" viewBox="0 0 400 250">
+        <rect x="0" y="0" width="400" height="250" fill="#f8fafc"/>
+        <line x1="35" y1="70" x2="365" y2="70" stroke="#334155" stroke-width="4"/>
+        <line x1="35" y1="180" x2="365" y2="180" stroke="#334155" stroke-width="4"/>
+        <line id="tLine" x1="90" y1="230" x2="300" y2="20" stroke="#2563eb" stroke-width="4"/>
+        <circle cx="200" cy="125" r="6" fill="#0f172a"/>
+        <text x="215" y="60" font-size="13" fill="#dc2626" font-weight="700">a ${st.a.toFixed(1)}°</text>
+        <text x="130" y="95" font-size="13" fill="#16a34a" font-weight="700">b ${b.toFixed(1)}°</text>
+      </svg>
+    </div>
+    <div class="row">
+      <button class="nbtn" id="m5" ${done||st.resolved?'disabled':''}>-5</button>
+      <button class="nbtn" id="m1" ${done||st.resolved?'disabled':''}>-1</button>
+      <button class="nbtn" id="p1" ${done||st.resolved?'disabled':''}>+1</button>
+      <button class="nbtn" id="p5" ${done||st.resolved?'disabled':''}>+5</button>
+    </div>
+    <div style="font-size:12px;color:#1e3a8a;margin-top:8px">Angle a: ${st.a.toFixed(1)}°
+      <input id="aSlider" type="range" min="5" max="175" step="0.1" value="${st.a.toFixed(1)}" style="width:100%" ${done||st.resolved?'disabled':''}>
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">${st.idx===MISSIONS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Lock Proof</button>`}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Use slider/buttons for precise target hit.</div>`}
+  `;
+  const bind=(id,d)=>{const el=sim.querySelector('#'+id); if(el) el.onclick=()=>nudge(d);};
+  bind('m5',-5); bind('m1',-1); bind('p1',1); bind('p5',5);
+  const sl=sim.querySelector('#aSlider'); if(sl) sl.oninput=e=>setA(e.target.value);
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
+  const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+}
+setup(); render();
+</script>
+</body>
+</html>

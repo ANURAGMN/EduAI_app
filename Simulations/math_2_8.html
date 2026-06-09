@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Expression Engineering Bay</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0f766e,#0284c7);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#ecfeff,#cffafe);border:2px solid #67e8f9;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#134e4a}
+.mission p{font-size:12px;color:#0f766e;line-height:1.45;margin-top:4px}
+.tray{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.chip{padding:10px;border:2px solid #bae6fd;border-radius:10px;background:#f0f9ff;color:#0f172a;text-align:center;font-weight:800;cursor:pointer}
+.chip.used{opacity:.35;cursor:not-allowed}
+.builder{margin-top:10px;background:#0f172a;border-radius:10px;padding:10px;color:#fff;min-height:56px}
+.builder .exp{font-family:'Courier New',monospace;font-size:16px;font-weight:800;word-break:break-word}
+.builder .meta{font-size:12px;opacity:.8;margin-top:4px}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#0f766e;color:#fff}
+.btn.undo{background:#e2e8f0;color:#334155}
+.btn.clear{background:#fee2e2;color:#991b1b}
+.btn.next{background:#0284c7;color:#fff}
+.btn.start{background:linear-gradient(135deg,#0f766e,#0284c7);color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#ecfeff,#cffafe);border-left:4px solid #0f766e;border-radius:12px;padding:12px;font-size:12px;color:#0f172a;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Expression Engineering Bay</h1>
+    <p>Assemble valid expressions to hit exact targets</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> building expressions with constraints strengthens understanding of terms, operators, and order of operations.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+
+const MISSIONS = [
+  {target:24, pool:[2,3,4,6,'+','-','*','/'], maxTokens:5, hint:'Try multiplication first.'},
+  {target:15, pool:[1,2,3,5,10,'+','-','*','/'], maxTokens:5, hint:'A subtraction from 20 can work.'},
+  {target:7, pool:[1,2,3,4,'+','-','*','/'], maxTokens:5, hint:'Use division to shrink values.'},
+  {target:36, pool:[3,4,6,9,'+','-','*','/'], maxTokens:5, hint:'Look for 6×6 or 9×4 structures.'},
+  {target:11, pool:[2,3,5,8,'+','-','*','/'], maxTokens:5, hint:'Combine one operation with addition/subtraction.'},
+  {target:30, pool:[2,3,5,10,'+','-','*','/'], maxTokens:5, hint:'Multiply then adjust if needed.'}
+];
+
+let st = {run:false, idx:0, score:0, lives:3, used:[], expr:[], resolved:false, msg:'', msgType:'info'};
+
+function mission(){ return MISSIONS[Math.min(st.idx, MISSIONS.length - 1)]; }
+
+function startGame(){
+  st = {run:true, idx:0, score:0, lives:3, used:[], expr:[], resolved:false, msg:'', msgType:'info'};
+  render();
+}
+
+function tokenAt(i){ return mission().pool[i]; }
+
+function canUse(index){
+  if(st.resolved || !st.run) return false;
+  return !st.used.includes(index);
+}
+
+function addToken(index){
+  if(!canUse(index)) return;
+  const tk = tokenAt(index);
+  const last = st.expr[st.expr.length - 1];
+  const isOp = typeof tk === "string";
+  const lastIsOp = typeof last === "string";
+
+  if(st.expr.length === 0 && isOp) return;
+  if(lastIsOp && isOp) return;
+  if(!lastIsOp && !isOp) return;
+  if(st.expr.length >= mission().maxTokens) return;
+
+  st.expr.push(tk);
+  st.used.push(index);
+  render();
+}
+
+function undo(){
+  if(st.resolved || st.expr.length === 0) return;
+  const removed = st.expr.pop();
+  const idx = st.used.pop();
+  if(typeof removed !== typeof tokenAt(idx)){
+    // Defensive fallback if state gets out of sync.
+    st.used = [];
+    st.expr = [];
+  }
+  render();
+}
+
+function clearExpr(){
+  if(st.resolved) return;
+  st.expr = [];
+  st.used = [];
+  render();
+}
+
+function evalExpr(tokens){
+  if(tokens.length < 3) return null;
+  if(typeof tokens[tokens.length - 1] === "string") return null;
+  const s = tokens.join(" ");
+  if(!/^[\d+\-*/\s]+$/.test(s)) return null;
+  try{
+    const v = Function(`"use strict"; return (${s});`)();
+    if(!Number.isFinite(v)) return null;
+    return v;
+  }catch{
+    return null;
+  }
+}
+
+function check(){
+  if(!st.run || st.resolved) return;
+  const m = mission();
+  const value = evalExpr(st.expr);
+  if(value === null){
+    st.msg = "Incomplete or invalid expression. Alternate number and operator.";
+    st.msgType = "bad";
+    render();
+    return;
+  }
+  st.resolved = true;
+  if(Math.abs(value - m.target) < 1e-9){
+    st.score += 14 + Math.max(0, m.maxTokens - st.expr.length);
+    st.msg = `Perfect build! ${st.expr.join(" ")} = ${value}.`;
+    st.msgType = "good";
+  } else {
+    st.lives -= 1;
+    st.msg = `Built value ${value}, target is ${m.target}. Hint: ${m.hint}`;
+    st.msgType = "bad";
+    if(st.lives <= 0) st.run = false;
+  }
+  render();
+}
+
+function nextMission(){
+  st.idx += 1;
+  if(st.idx >= MISSIONS.length){
+    st.run = false;
+    st.msg = "Engineering run complete!";
+    st.msgType = "good";
+    render();
+    return;
+  }
+  st.expr = [];
+  st.used = [];
+  st.resolved = false;
+  st.msg = "";
+  st.msgType = "info";
+  render();
+}
+
+function render(){
+  const done = !st.run;
+  const m = mission();
+  const value = evalExpr(st.expr);
+
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Mission</div><div class="v">${Math.min(st.idx + 1, MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Limit</div><div class="v">${m.maxTokens}</div></div>
+    </div>
+
+    <div class="mission">
+      <h3>Target value: ${m.target}</h3>
+      <p>Use each tile at most once. Build a valid expression with alternating number and operator tiles.</p>
+    </div>
+
+    <div class="tray">
+      ${m.pool.map((tk, i) => `<button class="chip ${st.used.includes(i) ? "used" : ""}" data-i="${i}">${tk}</button>`).join("")}
+    </div>
+
+    <div class="builder">
+      <div class="exp">${st.expr.length ? st.expr.join(" ") : "Build expression..."}</div>
+      <div class="meta">${value===null ? "Current value: -" : `Current value: ${value}`}</div>
+    </div>
+
+    <div class="actions">
+      ${done ? `<button class="btn start" id="startBtn">Start Engineering</button>` : `
+        ${st.resolved ? `<button class="btn next" id="nextBtn">${st.idx===MISSIONS.length-1 ? "Finish Run" : "Next Mission"}</button>` : `<button class="btn check" id="checkBtn">Check Build</button>`}
+      `}
+    </div>
+    ${!done ? `
+      <div class="actions">
+        <button class="btn undo" id="undoBtn">Undo</button>
+        <button class="btn clear" id="clearBtn">Clear</button>
+      </div>
+    ` : ""}
+
+    ${st.msg ? `<div class="msg ${st.msgType}">${st.msg}</div>` : `<div class="msg info">Tip: build shorter solutions for bonus points.</div>`}
+  `;
+
+  sim.querySelectorAll(".chip").forEach(b => b.onclick = () => addToken(parseInt(b.dataset.i, 10)));
+  const s = sim.querySelector("#startBtn"); if(s) s.onclick = startGame;
+  const c = sim.querySelector("#checkBtn"); if(c) c.onclick = check;
+  const n = sim.querySelector("#nextBtn"); if(n) n.onclick = nextMission;
+  const u = sim.querySelector("#undoBtn"); if(u) u.onclick = undo;
+  const cl = sim.querySelector("#clearBtn"); if(cl) cl.onclick = clearExpr;
+}
+
+startGame();
+</script>
+</body>
+</html>

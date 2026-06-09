@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<title>Calendar Formula Gridlock</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#4f46e5,#7c3aed);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#eef2ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#4338ca;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#eef2ff,#ede9fe);border:2px solid #c4b5fd;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission p{font-size:12px;color:#3730a3}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.cell{background:#f8fafc;border:2px solid #cbd5e1;border-radius:10px;padding:8px;text-align:center}
+.cell .n{font-size:20px;font-family:'Courier New',monospace;font-weight:900;color:#1f2937}
+.cell .t{font-size:10px;color:#475569}
+.opts{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+.opt{padding:10px;border:2px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;font-family:'Courier New',monospace;font-weight:800}
+.opt.sel{border-color:#4f46e5;background:#e0e7ff;color:#3730a3}
+.opt.ok{border-color:#16a34a;background:#dcfce7;color:#166534}
+.opt.bad{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#4f46e5;color:#fff}
+.btn.next{background:#0ea5e9;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#eef2ff,#ede9fe);border-left:4px solid #4f46e5;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Calendar Formula Gridlock</h1>
+    <p>Find invariant formulas from calendar blocks</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> in calendar grids, positions differ by fixed offsets. Algebra explains repeating equal-sum patterns.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const ROUNDS = [
+  {a:11, cells:[11,12,18,19], prompt:'For top-left value a, pick formula for diagonal sums.' , ans:'2a+8'},
+  {a:17, cells:[17,18,24,25], prompt:'Pick expression for top-right + bottom-left.' , ans:'2a+8'},
+  {a:5,  cells:[5,6,12,13], prompt:'Which formula equals both diagonals?', ans:'2a+8'},
+  {a:22, cells:[22,23,29,30], prompt:'Calendar 2x2 diagonal invariant?', ans:'2a+8'},
+  {a:8, cells:[8,9,15,16], prompt:'Choose general expression for each diagonal sum.', ans:'2a+8'},
+  {a:14, cells:[14,15,21,22], prompt:'Identify the lock formula.', ans:'2a+8'}
+];
+
+let st = {run:true, idx:0, score:0, lives:3, pick:'', resolved:false, msg:'', msgType:'info', opts:[]};
+
+function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x;}
+function setup(){ st.pick=''; st.resolved=false; st.msg=''; st.msgType='info'; st.opts=shuffle(['2a+8','2a+6','a+8','2a+7']); }
+
+function choose(v){ if(!st.run || st.resolved) return; st.pick=v; render(); }
+function check(){
+  if(!st.run || st.resolved || !st.pick) return;
+  const r=ROUNDS[st.idx];
+  st.resolved=true;
+  if(st.pick===r.ans){ st.score+=12; st.msg='Grid unlocked. Diagonal sums match!'; st.msgType='good'; }
+  else { st.lives--; st.msg='Not invariant. Correct lock is 2a+8.'; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=ROUNDS.length){ st.run=false; st.msg='All calendar locks solved!'; st.msgType='good'; render(); return; }
+  setup(); render();
+}
+function restart(){ st={run:true,idx:0,score:0,lives:3,pick:'',resolved:false,msg:'',msgType:'info',opts:[]}; setup(); render(); }
+
+function render(){
+  const done=!st.run;
+  const r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  const d1=r.cells[0]+r.cells[3], d2=r.cells[1]+r.cells[2];
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">a</div><div class="v">${r.a}</div></div>
+    </div>
+    <div class="mission">
+      <p>${r.prompt}</p>
+      <div class="grid">
+        ${r.cells.map((v,i)=>`<div class="cell"><div class="t">${i===0?'a':(i===1?'a+1':(i===2?'a+7':'a+8'))}</div><div class="n">${v}</div></div>`).join('')}
+      </div>
+      <p style="margin-top:6px">Diagonal sums: ${d1} and ${d2}</p>
+    </div>
+    <div class="opts">
+      ${st.opts.map(v=>{
+        const cls=st.resolved?(v===r.ans?'ok':(v===st.pick?'bad':'')):(v===st.pick?'sel':'');
+        return `<button class="opt ${cls}" data-v="${v}">${v}</button>`;
+      }).join('')}
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:(st.resolved?`<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next Round'}</button>`:`<button class="btn check" id="checkBtn">Lock Formula</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Selected: <b>${st.pick||'-'}</b></div>`}
+  `;
+  sim.querySelectorAll('.opt').forEach(b=>b.onclick=()=>choose(b.dataset.v));
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rr=sim.querySelector('#restartBtn'); if(rr) rr.onclick=restart;
+}
+setup();
+render();
+</script>
+</body>
+</html>

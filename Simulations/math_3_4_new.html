@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#dc2626">
+<title>Decimal Disaster Dispatch</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#dc2626,#ea580c);min-height:100vh}
+#app{max-width:420px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#fef2f2;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#991b1b;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#fef2f2,#fee2e2);border:2px solid #fca5a5;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#7f1d1d}
+.mission p{font-size:12px;color:#991b1b;line-height:1.45}
+.strip{display:flex;gap:8px}
+.box{flex:1;background:#111827;color:#fff;border-radius:10px;padding:10px;text-align:center}
+.box .big{font-size:22px;font-weight:900;font-family:'Courier New',monospace}
+.box .small{font-size:10px;color:#93c5fd}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.opt{padding:10px;border:none;border-radius:10px;background:#fff;border:2px solid #fecaca;color:#7f1d1d;font-weight:800;cursor:pointer}
+.opt:hover{background:#fff1f2}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.start{background:linear-gradient(135deg,#dc2626,#ea580c);color:#fff}
+.btn.next{background:#16a34a;color:#fff}
+.btn.retry{background:#e5e7eb;color:#374151}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#fef2f2,#fee2e2);border-left:4px solid #dc2626;border-radius:12px;padding:12px;font-size:12px;color:#111827}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Decimal Disaster Dispatch</h1>
+    <p>Choose the safe decimal interpretation in urgent contexts</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> decimal placement errors can cause huge real-world mistakes. Choose safe conversions fast.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const MISSIONS = [
+  {title:'Medication Unit', context:'Doctor wrote 0.05 mg. Which gram value is correct?', a:'0.00005 g', b:'0.0005 g', ans:'a', why:'0.05 mg = 0.00005 g (divide by 1000).'},
+  {title:'Airport Fuel Sheet', context:'Required 1.8 million litres. Which notation matches?', a:'1,800,000', b:'18,000,000', ans:'a', why:'1.8 million = 18 lakh = 1,800,000.'},
+  {title:'Invoice Decimal', context:'₹0.75 per unit. Which paise value matches?', a:'75 paise', b:'7.5 paise', ans:'a', why:'₹0.75 = 75/100 rupees = 75 paise.'},
+  {title:'Weight Label', context:'0.465 kg equals?', a:'465 g', b:'46.5 g', ans:'a', why:'0.465×1000 = 465 g.'},
+  {title:'Length Cut', context:'12 mm in cm is?', a:'1.2 cm', b:'0.12 cm', ans:'a', why:'12/10 = 1.2 cm.'},
+  {title:'Bulk Billing', context:'250 paise is?', a:'₹2.50', b:'₹25.00', ans:'a', why:'250/100 = ₹2.50.'}
+];
+
+let st = {run:false,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info'};
+function start(){ st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info'}; render(); }
+function choose(x){
+  if(!st.run || st.resolved) return;
+  const m = MISSIONS[st.idx];
+  st.resolved = true;
+  if(x===m.ans){ st.score += 12; st.msg='Safe dispatch chosen. '+m.why; st.msgType='good'; }
+  else { st.lives--; st.msg='Unsafe choice. '+m.why; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function retry(){ if(!st.resolved || !st.run) return; st.resolved=false; st.msg='Retry this dispatch mission.'; st.msgType='info'; render(); }
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=MISSIONS.length){ st.run=false; st.msg='All dispatch missions completed!'; st.msgType='good'; render(); return; }
+  st.resolved=false; st.msg=''; render();
+}
+function render(){
+  const done=!st.run;
+  const m = MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Mission</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Mode</div><div class="v">Safe</div></div>
+    </div>
+    <div class="mission">
+      <h3>${m.title}</h3>
+      <p>${m.context}</p>
+    </div>
+    <div class="opts">
+      <button class="opt" id="optA">${m.a}</button>
+      <button class="opt" id="optB">${m.b}</button>
+    </div>
+    <div class="actions">
+      ${done ? `<button class="btn start" id="startBtn">Start Dispatch Run</button>` :
+      (st.resolved ? `<button class="btn retry" id="retryBtn">Retry Mission</button><button class="btn next" id="nextBtn">Next Mission</button>` :
+      `<button class="btn retry" id="tipBtn">Need Hint</button>`)}
+    </div>
+    ${st.msg ? `<div class="msg ${st.msgType}">${st.msg}</div>` : `<div class="msg info">Think unit conversion before selecting.</div>`}
+  `;
+  const sa = sim.querySelector('#startBtn'); if(sa) sa.onclick=start;
+  const a = sim.querySelector('#optA'); if(a) a.onclick=()=>choose('a');
+  const b = sim.querySelector('#optB'); if(b) b.onclick=()=>choose('b');
+  const r = sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
+  const n = sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const t = sim.querySelector('#tipBtn'); if(t) t.onclick=()=>{st.msg='Hint: convert by powers of 10 first.'; st.msgType='info'; render();};
+}
+start();
+</script>
+</body>
+</html>

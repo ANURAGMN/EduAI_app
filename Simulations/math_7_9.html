@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<title>Triangle Inequality Builder</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#7c3aed,#4f46e5);min-height:100vh}
+#app{max-width:440px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#f5f3ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#6d28d9;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:2px solid #c4b5fd;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission p{font-size:12px;color:#4c1d95;line-height:1.45}
+.visual{height:220px;background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;overflow:hidden;margin-top:8px}
+svg{width:100%;height:100%;display:block}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.box{background:#f8fafc;border:2px solid #cbd5e1;border-radius:10px;padding:8px;text-align:center}
+.box .lbl{font-size:11px;color:#475569}
+.box input{width:100%;margin-top:6px;padding:8px;border:2px solid #cbd5e1;border-radius:8px;font-weight:800}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#7c3aed;color:#fff}
+.btn.next{background:#0ea5e9;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-left:4px solid #7c3aed;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Triangle Inequality Builder</h1>
+    <p>Tune side lengths to satisfy triangle possibility</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Chapter 7 focus:</b> sum of any two sides must be strictly greater than the third side.</div>
+</div>
+<script>
+const sim=document.getElementById('sim');
+const MISSIONS=[
+  {target:'valid'},
+  {target:'invalid'},
+  {target:'valid'},
+  {target:'invalid'},
+  {target:'valid'},
+  {target:'invalid'}
+];
+
+let st={run:true,idx:0,score:0,lives:3,a:5,b:4,c:3,resolved:false,msg:'',msgType:'info'};
+function valid(){ return st.a+st.b>st.c && st.a+st.c>st.b && st.b+st.c>st.a; }
+function setup(){
+  if(st.idx%2===0){ st.a=6; st.b=5; st.c=7; } else { st.a=2; st.b=3; st.c=6; }
+  st.resolved=false; st.msg=''; st.msgType='info';
+}
+function check(){
+  if(!st.run||st.resolved) return;
+  const want = MISSIONS[st.idx].target==='valid';
+  const isV = valid();
+  st.resolved=true;
+  if(isV===want){ st.score+=12; st.msg='Target state achieved.'; st.msgType='good'; }
+  else { st.lives--; st.msg=`Current sides are ${isV?'VALID':'INVALID'}, target was ${want?'VALID':'INVALID'}.`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=MISSIONS.length){ st.run=false; st.msg='Builder complete!'; st.msgType='good'; render(); return; }
+  setup(); render();
+}
+function restart(){ st={run:true,idx:0,score:0,lives:3,a:5,b:4,c:3,resolved:false,msg:'',msgType:'info'}; setup(); render(); }
+
+function draw(){
+  const W=420,H=220;
+  const A={x:80,y:180}, B={x:340,y:180};
+  const base=260;
+  const s=18;
+  const a=st.a*s,b=st.b*s,c=st.c*s;
+  const x=(b*b + base*base - c*c)/(2*base);
+  const y2=b*b - x*x;
+  let C={x:A.x + (isFinite(x)?x:130), y:80};
+  if(y2>0) C.y=A.y-Math.sqrt(y2);
+  const ok=valid();
+  return `
+  <svg viewBox="0 0 ${W} ${H}">
+    <rect x="0" y="0" width="${W}" height="${H}" fill="#f8fafc"/>
+    <line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="#94a3b8" stroke-width="2"/>
+    ${ok?`<polygon points="${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}" fill="rgba(124,58,237,.12)" stroke="#7c3aed" stroke-width="3"/>`:
+      `<line x1="${A.x}" y1="${A.y}" x2="${A.x + Math.min(base,b+c)}" y2="${A.y}" stroke="#ef4444" stroke-width="4" stroke-dasharray="6,4"/>`}
+    <circle cx="${A.x}" cy="${A.y}" r="5" fill="#1f2937"/><circle cx="${B.x}" cy="${B.y}" r="5" fill="#1f2937"/>
+    ${ok?`<circle cx="${C.x}" cy="${C.y}" r="5" fill="#1f2937"/>`:''}
+    <text x="${(A.x+B.x)/2}" y="${A.y+18}" font-size="12" fill="#475569" text-anchor="middle">a=${st.a}</text>
+    <text x="${A.x-20}" y="${A.y-20}" font-size="12" fill="#475569">b=${st.b}</text>
+    <text x="${B.x+10}" y="${A.y-20}" font-size="12" fill="#475569">c=${st.c}</text>
+    <text x="${W/2}" y="26" font-size="16" font-weight="700" fill="${ok?'#16a34a':'#dc2626'}" text-anchor="middle">${ok?'VALID TRIANGLE':'INVALID TRIANGLE'}</text>
+  </svg>`;
+}
+
+function render(){
+  const done=!st.run;
+  const tgt=MISSIONS[Math.min(st.idx,MISSIONS.length-1)].target.toUpperCase();
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Target</div><div class="v" style="font-size:12px">${tgt}</div></div>
+    </div>
+    <div class="mission"><p>Adjust sides so current triangle state becomes <b>${tgt}</b>.</p><div class="visual">${draw()}</div></div>
+    <div class="controls">
+      <div class="box"><div class="lbl">Side a</div><input id="aIn" type="range" min="1" max="12" step="1" value="${st.a}" ${st.resolved||done?'disabled':''}></div>
+      <div class="box"><div class="lbl">Side b</div><input id="bIn" type="range" min="1" max="12" step="1" value="${st.b}" ${st.resolved||done?'disabled':''}></div>
+      <div class="box"><div class="lbl">Side c</div><input id="cIn" type="range" min="1" max="12" step="1" value="${st.c}" ${st.resolved||done?'disabled':''}></div>
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:(st.resolved?`<button class="btn next" id="nextBtn">${st.idx===MISSIONS.length-1?'Finish':'Next Round'}</button>`:`<button class="btn check" id="checkBtn">Lock Build</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Triangle inequality: a+b>c, a+c>b, b+c>a.</div>`}
+  `;
+  const ai=sim.querySelector('#aIn'); if(ai) ai.oninput=()=>{st.a=parseInt(ai.value,10); render();};
+  const bi=sim.querySelector('#bIn'); if(bi) bi.oninput=()=>{st.b=parseInt(bi.value,10); render();};
+  const ci=sim.querySelector('#cIn'); if(ci) ci.oninput=()=>{st.c=parseInt(ci.value,10); render();};
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const r=sim.querySelector('#restartBtn'); if(r) r.onclick=restart;
+}
+setup();
+render();
+</script>
+</body>
+</html>

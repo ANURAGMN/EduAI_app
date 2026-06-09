@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Multiplication Pattern Pulse</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0f766e,#0ea5e9);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#ecfeff,#cffafe);border:2px solid #67e8f9;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#134e4a}
+.mission p{font-size:12px;color:#0f766e;line-height:1.45;margin-top:4px}
+.sequence{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pill{background:#0f172a;color:#fff;border-radius:999px;padding:6px 10px;font-family:'Courier New',monospace;font-weight:700;font-size:13px}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.opt{padding:10px;border:2px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;font-weight:700;font-size:13px}
+.opt.sel{border-color:#0369a1;background:#dbeafe;color:#1e3a8a}
+.opt.ok{border-color:#16a34a;background:#dcfce7;color:#166534}
+.opt.bad{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.digits{margin-top:10px;background:#f8fafc;border-radius:10px;padding:10px}
+.digits p{font-size:12px;color:#334155}
+.digits input{width:100%;margin-top:6px;padding:9px;border:2px solid #cbd5e1;border-radius:8px;font-size:14px;font-weight:700}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#0f766e;color:#fff}
+.btn.next{background:#0369a1;color:#fff}
+.btn.start{background:linear-gradient(135deg,#0f766e,#0ea5e9);color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#ecfeff,#cffafe);border-left:4px solid #0f766e;border-radius:12px;padding:12px;font-size:12px;color:#0f172a;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Multiplication Pattern Pulse</h1>
+    <p>Crack the next term and digit count</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> multiplication patterns reveal structure. Predicting the next term and counting digits builds number sense beyond direct calculation.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+
+const ROUNDS = [
+  {seq:[7,77,777], next:7777, options:[7770,7777,7077,77777], clue:"Pattern: 7 multiplied by 1, 11, 111, ..."},
+  {seq:[81,9801,998001], next:99980001, options:[99980001,99908001,99800001,999980001], clue:"Pattern from 9x9, 99x99, 999x999, ..."},
+  {seq:[12,24,48], next:96, options:[92,96,108,120], clue:"Each term is multiplied by 2."},
+  {seq:[36,108,324], next:972, options:[648,918,972,1008], clue:"Each term is multiplied by 3."},
+  {seq:[5,55,555], next:5555, options:[5055,5555,5505,55555], clue:"Growing ones-pattern with repeated digit 5."},
+  {seq:[15,150,1500], next:15000, options:[1500,15000,10500,10050], clue:"Multiplying by 10 adds one zero each step."}
+];
+
+let st = {run:false, idx:0, score:0, lives:3, streak:0, picked:null, digitInput:"", resolved:false, msg:"", msgType:"info"};
+
+function startGame(){
+  st = {run:true, idx:0, score:0, lives:3, streak:0, picked:null, digitInput:"", resolved:false, msg:"", msgType:"info"};
+  render();
+}
+
+function choose(value){
+  if(!st.run || st.resolved) return;
+  st.picked = value;
+  render();
+}
+
+function checkRound(){
+  if(!st.run || st.resolved || st.picked===null) return;
+  const round = ROUNDS[st.idx];
+  const expectedDigits = String(round.next).length;
+  const gotDigits = parseInt(st.digitInput, 10);
+  const termOk = st.picked === round.next;
+  const digitsOk = gotDigits === expectedDigits;
+  st.resolved = true;
+
+  if(termOk && digitsOk){
+    st.score += 12 + st.streak;
+    st.streak += 1;
+    st.msg = "Perfect pulse! Correct next term and correct digit count.";
+    st.msgType = "good";
+  } else {
+    st.lives -= 1;
+    st.streak = 0;
+    st.msg = `Not quite. Correct next term: ${round.next}, digit count: ${expectedDigits}.`;
+    st.msgType = "bad";
+    if(st.lives <= 0) st.run = false;
+  }
+  render();
+}
+
+function nextRound(){
+  st.idx += 1;
+  if(st.idx >= ROUNDS.length){
+    st.run = false;
+    st.msg = "All pattern pulses completed!";
+    st.msgType = "good";
+    render();
+    return;
+  }
+  st.picked = null;
+  st.digitInput = "";
+  st.resolved = false;
+  st.msg = "";
+  st.msgType = "info";
+  render();
+}
+
+function render(){
+  const done = !st.run;
+  const round = ROUNDS[Math.min(st.idx, ROUNDS.length - 1)];
+
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx + 1, ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Streak</div><div class="v">${st.streak}</div></div>
+    </div>
+
+    <div class="mission">
+      <h3>Find the next product</h3>
+      <p>${round.clue}</p>
+      <div class="sequence">
+        ${round.seq.map(v => `<span class="pill">${v}</span>`).join("")}
+        <span class="pill">?</span>
+      </div>
+    </div>
+
+    <div class="options">
+      ${round.options.map(v => {
+        const cls = st.resolved
+          ? (v===round.next ? "ok" : (v===st.picked ? "bad" : ""))
+          : (v===st.picked ? "sel" : "");
+        return `<button class="opt ${cls}" data-v="${v}">${v}</button>`;
+      }).join("")}
+    </div>
+
+    <div class="digits">
+      <p>How many digits will the next term have?</p>
+      <input id="digitInput" type="number" min="1" max="12" value="${st.digitInput}" placeholder="Enter digit count">
+    </div>
+
+    <div class="actions">
+      ${done
+        ? `<button class="btn start" id="startBtn">Start Pulse Run</button>`
+        : (st.resolved
+            ? `<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1 ? "Finish Run" : "Next Round"}</button>`
+            : `<button class="btn check" id="checkBtn">Check Pulse</button>`)}
+    </div>
+
+    ${st.msg
+      ? `<div class="msg ${st.msgType}">${st.msg}</div>`
+      : `<div class="msg info">Selected term: <b>${st.picked===null ? "-" : st.picked}</b>. Enter digit count, then check.</div>`}
+  `;
+
+  sim.querySelectorAll(".opt").forEach(b => b.onclick = () => choose(parseInt(b.dataset.v, 10)));
+  const di = sim.querySelector("#digitInput");
+  if(di){
+    di.oninput = () => { st.digitInput = di.value; };
+    di.disabled = st.resolved || done;
+  }
+  const s = sim.querySelector("#startBtn"); if(s) s.onclick = startGame;
+  const c = sim.querySelector("#checkBtn"); if(c) c.onclick = checkRound;
+  const n = sim.querySelector("#nextBtn"); if(n) n.onclick = nextRound;
+}
+
+startGame();
+</script>
+</body>
+</html>

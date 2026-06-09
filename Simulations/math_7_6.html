@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<title>Supplementary Sync Station</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#7c3aed,#5b21b6);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#f5f3ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#6d28d9;font-weight:700;text-transform:uppercase}.v{font-size:17px;font-weight:800;color:#0f172a}
+.mission{background:#faf5ff;border:2px solid #ddd6fe;border-radius:12px;padding:10px;margin-bottom:10px;font-size:12px;color:#5b21b6}
+.stage{height:250px;background:#fafafa;border:2px solid #cbd5e1;border-radius:12px;overflow:hidden}
+svg{width:100%;height:100%;display:block;touch-action:none}
+.row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.nbtn{padding:8px;border:none;border-radius:8px;background:#ede9fe;color:#5b21b6;font-weight:800;cursor:pointer}
+.nbtn:disabled{opacity:.5;cursor:not-allowed}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.check{background:#7c3aed;color:#fff}.next{background:#0f766e;color:#fff}.retry{background:#334155;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.4}
+.good{background:#dcfce7;color:#166534}.bad{background:#fef2f2;color:#991b1b}.info{background:#eff6ff;color:#1e3a8a}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Supplementary Sync Station</h1>
+    <p>Set one angle so both add up to 180°</p>
+  </div>
+  <div class="card" id="sim"></div>
+</div>
+<script>
+const sim=document.getElementById('sim');
+const MISSIONS=[35,52,68,95,121];
+let st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info',a:40};
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function setup(){ st.a=20+Math.random()*140; st.resolved=false; st.msg=''; st.msgType='info'; }
+function nudge(d){ if(!st.run||st.resolved) return; st.a=clamp(st.a+d,1,179); render(); }
+function setA(v){ if(!st.run||st.resolved) return; st.a=clamp(parseFloat(v)||0,1,179); render(); }
+function check(){
+  if(!st.run||st.resolved) return;
+  const target=MISSIONS[st.idx], b=180-st.a;
+  st.resolved=true;
+  if(Math.abs(st.a-target)<=2){ st.score+=12; st.msg=`Perfect! ${st.a.toFixed(1)}° + ${b.toFixed(1)}° = 180°`; st.msgType='good'; }
+  else { st.lives--; st.msg=`Need first angle near ${target}°.`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){ if(!st.resolved) return; st.idx++; if(st.idx>=MISSIONS.length){ st.run=false; st.msg='Station complete!'; st.msgType='good'; render(); return;} setup(); render(); }
+function retry(){ if(st.run&&st.resolved){ setup(); render(); } }
+function restart(){ st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info',a:40}; setup(); render(); }
+function render(){
+  const done=!st.run, target=MISSIONS[Math.min(st.idx,MISSIONS.length-1)], b=180-st.a;
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Target a</div><div class="v">${target}°</div></div>
+    </div>
+    <div class="mission">Mission: Set angle <b>a = ${target}° ± 2°</b>. Its supplementary angle auto-becomes <b>180°-a</b>.</div>
+    <div class="stage">
+      <svg id="svg" viewBox="0 0 400 250">
+        <rect x="0" y="0" width="400" height="250" fill="#fafafa"/>
+        <line x1="40" y1="180" x2="360" y2="180" stroke="#334155" stroke-width="4"/>
+        <line id="arm" x1="200" y1="180" x2="300" y2="90" stroke="#7c3aed" stroke-width="4"/>
+        <circle id="handle" cx="300" cy="90" r="11" fill="#7c3aed" stroke="#fff" stroke-width="3"/>
+        <circle cx="200" cy="180" r="6" fill="#0f172a"/>
+        <text x="235" y="165" font-size="13" fill="#dc2626" font-weight="700">a ${st.a.toFixed(1)}°</text>
+        <text x="120" y="165" font-size="13" fill="#16a34a" font-weight="700">b ${b.toFixed(1)}°</text>
+      </svg>
+    </div>
+    <div class="row">
+      <button class="nbtn" id="m5" ${done||st.resolved?'disabled':''}>-5°</button>
+      <button class="nbtn" id="m1" ${done||st.resolved?'disabled':''}>-1°</button>
+      <button class="nbtn" id="p1" ${done||st.resolved?'disabled':''}>+1°</button>
+      <button class="nbtn" id="p5" ${done||st.resolved?'disabled':''}>+5°</button>
+    </div>
+    <div style="font-size:12px;color:#5b21b6;margin-top:8px">Angle a: ${st.a.toFixed(1)}°<input id="slider" type="range" min="1" max="179" step="0.1" value="${st.a.toFixed(1)}" style="width:100%" ${done||st.resolved?'disabled':''}></div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">${st.idx===MISSIONS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Lock Angles</button>`}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Drag handle or use precision controls.</div>`}
+  `;
+  const svg=sim.querySelector('#svg'), arm=sim.querySelector('#arm'), handle=sim.querySelector('#handle');
+  const cx=200, cy=180, rad=130;
+  function paint(deg){
+    st.a=clamp(deg,1,179);
+    const t=st.a*Math.PI/180;
+    const x=cx+Math.cos(t)*rad, y=cy-Math.sin(t)*rad;
+    arm.setAttribute('x2',x.toFixed(1)); arm.setAttribute('y2',y.toFixed(1));
+    handle.setAttribute('cx',x.toFixed(1)); handle.setAttribute('cy',y.toFixed(1));
+  }
+  paint(st.a);
+  function toDeg(e){
+    const rct=svg.getBoundingClientRect();
+    const x=(e.clientX-rct.left)*(400/rct.width), y=(e.clientY-rct.top)*(250/rct.height);
+    return Math.atan2(cy-y,x-cx)*180/Math.PI;
+  }
+  let drag=false;
+  if(!done&&!st.resolved){
+    svg.addEventListener('pointerdown',e=>{drag=true;svg.setPointerCapture(e.pointerId);paint(toDeg(e));render();});
+    svg.addEventListener('pointermove',e=>{if(!drag)return;paint(toDeg(e));render();});
+    svg.addEventListener('pointerup',()=>drag=false); svg.addEventListener('pointercancel',()=>drag=false);
+  }
+  const bind=(id,d)=>{const el=sim.querySelector('#'+id); if(el) el.onclick=()=>nudge(d);};
+  bind('m5',-5); bind('m1',-1); bind('p1',1); bind('p5',5);
+  const sl=sim.querySelector('#slider'); if(sl) sl.oninput=e=>setA(e.target.value);
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rt=sim.querySelector('#retryBtn'); if(rt) rt.onclick=retry;
+  const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+}
+setup(); render();
+</script>
+</body>
+</html>

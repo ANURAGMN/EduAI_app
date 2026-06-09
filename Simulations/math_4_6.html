@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#6d28d9">
+<title>Matchstick Formula Forge</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#6d28d9,#4f46e5);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#f5f3ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#6d28d9;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:2px solid #c4b5fd;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission p{font-size:12px;color:#4c1d95;line-height:1.45}
+.preview{background:#111827;border-radius:10px;color:#fff;padding:10px;text-align:center}
+.preview .n{font-size:12px;opacity:.75}
+.preview .s{font-size:20px;font-family:'Courier New',monospace;font-weight:900}
+.opts{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+.opt{padding:10px;border:2px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;font-family:'Courier New',monospace;font-weight:800}
+.opt.sel{border-color:#6d28d9;background:#ede9fe;color:#4c1d95}
+.opt.ok{border-color:#16a34a;background:#dcfce7;color:#166534}
+.opt.bad{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#6d28d9;color:#fff}
+.btn.next{background:#0ea5e9;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-left:4px solid #6d28d9;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Matchstick Formula Forge</h1>
+    <p>Find the general formula from triangle-stick pattern</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> matchstick growth is linear. For y joined triangles, sticks follow 2y+1.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const ROUNDS = [
+  {y:1, sticks:3},
+  {y:2, sticks:5},
+  {y:3, sticks:7},
+  {y:5, sticks:11},
+  {y:8, sticks:17},
+  {y:10, sticks:21}
+];
+
+let st={run:true,idx:0,score:0,lives:3,pick:'',resolved:false,msg:'',msgType:'info',opts:[]};
+
+function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x;}
+function setup(){ st.pick=''; st.resolved=false; st.msg=''; st.msgType='info'; st.opts=shuffle(['2y+1','3y','y+2','2y+3']); }
+function choose(v){ if(!st.run||st.resolved) return; st.pick=v; render(); }
+function check(){
+  if(!st.run||st.resolved||!st.pick) return;
+  const r=ROUNDS[st.idx];
+  st.resolved=true;
+  if(st.pick==='2y+1'){
+    st.score+=12;
+    st.msg=`Correct. For y=${r.y}, sticks=${2*r.y+1}.`;
+    st.msgType='good';
+  }else{
+    st.lives--;
+    st.msg='Not correct. Pattern grows by +2, so formula is 2y+1.';
+    st.msgType='bad';
+    if(st.lives<=0) st.run=false;
+  }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Forge complete!'; st.msgType='good'; render(); return; }
+  setup(); render();
+}
+function restart(){ st={run:true,idx:0,score:0,lives:3,pick:'',resolved:false,msg:'',msgType:'info',opts:[]}; setup(); render(); }
+
+function render(){
+  const done=!st.run;
+  const r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">y</div><div class="v">${r.y}</div></div>
+    </div>
+    <div class="mission">
+      <p>Connected-triangle chain has <b>y=${r.y}</b> triangles and <b>${r.sticks}</b> sticks. Pick the general formula.</p>
+    </div>
+    <div class="preview"><div class="n">Your formula</div><div class="s">${st.pick||'?'}</div></div>
+    <div class="opts">
+      ${st.opts.map(v=>{
+        const cls=st.resolved?(v==='2y+1'?'ok':(v===st.pick?'bad':'')):(v===st.pick?'sel':'');
+        return `<button class="opt ${cls}" data-v="${v}">${v}</button>`;
+      }).join('')}
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:(st.resolved?`<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next Round'}</button>`:`<button class="btn check" id="checkBtn">Check Formula</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Select formula, then check.</div>`}
+  `;
+  sim.querySelectorAll('.opt').forEach(b=>b.onclick=()=>choose(b.dataset.v));
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+}
+setup();
+render();
+</script>
+</body>
+</html>

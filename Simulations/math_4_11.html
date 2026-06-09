@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#9333ea">
+<title>Substitution Sprint Grid</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#9333ea,#4f46e5);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#f5f3ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#6d28d9;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#f5f3ff,#e0e7ff);border:2px solid #c4b5fd;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#4c1d95}
+.mission p{font-size:12px;color:#4338ca;line-height:1.45;margin-top:4px}
+.expr{font-family:'Courier New',monospace;font-size:22px;font-weight:900;color:#312e81;text-align:center;margin:8px 0}
+.vals{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.box{background:#f8fafc;border:2px solid #cbd5e1;border-radius:10px;padding:8px;text-align:center}
+.box .l{font-size:11px;color:#334155}
+.box .x{font-size:20px;font-weight:900;color:#0f172a}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.choice{padding:10px;border:2px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;font-weight:800}
+.choice.sel{border-color:#6366f1;background:#e0e7ff;color:#3730a3}
+.choice.ok{border-color:#16a34a;background:#dcfce7;color:#166534}
+.choice.bad{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#9333ea;color:#fff}
+.btn.next{background:#0ea5e9;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#f5f3ff,#e0e7ff);border-left:4px solid #9333ea;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Substitution Sprint Grid</h1>
+    <p>Substitute values and identify correct result quickly</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> evaluate algebraic expressions by replacing variable with value and simplifying step-by-step.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+
+const ROUNDS = [
+  {expr:'3x + 5', x:4, ans:17, opts:[17,12,20,9]},
+  {expr:'2x - 7', x:9, ans:11, opts:[11,25,9,13]},
+  {expr:'x/2 + 6', x:8, ans:10, opts:[10,14,7,4]},
+  {expr:'4x - 3', x:5, ans:17, opts:[17,23,8,20]},
+  {expr:'x + x + 1', x:7, ans:15, opts:[15,14,8,21]},
+  {expr:'5x + 2', x:3, ans:17, opts:[17,13,7,22]}
+];
+
+let st = {run:true, idx:0, score:0, lives:3, pick:null, resolved:false, msg:'', msgType:'info'};
+let currentOpts = [];
+
+function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x;}
+function setupRound(){ st.pick=null; st.resolved=false; st.msg=''; st.msgType='info'; currentOpts=shuffle([...ROUNDS[st.idx].opts]); }
+
+function choose(v){ if(!st.run || st.resolved) return; st.pick=v; render(); }
+
+function check(){
+  if(!st.run || st.resolved || st.pick===null) return;
+  const r=ROUNDS[st.idx];
+  st.resolved=true;
+  if(st.pick===r.ans){ st.score+=12; st.msg='Correct substitution!'; st.msgType='good'; }
+  else { st.lives--; st.msg=`Not correct. Value is ${r.ans}.`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Sprint complete!'; st.msgType='good'; render(); return; }
+  setupRound(); render();
+}
+
+function render(){
+  const done = !st.run;
+  const r = ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">x</div><div class="v">${r.x}</div></div>
+    </div>
+    <div class="mission">
+      <h3>Evaluate expression</h3>
+      <p>Substitute x and choose the final value.</p>
+      <div class="expr">${r.expr}</div>
+      <div class="vals">
+        <div class="box"><div class="l">Given</div><div class="x">x = ${r.x}</div></div>
+        <div class="box"><div class="l">Selected</div><div class="x">${st.pick===null?'?':st.pick}</div></div>
+      </div>
+    </div>
+    <div class="choices">
+      ${currentOpts.map(v=>{
+        const cls = st.resolved ? (v===r.ans?'ok':(v===st.pick?'bad':'')) : (v===st.pick?'sel':'');
+        return `<button class="choice ${cls}" data-v="${v}">${v}</button>`;
+      }).join('')}
+    </div>
+    <div class="actions">
+      ${done ? `<button class="btn next" id="restartBtn">Restart Sprint</button>` :
+      (st.resolved ? `<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next Round'}</button>` :
+      `<button class="btn check" id="checkBtn">Check Value</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Select one option, then check.</div>`}
+  `;
+  sim.querySelectorAll('.choice').forEach(b=>b.onclick=()=>choose(Number(b.dataset.v)));
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rr=sim.querySelector('#restartBtn'); if(rr) rr.onclick=()=>{st={run:true,idx:0,score:0,lives:3,pick:null,resolved:false,msg:'',msgType:'info'}; setupRound(); render();};
+}
+
+setupRound();
+render();
+</script>
+</body>
+</html>

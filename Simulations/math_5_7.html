@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1d4ed8">
+<title>Digit Sum Click Race</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#1d4ed8,#0f766e);min-height:100vh}
+#app{max-width:420px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#eff6ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#1e40af;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#0f172a}
+.mission{background:linear-gradient(135deg,#eff6ff,#dcfce7);border:2px solid #93c5fd;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#1e3a8a}
+.mission p{font-size:12px;color:#334155;margin-top:4px}
+.target{text-align:center;font-size:28px;font-weight:900;color:#0f172a;font-family:'Courier New',monospace;margin:8px 0}
+.buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.btnpv{padding:11px;border:none;border-radius:10px;background:#dbeafe;color:#1e3a8a;font-weight:800;cursor:pointer}
+.read{margin-top:10px;font-size:12px;color:#475569;line-height:1.45}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.start{background:linear-gradient(135deg,#1d4ed8,#0f766e);color:#fff}
+.btn.next{background:#16a34a;color:#fff}
+.btn.reset{background:#e2e8f0;color:#374151}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-left:4px solid #1d4ed8;border-radius:12px;padding:12px;font-size:12px;color:#0f172a}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Digit Sum Click Race</h1>
+    <p>Beat minimum clicks using place-value buttons</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Core idea:</b> minimum clicks equals digit sum in base-10 place value build.</div>
+</div>
+<script>
+const sim = document.getElementById("sim");
+const TARGETS=[5072,8300,40629,56354,66666,367813];
+const PV=[100000,10000,1000,100,10,1];
+let st={run:false,idx:0,score:0,lives:3,current:0,clicks:0,resolved:false,msg:'',msgType:'info'};
+
+function digitSum(n){return String(n).split('').reduce((a,b)=>a+Number(b),0);}
+function start(){st={...st,run:true,idx:0,score:0,lives:3};setup();render();}
+function setup(){st.current=0;st.clicks=0;st.resolved=false;st.msg='';}
+function press(v){if(!st.run||st.resolved)return; st.current+=v; st.clicks++; render();}
+function reset(){if(st.resolved||!st.run)return; setup(); render();}
+function check(){
+  if(!st.run||st.resolved)return;
+  const t=TARGETS[st.idx], min=digitSum(t);
+  st.resolved=true;
+  if(st.current===t){
+    const bonus=Math.max(0,10-(st.clicks-min));
+    st.score += 12 + bonus;
+    st.msg=`Target built! clicks=${st.clicks}, minimum=${min}.`;
+    st.msgType='good';
+  } else {
+    st.lives--; st.msg=`Not exact: built ${st.current}, target ${t}.`; st.msgType='bad';
+    if(st.lives<=0) st.run=false;
+  }
+  render();
+}
+function next(){
+  if(!st.resolved)return;
+  st.idx++;
+  if(st.idx>=TARGETS.length){st.run=false;st.msg='Race completed!';st.msgType='good';render();return;}
+  setup(); render();
+}
+function render(){
+  const done=!st.run;
+  const t=TARGETS[Math.min(st.idx,TARGETS.length-1)];
+  const min=digitSum(t);
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,TARGETS.length)}/${TARGETS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Min Clicks</div><div class="v">${min}</div></div>
+    </div>
+    <div class="mission">
+      <h3>Build target using place-value taps</h3>
+      <p>Target: ${t.toLocaleString("en-IN")} | Current: ${st.current.toLocaleString("en-IN")} | Clicks: ${st.clicks}</p>
+    </div>
+    <div class="target">${st.current.toLocaleString("en-IN")}</div>
+    <div class="buttons">${PV.map(v=>`<button class="btnpv" data-v="${v}">+${v.toLocaleString("en-IN")}</button>`).join('')}</div>
+    <div class="read">Try matching exactly and staying near minimum clicks.</div>
+    <div class="actions">
+      ${done?`<button class="btn start" id="startBtn">Start Race</button>`:(st.resolved?`<button class="btn next" id="nextBtn">Next Target</button>`:`<button class="btn reset" id="resetBtn">Reset</button><button class="btn start" id="checkBtn">Lock Build</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Hint: digit-sum gives theoretical minimum taps.</div>`}
+  `;
+  sim.querySelectorAll(".btnpv").forEach(b=>b.onclick=()=>press(parseInt(b.dataset.v,10)));
+  const s=sim.querySelector("#startBtn"); if(s) s.onclick=start;
+  const r=sim.querySelector("#resetBtn"); if(r) r.onclick=reset;
+  const c=sim.querySelector("#checkBtn"); if(c) c.onclick=check;
+  const n=sim.querySelector("#nextBtn"); if(n) n.onclick=next;
+}
+start();
+</script>
+</body>
+</html>

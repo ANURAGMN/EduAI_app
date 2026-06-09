@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<title>Term Sort Factory</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#7c3aed 0%,#2563eb 100%);min-height:100vh}
+#app{max-width:420px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#f5f3ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#6d28d9;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#0f172a}
+.mission{background:linear-gradient(135deg,#f5f3ff,#dbeafe);border:2px solid #c4b5fd;border-radius:12px;padding:10px;margin-bottom:10px}
+.expr{font-family:'Courier New',monospace;font-size:22px;font-weight:800;text-align:center;color:#1f2937;margin:6px 0}
+.hint{font-size:12px;color:#4c1d95}
+.tokens{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0}
+.token{padding:8px 10px;border-radius:10px;border:2px solid #ddd6fe;background:#fff;font-family:'Courier New',monospace;font-size:14px;font-weight:800;color:#4c1d95;cursor:pointer}
+.zone-wrap{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.zone{background:#f8fafc;border:2px dashed #cbd5e1;border-radius:12px;padding:10px;min-height:84px}
+.zone h3{font-size:11px;color:#475569;margin-bottom:6px}
+.bucket{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:6px 8px;border-radius:8px;background:#ede9fe;color:#4c1d95;font-family:'Courier New',monospace;font-size:12px;font-weight:700}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#7c3aed;color:#fff}
+.btn.reset{background:#e2e8f0;color:#334155}
+.btn.next{background:#16a34a;color:#fff}
+.btn.start{background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff}
+.btn.pause{background:#f59e0b;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-left:4px solid #7c3aed;border-radius:12px;padding:12px;font-size:12px;color:#0f172a;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Term Sort Factory</h1>
+    <p>Classify expression pieces into terms and operators</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>NCERT focus:</b> terms are separated by + (after rewriting subtraction as adding negatives). Product parts stay inside one term.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+
+const MISSIONS = [
+  {expr:'39 - 2×6 + 11', terms:['39','-2×6','11'], ops:['+','+']},
+  {expr:'48 - 10×2 + 16÷2', terms:['48','-10×2','16÷2'], ops:['+','+']},
+  {expr:'23 - 2×4 + 16', terms:['23','-2×4','16'], ops:['+','+']},
+  {expr:'6×3 - 4×8×5', terms:['6×3','-4×8×5'], ops:['+']},
+  {expr:'30 + 5×4', terms:['30','5×4'], ops:['+']},
+  {expr:'13 - 2 + 6', terms:['13','-2','6'], ops:['+','+']}
+];
+
+let st = {run:false, paused:false, idx:0, score:0, lives:3, left:70, selectedTerms:[], selectedOps:[], used:new Set(), resolved:false, msg:'', msgType:'info'};
+let timer = null;
+
+function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x;}
+
+function tokenize(m){
+  const toks = [...m.terms.map(x=>({kind:'term',v:x})), ...m.ops.map(x=>({kind:'op',v:x})), {kind:'junk',v:'×'}, {kind:'junk',v:'-'}];
+  return shuffle(toks).map((t,i)=>({...t,id:`${t.kind}-${i}-${t.v}`}));
+}
+
+function setupRound(){
+  st.selectedTerms = [];
+  st.selectedOps = [];
+  st.used = new Set();
+  st.resolved = false;
+  st.msg = '';
+}
+
+function start(){
+  st = {...st, run:true, paused:false, idx:0, score:0, lives:3, left:70};
+  setupRound();
+  if(timer) clearInterval(timer);
+  timer = setInterval(()=>{
+    if(!st.run || st.paused) return;
+    st.left--;
+    if(st.left<=0){ st.left=0; st.run=false; st.resolved=true; st.msg='Factory shift over.'; st.msgType='bad'; clearInterval(timer); }
+    render();
+  },1000);
+  render();
+}
+
+function togglePause(){
+  if(!st.run || st.resolved) return;
+  st.paused = !st.paused;
+  st.msg = st.paused ? 'Conveyor paused. Resume when ready.' : 'Conveyor resumed.';
+  st.msgType = 'info';
+  render();
+}
+
+function pickToken(id, kind, value){
+  if(st.resolved || !st.run || st.paused || st.used.has(id)) return;
+  st.used.add(id);
+  if(kind==='term') st.selectedTerms.push(value);
+  else if(kind==='op') st.selectedOps.push(value);
+  render();
+}
+
+function check(){
+  if(st.resolved || !st.run || st.paused) return;
+  const m = MISSIONS[st.idx];
+  const okTerms = m.terms.length===st.selectedTerms.length && m.terms.every((x,i)=>x===st.selectedTerms[i]);
+  const okOps = m.ops.length===st.selectedOps.length && m.ops.every((x,i)=>x===st.selectedOps[i]);
+  st.resolved = true;
+  if(okTerms && okOps){
+    st.score += 14;
+    st.msg = 'Correct classification! Terms and + separators are valid.';
+    st.msgType = 'good';
+  } else {
+    st.lives--;
+    st.msg = 'Classification mismatch. Recheck how subtraction becomes adding a negative term.';
+    st.msgType = 'bad';
+    if(st.lives<=0){ st.run=false; clearInterval(timer); }
+  }
+  render();
+}
+
+function resetBuckets(){ setupRound(); render(); }
+
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=MISSIONS.length){ st.run=false; st.msg='All factory jobs completed!'; st.msgType='good'; clearInterval(timer); render(); return; }
+  setupRound();
+  render();
+}
+
+function render(){
+  const done = !st.run;
+  const m = MISSIONS[Math.min(st.idx, MISSIONS.length-1)];
+  const tokens = tokenize(m);
+
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Mission</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Time</div><div class="v">${st.left}s</div></div>
+    </div>
+
+    <div class="mission">
+      <div class="hint">Classify tokens in order: terms and + separators</div>
+      <div class="expr">${m.expr}</div>
+      <div class="hint">Ignore junk tokens that are not top-level separators.</div>
+    </div>
+
+    <div class="tokens">
+      ${tokens.map(t=>`<button class="token" data-id="${t.id}" data-kind="${t.kind}" data-v="${t.v}">${t.v}</button>`).join('')}
+    </div>
+
+    <div class="zone-wrap">
+      <div class="zone">
+        <h3>Term Conveyor</h3>
+        <div class="bucket">${st.selectedTerms.map(x=>`<span class="chip">${x}</span>`).join('') || '<span class="chip">empty</span>'}</div>
+      </div>
+      <div class="zone">
+        <h3>Separator Conveyor (+)</h3>
+        <div class="bucket">${st.selectedOps.map(x=>`<span class="chip">${x}</span>`).join('') || '<span class="chip">empty</span>'}</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      ${done ? `<button class="btn start" id="startBtn">Start Factory Run</button>` : (st.resolved ? `<button class="btn next" id="nextBtn">Next Job</button>` : `<button class="btn pause" id="pauseBtn">${st.paused ? 'Resume Conveyor' : 'Pause Conveyor'}</button><button class="btn reset" id="resetBtn">Reset Buckets</button><button class="btn check" id="checkBtn">Check Classification</button>`)}
+    </div>
+
+    ${st.msg ? `<div class="msg ${st.msgType}">${st.msg}</div>` : `<div class="msg info">Pick tokens in order. Products like 2×6 stay in one term.</div>`}
+  `;
+
+  sim.querySelectorAll('.token').forEach(b=>b.onclick=()=>pickToken(b.dataset.id,b.dataset.kind,b.dataset.v));
+  const s=sim.querySelector('#startBtn'); if(s) s.onclick=start;
+  const p=sim.querySelector('#pauseBtn'); if(p) p.onclick=togglePause;
+  const r=sim.querySelector('#resetBtn'); if(r) r.onclick=resetBuckets;
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+}
+
+start();
+</script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+ma<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0369a1">
+<title>Word Formula Assembler</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0369a1 0%,#059669 100%);min-height:100vh}
+#app{max-width:420px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#f0f9ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0369a1;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#0f172a}
+.mission{background:linear-gradient(135deg,#f0f9ff,#ecfdf5);border:2px solid #93c5fd;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#0c4a6e}
+.mission p{font-size:12px;color:#334155;line-height:1.45}
+.tray{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.tok{padding:8px 10px;border-radius:10px;border:2px solid #bae6fd;background:#fff;color:#0369a1;font-weight:800;cursor:pointer}
+.slots{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+.slot{height:42px;border-radius:10px;border:2px dashed #93c5fd;background:#f8fafc;display:flex;align-items:center;justify-content:center;font-weight:800;color:#0c4a6e}
+.slot.fill{border-style:solid;background:#fff}
+.expr{margin-top:8px;text-align:center;font-family:'Courier New',monospace;font-size:20px;font-weight:900;color:#0f172a}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.start{background:linear-gradient(135deg,#0369a1,#059669);color:#fff}
+.btn.reset{background:#e2e8f0;color:#334155}
+.btn.check{background:#0284c7;color:#fff}
+.btn.next{background:#16a34a;color:#fff}
+.btn.retry{background:#f59e0b;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#f0f9ff,#ecfdf5);border-left:4px solid #0369a1;border-radius:12px;padding:12px;font-size:12px;color:#0f172a;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Word Formula Assembler</h1>
+    <p>Build correct algebraic expressions from sentence clues</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Skill:</b> convert language to algebra in correct order (especially “less than”, “times”, and constants).</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const MISSIONS = [
+  {clue:'5 more than d', tokens:['d','+','5'], answer:'d+5'},
+  {clue:'13 less than 2d', tokens:['2d','-','13'], answer:'2d-13'},
+  {clue:'Perimeter of regular hexagon side a', tokens:['6','×','a'], answer:'6×a'},
+  {clue:'x items Rs30 and y items Rs20', tokens:['30x','+','20y'], answer:'30x+20y'},
+  {clue:'Startup 10 seconds and 8 seconds per y kg', tokens:['10','+','8y'], answer:'10+8y'},
+  {clue:'2 less than 13 times n', tokens:['13n','-','2'], answer:'13n-2'}
+];
+
+let st = {run:false, idx:0, score:0, lives:3, slots:[null,null,null,null,null], resolved:false, msg:'', msgType:'info'};
+
+function start(){ st={...st,run:true,idx:0,score:0,lives:3}; setup(); render(); }
+function setup(){ st.slots=[null,null,null,null,null]; st.resolved=false; st.msg=''; }
+function place(t){
+  if(!st.run || st.resolved) return;
+  const i=st.slots.findIndex(x=>x===null);
+  if(i<0) return;
+  st.slots[i]=t;
+  render();
+}
+function resetSlots(){ if(st.resolved) return; setup(); render(); }
+function exprFromSlots(){ return st.slots.filter(Boolean).join(''); }
+function check(){
+  if(!st.run || st.resolved) return;
+  const m = MISSIONS[st.idx];
+  const e = exprFromSlots();
+  st.resolved=true;
+  if(e===m.answer){ st.score+=14; st.msg='Formula assembled correctly!'; st.msgType='good'; }
+  else { st.lives--; st.msg=`Not yet. Built "${e||'empty'}", expected "${m.answer}".`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=MISSIONS.length){ st.run=false; st.msg='All formulas assembled!'; st.msgType='good'; render(); return; }
+  setup(); render();
+}
+
+function retry(){
+  if(!st.run) return;
+  setup();
+  render();
+}
+
+function render(){
+  const done=!st.run;
+  const m = MISSIONS[Math.min(st.idx, MISSIONS.length-1)];
+  const available = [...m.tokens, '(', ')'].sort();
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Mission</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Filled</div><div class="v">${st.slots.filter(Boolean).length}/5</div></div>
+    </div>
+    <div class="mission">
+      <h3>Sentence clue</h3>
+      <p>${m.clue}</p>
+    </div>
+    <div class="tray">${available.map(t=>`<button class="tok" data-t="${t}">${t}</button>`).join('')}</div>
+    <div class="slots">${st.slots.map(s=>`<div class="slot ${s?'fill':''}">${s||''}</div>`).join('')}</div>
+    <div class="expr">${exprFromSlots() || '...'}</div>
+    <div class="actions">
+      ${done ? `<button class="btn start" id="startBtn">Start Assembler Run</button>` : (st.resolved ? (st.msgType==='bad' ? `<button class="btn retry" id="retryBtn">Retry Mission</button><button class="btn next" id="nextBtn">Next Mission</button>` : `<button class="btn next" id="nextBtn">Next Mission</button>`) : `<button class="btn reset" id="resetBtn">Reset</button><button class="btn check" id="checkBtn">Check Formula</button>`)}
+    </div>
+    ${st.msg ? `<div class="msg ${st.msgType}">${st.msg}</div>` : `<div class="msg info">Tip: place variable term before +/- constant where needed.</div>`}
+  `;
+  sim.querySelectorAll('.tok').forEach(b=>b.onclick=()=>place(b.dataset.t));
+  const s=sim.querySelector('#startBtn'); if(s) s.onclick=start;
+  const r=sim.querySelector('#resetBtn'); if(r) r.onclick=resetSlots;
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const rt=sim.querySelector('#retryBtn'); if(rt) rt.onclick=retry;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+}
+start();
+</script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<title>Perpendicular Drop Constructor</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#2563eb,#1d4ed8);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#eff6ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#1d4ed8;font-weight:700;text-transform:uppercase}.v{font-size:17px;font-weight:800;color:#0f172a}
+.mission{background:#eff6ff;border:2px solid #bfdbfe;border-radius:12px;padding:10px;margin-bottom:10px;font-size:12px;color:#1e3a8a}
+.stage{height:270px;background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;overflow:hidden}
+svg{width:100%;height:100%;display:block;touch-action:none}
+.nudge{margin-top:10px;background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;padding:10px}
+.nudgeTop{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#334155;margin-bottom:8px}
+.nudgeBtns{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.mini{padding:9px 0;border:none;border-radius:8px;background:#dbeafe;color:#1d4ed8;font-weight:800;cursor:pointer}
+.mini.center{background:#e2e8f0;color:#0f172a}
+.track{width:100%;margin-top:8px}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.check{background:#2563eb;color:#fff}.next{background:#0f766e;color:#fff}.retry{background:#334155;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.4}
+.good{background:#dcfce7;color:#166534}.bad{background:#fef2f2;color:#991b1b}.info{background:#eff6ff;color:#1e3a8a}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Perpendicular Drop Constructor</h1>
+    <p>Drag F on line AB so PF becomes perpendicular</p>
+  </div>
+  <div class="card" id="sim"></div>
+</div>
+<script>
+const sim=document.getElementById('sim');
+const MISSIONS=[
+  {lineDeg:18, p:{x:132,y:62}, tol:2},
+  {lineDeg:42, p:{x:288,y:72}, tol:2},
+  {lineDeg:75, p:{x:260,y:95}, tol:2},
+  {lineDeg:110,p:{x:120,y:92}, tol:2},
+  {lineDeg:145,p:{x:290,y:86}, tol:2}
+];
+let st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info',t:0};
+
+const cx=200, cy=150, L=190;
+function rad(d){return d*Math.PI/180}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function lineUnit(deg){return {x:Math.cos(rad(deg)),y:Math.sin(rad(deg))}}
+function projT(mx,my,deg){
+  const u=lineUnit(deg), dx=mx-cx, dy=my-cy;
+  return clamp(dx*u.x+dy*u.y,-L,L);
+}
+function currentGeometry(){
+  const m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+  const u=lineUnit(m.lineDeg);
+  const A={x:cx-u.x*L,y:cy-u.y*L}, B={x:cx+u.x*L,y:cy+u.y*L};
+  const F={x:cx+u.x*st.t,y:cy+u.y*st.t}, P=m.p;
+  const pf={x:F.x-P.x,y:F.y-P.y}, l={x:B.x-A.x,y:B.y-A.y};
+  const dot=Math.abs(pf.x*l.x+pf.y*l.y);
+  const n1=Math.hypot(pf.x,pf.y)||1, n2=Math.hypot(l.x,l.y)||1;
+  const ang=Math.acos(clamp(dot/(n1*n2),0,1))*180/Math.PI;
+  return {A,B,F,P,ang,err:Math.abs(90-ang)};
+}
+function setupRound(){
+  st.resolved=false; st.msg=''; st.msgType='info';
+  st.t=(Math.random()*2-1)*120;
+}
+function setT(v){
+  if(!st.run||st.resolved) return;
+  st.t=clamp(v,-L,L);
+  render();
+}
+function nudge(d){
+  if(!st.run||st.resolved) return;
+  st.t=clamp(st.t+d,-L,L);
+  render();
+}
+function check(){
+  if(!st.run||st.resolved) return;
+  const m=MISSIONS[st.idx], g=currentGeometry();
+  st.resolved=true;
+  if(g.err<=m.tol){
+    st.score+=15; st.msg=`Perfect drop! Angle is ${g.ang.toFixed(1)}°.`; st.msgType='good';
+  }else{
+    st.lives--; st.msg=`Not perpendicular yet. Angle is ${g.ang.toFixed(1)}°.`; st.msgType='bad';
+    if(st.lives<=0) st.run=false;
+  }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=MISSIONS.length){st.run=false; st.msg='All missions complete!'; st.msgType='good'; render(); return;}
+  setupRound(); render();
+}
+function retry(){ if(!st.run||!st.resolved) return; setupRound(); render(); }
+function restart(){ st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info',t:0}; setupRound(); render(); }
+
+function render(){
+  const done=!st.run, m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)], g=currentGeometry();
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Error</div><div class="v">${g.err.toFixed(1)}°</div></div>
+    </div>
+    <div class="mission">Mission: Place F so <b>PF ⟂ AB</b> (target 90° ± ${m.tol}°). Drag on the line to move F.</div>
+    <div class="stage">
+      <svg id="svg" viewBox="0 0 400 270">
+        <rect x="0" y="0" width="400" height="270" fill="#f8fafc"/>
+        <line x1="${g.A.x.toFixed(1)}" y1="${g.A.y.toFixed(1)}" x2="${g.B.x.toFixed(1)}" y2="${g.B.y.toFixed(1)}" stroke="#334155" stroke-width="4"/>
+        <line x1="${g.P.x}" y1="${g.P.y}" x2="${g.F.x.toFixed(1)}" y2="${g.F.y.toFixed(1)}" stroke="#2563eb" stroke-width="4"/>
+        <circle cx="${g.P.x}" cy="${g.P.y}" r="9" fill="#dc2626"/><text x="${g.P.x+12}" y="${g.P.y-8}" font-size="13" fill="#991b1b">P</text>
+        <circle cx="${g.F.x.toFixed(1)}" cy="${g.F.y.toFixed(1)}" r="11" fill="#2563eb" stroke="#fff" stroke-width="3"/><text x="${g.F.x+12}" y="${g.F.y-8}" font-size="13" fill="#1d4ed8">F</text>
+        <text x="16" y="22" font-size="13" fill="#0f172a">Current ∠(PF,AB): ${g.ang.toFixed(1)}°</text>
+      </svg>
+    </div>
+    <div class="nudge">
+      <div class="nudgeTop">
+        <span>Fine control (better than drag for exact target)</span>
+        <b>Offset ${(st.t/L).toFixed(2)}</b>
+      </div>
+      <div class="nudgeBtns">
+        <button class="mini" data-d="-12">--</button>
+        <button class="mini" data-d="-3">-</button>
+        <button class="mini center" id="centerBtn">0</button>
+        <button class="mini" data-d="3">+</button>
+        <button class="mini" data-d="12">++</button>
+      </div>
+      <input id="tSlider" class="track" type="range" min="${-L}" max="${L}" step="1" value="${st.t}">
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">${st.idx===MISSIONS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Lock Drop</button>`}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Use drag for rough placement, then -- / - / + / ++ or slider for precision.</div>`}
+  `;
+  const svg=sim.querySelector('#svg');
+  let drag=false;
+  if(!done&&!st.resolved){
+    const move=(e)=>{
+      const r=svg.getBoundingClientRect();
+      const x=(e.clientX-r.left)*(400/r.width), y=(e.clientY-r.top)*(270/r.height);
+      st.t=projT(x,y,m.lineDeg); render();
+    };
+    svg.addEventListener('pointerdown',e=>{drag=true;svg.setPointerCapture(e.pointerId);move(e);});
+    svg.addEventListener('pointermove',e=>{if(drag)move(e);});
+    svg.addEventListener('pointerup',()=>drag=false); svg.addEventListener('pointercancel',()=>drag=false);
+  }
+  sim.querySelectorAll('.mini[data-d]').forEach(b=>b.onclick=()=>nudge(parseFloat(b.dataset.d)));
+  const slider=sim.querySelector('#tSlider'); if(slider) slider.oninput=e=>setT(parseFloat(e.target.value));
+  const center=sim.querySelector('#centerBtn'); if(center) center.onclick=()=>setT(0);
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
+  const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+}
+setupRound(); render();
+</script>
+</body>
+</html>

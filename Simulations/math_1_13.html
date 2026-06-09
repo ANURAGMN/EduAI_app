@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0ea5e9">
+<title>Scale Journey Builder</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0ea5e9 0%,#6366f1 100%);min-height:100vh}
+#app{max-width:420px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#f0f9ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0369a1;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#0f172a}
+.mission{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #93c5fd;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#1e3a8a}
+.mission p{font-size:12px;color:#1d4ed8;margin-top:4px;line-height:1.45}
+.track{background:#f8fafc;border-radius:12px;padding:10px;margin-bottom:10px}
+.line{height:18px;background:#e5e7eb;border-radius:10px;position:relative}
+.fill{height:100%;background:linear-gradient(90deg,#0ea5e9,#2563eb);border-radius:10px}
+.marker{position:absolute;top:-6px;width:14px;height:30px;background:#dc2626;border-radius:4px;border:2px solid #fff}
+.labels{display:flex;justify-content:space-between;font-size:10px;color:#475569;margin-top:6px}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.btn{padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.good{background:#0ea5e9;color:#fff}
+.btn.next{background:#059669;color:#fff}
+.btn.retry{background:#e2e8f0;color:#334155}
+.btn.start{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-left:4px solid #0ea5e9;border-radius:12px;padding:12px;font-size:12px;color:#0f172a;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Scale Journey Builder</h1>
+    <p>Travel missions using large-number estimation</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> estimate and compare huge distances with speed × days calculations.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const MISSIONS = [
+  {title:'Moon Dash', dist:384400, days:3650, options:[80,100], answer:100},
+  {title:'Near-Sun Reality', dist:147000000, days:36500, options:[500,1000], answer:1000},
+  {title:'Marathon Builder', dist:42000, days:60, options:[500,700], answer:700},
+  {title:'State Express', dist:1800, days:6, options:[250,300], answer:300},
+  {title:'Village Supply', dist:950, days:5, options:[150,200], answer:200}
+];
+let st={run:false,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info'};
+function start(){st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info'};render();}
+function choose(spd){
+  if(!st.run||st.resolved) return;
+  const m=MISSIONS[st.idx];
+  const can=spd*m.days;
+  st.resolved=true;
+  if(spd===m.answer){
+    st.score+=12; st.msgType='good';
+    st.msg=`Good route choice! ${spd}×${m.days} = ${fmt(can)} km coverage.`;
+  } else {
+    st.lives--; st.msgType='bad';
+    st.msg=`Not optimal. ${spd}×${m.days} = ${fmt(can)} km. Better pick reaches target range.`;
+    if(st.lives<=0) st.run=false;
+  }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=MISSIONS.length){st.run=false;st.msg='Journey plan completed!';st.msgType='good';}
+  else {st.resolved=false;st.msg='';}
+  render();
+}
+function retry(){
+  if(!st.resolved || !st.run) return;
+  st.resolved=false;
+  st.msg='Retry this mission with the better range choice.';
+  st.msgType='info';
+  render();
+}
+function fmt(n){return Math.round(n).toLocaleString('en-IN');}
+function render(){
+  const done=!st.run;
+  const m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+  const best=m.answer*m.days;
+  const pct=Math.min(100,best/m.dist*100);
+  sim.innerHTML=`
+  <div class="stats">
+    <div class="stat"><div class="k">Mission</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+    <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+    <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+    <div class="stat"><div class="k">Best km/day</div><div class="v">${m.answer}</div></div>
+  </div>
+  <div class="mission">
+    <h3>${m.title}</h3>
+    <p>Target distance: <b>${fmt(m.dist)} km</b> in <b>${fmt(m.days)} days</b>. Choose better daily speed.</p>
+  </div>
+  <div class="track">
+    <div class="line"><div class="fill" style="width:${pct}%"></div><div class="marker" style="left:calc(${pct}% - 7px)"></div></div>
+    <div class="labels"><span>0 km</span><span>${fmt(m.dist)} km target</span></div>
+  </div>
+    <div class="controls">
+      ${done?`<button class="btn start" id="startBtn">Start Journey Run</button>`:(st.resolved?`<button class="btn retry" id="retryBtn">Retry Mission</button><button class="btn next" id="nextBtn">Next Mission</button>`:m.options.map(v=>`<button class="btn good" data-v="${v}">${v} km/day</button>`).join(''))}
+    </div>
+  ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Think with multiplication and compare against target distance.</div>`}
+  `;
+  sim.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>choose(parseInt(b.dataset.v,10)));
+  const s=sim.querySelector('#startBtn'); if(s) s.onclick=start;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
+}
+start();
+</script>
+</body>
+</html>

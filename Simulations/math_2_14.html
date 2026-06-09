@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<title>Term Value Assembler Dash</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#7c3aed,#4338ca);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#f5f3ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#6d28d9;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#f5f3ff,#e0e7ff);border:2px solid #c4b5fd;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission .expr{font-family:'Courier New',monospace;font-size:21px;font-weight:900;color:#312e81;text-align:center;margin-top:6px}
+.bins{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.bin{background:#f8fafc;border:2px dashed #cbd5e1;border-radius:10px;padding:8px}
+.bin h4{font-size:11px;color:#475569}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{padding:6px 8px;border-radius:8px;background:#ede9fe;color:#4c1d95;font-family:'Courier New',monospace;font-size:12px;font-weight:700}
+.tokens{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}
+.tok{padding:8px 10px;border:2px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;font-family:'Courier New',monospace;font-size:13px;font-weight:800}
+.tok.used{opacity:.35;cursor:not-allowed}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#7c3aed;color:#fff}
+.btn.next{background:#0ea5e9;color:#fff}
+.btn.reset{background:#e2e8f0;color:#334155}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#f5f3ff,#e0e7ff);border-left:4px solid #7c3aed;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Term Value Assembler Dash</h1>
+    <p>Split expression into terms and separators in order</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> evaluate expressions by identifying top-level terms (products stay inside terms), then combine.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const ROUNDS = [
+  {expr:'39 - 2×6 + 11', terms:['39','-2×6','11'], seps:['+','+']},
+  {expr:'48 - 10×2 + 16÷2', terms:['48','-10×2','16÷2'], seps:['+','+']},
+  {expr:'6×3 - 4×8×5', terms:['6×3','-4×8×5'], seps:['+']},
+  {expr:'30 + 5×4', terms:['30','5×4'], seps:['+']},
+  {expr:'23 - 2×4 + 16', terms:['23','-2×4','16'], seps:['+','+']},
+  {expr:'13 - 2 + 6', terms:['13','-2','6'], seps:['+','+']}
+];
+
+let st = {run:true, idx:0, score:0, lives:3, pickedTerms:[], pickedSeps:[], used:new Set(), resolved:false, msg:'', msgType:'info', tokens:[]};
+
+function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x;}
+
+function mkTokens(r){
+  const toks = [...r.terms.map(v=>({k:'t',v})), ...r.seps.map(v=>({k:'s',v})), {k:'j',v:'×'}, {k:'j',v:'-'}];
+  return shuffle(toks).map((t,i)=>({id:`${t.k}-${i}-${t.v}`, ...t}));
+}
+
+function setupRound(){
+  st.pickedTerms=[]; st.pickedSeps=[]; st.used=new Set(); st.resolved=false; st.msg=''; st.msgType='info';
+  st.tokens = mkTokens(ROUNDS[st.idx]);
+}
+
+function pick(id,k,v){
+  if(!st.run || st.resolved || st.used.has(id)) return;
+  st.used.add(id);
+  if(k==='t') st.pickedTerms.push(v);
+  if(k==='s') st.pickedSeps.push(v);
+  render();
+}
+
+function resetPick(){ if(!st.run || st.resolved) return; setupRound(); render(); }
+
+function check(){
+  if(!st.run || st.resolved) return;
+  const r = ROUNDS[st.idx];
+  const okT = r.terms.length===st.pickedTerms.length && r.terms.every((x,i)=>x===st.pickedTerms[i]);
+  const okS = r.seps.length===st.pickedSeps.length && r.seps.every((x,i)=>x===st.pickedSeps[i]);
+  st.resolved=true;
+  if(okT && okS){
+    st.score += 12;
+    st.msg='Assembly correct!';
+    st.msgType='good';
+  }else{
+    st.lives -= 1;
+    st.msg='Mismatch. Terms/operators must be in exact order.';
+    st.msgType='bad';
+    if(st.lives<=0) st.run=false;
+  }
+  render();
+}
+
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Dash complete!'; st.msgType='good'; render(); return; }
+  setupRound(); render();
+}
+
+function restart(){ st={run:true,idx:0,score:0,lives:3,pickedTerms:[],pickedSeps:[],used:new Set(),resolved:false,msg:'',msgType:'info',tokens:[]}; setupRound(); render(); }
+
+function render(){
+  const done=!st.run;
+  const r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Mode</div><div class="v">Dash</div></div>
+    </div>
+    <div class="mission">
+      <div style="font-size:12px;color:#4338ca">Split into ordered terms and + separators</div>
+      <div class="expr">${r.expr}</div>
+    </div>
+    <div class="bins">
+      <div class="bin"><h4>Terms</h4><div class="chips">${st.pickedTerms.map(v=>`<span class="chip">${v}</span>`).join('')||'<span class="chip">empty</span>'}</div></div>
+      <div class="bin"><h4>Separators (+)</h4><div class="chips">${st.pickedSeps.map(v=>`<span class="chip">${v}</span>`).join('')||'<span class="chip">empty</span>'}</div></div>
+    </div>
+    <div class="tokens">
+      ${st.tokens.map(t=>`<button class="tok ${st.used.has(t.id)?'used':''}" data-id="${t.id}" data-k="${t.k}" data-v="${t.v}" ${st.used.has(t.id)||st.resolved||done?'disabled':''}>${t.v}</button>`).join('')}
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:(st.resolved?`<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next'}</button>`:`<button class="btn reset" id="resetBtn">Reset</button><button class="btn check" id="checkBtn">Check</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Ignore junk tokens like inner × and spare - markers.</div>`}
+  `;
+  sim.querySelectorAll('.tok').forEach(b=>b.onclick=()=>pick(b.dataset.id,b.dataset.k,b.dataset.v));
+  const rs=sim.querySelector('#resetBtn'); if(rs) rs.onclick=resetPick;
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rr=sim.querySelector('#restartBtn'); if(rr) rr.onclick=restart;
+}
+setupRound();
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Mean Median Sort Arena</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#0f766e,#115e59);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}.v{font-size:17px;font-weight:800;color:#0f172a}
+.mission{background:#ecfeff;border:2px solid #99f6e4;border-radius:12px;padding:10px;margin-bottom:10px;font-size:12px;color:#134e4a}
+.arr{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.chip{min-width:40px;text-align:center;padding:9px 10px;border:2px solid #99f6e4;border-radius:10px;background:#fff;color:#0f766e;font-weight:900;cursor:pointer}
+.chip.sel{background:#ccfbf1;border-color:#0f766e}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.slot{background:#f8fafc;border:2px dashed #94a3b8;border-radius:10px;padding:10px}
+.slot h4{font-size:12px;color:#334155;margin-bottom:6px}
+.line{font-family:'Courier New',monospace;font-size:16px;font-weight:900;color:#0f172a;min-height:20px}
+.inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.inputs input{width:100%;padding:10px;border:2px solid #cbd5e1;border-radius:10px;font-weight:800;font-size:16px}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.check{background:#0f766e;color:#fff}.next{background:#0ea5e9;color:#fff}.retry{background:#334155;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.4}
+.good{background:#dcfce7;color:#166534}.bad{background:#fef2f2;color:#991b1b}.info{background:#eff6ff;color:#1e3a8a}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Mean Median Sort Arena</h1>
+    <p>Sort data and compute mean/median under pressure</p>
+  </div>
+  <div class="card" id="sim"></div>
+</div>
+<script>
+const sim=document.getElementById('sim');
+const ROUNDS=[
+  [4,9,2,7,8],
+  [12,5,11,9,8],
+  [3,3,8,10,6],
+  [15,6,9,12,3],
+  [14,7,5,9,10]
+];
+let st={run:true,idx:0,score:0,lives:3,sel:null,sorted:[],pick:[],resolved:false,msg:'',msgType:'info'};
+
+function setupRound(){
+  const arr=ROUNDS[st.idx].slice();
+  st.pick=arr.slice(); st.sorted=[]; st.sel=null;
+  st.resolved=false; st.msg=''; st.msgType='info';
+}
+function select(i){ if(!st.run||st.resolved) return; st.sel=i; render(); }
+function moveSelected(){
+  if(st.sel===null||st.resolved||!st.run) return;
+  st.sorted.push(st.pick[st.sel]); st.pick.splice(st.sel,1); st.sel=null; render();
+}
+function moveBack(){
+  if(st.resolved||!st.run||st.sorted.length===0) return;
+  st.pick.push(st.sorted.pop()); render();
+}
+function mean(a){ return a.reduce((s,v)=>s+v,0)/a.length; }
+function median(a){
+  const b=a.slice().sort((x,y)=>x-y), m=Math.floor(b.length/2);
+  return b.length%2?b[m]:(b[m-1]+b[m])/2;
+}
+function check(){
+  if(!st.run||st.resolved) return;
+  const src=ROUNDS[st.idx], sorted=src.slice().sort((a,b)=>a-b);
+  const inMean=parseFloat(sim.querySelector('#meanIn').value);
+  const inMed=parseFloat(sim.querySelector('#medIn').value);
+  const sortedOk=st.pick.length===0 && st.sorted.every((v,i)=>v===sorted[i]);
+  const meanOk=Math.abs(inMean-mean(src))<0.01, medOk=Math.abs(inMed-median(src))<0.01;
+  st.resolved=true;
+  if(sortedOk&&meanOk&&medOk){
+    st.score+=15; st.msg='Excellent! Sorted data, mean, and median are all correct.'; st.msgType='good';
+  }else{
+    st.lives--; st.msg=`Mismatch. Correct mean ${mean(src).toFixed(2)}, median ${median(src)}.`; st.msgType='bad';
+    if(st.lives<=0) st.run=false;
+  }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=ROUNDS.length){st.run=false; st.msg='Arena complete!'; st.msgType='good'; render(); return;}
+  setupRound(); render();
+}
+function retry(){ if(!st.run||!st.resolved) return; setupRound(); render(); }
+function restart(){ st={run:true,idx:0,score:0,lives:3,sel:null,sorted:[],pick:[],resolved:false,msg:'',msgType:'info'}; setupRound(); render(); }
+
+function render(){
+  const done=!st.run, src=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Count</div><div class="v">${src.length}</div></div>
+    </div>
+    <div class="mission">Mission: move values into ascending order, then enter mean and median for dataset <b>${src.join(', ')}</b>.</div>
+    <div class="slots">
+      <div class="slot">
+        <h4>Unsorted Pool</h4>
+        <div class="arr">
+          ${st.pick.map((n,i)=>`<button class="chip ${st.sel===i?'sel':''}" data-i="${i}">${n}</button>`).join('')||'<span class="line">empty</span>'}
+        </div>
+      </div>
+      <div class="slot">
+        <h4>Sorted Lane</h4>
+        <div class="line">${st.sorted.join(' , ')||'...'}</div>
+      </div>
+    </div>
+    <div class="actions">
+      ${!done&&!st.resolved?`<button class="btn retry" id="moveBtn">Move Selected →</button><button class="btn retry" id="backBtn">← Undo</button>`:''}
+    </div>
+    <div class="inputs">
+      <input id="meanIn" type="number" step="0.01" placeholder="Mean" ${st.resolved||done?'disabled':''}>
+      <input id="medIn" type="number" step="0.01" placeholder="Median" ${st.resolved||done?'disabled':''}>
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Check Mission</button>`}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Sort first, then compute mean and median.</div>`}
+  `;
+  sim.querySelectorAll('.chip').forEach(b=>b.onclick=()=>select(parseInt(b.dataset.i,10)));
+  const m=sim.querySelector('#moveBtn'); if(m) m.onclick=moveSelected;
+  const b=sim.querySelector('#backBtn'); if(b) b.onclick=moveBack;
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
+  const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+}
+setupRound(); render();
+</script>
+</body>
+</html>

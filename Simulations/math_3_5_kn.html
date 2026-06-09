@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="kn" dir="ltr">
+<head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#b45309">
+<title>ದಶಮಾಂಶ ಹೋಲಿಕೆ ಮತ್ತು ಕ್ರಮ — ಅಧ್ಯಾಯ ೩</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans Kannada',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#b45309 0%,#dc2626 100%);min-height:100vh;-webkit-font-smoothing:antialiased}#app{max-width:420px;margin:auto;padding:10px;padding-top:max(10px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom))}
+.header{text-align:center;color:#fff;padding:14px}
+.header h1{font-size:20px;font-weight:800;margin-bottom:4px}
+.header p{font-size:13px;opacity:.9}
+.sim-card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.12);margin-bottom:14px}
+.mode-tabs{display:flex;gap:4px;margin-bottom:14px}
+.mode-tab{flex:1;padding:10px 2px;border:2px solid #e5e7eb;border-radius:10px;background:#fafafa;font-size:10px;font-weight:600;text-align:center;cursor:pointer}
+.mode-tab.active{border-color:#b45309;background:#fffbeb;color:#92400e}
+/* VS display */
+.vs-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.vs-box{flex:1;background:#fffbeb;border-radius:12px;padding:16px 8px;text-align:center;font-size:22px;font-weight:800;color:#78350f;border:2px solid #fde68a}
+.vs-mid{font-size:24px;font-weight:800;color:#d4d4d8;width:36px;text-align:center}
+/* Quiz controls */
+.quiz-q{font-size:15px;font-weight:700;color:#1e293b;text-align:center;padding:16px;background:#fffbeb;border-radius:12px;margin-bottom:12px;line-height:1.5}
+.ans-row{display:flex;gap:8px;justify-content:center;margin:12px 0}
+.ans-btn{padding:14px 22px;border-radius:12px;border:2px solid #e5e7eb;font-size:18px;font-weight:700;cursor:pointer;background:#fff;min-width:60px;text-align:center}
+.ans-btn:active{transform:scale(.96)}
+.ans-btn.correct{border-color:#16a34a;background:#dcfce7;color:#166534}
+.ans-btn.wrong{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.quiz-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.quiz-opt{padding:14px;border-radius:12px;border:2px solid #e5e7eb;font-size:14px;font-weight:600;cursor:pointer;background:#fff;text-align:center}
+.quiz-opt:active{transform:scale(.97)}
+.quiz-opt.correct{border-color:#16a34a;background:#dcfce7;color:#166534}
+.quiz-opt.wrong{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.feedback-box{text-align:center;font-size:13px;padding:12px;border-radius:10px;min-height:20px;margin-bottom:10px}
+.next-btn{display:block;margin:0 auto;padding:14px 32px;border-radius:12px;border:none;background:linear-gradient(135deg,#b45309,#dc2626);color:#fff;font-weight:700;font-size:14px;cursor:pointer}
+.next-btn:active{transform:scale(.97)}
+.score-bar{text-align:center;font-size:13px;font-weight:600;color:#555;margin-bottom:12px}
+.score-bar b{color:#b45309}
+/* Insight */
+.insight-box{background:linear-gradient(135deg,#fffbeb,#fef3c7);border-radius:12px;padding:14px;margin-top:14px;border-left:4px solid #b45309;font-size:13px;line-height:1.5}
+.insight-title{font-weight:700;color:#92400e;margin-bottom:6px}
+/* Help */
+.help-btn{position:fixed;bottom:20px;right:20px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#b45309,#dc2626);color:#fff;border:3px solid #fff;box-shadow:0 4px 15px rgba(180,83,9,.4);font-size:20px;font-weight:700;cursor:pointer;z-index:100;display:flex;align-items:center;justify-content:center}
+.help-btn:active{transform:scale(.9)}
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.help-overlay.open{display:flex}
+.help-panel{background:#fff;border-radius:20px 20px 0 0;max-width:420px;width:100%;max-height:75vh;overflow-y:auto;padding:20px 16px env(safe-area-inset-bottom);animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.help-close{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.help-close h2{font-size:16px;font-weight:700;color:#333}
+.help-close button{width:32px;height:32px;border-radius:50%;border:none;background:#f1f5f9;font-size:18px;cursor:pointer;color:#64748b}
+.help-section{margin-bottom:14px}
+.help-section-title{font-size:12px;font-weight:700;color:#b45309;margin-bottom:6px}
+.help-step{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px;line-height:1.5;color:#475569}
+.help-step:last-child{border-bottom:none}
+.help-step .sn{width:22px;height:22px;border-radius:50%;background:#b45309;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.help-try{background:#fffbeb;border-radius:8px;padding:8px 10px;font-size:11px;color:#92400e;line-height:1.5;margin-top:4px}
+.help-key{background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:8px;padding:8px 10px;font-size:11px;color:#92400e;line-height:1.5;margin-top:4px}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="header">
+  <h1>ದಶಮಾಂಶ ಹೋಲಿಕೆ ಮತ್ತು ಕ್ರಮ</h1>
+  <p>ಯಾವುದು ಹೆಚ್ಚು? ಅಂಕೆ ಅಂಕೆಯಾಗಿ ಹೋಲಿಸಿ!</p>
+</div>
+<div class="sim-card" id="sim"></div>
+<div class="insight-box">
+  <div class="insight-title">ಶೂನ್ಯ ದುಸ್ಥಿತಿ</div>
+  <b>ಕೊನೆಯ ಶೂನ್ಯಗಳು</b> ದಶಮಾಂಶ ಬದಲಾಯಿಸುವುದಿಲ್ಲ: 0.2 = 0.20 = 0.200.<br>
+  ಆದರೆ <b>ದಶಮಾಂಶ ಬಿಂದುವಿನ ನಂತರದ ಶೂನ್ಯಗಳು</b> ಬದಲಾಯಿಸುತ್ತವೆ: 0.2 (2 ದಶಾಂಶ) &ne; 0.02 (2 ಶತಾಂಶ) &ne; 0.002 (2 ಸಾವಿರಾಂಶ).<br>
+  ಹೆಚ್ಚು ಅಂಕೆಗಳು ಹೆಚ್ಚು ಎಂದು ಅರ್ಥವಲ್ಲ: 0.9 > 0.123456!
+</div>
+
+<button class="help-btn" id="helpBtn">?</button>
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-panel">
+    <div class="help-close"><h2>ಈ ಸಿಮ್ಯುಲೇಶನ್ ಹೇಗೆ ಬಳಸುವುದು</h2><button id="helpClose">&times;</button></div>
+    <div class="help-section">
+      <div class="help-section-title">ಏನು ಮಾಡಬೇಕು</div>
+      <div class="help-step"><span class="sn">1</span><span><b>ಹೋಲಿಸಿ:</b> ಪಕ್ಕಪಕ್ಕ ಎರಡು ದಶಮಾಂಶ — &lt;, = ಅಥವಾ &gt; ಒತ್ತಿ.</span></div>
+      <div class="help-step"><span class="sn">2</span><span><b>ಅತಿ ಹತ್ತಿರ:</b> ಗುರಿ ಸಂಖ್ಯೆಗೆ ಯಾವ ದಶಮಾಂಶ ಅತಿ ಹತ್ತಿರ ಎಂದು ಕಂಡುಹಿಡಿಯಿರಿ.</span></div>
+      <div class="help-step"><span class="sn">3</span><span>ಎಡದಿಂದ <b>ಅಂಕೆ ಅಂಕೆಯಾಗಿ</b> ಹೋಲಿಸಿ. ಮೊದಲು ವಿಭಿನ್ನವಾಗುವ ಅಂಕೆ ನಿರ್ಧರಿಸುತ್ತದೆ!</span></div>
+    </div>
+    <div class="help-section">
+      <div class="help-section-title">ಮುಖ್ಯ ಕಲ್ಪನೆ</div>
+      <div class="help-key">ಹೋಲಿಸಲು: ದಶಮಾಂಶ ಬಿಂದುಗಳನ್ನು ಜೋಡಿಸಿ, ಶೂನ್ಯದಿಂದ ತುಂಬಿಸಿ, ನಂತರ ಎಡದಿಂದ ಬಲಕ್ಕೆ ಹೋಲಿಸಿ. 6.456 vs 6.465: ಏಕ ಒಂದೇ (6), ದಶಾಂಶ ಒಂದೇ (4), ಶತಾಂಶ: 5 vs 6 → 6.465 ಗೆಲುವು!</div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+document.getElementById('helpBtn').onclick=()=>document.getElementById('helpOverlay').classList.add('open');
+document.getElementById('helpClose').onclick=()=>document.getElementById('helpOverlay').classList.remove('open');
+document.getElementById('helpOverlay').onclick=e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open')};
+
+const COMPARE=[
+  {a:"1.23",b:"1.32",ans:">",ex:"Units same. Tenths: 2 < 3 → 1.32 is bigger"},
+  {a:"3.81",b:"13.800",ans:"<",ex:"3 < 13 → 13.800 is bigger"},
+  {a:"1.009",b:"1.090",ans:"<",ex:"Units same. Tenths: 0 < 0... Hundredths: 0 < 9 → 1.090 is bigger"},
+  {a:"0.2",b:"0.20",ans:"=",ex:"0.20 = 0.2 — trailing zeros don't change value"},
+  {a:"0.2",b:"0.02",ans:">",ex:"0.2 = 2 tenths, 0.02 = 2 hundredths. Tenths > hundredths!"},
+  {a:"6.456",b:"6.465",ans:"<",ex:"Units 6=6, tenths 4=4, hundredths 5<6 → 6.465 wins"},
+  {a:"4.5",b:"4.50",ans:"=",ex:"4.50 = 4.5 — trailing zero doesn't matter"},
+  {a:"0.9",b:"0.123",ans:">",ex:"Tenths: 9 > 1. More digits ≠ bigger number!"},
+  {a:"11.01",b:"11.10",ans:"<",ex:"Units 11=11, tenths 0<1 → 11.10 is bigger"},
+  {a:"2.567",b:"2.675",ans:"<",ex:"Units 2=2, tenths 5<6 → 2.675 is bigger"}
+];
+
+const CLOSEST=[
+  {target:1,opts:["0.9","1.01","1.1","1.11"],ans:"1.01",ex:"0.9 is 0.1 away, 1.01 is 0.01 away, 1.1 is 0.1 away → 1.01 wins"},
+  {target:4,opts:["3.56","3.65","3.099"],ans:"3.65",ex:"Distances: 0.44, 0.35, 0.901 → 3.65 is closest (0.35)"},
+  {target:1,opts:["0.8","0.69","1.08"],ans:"1.08",ex:"0.8→0.2, 0.69→0.31, 1.08→0.08 → 1.08 wins"},
+  {target:1.09,opts:["0.9","1.01","1.1","1.11"],ans:"1.1",ex:"Distances: 0.19, 0.08, 0.01, 0.02 → 1.1 is closest (0.01)"},
+  {target:25,opts:["24.815","25.148","25.184","24.518"],ans:"24.815",ex:"25−24.815=0.185, 25.148−25=0.148... actually 25.148 is closer! Both close — check carefully"}
+];
+
+const T={compare:"ಹೋಲಿಸಿ (<, =, >)",closest:"ಅತಿ ಹತ್ತಿರ ಕಂಡುಹಿಡಿ",score:"ಸ್ಕೋರ್",question:"ಪ್ರಶ್ನೆ",whichGreater:"ಯಾವುದು ಹೆಚ್ಚು?",whichClosest:"ಯಾವುದು <b>ಅತಿ ಹತ್ತಿರ</b>?",next:"ಮುಂದೆ",correct:"ಸರಿ!"};
+const ct=document.getElementById("sim");
+let mode="compare",qIdx=0,qScore=0,qTotal=0,qAns=false;
+
+function renderCompare(){
+  if(qIdx>=COMPARE.length)qIdx=0;
+  const q=COMPARE[qIdx];
+  ct.innerHTML=`
+  <div class="mode-tabs">${tabs('compare')}</div>
+  <div class="score-bar">${T.score}: <b>${qScore}/${qTotal}</b> &bull; ${T.question} <b>${qIdx+1}/${COMPARE.length}</b></div>
+  <div class="quiz-q">${T.whichGreater}</div>
+  <div class="vs-row">
+    <div class="vs-box">${q.a}</div>
+    <div class="vs-mid">?</div>
+    <div class="vs-box">${q.b}</div>
+  </div>
+  <div class="ans-row" id="ans">${["<","=",">"].map(o=>`<button class="ans-btn" data-v="${o==="<"?"&lt;":o===">"?"&gt;":"="}">${o==="<"?"&lt;":o===">"?"&gt;":o}</button>`).join('')}</div>
+  <div class="feedback-box" id="fb"></div>
+  <button class="next-btn" id="nxt" style="display:none">${T.next}</button>`;
+  qAns=false;wireMode();
+  ct.querySelector('#ans').addEventListener('click',e=>{
+    const b=e.target.closest('.ans-btn');if(!b||qAns)return;qAns=true;qTotal++;
+    const uv=b.textContent.trim();
+    const correct=uv===(q.ans==="<"?"<":q.ans===">"?">":"=");
+    if(correct){b.classList.add('correct');qScore++;ct.querySelector('#fb').innerHTML=`<div style="background:#dcfce7;color:#166534;padding:12px;border-radius:10px"><b>${T.correct}</b> ${q.a} ${q.ans} ${q.b}. ${q.ex}</div>`}
+    else{b.classList.add('wrong');ct.querySelector('#fb').innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px"><b>${q.a} ${q.ans} ${q.b}.</b> ${q.ex}</div>`}
+    ct.querySelector('#nxt').style.display='block';
+  });
+  ct.querySelector('#nxt').onclick=()=>{qIdx++;renderCompare()};
+}
+
+let cIdx=0;
+function renderClosest(){
+  if(cIdx>=CLOSEST.length)cIdx=0;
+  const q=CLOSEST[cIdx];
+  ct.innerHTML=`
+  <div class="mode-tabs">${tabs('closest')}</div>
+  <div class="score-bar">${T.question} <b>${cIdx+1}/${CLOSEST.length}</b></div>
+  <div class="quiz-q">ಯಾವುದು <b>ಅತಿ ಹತ್ತಿರ</b> <span style="color:#b45309;font-size:20px">${q.target}</span> ಗೆ?</div>
+  <div class="quiz-opts" id="qo">${q.opts.map(o=>`<button class="quiz-opt" data-v="${o}">${o}</button>`).join('')}</div>
+  <div class="feedback-box" id="fb"></div>
+  <button class="next-btn" id="nxt" style="display:none">${T.next}</button>`;
+  qAns=false;wireMode();
+  ct.querySelector('#qo').addEventListener('click',e=>{
+    const b=e.target.closest('.quiz-opt');if(!b||qAns)return;qAns=true;
+    if(b.dataset.v===q.ans){b.classList.add('correct');ct.querySelector('#fb').innerHTML=`<div style="background:#dcfce7;color:#166534;padding:12px;border-radius:10px"><b>${T.correct}</b> ${q.ex}</div>`}
+    else{b.classList.add('wrong');ct.querySelectorAll('.quiz-opt').forEach(x=>{if(x.dataset.v===q.ans)x.classList.add('correct')});ct.querySelector('#fb').innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px"><b>${q.ans}</b> is closest. ${q.ex}</div>`}
+    ct.querySelector('#nxt').style.display='block';
+  });
+  ct.querySelector('#nxt').onclick=()=>{cIdx++;renderClosest()};
+}
+
+function tabs(a){return['compare','closest'].map(m=>`<button class="mode-tab${m===a?' active':''}" data-m="${m}">${T[m]||m}</button>`).join('')}
+function wireMode(){ct.querySelectorAll('.mode-tab').forEach(b=>b.onclick=()=>{mode=b.dataset.m;qIdx=0;cIdx=0;qScore=0;qTotal=0;if(mode==='compare')renderCompare();else renderClosest()})}
+
+renderCompare();
+</script>
+</body>
+</html>

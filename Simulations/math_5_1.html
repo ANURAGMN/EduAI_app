@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1d4ed8">
+<title>Angle Chase Bridge</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#1d4ed8,#1e3a8a);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}.header h1{font-size:20px;font-weight:800}.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#eff6ff;border-radius:10px;padding:8px;text-align:center}.k{font-size:10px;color:#1d4ed8;font-weight:700;text-transform:uppercase}.v{font-size:17px;font-weight:800;color:#0f172a}
+.mission{background:#eff6ff;border:2px solid #bfdbfe;border-radius:12px;padding:10px;margin-bottom:10px;font-size:12px;color:#1e3a8a}
+.stage{height:240px;background:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;overflow:hidden}
+svg{width:100%;height:100%;display:block;touch-action:none}
+.pad{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.nbtn{padding:8px;border:none;border-radius:8px;background:#dbeafe;color:#1e3a8a;font-weight:800;cursor:pointer}
+.actions{display:flex;gap:8px;margin-top:10px}.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.check{background:#1d4ed8;color:#fff}.next{background:#0f766e;color:#fff}.retry{background:#334155;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.4}
+.good{background:#dcfce7;color:#166534}.bad{background:#fef2f2;color:#991b1b}.info{background:#eff6ff;color:#1e3a8a}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header"><h1>Angle Chase Bridge</h1><p>Tune a transversal to unlock bridge angles</p></div>
+  <div class="card" id="sim"></div>
+</div>
+<script>
+const sim=document.getElementById('sim');
+const ROUNDS=[{t:45,tol:2},{t:68,tol:2},{t:92,tol:2},{t:125,tol:2},{t:138,tol:2}];
+let st={run:true,idx:0,score:0,lives:3,a:40,resolved:false,msg:'',msgType:'info'};
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function setup(){st.a=25+Math.random()*130;st.resolved=false;st.msg='';st.msgType='info';}
+function nudge(d){if(!st.run||st.resolved)return;st.a=clamp(st.a+d,5,175);render();}
+function setA(v){if(!st.run||st.resolved)return;st.a=clamp(parseFloat(v)||0,5,175);render();}
+function check(){if(!st.run||st.resolved)return;const m=ROUNDS[st.idx];st.resolved=true;if(Math.abs(st.a-m.t)<=m.tol){st.score+=12;st.msg='Bridge lock opened!';st.msgType='good';}else{st.lives--;st.msg=`Need ${m.t}°`;st.msgType='bad';if(st.lives<=0)st.run=false;}render();}
+function next(){if(!st.resolved)return;st.idx++;if(st.idx>=ROUNDS.length){st.run=false;st.msg='Bridge complete!';st.msgType='good';render();return;}setup();render();}
+function retry(){if(st.run&&st.resolved){setup();render();}}
+function restart(){st={run:true,idx:0,score:0,lives:3,a:40,resolved:false,msg:'',msgType:'info'};setup();render();}
+function render(){
+  const done=!st.run,m=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  const b=180-st.a;
+  sim.innerHTML=`
+  <div class="stats">
+    <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+    <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+    <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+    <div class="stat"><div class="k">Target</div><div class="v">${m.t}°</div></div>
+  </div>
+  <div class="mission">Set red bridge angle to <b>${m.t}° ± ${m.tol}°</b>. Opposite angle auto-matches.</div>
+  <div class="stage">
+    <svg id="svg" viewBox="0 0 400 240">
+      <line x1="10" y1="70" x2="390" y2="70" stroke="#334155" stroke-width="4"/>
+      <line x1="10" y1="170" x2="390" y2="170" stroke="#334155" stroke-width="4"/>
+      <line x1="70" y1="220" x2="330" y2="20" stroke="#1d4ed8" stroke-width="4"/>
+      <text x="220" y="64" fill="#dc2626" font-size="14" font-weight="700">${st.a.toFixed(1)}°</text>
+      <text x="130" y="176" fill="#16a34a" font-size="14" font-weight="700">${b.toFixed(1)}°</text>
+    </svg>
+  </div>
+  <div class="pad">
+    <button class="nbtn" id="m5" ${done||st.resolved?'disabled':''}>-5°</button>
+    <button class="nbtn" id="m1" ${done||st.resolved?'disabled':''}>-1°</button>
+    <button class="nbtn" id="p1" ${done||st.resolved?'disabled':''}>+1°</button>
+    <button class="nbtn" id="p5" ${done||st.resolved?'disabled':''}>+5°</button>
+  </div>
+  <div style="font-size:12px;color:#1e3a8a;margin-top:6px">Angle: ${st.a.toFixed(1)}° <input id="slider" type="range" min="5" max="175" step="0.1" value="${st.a.toFixed(1)}" style="width:100%" ${done||st.resolved?'disabled':''}></div>
+  <div class="actions">
+    ${done?`<button class="btn next" id="restartBtn">Restart</button>`:st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Lock Angle</button>`}
+  </div>
+  ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Use fine controls for exact hit.</div>`}
+  `;
+  const bind=(id,d)=>{const el=sim.querySelector('#'+id);if(el)el.onclick=()=>nudge(d);};bind('m5',-5);bind('m1',-1);bind('p1',1);bind('p5',5);
+  const s=sim.querySelector('#slider'); if(s) s.oninput=e=>setA(e.target.value);
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rt=sim.querySelector('#retryBtn'); if(rt) rt.onclick=retry;
+  const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+}
+setup();render();
+</script>
+</body>
+</html>

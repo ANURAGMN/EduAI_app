@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0369a1">
+<title>Expression Comparison — Reason, Don't Calculate</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0369a1 0%,#7c3aed 100%);min-height:100vh;-webkit-font-smoothing:antialiased}
+#app{max-width:420px;margin:auto;padding:10px;padding-top:max(10px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom))}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:18px;font-weight:700;margin-bottom:4px}
+.header p{font-size:12px;opacity:.9}
+.sim-card{background:#fff;border-radius:14px;padding:12px;box-shadow:0 6px 18px rgba(0,0,0,.15);margin-bottom:12px}
+.score-bar{display:flex;justify-content:center;gap:20px;padding:10px;background:rgba(255,255,255,.15);border-radius:10px;margin-bottom:12px;color:#fff;font-size:12px;font-weight:600}
+.score-bar b{font-size:18px}
+/* Versus display */
+.vs-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.vs-expr{flex:1;background:#f0f9ff;border-radius:10px;padding:14px 8px;text-align:center;font-family:'Courier New',monospace;font-size:14px;font-weight:700;color:#0c4a6e;border:2px solid #bae6fd}
+.vs-middle{font-size:22px;font-weight:800;color:#cbd5e1;width:36px;text-align:center;flex-shrink:0}
+/* Answer buttons */
+.ans-row{display:flex;gap:8px;justify-content:center;margin:12px 0}
+.ans-btn{padding:14px 20px;border-radius:10px;border:2px solid #e5e7eb;font-size:18px;font-weight:700;cursor:pointer;background:#fff;min-width:60px;text-align:center;transition:all .15s}
+.ans-btn:active{transform:scale(.96)}
+.ans-btn.correct{border-color:#16a34a;background:#dcfce7;color:#166534}
+.ans-btn.wrong{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+/* Explanation */
+.explain-box{background:#f0f9ff;border-radius:10px;padding:12px;border-left:4px solid #0369a1;font-size:12px;line-height:1.6;color:#475569;min-height:40px;margin-bottom:10px}
+.explain-box b{color:#0369a1}
+/* Next button */
+.next-btn{display:block;margin:0 auto;padding:12px 28px;border-radius:10px;border:none;background:linear-gradient(135deg,#0369a1,#7c3aed);color:#fff;font-weight:600;font-size:13px;cursor:pointer}
+.next-btn:active{transform:scale(.97)}
+/* Reasoning hint */
+.hint-box{background:#fffbeb;border-radius:10px;padding:10px;border-left:4px solid #f59e0b;font-size:11px;line-height:1.5;color:#92400e;margin-bottom:10px}
+/* Insight */
+.insight-box{background:linear-gradient(135deg,#f0f9ff,#dbeafe);border-radius:10px;padding:12px;margin-top:12px;border-left:4px solid #0369a1;font-size:12px;line-height:1.5}
+.insight-title{font-weight:700;color:#0369a1;margin-bottom:4px}
+/* Help */
+.help-btn{position:fixed;bottom:20px;right:20px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#0369a1,#7c3aed);color:#fff;border:3px solid #fff;box-shadow:0 4px 15px rgba(3,105,161,.4);font-size:20px;font-weight:700;cursor:pointer;z-index:100;display:flex;align-items:center;justify-content:center}
+.help-btn:active{transform:scale(.9)}
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.help-overlay.open{display:flex}
+.help-panel{background:#fff;border-radius:20px 20px 0 0;max-width:420px;width:100%;max-height:75vh;overflow-y:auto;padding:20px 16px env(safe-area-inset-bottom);animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.help-close{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.help-close h2{font-size:16px;font-weight:700;color:#333}
+.help-close button{width:32px;height:32px;border-radius:50%;border:none;background:#f1f5f9;font-size:18px;cursor:pointer;color:#64748b}
+.help-section{margin-bottom:14px}
+.help-section-title{font-size:12px;font-weight:700;color:#0369a1;margin-bottom:6px}
+.help-step{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px;line-height:1.5;color:#475569}
+.help-step:last-child{border-bottom:none}
+.help-step-num{width:22px;height:22px;border-radius:50%;background:#0369a1;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.help-try{background:#f0f9ff;border-radius:8px;padding:8px 10px;font-size:11px;color:#0c4a6e;line-height:1.5;margin-top:4px}
+.help-try b{color:#0369a1}
+.help-key{background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:8px;padding:8px 10px;font-size:11px;color:#92400e;line-height:1.5;margin-top:4px}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="header">
+  <h1>Compare Expressions</h1>
+  <p>Reason without calculating — use terms!</p>
+</div>
+<div class="score-bar">Score: <b id="score">0</b>/<b id="total">0</b> &nbsp; Question: <b id="qnum">1</b></div>
+<div class="sim-card" id="sim"></div>
+<div class="insight-box">
+  <div class="insight-title">Comparing Strategy</div>
+  Don't compute both sides! Instead, look at <b>what changed</b> between the two expressions. If one term got bigger and nothing else changed, the whole expression got bigger.
+</div>
+
+<button class="help-btn" id="helpBtn">?</button>
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-panel">
+    <div class="help-close"><h2>How to Use This Simulation</h2><button id="helpClose">&times;</button></div>
+    <div class="help-section">
+      <div class="help-section-title">What To Do</div>
+      <div class="help-step"><span class="help-step-num">1</span><span>Read the two expressions side by side. <b>Don't calculate</b> — instead, reason about which is bigger.</span></div>
+      <div class="help-step"><span class="help-step-num">2</span><span>Tap <b>&lt;</b>, <b>&gt;</b>, or <b>=</b> to answer.</span></div>
+      <div class="help-step"><span class="help-step-num">3</span><span>Read the <b>explanation</b> to see the reasoning — how terms shift, what's added or removed.</span></div>
+      <div class="help-step"><span class="help-step-num">4</span><span>Tap <b>Next</b> for more questions. Build your number sense!</span></div>
+    </div>
+    <div class="help-section">
+      <div class="help-section-title">Try This</div>
+      <div class="help-try"><b>Example:</b> 1023+125 vs 1022+128. Left has 1 more in first part, but Right has 3 more in second part. Net: Right is 2 more. So Left &lt; Right.</div>
+      <div class="help-try"><b>Distributive:</b> (34−28)×42 vs 34×42−28×42. These are the SAME by distributive property! (34−28)×42 = 34×42−28×42. Answer: =</div>
+    </div>
+    <div class="help-section">
+      <div class="help-section-title">Key Concept</div>
+      <div class="help-key">To compare expressions without computing: identify which terms changed and by how much. If one side gained more than it lost compared to the other, it's bigger. Use properties (commutative, distributive) to recognize when expressions are equal.</div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+document.getElementById('helpBtn').onclick=()=>document.getElementById('helpOverlay').classList.add('open');
+document.getElementById('helpClose').onclick=()=>document.getElementById('helpOverlay').classList.remove('open');
+document.getElementById('helpOverlay').onclick=(e)=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open')};
+
+const QUIZ=[
+  {l:"1023 + 125",r:"1022 + 128",ans:"<",hint:"Left starts 1 higher, but Right adds 3 more",ex:"Left: 1148. Right: 1150. Right is 2 more."},
+  {l:"245 + 289",r:"246 + 285",ans:">",hint:"Left has 1 less in first, 4 more in second",ex:"Left: 534. Right: 531. Left is 3 more."},
+  {l:"273 − 145",r:"272 − 144",ans:"=",hint:"Left starts 1 higher, but also subtracts 1 more",ex:"Both equal 128. Changes cancel out."},
+  {l:"364 + 587",r:"363 + 589",ans:"<",hint:"Left has 1 more, but Right adds 2 more",ex:"Left: 951. Right: 952. Right is 1 more."},
+  {l:"124 + 245",r:"129 + 245",ans:"<",hint:"Same second term, but Right has 5 more in first",ex:"129 > 124, same 245. Right is bigger."},
+  {l:"213 − 77",r:"214 − 76",ans:"<",hint:"Right starts 1 higher AND subtracts 1 less",ex:"Left: 136. Right: 138. Right gains twice."},
+  {l:"(8 − 3) × 29",r:"(3 − 8) × 29",ans:">",hint:"8−3=5 (positive), 3−8=−5 (negative)",ex:"Left: 5×29=145. Right: −5×29=−145."},
+  {l:"15 + 9 × 18",r:"(15 + 9) × 18",ans:"<",hint:"Right multiplies ALL of 15+9 by 18, not just 9",ex:"Left: 15+162=177. Right: 24×18=432."},
+  {l:"23 × (17 − 9)",r:"23 × 17 + 23 × 9",ans:"<",hint:"Left: 23×8. Right: 23×17+23×9 (sum, not difference!)",ex:"Left: 184. Right: 391+207=598."},
+  {l:"(34 − 28) × 42",r:"34 × 42 − 28 × 42",ans:"=",hint:"Distributive property: (a−b)×c = a×c − b×c",ex:"Both equal 6×42 = 252."},
+  {l:"(16 − 11) × 12",r:"−11 × 12 + 16 × 12",ans:"=",hint:"Rewrite right: 16×12 − 11×12 = (16−11)×12",ex:"Both equal 5×12 = 60."},
+  {l:"25 × (42 + 16)",r:"25 × (43 + 15)",ans:"=",hint:"42+16 = 43+15 = 58",ex:"Both equal 25×58 = 1450."},
+  {l:"83 × 42 − 18",r:"83 × 40 − 18",ans:">",hint:"Same −18, but left has 83×42 > 83×40",ex:"42 > 40, so 83×42 > 83×40."},
+  {l:"145 − 17 × 8",r:"145 − 17 × 6",ans:"<",hint:"Left subtracts 17×8 (more), Right subtracts 17×6 (less)",ex:"Left subtracts more, so Left is smaller."},
+  {l:"49 − 7 + 8",r:"49 − 7 + 8",ans:"=",hint:"Identical expressions!",ex:"Same expression, same value: 50."}
+];
+
+const c=document.getElementById("sim");
+let qIdx=0,score=0,total=0,answered=false;
+// Shuffle
+for(let i=QUIZ.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[QUIZ[i],QUIZ[j]]=[QUIZ[j],QUIZ[i]]}
+
+function render(){
+  if(qIdx>=QUIZ.length)qIdx=0;
+  const q=QUIZ[qIdx];
+  document.getElementById("score").textContent=score;
+  document.getElementById("total").textContent=total;
+  document.getElementById("qnum").textContent=qIdx+1;
+
+  c.innerHTML=`
+  <div class="vs-row">
+    <div class="vs-expr">${q.l}</div>
+    <div class="vs-middle">?</div>
+    <div class="vs-expr">${q.r}</div>
+  </div>
+  <div class="hint-box">${q.hint}</div>
+  <div class="ans-row" id="ans-row">
+    <button class="ans-btn" data-v="<">&lt;</button>
+    <button class="ans-btn" data-v="=">=</button>
+    <button class="ans-btn" data-v=">">&gt;</button>
+  </div>
+  <div class="explain-box" id="explain"></div>
+  <button class="next-btn" id="nxt" style="display:none">Next Question</button>`;
+
+  answered=false;
+  c.querySelector("#ans-row").addEventListener("click",e=>{
+    const b=e.target.closest(".ans-btn");if(!b||answered)return;answered=true;total++;
+    if(b.dataset.v===q.ans){b.classList.add("correct");score++;c.querySelector("#explain").innerHTML=`<b style="color:#16a34a">Correct!</b> ${q.ex}`}
+    else{b.classList.add("wrong");c.querySelectorAll(".ans-btn").forEach(x=>{if(x.dataset.v===q.ans)x.classList.add("correct")});c.querySelector("#explain").innerHTML=`<b style="color:#dc2626">Answer: ${q.ans}</b> — ${q.ex}`}
+    document.getElementById("score").textContent=score;document.getElementById("total").textContent=total;
+    c.querySelector("#nxt").style.display="block";
+  });
+  c.querySelector("#nxt").onclick=()=>{qIdx++;render()};
+}
+render();
+</script>
+</body>
+</html>

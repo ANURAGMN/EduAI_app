@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0284c7">
+<title>Grouped Data Median Mission</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#0284c7,#0369a1);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}.v{font-size:17px;font-weight:800;color:#0f172a}
+.mission{background:#ecfeff;border:2px solid #99f6e4;border-radius:12px;padding:10px;margin-bottom:10px;font-size:12px;color:#134e4a}
+.table{background:#f8fafc;border:2px solid #cbd5e1;border-radius:10px;padding:8px}
+.r{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px 0;border-bottom:1px solid #e2e8f0}
+.r:last-child{border-bottom:none}
+.h{font-size:11px;color:#475569}.n{font-family:'Courier New',monospace;font-weight:900;color:#0f172a}
+.ctrl{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.b{padding:8px;border:none;border-radius:8px;background:#e0f2fe;color:#075985;font-weight:800;cursor:pointer}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.check{background:#0284c7;color:#fff}.next{background:#0f766e;color:#fff}.retry{background:#334155;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.4}
+.good{background:#dcfce7;color:#166534}.bad{background:#fef2f2;color:#991b1b}.info{background:#eff6ff;color:#1e3a8a}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Grouped Data Median Mission</h1>
+    <p>Find class containing median by cumulative frequency</p>
+  </div>
+  <div class="card" id="sim"></div>
+</div>
+<script>
+const sim=document.getElementById('sim');
+const ROUNDS=[
+  {cls:['0-10','10-20','20-30','30-40'], f:[3,7,8,2], ans:2},
+  {cls:['5-15','15-25','25-35','35-45'], f:[4,5,6,5], ans:2},
+  {cls:['0-5','5-10','10-15','15-20'], f:[2,6,7,5], ans:2},
+  {cls:['10-20','20-30','30-40','40-50'], f:[5,9,4,2], ans:1},
+  {cls:['2-6','6-10','10-14','14-18'], f:[3,4,9,4], ans:2}
+];
+let st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info',pick:0};
+function setup(){ st.pick=0; st.resolved=false; st.msg=''; st.msgType='info'; }
+function nudge(d){ if(!st.run||st.resolved) return; st.pick=Math.max(0,Math.min(3,st.pick+d)); render(); }
+function check(){
+  if(!st.run||st.resolved) return;
+  const r=ROUNDS[st.idx]; st.resolved=true;
+  if(st.pick===r.ans){ st.score+=12; st.msg='Correct median class selected.'; st.msgType='good'; }
+  else{ st.lives--; st.msg=`Median class is ${r.cls[r.ans]}.`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){ if(!st.resolved) return; st.idx++; if(st.idx>=ROUNDS.length){st.run=false; st.msg='Mission complete!'; st.msgType='good'; render(); return;} setup(); render(); }
+function retry(){ if(st.run&&st.resolved){ setup(); render(); } }
+function restart(){ st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info',pick:0}; setup(); render(); }
+function render(){
+  const done=!st.run, r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  let cf=0;
+  const cfs=r.f.map(v=>{cf+=v; return cf;});
+  const n=cf, n2=n/2;
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">N/2</div><div class="v">${n2}</div></div>
+    </div>
+    <div class="mission">Find the class where cumulative frequency first reaches/exceeds <b>N/2</b>. Use arrows to pick class index.</div>
+    <div class="table">
+      <div class="r"><div class="h">Class interval</div><div class="h">f / c.f.</div></div>
+      ${r.cls.map((c,i)=>`<div class="r" style="${i===st.pick?'background:#e0f2fe;border-radius:6px':''}"><div class="n">${c}</div><div class="n">${r.f[i]} / ${cfs[i]}</div></div>`).join('')}
+    </div>
+    <div class="ctrl">
+      <button class="b" id="m2" ${done||st.resolved?'disabled':''}>-2</button>
+      <button class="b" id="m1" ${done||st.resolved?'disabled':''}>-1</button>
+      <button class="b" id="p1" ${done||st.resolved?'disabled':''}>+1</button>
+      <button class="b" id="p2" ${done||st.resolved?'disabled':''}>+2</button>
+    </div>
+    <div style="font-size:12px;color:#0f766e;margin-top:6px">Selected class: <b>${r.cls[st.pick]}</b></div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Check Median Class</button>`}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Track cumulative frequency and target N/2 carefully.</div>`}
+  `;
+  const bind=(id,d)=>{const el=sim.querySelector('#'+id); if(el) el.onclick=()=>nudge(d);};
+  bind('m2',-2); bind('m1',-1); bind('p1',1); bind('p2',2);
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const nx=sim.querySelector('#nextBtn'); if(nx) nx.onclick=next;
+  const rt=sim.querySelector('#retryBtn'); if(rt) rt.onclick=retry;
+  const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+}
+setup(); render();
+</script>
+</body>
+</html>

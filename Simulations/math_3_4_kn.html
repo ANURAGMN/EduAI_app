@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="kn" dir="ltr">
+<head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#dc2626">
+<title>ದಶಮಾಂಶ ಸಂಕಲನ ಮತ್ತು ವ್ಯವಕಲನ — ಅಧ್ಯಾಯ ೩</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans Kannada',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#dc2626 0%,#ea580c 100%);min-height:100vh;-webkit-font-smoothing:antialiased}#app{max-width:420px;margin:auto;padding:10px;padding-top:max(10px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom))}
+.header{text-align:center;color:#fff;padding:14px}
+.header h1{font-size:20px;font-weight:800;margin-bottom:4px}
+.header p{font-size:13px;opacity:.9}
+.sim-card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.12);margin-bottom:14px}
+/* Computation display */
+.comp-display{background:linear-gradient(135deg,#fef2f2,#fecaca);border-radius:14px;padding:16px;margin-bottom:12px;font-family:'Courier New',monospace}
+.comp-row{display:flex;justify-content:flex-end;gap:0;font-size:22px;font-weight:700;color:#1e293b;line-height:1.6}
+.comp-row.op{color:#dc2626}
+.comp-row.line{border-bottom:3px solid #dc2626;margin:4px 0;padding:0}
+.comp-row.result{color:#dc2626;font-size:24px}
+.comp-digit{width:22px;text-align:center}
+.comp-carry{font-size:11px;color:#dc2626;font-weight:700}
+/* Step cards */
+.step-card{background:#fef2f2;border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:4px solid #dc2626;font-size:13px;line-height:1.6;color:#334155}
+.step-card b{color:#dc2626}
+.step-num{display:inline-flex;width:22px;height:22px;border-radius:50%;background:#dc2626;color:#fff;font-size:10px;font-weight:700;align-items:center;justify-content:center;margin-right:8px}
+/* Result */
+.result-panel{background:linear-gradient(135deg,#fef2f2,#fecaca);border-radius:14px;padding:16px;text-align:center;border:2px solid #f87171;margin-bottom:12px}
+.result-label{font-size:12px;color:#991b1b;font-weight:600}
+.result-value{font-size:28px;font-weight:800;color:#7f1d1d;margin:4px 0}
+/* Presets */
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.preset-btn{padding:7px 10px;border-radius:20px;border:2px solid #fecaca;background:#fff;font-size:10px;font-weight:600;cursor:pointer;color:#991b1b;font-family:'Courier New',monospace}
+.preset-btn:active{transform:scale(.95)}
+.preset-btn.active{background:#dc2626;color:#fff;border-color:#dc2626}
+/* Slider */
+.slider-group{margin-bottom:12px}
+.slider-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.slider-label .name{color:#555}
+.slider-label .val{font-weight:700;color:#dc2626}
+input[type="range"]{width:100%;height:8px;border-radius:4px;background:#e5e7eb;-webkit-appearance:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
+/* Insight */
+.insight-box{background:linear-gradient(135deg,#fef2f2,#fecaca);border-radius:12px;padding:14px;margin-top:14px;border-left:4px solid #dc2626;font-size:13px;line-height:1.5}
+.insight-title{font-weight:700;color:#991b1b;margin-bottom:6px}
+/* Help */
+.help-btn{position:fixed;bottom:20px;right:20px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#dc2626,#ea580c);color:#fff;border:3px solid #fff;box-shadow:0 4px 15px rgba(220,38,38,.4);font-size:20px;font-weight:700;cursor:pointer;z-index:100;display:flex;align-items:center;justify-content:center}
+.help-btn:active{transform:scale(.9)}
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.help-overlay.open{display:flex}
+.help-panel{background:#fff;border-radius:20px 20px 0 0;max-width:420px;width:100%;max-height:75vh;overflow-y:auto;padding:20px 16px env(safe-area-inset-bottom);animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.help-close{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.help-close h2{font-size:16px;font-weight:700;color:#333}
+.help-close button{width:32px;height:32px;border-radius:50%;border:none;background:#f1f5f9;font-size:18px;cursor:pointer;color:#64748b}
+.help-section{margin-bottom:14px}
+.help-section-title{font-size:12px;font-weight:700;color:#dc2626;margin-bottom:6px}
+.help-step{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px;line-height:1.5;color:#475569}
+.help-step:last-child{border-bottom:none}
+.help-step .sn{width:22px;height:22px;border-radius:50%;background:#dc2626;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.help-try{background:#fef2f2;border-radius:8px;padding:8px 10px;font-size:11px;color:#991b1b;line-height:1.5;margin-top:4px}
+.help-key{background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:8px;padding:8px 10px;font-size:11px;color:#92400e;line-height:1.5;margin-top:4px}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="header">
+  <h1>ದಶಮಾಂಶ ಸಂಕಲನ ಮತ್ತು ವ್ಯವಕಲನ</h1>
+  <p>ದಶಮಾಂಶಗಳನ್ನು ಹಂತ ಹಂತವಾಗಿ ಕೂಡಿಸಿ ಮತ್ತು ಕಳೆಯಿರಿ</p>
+</div>
+<div class="sim-card" id="sim"></div>
+<div class="insight-box">
+  <div class="insight-title">ಮುಖ್ಯ ನಿಯಮ</div>
+  ದಶಮಾಂಶಗಳನ್ನು ಕೂಡಿಸುವುದು ಮತ್ತು ಕಳೆಯುವುದು ಪೂರ್ಣ ಸಂಖ್ಯೆಗಳಂತೆಯೇ — <b>ದಶಮಾಂಶ ಬಿಂದುಗಳನ್ನು ಜೋಡಿಸಿ</b>, ನಂತರ ಬಲದಿಂದ ಎಡಕ್ಕೆ ಕಾಲಂ ಕಾಲಂ ಕೂಡಿಸಿ/ಕಳೆಯಿರಿ. ಕ್ಯಾರಿ ಮತ್ತು ಸಾಲ (borrow) ಒಂದೇ ರೀತಿ: 10 ಶತಾಂಶ = 1 ದಶಾಂಶ, 10 ದಶಾಂಶ = 1 ಏಕ.
+</div>
+
+<button class="help-btn" id="helpBtn">?</button>
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-panel">
+    <div class="help-close"><h2>ಈ ಸಿಮ್ಯುಲೇಶನ್ ಹೇಗೆ ಬಳಸುವುದು</h2><button id="helpClose">&times;</button></div>
+    <div class="help-section">
+      <div class="help-section-title">ಏನು ಮಾಡಬೇಕು</div>
+      <div class="help-step"><span class="sn">1</span><span><b>ಪ್ರೀಸೆಟ್</b> ಗಳಿಂದ ಒಂದು ಸಮಸ್ಯೆ ಆಯ್ಕೆಮಾಡಿ — ಪಾಠಪುಸ್ತಕ ಅಭ್ಯಾಸಗಳಿಂದ.</span></div>
+      <div class="help-step"><span class="sn">2</span><span>ದಶಮಾಂಶ ಬಿಂದುಗಳನ್ನು ಜೋಡಿಸಿದ <b>ಲಂಬ ಲೆಕ್ಕ</b> ನೋಡಿ.</span></div>
+      <div class="help-step"><span class="sn">3</span><span>ಪ್ರತಿ ಕಾಲಂ ಹೇಗೆ ಲೆಕ್ಕಹಾಕಲ್ಪಟ್ಟಿದೆ (ಅಗತ್ಯವಿದ್ದರೆ carry/borrow) ತೋರಿಸುವ <b>ಹಂತಗಳು</b> ಓದಿ.</span></div>
+    </div>
+    <div class="help-section">
+      <div class="help-section-title">ಮುಖ್ಯ ಕಲ್ಪನೆ</div>
+      <div class="help-key"><b>ಯಾವಾಗಲೂ ದಶಮಾಂಶ ಬಿಂದುಗಳನ್ನು ಜೋಡಿಸಿ!</b> ಅಗತ್ಯವಿದ್ದರೆ ಶೂನ್ಯದಿಂದ ತುಂಬಿಸಿ (18 = 18.0, 5.3 = 5.30). ನಂತರ ಬಲದಿಂದ ಪ್ರತಿ ಕಾಲಂ ಕೂಡಿಸಿ/ಕಳೆಯಿರಿ. 10 ಸಾವಿರಾಂಶ = 1 ಶತಾಂಶ, 10 ಶತಾಂಶ = 1 ದಶಾಂಶ, 10 ದಶಾಂಶ = 1 ಏಕ.</div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+document.getElementById('helpBtn').onclick=()=>document.getElementById('helpOverlay').classList.add('open');
+document.getElementById('helpClose').onclick=()=>document.getElementById('helpOverlay').classList.remove('open');
+document.getElementById('helpOverlay').onclick=e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open')};
+
+const PROBLEMS=[
+  {a:5.3,b:2.6,op:'+',result:7.9},
+  {a:18,b:8.8,op:'+',result:26.8},
+  {a:2.15,b:5.26,op:'+',result:7.41},
+  {a:9.01,b:9.10,op:'+',result:18.11},
+  {a:29.19,b:9.91,op:'+',result:39.10},
+  {a:0.934,b:0.6,op:'+',result:1.534},
+  {a:75.345,b:86.691,op:'+',result:162.036},
+  {a:5.6,b:2.3,op:'-',result:3.3},
+  {a:18,b:8.8,op:'-',result:9.2},
+  {a:10.4,b:4.5,op:'-',result:5.9},
+  {a:17,b:16.198,op:'-',result:0.802},
+  {a:34.505,b:18.1,op:'-',result:16.405},
+  {a:9.9,b:9.09,op:'-',result:0.81},
+  {a:6.236,b:0.487,op:'-',result:5.749}
+];
+
+const T={exploreProblems:"ಸಮಸ್ಯೆಗಳನ್ನು ಅನ್ವೇಷಿಸಿ",quiz:"ರಸಪ್ರಶ್ನೆ",score:"ಸ್ಕೋರ್",question:"ಪ್ರಶ್ನೆ",nextQ:"ಮುಂದಿನ ಪ್ರಶ್ನೆ",correct:"ಸರಿ!",answer:"ಉತ್ತರ"};
+const ct=document.getElementById("sim");
+let pIdx=0,arMode="explore",arQIdx=0,arQScore=0,arQTotal=0,arQAns=false;
+
+const AR_QUIZ=[
+  {q:"5.3 + 2.6 = ?",opts:["7.9","7.09","8.9","79"],ans:"7.9",ex:"3+6=9 tenths, 5+2=7 → 7.9"},
+  {q:"18 + 8.8 = ?",opts:["26.8","26.08","188.8","9.8"],ans:"26.8",ex:"18.0 + 8.8: 0+8=8 tenths, 18+8=26 → 26.8"},
+  {q:"2.15 + 5.26 = ?",opts:["7.41","7.31","73.1","7.14"],ans:"7.41",ex:"5+6=11 hundredths (carry 1), 1+2+1=4 tenths, 2+5=7 → 7.41"},
+  {q:"5.6 − 2.3 = ?",opts:["3.3","3.03","33","2.3"],ans:"3.3",ex:"6−3=3 tenths, 5−2=3 → 3.3"},
+  {q:"18 − 8.8 = ?",opts:["9.2","9.02","10.2","8.2"],ans:"9.2",ex:"18.0 − 8.8: borrow 1 unit → 17.10, 10−8=2 tenths, 17−8=9 → 9.2"},
+  {q:"10.4 − 4.5 = ?",opts:["5.9","6.9","5.1","6.1"],ans:"5.9",ex:"Can't do 4−5 tenths → borrow: 9.14, 14−5=9 tenths, 9−4=5 → 5.9"},
+  {q:"0.75 + 0.03 = ?",opts:["0.78","0.78","7.8","0.708"],ans:"0.78",ex:"5+3=8 hundredths, 7 tenths stays → 0.78"},
+  {q:"9.9 − 9.09 = ?",opts:["0.81","0.09","0.9","8.1"],ans:"0.81",ex:"9.90 − 9.09: 0−9 → borrow: 9.8.10, 10−9=1 h, 8−0=8 t, 9−9=0 → 0.81"},
+  {q:"Estimate: 25.936 + 8.202 is between?",opts:["33 and 36","25 and 30","40 and 45","8 and 10"],ans:"33 and 36",ex:"Whole parts: 25+8=33. Max: 26+9=35. So between 33 and 36."},
+  {q:"17 − 0.05 = ?",opts:["16.95","16.5","16.05","17.05"],ans:"16.95",ex:"17.00 − 0.05: 0−5 → borrow: 16.9.10, 10−5=5 h, 9 t, 16 → 16.95"}
+];
+
+function renderARQuiz(){
+  if(arQIdx>=AR_QUIZ.length)arQIdx=0;
+  const q=AR_QUIZ[arQIdx];
+  ct.innerHTML=`
+  <div style="display:flex;gap:6px;margin-bottom:14px">
+    <button class="preset-btn" style="flex:1;text-align:center;padding:10px" onclick="arMode='explore';render()">${T.exploreProblems}</button>
+    <button class="preset-btn" style="flex:1;text-align:center;padding:10px;background:#dc2626;color:#fff;border-color:#dc2626">${T.quiz}</button>
+  </div>
+  <div style="text-align:center;font-size:13px;font-weight:600;color:#555;margin-bottom:10px">${T.score}: <b style="color:#dc2626">${arQScore}/${arQTotal}</b> &bull; ${T.question} <b>${arQIdx+1}/${AR_QUIZ.length}</b></div>
+  <div style="font-size:18px;font-weight:800;color:#1e293b;text-align:center;padding:18px;background:#fef2f2;border-radius:14px;margin-bottom:12px;font-family:'Courier New',monospace">${q.q}</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px" id="arqo">${q.opts.map(o=>`<button style="padding:14px;border-radius:12px;border:2px solid #e5e7eb;font-size:15px;font-weight:700;cursor:pointer;background:#fff;text-align:center;font-family:'Courier New',monospace" class="qopt" data-v="${o}">${o}</button>`).join('')}</div>
+  <div id="arfb" style="text-align:center;font-size:13px;min-height:20px;margin-bottom:10px"></div>
+  <button id="arnxt" style="display:none;margin:0 auto;padding:14px 32px;border-radius:12px;border:none;background:linear-gradient(135deg,#dc2626,#ea580c);color:#fff;font-weight:700;font-size:14px;cursor:pointer">${T.nextQ}</button>`;
+  arQAns=false;
+  ct.querySelector('#arqo').addEventListener('click',e=>{
+    const b=e.target.closest('.qopt');if(!b||arQAns)return;arQAns=true;arQTotal++;
+    if(b.dataset.v===q.ans){b.style.borderColor='#16a34a';b.style.background='#dcfce7';b.style.color='#166534';arQScore++;ct.querySelector('#arfb').innerHTML=`<div style="background:#dcfce7;color:#166534;padding:12px;border-radius:10px"><b>${T.correct}</b> ${q.ex}</div>`}
+    else{b.style.borderColor='#dc2626';b.style.background='#fef2f2';b.style.color='#991b1b';ct.querySelectorAll('.qopt').forEach(x=>{if(x.dataset.v===q.ans){x.style.borderColor='#16a34a';x.style.background='#dcfce7';x.style.color='#166534'}});ct.querySelector('#arfb').innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px"><b>${T.answer}: ${q.ans}</b> &mdash; ${q.ex}</div>`}
+    ct.querySelector('#arnxt').style.display='block';
+  });
+  ct.querySelector('#arnxt').onclick=()=>{arQIdx++;renderARQuiz()};
+}
+
+function pad(n,dp){return n.toFixed(dp)}
+
+function render(){
+  if(arMode==='quiz'){renderARQuiz();return}
+  const p=PROBLEMS[pIdx];
+  const dp=Math.max((p.a.toString().split('.')[1]||'').length,(p.b.toString().split('.')[1]||'').length,
+    (p.result.toString().split('.')[1]||'').length);
+  const aStr=pad(p.a,dp),bStr=pad(p.b,dp),rStr=pad(p.result,dp);
+  const maxLen=Math.max(aStr.length,bStr.length,rStr.length);
+  const aP=aStr.padStart(maxLen),bP=bStr.padStart(maxLen),rP=rStr.padStart(maxLen);
+
+  // Build vertical display
+  let rows=`
+    <div class="comp-row">${aP.split('').map(c=>`<span class="comp-digit">${c}</span>`).join('')}</div>
+    <div class="comp-row op"><span class="comp-digit">${p.op}</span>${bP.split('').map(c=>`<span class="comp-digit">${c}</span>`).join('')}</div>
+    <div class="comp-row line"></div>
+    <div class="comp-row result">${rP.split('').map(c=>`<span class="comp-digit">${c}</span>`).join('')}</div>`;
+
+  // Steps explanation (Kannada)
+  let steps=[];
+  steps.push(`ದಶಮಾಂಶ ಬಿಂದುಗಳನ್ನು <b>ಜೋಡಿಸಿ</b>: ${aStr} ${p.op} ${bStr}`);
+  if(dp>0)steps.push(`<b>ಬಲದಿಂದ ಎಡಕ್ಕೆ</b> ಕೆಲಸ ಮಾಡಿ: ಚಿಕ್ಕ ಸ್ಥಾನದಿಂದ (${dp===3?'ಸಾವಿರಾಂಶ':dp===2?'ಶತಾಂಶ':'ದಶಾಂಶ'})`);
+  if(p.op==='+'){
+    steps.push(`ಪ್ರತಿ ಕಾಲಂ ಕೂಡಿಸಿ. ಕಾಲಂ ಮೊತ್ತ <b>10 ಅಥವಾ ಹೆಚ್ಚು</b> ಆದರೆ ಎಡದ ಮುಂದಿನ ಕಾಲಂಗೆ 1 ಕ್ಯಾರಿ ಮಾಡಿ`);
+    steps.push(`ಫಲಿತಾಂಶ: <b>${rStr}</b>`);
+  } else {
+    steps.push(`ಪ್ರತಿ ಕಾಲಂ ಕಳೆಯಿರಿ. ಅಂಕಿ <b>ಚಿಕ್ಕದಾಗಿದ್ದರೆ</b> ಎಡದ ಕಾಲಂನಿಂದ 1 ಸಾಲ ತೆಗೆದುಕೊಳ್ಳಿ (= 10 ಚಿಕ್ಕ ಏಕ)`);
+    steps.push(`ಫಲಿತಾಂಶ: <b>${rStr}</b>`);
+  }
+
+  let stepsHtml=steps.map((s,i)=>`<div class="step-card"><span class="step-num">${i+1}</span>${s}</div>`).join('');
+
+  let presetsHtml=PROBLEMS.map((pr,i)=>
+    `<button class="preset-btn${i===pIdx?' active':''}" data-i="${i}">${pad(pr.a,1)} ${pr.op} ${pad(pr.b,1)}</button>`
+  ).join('');
+
+  ct.innerHTML=`
+  <div style="display:flex;gap:6px;margin-bottom:14px">
+    <button class="preset-btn" style="flex:1;text-align:center;padding:10px;background:#dc2626;color:#fff;border-color:#dc2626">${T.exploreProblems}</button>
+    <button class="preset-btn" style="flex:1;text-align:center;padding:10px" onclick="arMode='quiz';arQIdx=0;arQScore=0;arQTotal=0;renderARQuiz()">${T.quiz}</button>
+  </div>
+  <div class="comp-display">${rows}</div>
+  ${stepsHtml}
+  <div class="result-panel">
+    <div class="result-label">${p.a} ${p.op} ${p.b}</div>
+    <div class="result-value">${p.result}</div>
+  </div>
+  <div style="font-size:11px;color:#888;margin-bottom:4px">ಸಮಸ್ಯೆ ಆಯ್ಕೆಮಾಡಿ:</div>
+  <div class="presets">${presetsHtml}</div>`;
+
+  ct.querySelectorAll('.preset-btn').forEach(b=>b.onclick=()=>{pIdx=parseInt(b.dataset.i);render()});
+}
+render();
+</script>
+</body>
+</html>

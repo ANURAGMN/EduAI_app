@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0ea5e9">
+<title>Equivalent Fraction Tile Flip</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#0ea5e9,#0284c7);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}.v{font-size:17px;font-weight:800;color:#0f172a}
+.mission{background:#ecfeff;border:2px solid #99f6e4;border-radius:12px;padding:10px;margin-bottom:10px;font-size:12px;color:#134e4a}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{padding:12px;border:2px solid #cbd5e1;border-radius:10px;background:#fff;font-family:'Courier New',monospace;font-size:22px;font-weight:900;color:#0f172a;cursor:pointer}
+.tile.sel{border-color:#0284c7;background:#e0f2fe;color:#0c4a6e}
+.tile.ok{border-color:#16a34a;background:#dcfce7;color:#166534}
+.tile.bad{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.check{background:#0284c7;color:#fff}.next{background:#0f766e;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.4}
+.good{background:#dcfce7;color:#166534}.bad{background:#fef2f2;color:#991b1b}.info{background:#eff6ff;color:#1e3a8a}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Equivalent Fraction Tile Flip</h1>
+    <p>Pick all fractions equivalent to the anchor fraction</p>
+  </div>
+  <div class="card" id="sim"></div>
+</div>
+<script>
+const sim=document.getElementById('sim');
+const ROUNDS=[
+  {base:[1,2], tiles:[[2,4],[3,6],[2,5],[4,8]]},
+  {base:[2,3], tiles:[[4,6],[6,9],[3,5],[8,12]]},
+  {base:[3,5], tiles:[[6,10],[9,15],[5,8],[12,20]]},
+  {base:[4,7], tiles:[[8,14],[12,21],[10,14],[16,28]]},
+  {base:[5,8], tiles:[[10,16],[15,24],[12,20],[20,32]]}
+];
+let st={run:true,idx:0,score:0,lives:3,picks:new Set(),resolved:false,msg:'',msgType:'info'};
+function eq(a,b,c,d){ return a*d===b*c; }
+function setup(){ st.picks=new Set(); st.resolved=false; st.msg=''; st.msgType='info'; }
+function toggle(i){ if(!st.run||st.resolved) return; st.picks.has(i)?st.picks.delete(i):st.picks.add(i); render(); }
+function check(){
+  if(!st.run||st.resolved) return;
+  const r=ROUNDS[st.idx], good=r.tiles.map(t=>eq(t[0],t[1],r.base[0],r.base[1]));
+  st.resolved=true;
+  let ok=true;
+  good.forEach((g,i)=>{ if(g!==st.picks.has(i)) ok=false; });
+  if(ok){ st.score+=12; st.msg='Perfect equivalence set!'; st.msgType='good'; }
+  else { st.lives--; st.msg='Mismatch in selected equivalent tiles.'; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){ if(!st.resolved) return; st.idx++; if(st.idx>=ROUNDS.length){st.run=false; st.msg='Tile flip complete!'; st.msgType='good'; render(); return;} setup(); render(); }
+function restart(){ st={run:true,idx:0,score:0,lives:3,picks:new Set(),resolved:false,msg:'',msgType:'info'}; setup(); render(); }
+function render(){
+  const done=!st.run, r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)], good=r.tiles.map(t=>eq(t[0],t[1],r.base[0],r.base[1]));
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Anchor</div><div class="v">${r.base[0]}/${r.base[1]}</div></div>
+    </div>
+    <div class="mission">Select all tiles equivalent to <b>${r.base[0]}/${r.base[1]}</b>.</div>
+    <div class="tiles">
+      ${r.tiles.map((t,i)=>{
+        let cls=st.picks.has(i)?'sel':'';
+        if(st.resolved){ cls=good[i]?'ok':(st.picks.has(i)?'bad':''); }
+        return `<button class="tile ${cls}" data-i="${i}">${t[0]}/${t[1]}</button>`;
+      }).join('')}
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:st.resolved?`<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Check Tiles</button>`}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Tap multiple tiles before checking.</div>`}
+  `;
+  sim.querySelectorAll('.tile').forEach(b=>b.onclick=()=>toggle(parseInt(b.dataset.i,10)));
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+}
+setup(); render();
+</script>
+</body>
+</html>

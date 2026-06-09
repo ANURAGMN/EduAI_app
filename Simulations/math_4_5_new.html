@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#dc2626">
+<title>Expression Balance Duel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#dc2626 0%,#7c3aed 100%);min-height:100vh}
+#app{max-width:420px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#fef2f2;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#991b1b;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#fef2f2,#fce7f3);border:2px solid #fda4af;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#7f1d1d}
+.mission p{font-size:12px;color:#9f1239;margin-top:4px;line-height:1.45}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.expr{background:#111827;border-radius:12px;color:#fff;padding:12px;text-align:center}
+.expr .t{font-size:11px;opacity:.7}
+.expr .x{font-size:20px;font-weight:800;margin-top:4px;font-family:'Courier New',monospace}
+.vals{background:#f8fafc;border-radius:12px;padding:10px;margin-bottom:10px}
+.vals p{font-size:12px;color:#334155}
+.slider{margin-top:8px}
+input[type=range]{width:100%}
+.read{display:flex;justify-content:space-between;font-size:12px;color:#475569;margin-top:4px}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#dc2626;color:#fff}
+.btn.next{background:#059669;color:#fff}
+.btn.start{background:linear-gradient(135deg,#dc2626,#7c3aed);color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#fef2f2,#fce7f3);border-left:4px solid #dc2626;border-radius:12px;padding:12px;font-size:12px;color:#111827}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Expression Balance Duel</h1>
+    <p>Tune x to make expressions equal under constraints</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Goal:</b> in each duel, drag x until both expressions match. Use fewer checks for higher score.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+
+const DUELS = [
+  {left:(x)=>5*x, right:(x)=>x+20, L:'5x', R:'x+20', range:[0,20]},
+  {left:(x)=>10*x-3, right:(x)=>10*(x-3), L:'10x-3', R:'10(x-3)', range:[0,20]},
+  {left:(x)=>2*x+1, right:(x)=>2*(x+1), L:'2x+1', R:'2(x+1)', range:[0,20]},
+  {left:(x)=>3*x-6, right:(x)=>x+8, L:'3x-6', R:'x+8', range:[0,20]},
+  {left:(x)=>4*x+5, right:(x)=>2*x+19, L:'4x+5', R:'2x+19', range:[0,20]},
+  {left:(x)=>7*x-14, right:(x)=>5*x+2, L:'7x-14', R:'5x+2', range:[0,20]}
+];
+
+let st = {run:false, idx:0, score:0, lives:3, checksLeft:4, x:5, resolved:false, msg:'', msgType:'info'};
+
+function setupRound(){
+  const d = DUELS[st.idx];
+  st.x = Math.round((d.range[0] + d.range[1]) / 2);
+  st.checksLeft = 4;
+  st.resolved = false;
+  st.msg = '';
+}
+
+function start(){
+  st = {...st, run:true, idx:0, score:0, lives:3};
+  setupRound();
+  render();
+}
+
+function check(){
+  if(!st.run || st.resolved) return;
+  const d = DUELS[st.idx];
+  const lv = d.left(st.x);
+  const rv = d.right(st.x);
+  const diff = lv-rv;
+  st.checksLeft -= 1;
+  if(diff===0){
+    st.resolved = true;
+    st.score += 14 + st.checksLeft;
+    st.msg = `Balance achieved! ${lv} = ${rv}.`;
+    st.msgType = 'good';
+    render();
+    return;
+  }
+  if(st.checksLeft<=0){
+    st.resolved = true;
+    st.lives -= 1;
+    st.msg = `No checks left. Need left-right difference 0 (current ${diff}).`;
+    st.msgType = 'bad';
+    if(st.lives<=0) st.run = false;
+  } else {
+    st.msg = `Not equal: left-right = ${diff}. Checks left: ${st.checksLeft}.`;
+    st.msgType = 'info';
+  }
+  render();
+}
+
+function next(){
+  if(!st.resolved) return;
+  st.idx += 1;
+  if(st.idx>=DUELS.length){
+    st.run = false;
+    st.msg = 'Duel series complete!';
+    st.msgType = 'good';
+  } else setupRound();
+  render();
+}
+
+function render(){
+  const done = !st.run;
+  const d = DUELS[Math.min(st.idx, DUELS.length-1)];
+  const lv = d.left(st.x);
+  const rv = d.right(st.x);
+  const diff = lv-rv;
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Duel</div><div class="v">${Math.min(st.idx+1,DUELS.length)}/${DUELS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Checks</div><div class="v">${st.checksLeft}</div></div>
+    </div>
+
+    <div class="mission">
+      <h3>Make both expressions equal</h3>
+      <p>Find integer x so that left and right produce same value.</p>
+    </div>
+
+    <div class="vs">
+      <div class="expr"><div class="t">Left</div><div class="x">${d.L}</div></div>
+      <div class="expr"><div class="t">Right</div><div class="x">${d.R}</div></div>
+    </div>
+
+    <div class="vals">
+      <p>x = <b>${st.x}</b></p>
+      <div class="read"><span>Left value: ${lv}</span><span>Right value: ${rv}</span></div>
+      <div class="read"><span>Difference</span><span><b>${diff}</b></span></div>
+      <div class="slider"><input id="x" type="range" min="${d.range[0]}" max="${d.range[1]}" step="1" value="${st.x}"></div>
+    </div>
+
+    <div class="actions">
+      ${done ? `<button class="btn start" id="startBtn">Start Duel</button>` : (st.resolved ? `<button class="btn next" id="nextBtn">Next Duel</button>` : `<button class="btn check" id="checkBtn">Check Balance</button>`)}
+    </div>
+
+    ${st.msg ? `<div class="msg ${st.msgType}">${st.msg}</div>` : `<div class="msg info">Tip: use difference sign (+/-) to move x in right direction.</div>`}
+  `;
+
+  const x = sim.querySelector('#x'); if(x) x.oninput=()=>{st.x=parseInt(x.value,10); render();};
+  const s = sim.querySelector('#startBtn'); if(s) s.onclick=start;
+  const c = sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n = sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+}
+
+start();
+</script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1d4ed8">
+<title>Scenario Expression Dispatch</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#1d4ed8,#0ea5e9);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#eff6ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#1d4ed8;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #93c5fd;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#1e3a8a}
+.mission p{font-size:12px;color:#1d4ed8;line-height:1.45;margin-top:4px}
+.opts{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+.opt{padding:10px;border:2px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;font-family:'Courier New',monospace;font-size:14px;font-weight:800}
+.opt.sel{border-color:#1d4ed8;background:#dbeafe;color:#1e3a8a}
+.opt.ok{border-color:#16a34a;background:#dcfce7;color:#166534}
+.opt.bad{border-color:#dc2626;background:#fef2f2;color:#991b1b}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#1d4ed8;color:#fff}
+.btn.next{background:#0ea5e9;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-left:4px solid #1d4ed8;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Scenario Expression Dispatch</h1>
+    <p>Dispatch each story to the correct algebraic model</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> convert real situations into concise expressions (cost, perimeter, time models).</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const CASES = [
+  {text:'Cost of c coconuts at ₹35 each and j kg jaggery at ₹60 each', ans:'35c + 60j', opts:['35 + c + 60 + j','35c + 60j','95cj','35c - 60j']},
+  {text:'Perimeter of a square with side q', ans:'4q', opts:['q+4','4q','q/4','q+q']},
+  {text:'Flour mill takes 10 seconds startup and 8 seconds per kg (y kg)', ans:'10 + 8y', opts:['10y + 8','10 + 8y','8 + y','18y']},
+  {text:'Shabnam is 3 years older than Aftab (a)', ans:'a + 3', opts:['3a','a + 3','a - 3','3 + 3a']},
+  {text:'Rope folded r times then cut gives pieces', ans:'r + 2', opts:['2r','r+1','r+2','r/2']},
+  {text:'Meal has x rotis at ₹30 and y pulao plates at ₹20', ans:'30x + 20y', opts:['50xy','30x + 20y','20x + 30y','30 + 20 + x + y']}
+];
+
+let st={run:true,idx:0,score:0,lives:3,pick:null,resolved:false,msg:'',msgType:'info'};
+function choose(i){ if(!st.run||st.resolved) return; st.pick=i; render(); }
+function check(){
+  if(!st.run||st.resolved||st.pick===null) return;
+  const c=CASES[st.idx];
+  st.resolved=true;
+  if(c.opts[st.pick]===c.ans){ st.score+=12; st.msg='Correct dispatch formula.'; st.msgType='good'; }
+  else { st.lives--; st.msg=`Expected: ${c.ans}`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=CASES.length){ st.run=false; st.msg='Dispatch complete!'; st.msgType='good'; render(); return; }
+  st.pick=null; st.resolved=false; st.msg=''; st.msgType='info'; render();
+}
+function restart(){ st={run:true,idx:0,score:0,lives:3,pick:null,resolved:false,msg:'',msgType:'info'}; render(); }
+
+function render(){
+  const done=!st.run;
+  const c=CASES[Math.min(st.idx,CASES.length-1)];
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Case</div><div class="v">${Math.min(st.idx+1,CASES.length)}/${CASES.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Mode</div><div class="v">Model</div></div>
+    </div>
+    <div class="mission">
+      <h3>Choose correct expression</h3>
+      <p>${c.text}</p>
+    </div>
+    <div class="opts">
+      ${c.opts.map((o,i)=>{
+        const cls=st.resolved?(o===c.ans?'ok':(i===st.pick?'bad':'')):(i===st.pick?'sel':'');
+        return `<button class="opt ${cls}" data-i="${i}">${o}</button>`;
+      }).join('')}
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:(st.resolved?`<button class="btn next" id="nextBtn">${st.idx===CASES.length-1?'Finish':'Next Case'}</button>`:`<button class="btn check" id="checkBtn">Check Expression</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Pick one expression then check.</div>`}
+  `;
+  sim.querySelectorAll('.opt').forEach(b=>b.onclick=()=>choose(parseInt(b.dataset.i,10)));
+  const cbtn=sim.querySelector('#checkBtn'); if(cbtn) cbtn.onclick=check;
+  const nbtn=sim.querySelector('#nextBtn'); if(nbtn) nbtn.onclick=next;
+  const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+}
+render();
+</script>
+</body>
+</html>

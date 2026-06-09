@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0284c7">
+<title>Decimal Place Value Builder Bay</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0284c7,#0ea5e9);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.9}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#ecfeff,#e0f2fe);border:2px solid #67e8f9;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission h3{font-size:14px;color:#0c4a6e}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px}
+.slot{background:#f8fafc;border:2px dashed #cbd5e1;border-radius:10px;padding:8px;text-align:center}
+.slot .l{font-size:10px;color:#475569}
+.slot .d{font-size:18px;font-family:'Courier New',monospace;font-weight:900;color:#0f172a;margin-top:3px}
+.deck{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.digit{padding:10px;border:2px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;font-weight:900}
+.digit.used{opacity:.35;cursor:not-allowed}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.reset{background:#e2e8f0;color:#334155}
+.btn.check{background:#0284c7;color:#fff}
+.btn.next{background:#0f766e;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#ecfeff,#e0f2fe);border-left:4px solid #0284c7;border-radius:12px;padding:12px;font-size:12px;color:#0f172a;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Decimal Place Value Builder Bay</h1>
+    <p>Build decimals by placing digits in correct value slots</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Concept:</b> same digits produce different numbers depending on place value position around decimal point.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const POS = ['Hundreds','Tens','Ones','Tenths','Hundredths'];
+const ROUNDS = [
+  {target:'705.34', digits:['7','0','5','3','4']},
+  {target:'70.53', digits:['7','0','5','3','0']},
+  {target:'7.05', digits:['7','0','0','0','5']},
+  {target:'410.35', digits:['4','1','0','3','5']},
+  {target:'926.08', digits:['9','2','6','0','8']},
+  {target:'137.40', digits:['1','3','7','4','0']}
+];
+
+let st={run:true,idx:0,score:0,lives:3,placed:[null,null,null,null,null],used:new Set(),resolved:false,msg:'',msgType:'info'};
+
+function setup(){ st.placed=[null,null,null,null,null]; st.used=new Set(); st.resolved=false; st.msg=''; st.msgType='info'; }
+function pick(i){
+  if(!st.run||st.resolved||st.used.has(i)) return;
+  const empty=st.placed.findIndex(v=>v===null);
+  if(empty===-1) return;
+  st.placed[empty]=i;
+  st.used.add(i);
+  render();
+}
+function pop(){
+  if(!st.run||st.resolved) return;
+  let idx=-1;
+  for(let i=st.placed.length-1;i>=0;i--){ if(st.placed[i]!==null){ idx=i; break; } }
+  if(idx===-1) return;
+  const d=st.placed[idx];
+  st.placed[idx]=null;
+  st.used.delete(d);
+  render();
+}
+function builtString(round){
+  const vals=st.placed.map(i=>i===null?'_':round.digits[i]);
+  return `${vals[0]}${vals[1]}${vals[2]}.${vals[3]}${vals[4]}`;
+}
+function check(){
+  if(!st.run||st.resolved) return;
+  const r=ROUNDS[st.idx];
+  if(st.placed.some(v=>v===null)){ st.msg='Fill all slots first.'; st.msgType='info'; render(); return; }
+  const got=builtString(r);
+  st.resolved=true;
+  if(got===r.target){ st.score+=12; st.msg='Correct place-value build!'; st.msgType='good'; }
+  else { st.lives--; st.msg=`Built ${got}. Target is ${r.target}.`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Builder bay complete!'; st.msgType='good'; render(); return; }
+  setup(); render();
+}
+function restart(){ st={run:true,idx:0,score:0,lives:3,placed:[null,null,null,null,null],used:new Set(),resolved:false,msg:'',msgType:'info'}; setup(); render(); }
+
+function render(){
+  const done=!st.run;
+  const r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Target</div><div class="v" style="font-size:12px">${r.target}</div></div>
+    </div>
+    <div class="mission">
+      <h3>Build target decimal exactly</h3>
+      <div class="grid">
+        ${POS.map((p,i)=>`<div class="slot"><div class="l">${p}</div><div class="d">${st.placed[i]===null?'_':r.digits[st.placed[i]]}</div></div>`).join('')}
+      </div>
+    </div>
+    <div class="deck">
+      ${r.digits.map((d,i)=>`<button class="digit ${st.used.has(i)?'used':''}" data-i="${i}" ${st.used.has(i)||st.resolved||done?'disabled':''}>${d}</button>`).join('')}
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:(st.resolved?`<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next Round'}</button>`:`<button class="btn reset" id="popBtn">Backspace Slot</button><button class="btn check" id="checkBtn">Check Build</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Built: <b>${builtString(r)}</b></div>`}
+  `;
+  sim.querySelectorAll('.digit').forEach(b=>b.onclick=()=>pick(parseInt(b.dataset.i,10)));
+  const p=sim.querySelector('#popBtn'); if(p) p.onclick=pop;
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rr=sim.querySelector('#restartBtn'); if(rr) rr.onclick=restart;
+}
+setup();
+render();
+</script>
+</body>
+</html>

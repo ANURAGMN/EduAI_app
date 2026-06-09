@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Parallel Line Angle Hunt</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0f766e,#0284c7);min-height:100vh}
+#app{max-width:440px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}
+.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}
+.v{font-size:18px;font-weight:800;color:#111827}
+.mission{background:linear-gradient(135deg,#ecfeff,#dbeafe);border:2px solid #67e8f9;border-radius:12px;padding:10px;margin-bottom:10px}
+.mission p{font-size:12px;color:#155e75;line-height:1.45}
+.board{background:#f8fafc;border-radius:12px;border:2px solid #cbd5e1;height:300px;position:relative;overflow:hidden;margin-top:8px}
+svg{width:100%;height:100%;display:block}
+.read{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.chip{background:#f1f5f9;border-radius:10px;padding:8px;text-align:center}
+.chip .l{font-size:11px;color:#475569}
+.chip .n{font-size:18px;font-weight:900;color:#0f172a;font-family:'Courier New',monospace}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.check{background:#0284c7;color:#fff}
+.btn.next{background:#0f766e;color:#fff}
+.btn.reset{background:#e2e8f0;color:#334155}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.45}
+.msg.good{background:#dcfce7;color:#166534}
+.msg.bad{background:#fef2f2;color:#991b1b}
+.msg.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:linear-gradient(135deg,#ecfeff,#dbeafe);border-left:4px solid #0f766e;border-radius:12px;padding:12px;font-size:12px;color:#111827;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Parallel Line Angle Hunt</h1>
+    <p>Drag transversal to match target angle relation</p>
+  </div>
+  <div class="card" id="sim"></div>
+  <div class="insight"><b>Interactive geometry:</b> move the transversal endpoint and use corresponding/alternate/linear-pair logic live.</div>
+</div>
+<script>
+const sim = document.getElementById('sim');
+const W = 400, H = 300;
+const Y1 = 90, Y2 = 220;
+const L = {x1:30,y1:Y1,x2:370,y2:Y1};
+const M = {x1:30,y1:Y2,x2:370,y2:Y2};
+
+const ROUNDS = [
+  {type:'corresponding', target:60, label:'Make corresponding angle = 60°'},
+  {type:'alternate', target:45, label:'Make alternate interior angle = 45°'},
+  {type:'linear', target:120, label:'Make linear-pair angle = 120°'},
+  {type:'corresponding', target:75, label:'Make corresponding angle = 75°'},
+  {type:'alternate', target:30, label:'Make alternate interior angle = 30°'},
+  {type:'linear', target:100, label:'Make linear-pair angle = 100°'}
+];
+
+let st = {
+  run:true, idx:0, score:0, lives:3,
+  ax:210, ay:20, bx:190, by:280,
+  resolved:false, msg:'', msgType:'info',
+  dragging:null
+};
+
+function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+function radToDeg(r){ return r*180/Math.PI; }
+function normDeg(d){ let x=d%180; if(x<0)x+=180; return x; }
+
+function lineAngleDeg(){
+  const ang = radToDeg(Math.atan2(st.by-st.ay, st.bx-st.ax));
+  return normDeg(ang);
+}
+
+function topAcute(){
+  const a = lineAngleDeg();
+  return a<=90 ? a : 180-a;
+}
+
+function measuredAngle(){
+  const r = ROUNDS[st.idx];
+  const acute = topAcute();
+  if(r.type==='corresponding') return acute;
+  if(r.type==='alternate') return acute;
+  return 180-acute;
+}
+
+function setupRound(){
+  st.resolved=false; st.msg=''; st.msgType='info';
+  st.ax=210; st.ay=20; st.bx=190; st.by=280;
+}
+
+function pointerToSvg(e){
+  const svg = document.getElementById('boardSvg');
+  const rect = svg.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (W / rect.width);
+  const y = (e.clientY - rect.top) * (H / rect.height);
+  return {x:clamp(x,0,W), y:clamp(y,0,H)};
+}
+
+function startDrag(e, who){
+  if(!st.run || st.resolved) return;
+  e.preventDefault();
+  st.dragging = who;
+}
+
+function onMove(e){
+  if(!st.dragging) return;
+  const p = pointerToSvg(e);
+  if(st.dragging==='A'){ st.ax=p.x; st.ay=p.y; }
+  if(st.dragging==='B'){ st.bx=p.x; st.by=p.y; }
+  render();
+}
+
+function stopDrag(){ st.dragging=null; }
+
+function check(){
+  if(!st.run || st.resolved) return;
+  const r = ROUNDS[st.idx];
+  const val = measuredAngle();
+  const ok = Math.abs(val - r.target) <= 2;
+  st.resolved = true;
+  if(ok){
+    st.score += 12;
+    st.msg = `Great! ${r.type} angle ≈ ${val.toFixed(1)}°`;
+    st.msgType='good';
+  }else{
+    st.lives -= 1;
+    st.msg = `Off target (${val.toFixed(1)}°). Need ${r.target}°`;
+    st.msgType='bad';
+    if(st.lives<=0) st.run=false;
+  }
+  render();
+}
+
+function next(){
+  if(!st.resolved) return;
+  st.idx++;
+  if(st.idx>=ROUNDS.length){
+    st.run=false; st.msg='Angle hunt complete!'; st.msgType='good'; render(); return;
+  }
+  setupRound(); render();
+}
+
+function restart(){
+  st={run:true,idx:0,score:0,lives:3,ax:210,ay:20,bx:190,by:280,resolved:false,msg:'',msgType:'info',dragging:null};
+  setupRound(); render();
+}
+
+function render(){
+  const done=!st.run;
+  const r = ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  const val = measuredAngle();
+  sim.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Type</div><div class="v" style="font-size:11px">${r.type}</div></div>
+    </div>
+    <div class="mission">
+      <p>${r.label}</p>
+      <div class="board">
+        <svg viewBox="0 0 ${W} ${H}" id="boardSvg">
+          <line x1="${L.x1}" y1="${L.y1}" x2="${L.x2}" y2="${L.y2}" stroke="#334155" stroke-width="3"/>
+          <line x1="${M.x1}" y1="${M.y1}" x2="${M.x2}" y2="${M.y2}" stroke="#334155" stroke-width="3"/>
+          <line x1="${st.ax}" y1="${st.ay}" x2="${st.bx}" y2="${st.by}" stroke="#0284c7" stroke-width="3"/>
+          <circle cx="${st.ax}" cy="${st.ay}" r="8" fill="#f59e0b" stroke="#fff" stroke-width="2" id="dragA"/>
+          <circle cx="${st.bx}" cy="${st.by}" r="8" fill="#f59e0b" stroke="#fff" stroke-width="2" id="dragB"/>
+          <text x="${L.x2-18}" y="${L.y1-8}" font-size="12" fill="#334155">l</text>
+          <text x="${M.x2-18}" y="${M.y2-8}" font-size="12" fill="#334155">m</text>
+        </svg>
+      </div>
+    </div>
+    <div class="read">
+      <div class="chip"><div class="l">Target</div><div class="n">${r.target.toFixed(1)}°</div></div>
+      <div class="chip"><div class="l">Current</div><div class="n">${val.toFixed(1)}°</div></div>
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:
+      (st.resolved?`<button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next Round'}</button>`:
+      `<button class="btn reset" id="resetBtn">Reset Position</button><button class="btn check" id="checkBtn">Check Angle</button>`)}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Drag yellow handles to rotate the transversal.</div>`}
+  `;
+
+  const svg = sim.querySelector('#boardSvg');
+  if(svg){
+    svg.addEventListener('pointermove', onMove);
+    svg.addEventListener('pointerup', stopDrag);
+    svg.addEventListener('pointerleave', stopDrag);
+    const a = sim.querySelector('#dragA');
+    const b = sim.querySelector('#dragB');
+    if(a) a.addEventListener('pointerdown', (e)=>startDrag(e,'A'));
+    if(b) b.addEventListener('pointerdown', (e)=>startDrag(e,'B'));
+  }
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const rs=sim.querySelector('#resetBtn'); if(rs) rs.onclick=()=>{setupRound();render();};
+  const rr=sim.querySelector('#restartBtn'); if(rr) rr.onclick=restart;
+}
+
+setupRound();
+render();
+</script>
+</body>
+</html>

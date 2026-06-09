@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0891b2">
+<title>LCM HCF Sync Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#0891b2,#0e7490);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}.v{font-size:17px;font-weight:800;color:#0f172a}
+.mission{background:#ecfeff;border:2px solid #99f6e4;border-radius:12px;padding:10px;margin-bottom:10px;font-size:12px;color:#134e4a}
+.pairs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.box{background:#f8fafc;border:2px solid #cbd5e1;border-radius:10px;padding:8px}
+.box h4{font-size:12px;color:#334155}
+.nums{font-size:22px;font-family:'Courier New',monospace;font-weight:900;color:#0f172a;margin-top:4px}
+.inp{width:100%;margin-top:8px;padding:8px;border:2px solid #cbd5e1;border-radius:8px;font-weight:800}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.check{background:#0f766e;color:#fff}.next{background:#0284c7;color:#fff}.retry{background:#334155;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.4}
+.good{background:#dcfce7;color:#166534}.bad{background:#fef2f2;color:#991b1b}.info{background:#eff6ff;color:#1e3a8a}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>LCM HCF Sync Lab</h1>
+    <p>Sync two numbers by finding both HCF and LCM</p>
+  </div>
+  <div class="card" id="sim"></div>
+</div>
+<script>
+const sim=document.getElementById('sim');
+const ROUNDS=[[12,18],[16,24],[14,21],[18,30],[20,32],[27,36]];
+let st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info'};
+function gcd(a,b){ while(b){ [a,b]=[b,a%b]; } return a; }
+function lcm(a,b){ return (a*b)/gcd(a,b); }
+function check(){
+  if(!st.run||st.resolved) return;
+  const [a,b]=ROUNDS[st.idx];
+  const g=parseInt(sim.querySelector('#hcf').value,10);
+  const l=parseInt(sim.querySelector('#lcm').value,10);
+  st.resolved=true;
+  if(g===gcd(a,b)&&l===lcm(a,b)){ st.score+=12; st.msg='Perfect sync: HCF and LCM both correct.'; st.msgType='good'; }
+  else{ st.lives--; st.msg=`Need HCF=${gcd(a,b)}, LCM=${lcm(a,b)}.`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){ if(!st.resolved) return; st.idx++; if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Sync lab complete!'; st.msgType='good'; render(); return; } st.resolved=false; st.msg=''; st.msgType='info'; render(); }
+function retry(){ if(st.run&&st.resolved){ st.resolved=false; st.msg=''; st.msgType='info'; render(); } }
+function restart(){ st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info'}; render(); }
+function render(){
+  const done=!st.run, [a,b]=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Mode</div><div class="v">Sync</div></div>
+    </div>
+    <div class="mission">Mission: For numbers <b>${a}</b> and <b>${b}</b>, enter both HCF and LCM.</div>
+    <div class="pairs">
+      <div class="box"><h4>HCF</h4><div class="nums">?</div><input id="hcf" class="inp" type="number" step="1" ${done||st.resolved?'disabled':''}></div>
+      <div class="box"><h4>LCM</h4><div class="nums">?</div><input id="lcm" class="inp" type="number" step="1" ${done||st.resolved?'disabled':''}></div>
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Check Pair</button>`}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Use factors and multiples logic before locking.</div>`}
+  `;
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
+  const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+}
+render();
+</script>
+</body>
+</html>

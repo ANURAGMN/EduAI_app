@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<title>Exterior Angle Workshop</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#7c3aed,#5b21b6);min-height:100vh}
+#app{max-width:430px;margin:auto;padding:10px}
+.header{text-align:center;color:#fff;padding:12px}
+.header h1{font-size:20px;font-weight:800}.header p{font-size:12px;opacity:.92}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#f5f3ff;border-radius:10px;padding:8px;text-align:center}
+.k{font-size:10px;color:#6d28d9;font-weight:700;text-transform:uppercase}.v{font-size:17px;font-weight:800;color:#0f172a}
+.mission{background:#faf5ff;border:2px solid #ddd6fe;border-radius:12px;padding:10px;margin-bottom:10px;font-size:12px;color:#5b21b6}
+.stage{height:260px;background:#fafafa;border:2px solid #cbd5e1;border-radius:12px;overflow:hidden}
+svg{width:100%;height:100%;display:block;touch-action:none}
+.row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.nbtn{padding:8px;border:none;border-radius:8px;background:#ede9fe;color:#5b21b6;font-weight:800;cursor:pointer}
+.nbtn:disabled{opacity:.5;cursor:not-allowed}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.check{background:#7c3aed;color:#fff}.next{background:#0f766e;color:#fff}.retry{background:#334155;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.4}
+.good{background:#dcfce7;color:#166534}.bad{background:#fef2f2;color:#991b1b}.info{background:#eff6ff;color:#1e3a8a}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Exterior Angle Workshop</h1>
+    <p>Tune a triangle so exterior angle hits mission target</p>
+  </div>
+  <div class="card" id="sim"></div>
+</div>
+<script>
+const sim=document.getElementById('sim');
+const MISSIONS=[
+  {target:120,tol:2},{target:135,tol:2},{target:150,tol:2},{target:110,tol:2},{target:98,tol:2}
+];
+const A={x:90,y:210}, B={x:310,y:210};
+let C={x:220,y:90};
+let st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info'};
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function ang(p,q,r){
+  const v1={x:p.x-q.x,y:p.y-q.y}, v2={x:r.x-q.x,y:r.y-q.y};
+  const n1=Math.hypot(v1.x,v1.y)||1, n2=Math.hypot(v2.x,v2.y)||1;
+  const c=clamp((v1.x*v2.x+v1.y*v2.y)/(n1*n2),-1,1);
+  return Math.acos(c)*180/Math.PI;
+}
+function geom(){
+  const a=ang(B,A,C), b=ang(A,B,C), c=ang(A,C,B);
+  return {a,b,c,extA:180-a};
+}
+function moveC(dx,dy){ C.x=clamp(C.x+dx,80,330); C.y=clamp(C.y+dy,45,185); }
+function setup(){ C={x:140+Math.random()*170,y:65+Math.random()*90}; st.resolved=false; st.msg=''; st.msgType='info'; }
+function check(){
+  if(!st.run||st.resolved) return;
+  const m=MISSIONS[st.idx], g=geom(); st.resolved=true;
+  if(Math.abs(g.extA-m.target)<=m.tol){ st.score+=15; st.msg='Exterior angle locked!'; st.msgType='good'; }
+  else{ st.lives--; st.msg=`Need ${m.target}°, got ${g.extA.toFixed(1)}°`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  render();
+}
+function next(){ if(!st.resolved)return; st.idx++; if(st.idx>=MISSIONS.length){st.run=false; st.msg='Workshop done!'; st.msgType='good'; render(); return;} setup(); render(); }
+function retry(){ if(st.run&&st.resolved){ setup(); render(); } }
+function restart(){ st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info'}; setup(); render(); }
+function render(){
+  const done=!st.run, m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)], g=geom();
+  sim.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
+      <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
+      <div class="stat"><div class="k">Target</div><div class="v">${m.target}°</div></div>
+    </div>
+    <div class="mission">Set triangle so exterior angle at A is <b>${m.target}° ± ${m.tol}°</b>. Use drag or precision controls.</div>
+    <div class="stage">
+      <svg id="svg" viewBox="0 0 400 260">
+        <rect x="0" y="0" width="400" height="260" fill="#fafafa"/>
+        <line x1="30" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="#334155" stroke-width="4"/>
+        <line x1="${A.x}" y1="${A.y}" x2="${C.x.toFixed(1)}" y2="${C.y.toFixed(1)}" stroke="#7c3aed" stroke-width="4"/>
+        <line x1="${B.x}" y1="${B.y}" x2="${C.x.toFixed(1)}" y2="${C.y.toFixed(1)}" stroke="#7c3aed" stroke-width="4"/>
+        <circle cx="${A.x}" cy="${A.y}" r="8" fill="#0f172a"/><text x="${A.x-20}" y="${A.y+22}" font-size="13" fill="#111827">A</text>
+        <circle cx="${B.x}" cy="${B.y}" r="8" fill="#0f172a"/><text x="${B.x-8}" y="${B.y+22}" font-size="13" fill="#111827">B</text>
+        <circle cx="${C.x.toFixed(1)}" cy="${C.y.toFixed(1)}" r="11" fill="#7c3aed" stroke="#fff" stroke-width="3"/><text x="${C.x+12}" y="${C.y-8}" font-size="13" fill="#5b21b6">C</text>
+        <text x="16" y="22" font-size="13" fill="#dc2626" font-weight="700">Exterior ∠A = ${g.extA.toFixed(1)}°</text>
+        <text x="16" y="40" font-size="12" fill="#334155">Interior A=${g.a.toFixed(1)}°, B=${g.b.toFixed(1)}°, C=${g.c.toFixed(1)}°</text>
+      </svg>
+    </div>
+    <div class="row">
+      <button class="nbtn" id="l5" ${done||st.resolved?'disabled':''}>◀5</button>
+      <button class="nbtn" id="l1" ${done||st.resolved?'disabled':''}>◀1</button>
+      <button class="nbtn" id="r1" ${done||st.resolved?'disabled':''}>1▶</button>
+      <button class="nbtn" id="r5" ${done||st.resolved?'disabled':''}>5▶</button>
+      <button class="nbtn" id="u5" ${done||st.resolved?'disabled':''}>▲5</button>
+      <button class="nbtn" id="u1" ${done||st.resolved?'disabled':''}>▲1</button>
+      <button class="nbtn" id="d1" ${done||st.resolved?'disabled':''}>1▼</button>
+      <button class="nbtn" id="d5" ${done||st.resolved?'disabled':''}>5▼</button>
+    </div>
+    <div class="actions">
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">${st.idx===MISSIONS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Lock Exterior</button>`}
+    </div>
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Exterior angle = 180° - interior angle at A.</div>`}
+  `;
+  const svg=sim.querySelector('#svg');
+  let drag=false;
+  if(!done&&!st.resolved){
+    const mv=(e)=>{
+      const rect=svg.getBoundingClientRect();
+      C.x=clamp((e.clientX-rect.left)*(400/rect.width),80,330);
+      C.y=clamp((e.clientY-rect.top)*(260/rect.height),45,185);
+      render();
+    };
+    svg.addEventListener('pointerdown',e=>{drag=true; svg.setPointerCapture(e.pointerId); mv(e);});
+    svg.addEventListener('pointermove',e=>{if(drag) mv(e);});
+    svg.addEventListener('pointerup',()=>drag=false); svg.addEventListener('pointercancel',()=>drag=false);
+  }
+  const bind=(id,dx,dy)=>{const el=sim.querySelector('#'+id); if(el) el.onclick=()=>{moveC(dx,dy); render();};};
+  bind('l5',-5,0); bind('l1',-1,0); bind('r1',1,0); bind('r5',5,0);
+  bind('u5',0,-5); bind('u1',0,-1); bind('d1',0,1); bind('d5',0,5);
+  const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
+  const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
+  const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+}
+setup(); render();
+</script>
+</body>
+</html>
