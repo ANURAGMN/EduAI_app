@@ -139,11 +139,13 @@ class ConceptViewModel @Inject constructor(
                 val subjectId = chapter?.subjectId ?: ""
 
                 // Reactively collect progress changes for this chapter and overall chapter progress
+                // NOTE: getAllProgress() returns all progress entries, but we filter by language in determineSimulationStatus()
                 val progressFlow = progressDao.getAllProgress(studentId, AppConfig.APP_NAME)
                 val chapterProgressFlow = progressDao.getChapterWiseProgressFlow(studentId, subjectId, language, AppConfig.APP_NAME)
 
                 combine(progressFlow, chapterProgressFlow) { allProgress, progressSummaries ->
-                    DebugLogger.debugLog("ConceptVM", "🔄 PROGRESS FLOW TRIGGERED - Recalculating all concepts...")
+                    DebugLogger.debugLog("ConceptVM", " PROGRESS FLOW TRIGGERED - Language=$language, Progress entries=${allProgress.size}")
+                    DebugLogger.debugLog("ConceptVM", "  Filtering progress for language=$language only")
 
                     val conceptUiModels = concepts.mapIndexed { index, concept ->
                         // ...existing code...
@@ -182,9 +184,9 @@ class ConceptViewModel @Inject constructor(
                                 )
                             }
                             else -> {
-                                val progress = allProgress.find { it.itemType == "CONCEPT" && it.itemId == concept.conceptId && (it.language == language || it.language.isEmpty()) }
+                                val progress = allProgress.find { it.itemType == "CONCEPT" && it.itemId == concept.conceptId && it.language == language }
                                 val prevStatus = if (index > 0) {
-                                    allProgress.find { it.itemType == "CONCEPT" && it.itemId == concepts[index - 1].conceptId && (it.language == language || it.language.isEmpty()) }?.status
+                                    allProgress.find { it.itemType == "CONCEPT" && it.itemId == concepts[index - 1].conceptId && it.language == language }?.status
                                 } else null
                                 determineConceptStatus(progress, index == 0, prevStatus)
                             }
@@ -195,9 +197,18 @@ class ConceptViewModel @Inject constructor(
                             name = displayName,
                             order = concept.orderIndex,
                             status = when (status) {
-                                ProgressStatus.COMPLETED.value -> DomainProgressStatus.COMPLETED
-                                ProgressStatus.IN_PROGRESS.value, "STARTED" -> DomainProgressStatus.IN_PROGRESS
-                                else -> DomainProgressStatus.NOT_STARTED
+                                ProgressStatus.COMPLETED.value -> {
+                                    DebugLogger.debugLog("ConceptVM", "   ✅ $displayName [$language] → COMPLETED")
+                                    DomainProgressStatus.COMPLETED
+                                }
+                                ProgressStatus.IN_PROGRESS.value, "STARTED" -> {
+                                    DebugLogger.debugLog("ConceptVM", "   🔄 $displayName [$language] → IN_PROGRESS")
+                                    DomainProgressStatus.IN_PROGRESS
+                                }
+                                else -> {
+                                    DebugLogger.debugLog("ConceptVM", "   ⭕ $displayName [$language] → NOT_STARTED")
+                                    DomainProgressStatus.NOT_STARTED
+                                }
                             },
                             type = concept.type,
                             simulationUrl = simUrl ?: "",
@@ -211,7 +222,7 @@ class ConceptViewModel @Inject constructor(
                         unlockFirstConcept(studentId, conceptUiModels[0].id)
                     }
 
-                    // ✅ CRITICAL FIX: Get chapter progress from the real-time flow
+                    //  CRITICAL FIX: Get chapter progress from the real-time flow
                     // This is the source of truth for progress bar display on this screen
                     val summary = progressSummaries.find { it.chapterId == chapterId }
                     val totalConcepts = summary?.totalConcepts ?: concepts.size
@@ -220,7 +231,7 @@ class ConceptViewModel @Inject constructor(
 
                     DebugLogger.debugLog(
                         "ConceptVM",
-                        "✅ Chapter Progress Updated [$language]: $completedConcepts/$totalConcepts concepts completed (${progressUiModel.progressPercentage}%)"
+                        " Chapter Progress Updated [$language]: $completedConcepts/$totalConcepts concepts completed (${progressUiModel.progressPercentage}%)"
                     )
                     DebugLogger.debugLog(
                         "ConceptVM",
@@ -259,9 +270,17 @@ class ConceptViewModel @Inject constructor(
         concepts: List<com.ncert7.aitutorandlab.data.local.entities.ConceptEntity>,
         language: String
     ): String {
-        // Helper: find progress by itemType and conceptId, accepting both exact language and empty-language entries
-        fun findProgress(itemType: String, id: String): com.ncert7.aitutorandlab.data.local.entities.ProgressEntity? =
-            allProgress.find { it.itemType == itemType && it.itemId == id && (it.language == language || it.language.isEmpty()) }
+        // Helper: find progress by itemType and conceptId - EXACT language match only (no fallback to empty language)
+        // This ensures Kannada progress is never matched with English progress
+        fun findProgress(itemType: String, id: String): com.ncert7.aitutorandlab.data.local.entities.ProgressEntity? {
+            val found = allProgress.find { it.itemType == itemType && it.itemId == id && it.language == language }
+            if (found != null) {
+                DebugLogger.debugLog("ConceptVM", "   findProgress($itemType, $id) [$language] = ${found.status}")
+            } else {
+                DebugLogger.debugLog("ConceptVM", "   findProgress($itemType, $id) [$language] = NOT FOUND")
+            }
+            return found
+        }
 
         return when {
             hasAgent && hasUrl -> {
@@ -270,12 +289,14 @@ class ConceptViewModel @Inject constructor(
                 val urlDone = findProgress("SIMULATION", conceptId)
                     ?.status == ProgressStatus.COMPLETED.value
 
+                DebugLogger.debugLog("ConceptVM", "   Concept $conceptId [hasAgent+hasUrl]: agent=$agentDone, url=$urlDone, language=$language")
+
                 when {
                     agentDone && urlDone -> ProgressStatus.COMPLETED.value
                     agentDone || urlDone -> ProgressStatus.IN_PROGRESS.value
                     else -> {
                         val prevStatus = if (index > 0) {
-                            allProgress.find { it.itemId == concepts[index - 1].conceptId && (it.language == language || it.language.isEmpty()) }?.status
+                            allProgress.find { it.itemId == concepts[index - 1].conceptId && it.language == language }?.status
                         } else null
                         determineConceptStatus(null, index == 0, prevStatus)
                     }
@@ -284,9 +305,10 @@ class ConceptViewModel @Inject constructor(
             hasAgent -> {
                 val agentDone = findProgress("SIMULATION_AGENT", conceptId)
                     ?.status == ProgressStatus.COMPLETED.value
+                DebugLogger.debugLog("ConceptVM", "   Concept $conceptId [hasAgent only]: agent=$agentDone, language=$language")
                 if (agentDone) ProgressStatus.COMPLETED.value else {
                     val prevStatus = if (index > 0) {
-                        allProgress.find { it.itemId == concepts[index - 1].conceptId && (it.language == language || it.language.isEmpty()) }?.status
+                        allProgress.find { it.itemId == concepts[index - 1].conceptId && it.language == language }?.status
                     } else null
                     determineConceptStatus(null, index == 0, prevStatus)
                 }
@@ -294,9 +316,10 @@ class ConceptViewModel @Inject constructor(
             hasUrl -> {
                 val urlDone = findProgress("SIMULATION", conceptId)
                     ?.status == ProgressStatus.COMPLETED.value
+                DebugLogger.debugLog("ConceptVM", "   Concept $conceptId [hasUrl only]: url=$urlDone, language=$language")
                 if (urlDone) ProgressStatus.COMPLETED.value else {
                     val prevStatus = if (index > 0) {
-                        allProgress.find { it.itemId == concepts[index - 1].conceptId && (it.language == language || it.language.isEmpty()) }?.status
+                        allProgress.find { it.itemId == concepts[index - 1].conceptId && it.language == language }?.status
                     } else null
                     determineConceptStatus(null, index == 0, prevStatus)
                 }

@@ -122,16 +122,24 @@ class ProgressEventTracker @Inject constructor(
     suspend fun markSimulationUrlCompleted(studentId: String, conceptId: String, language: String? = null) {
         try {
             val resolvedLang = language ?: if (com.ncert7.aitutorandlab.utils.isKannada()) "kn" else "en"
-            DebugLogger.debugLog(TAG, " Marking Simulation URL as COMPLETED: $conceptId ($resolvedLang)...")
+            DebugLogger.debugLog(TAG, " Marking Simulation URL as COMPLETED: $conceptId ($resolvedLang) [provided=$language, detected=${com.ncert7.aitutorandlab.utils.isKannada()}]...")
 
             progressRepository.markSimulationUrlCompleted(studentId, conceptId, resolvedLang)
-            DebugLogger.debugLog(TAG, "  ✓ Progress table updated with SIMULATION status=COMPLETED")
+            DebugLogger.debugLog(TAG, "  ✓ Progress table updated with SIMULATION status=COMPLETED [$resolvedLang]")
+
+            // Verify the progress was actually saved
+            val savedProgress = progressRepository.getProgress(studentId, "SIMULATION", conceptId, resolvedLang)
+            if (savedProgress != null) {
+                DebugLogger.debugLog(TAG, "  ✓ Verification: Saved progress status = ${savedProgress.status} (language=${savedProgress.language})")
+            } else {
+                DebugLogger.errorLog(TAG, "  ❌ Verification FAILED: Progress not found after save!")
+            }
 
             triggerChapterProgressUpdate(studentId, conceptId, resolvedLang)
             DebugLogger.debugLog(TAG, "  ✓ Chapter progress recalculated")
 
             streakRepository.recordActivity(studentId)
-            DebugLogger.debugLog(TAG, "  ✓ Streak recorded")
+            DebugLogger.debugLog(TAG, "   Streak recorded")
 
             DebugLogger.debugLog(TAG, " Simulation URL COMPLETED: $conceptId ($resolvedLang) - ALL 3 screens should show updated progress NOW")
         } catch (e: Exception) {

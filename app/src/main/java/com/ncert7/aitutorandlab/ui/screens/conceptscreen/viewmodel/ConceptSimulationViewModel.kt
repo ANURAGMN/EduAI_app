@@ -47,6 +47,10 @@ class ConceptSimulationViewModel @Inject constructor(
     private val _simulationUrl = MutableStateFlow("")
     val simulationUrl: StateFlow<String> = _simulationUrl.asStateFlow()
 
+    // Trigger for forcing recomposition after progress update
+    private val _progressUpdateTrigger = MutableStateFlow(0)
+    val progressUpdateTrigger: StateFlow<Int> = _progressUpdateTrigger.asStateFlow()
+
     /**
      * Mark the simulation URL for [conceptId] as loaded/completed.
      * Safe to call multiple times — idempotent at the DB level.
@@ -204,11 +208,19 @@ class ConceptSimulationViewModel @Inject constructor(
                 if (studentId.isNotEmpty() && conceptId.isNotEmpty()) {
                     // Use ProgressEventTracker to ensure chapter progress is recalculated
                     // This triggers updates in ALL 3 screens via the reactive Flow
+                    DebugLogger.debugLog(TAG, "📍 About to call progressEventTracker.markSimulationUrlCompleted with language=$language")
                     progressEventTracker.markSimulationUrlCompleted(studentId, conceptId, language)
 
                     DebugLogger.debugLog(
                         TAG,
                         "✅ Simulation URL marked as COMPLETED for concept: $conceptId [$language] - Progress bars should update!"
+                    )
+
+                    // Verify progress was actually saved
+                    val progress = conceptRepository.getProgress(studentId, "SIMULATION", conceptId, language)
+                    DebugLogger.debugLog(
+                        TAG,
+                        "🔍 Verification: Progress for SIMULATION/$conceptId/$language = ${progress?.status ?: "NOT FOUND"} (progress was ${if (progress != null) "FOUND" else "NOT FOUND"})"
                     )
 
                     // Update user's streak when simulation is completed
@@ -217,10 +229,16 @@ class ConceptSimulationViewModel @Inject constructor(
                     }
 
                     // Trigger real-time sync to Firestore
-                    val progress = conceptRepository.getProgress(studentId, "SIMULATION", conceptId, language)
                     if (progress != null) {
+                        DebugLogger.debugLog(TAG, "📤 Syncing progress to Firestore for progressId=${progress.progressId}")
                         DataSyncService.syncProgressUpdate(progress.progressId, studentId)
+                    } else {
+                        DebugLogger.errorLog(TAG, "⚠️ Progress was null after marking - sync skipped")
                     }
+
+                    // Force UI recomposition by incrementing trigger
+                    _progressUpdateTrigger.value = _progressUpdateTrigger.value + 1
+                    DebugLogger.debugLog(TAG, "🔄 UI recomposition triggered: ${_progressUpdateTrigger.value}")
                 } else {
                     DebugLogger.errorLog(
                         TAG,
