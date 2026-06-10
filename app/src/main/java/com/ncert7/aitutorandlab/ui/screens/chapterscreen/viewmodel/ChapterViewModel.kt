@@ -101,14 +101,17 @@ class ChapterViewModel @Inject constructor(
                 // ANY progress row for this subject changes, the Flow emits and the UI redraws.
                 chapterRepository.getChapterWiseProgress(userId, subjectId, language)
                     .collect { progressSummaries ->
+                        DebugLogger.debugLog(TAG, "🔄 CHAPTER PROGRESS FLOW TRIGGERED - Updating ${progressSummaries.size} chapter(s)...")
+
                         val progressMap = progressSummaries.associateBy { it.chapterId }
 
                         val chapterUiModels = filteredChapters.map { chapter ->
                             val summary = progressMap[chapter.chapterId]
                             val flags = chapterFlags[chapter.chapterId] ?: Triple(false, false, false)
 
-                            // Prefer live summary data; fall back to chapter metadata
-                            val totalConcepts     = summary?.totalConcepts ?: chapter.totalConcepts
+                            // ✅ FIXED: Use the real-time summary data directly
+                            // This ensures consistent progress across all screens
+                            val totalConcepts     = summary?.totalConcepts ?: 0
                             val completedConcepts = summary?.completedConcepts ?: 0
                             val overallPct        = summary?.completionPercentage ?: 0
 
@@ -117,6 +120,8 @@ class ChapterViewModel @Inject constructor(
                                 overallPct > 0    -> ProgressStatus.IN_PROGRESS
                                 else               -> ProgressStatus.NOT_STARTED
                             }
+
+                            DebugLogger.debugLog(TAG, "  Chapter ${chapter.chapterName}: $completedConcepts/$totalConcepts ($overallPct%) - $status")
 
                             ChapterUiModel(
                                 id               = chapter.chapterId,
@@ -134,6 +139,8 @@ class ChapterViewModel @Inject constructor(
                                 hasRevision      = flags.third
                             )
                         }
+
+                        DebugLogger.debugLog(TAG, "✅ All chapter progress bars updated")
 
                         _state.value = _state.value.copy(
                             chapters    = chapterUiModels,

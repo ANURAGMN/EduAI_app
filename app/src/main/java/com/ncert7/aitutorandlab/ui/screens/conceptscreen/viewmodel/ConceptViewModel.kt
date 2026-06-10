@@ -143,11 +143,12 @@ class ConceptViewModel @Inject constructor(
                 val chapterProgressFlow = progressDao.getChapterWiseProgressFlow(studentId, subjectId, language, AppConfig.APP_NAME)
 
                 combine(progressFlow, chapterProgressFlow) { allProgress, progressSummaries ->
+                    DebugLogger.debugLog("ConceptVM", "🔄 PROGRESS FLOW TRIGGERED - Recalculating all concepts...")
+
                     val conceptUiModels = concepts.mapIndexed { index, concept ->
-                        // Determine display text based on concept type
+                        // ...existing code...
                         val displayName = when {
                             type.equals("MATH PROBLEM", ignoreCase = true) -> {
-                                // For Math Problems: Show problemTopicName (localized)
                                 if (isKannada()) {
                                     concept.problemTopicNameKn.ifEmpty { concept.conceptName }
                                 } else {
@@ -155,12 +156,10 @@ class ConceptViewModel @Inject constructor(
                                 }
                             }
                             else -> {
-                                // For STUDY and SIMULATION: Show conceptName (localized)
                                 concept.getLocalizedName()
                             }
                         }
 
-                        // Get appropriate fields based on language and type
                         val simId = if (isKannada()) {
                             concept.simulationIdKannada
                         } else {
@@ -176,7 +175,6 @@ class ConceptViewModel @Inject constructor(
                         val hasAgent = !simId.isNullOrBlank() && !simId.equals("null", ignoreCase = true)
                         val hasUrl = !simUrl.isNullOrBlank() && !simUrl.equals("null", ignoreCase = true)
 
-                        // Determine concept status based on progress tracking
                         val status = when {
                             type.equals("SIMULATION", ignoreCase = true) -> {
                                 determineSimulationStatus(
@@ -184,8 +182,6 @@ class ConceptViewModel @Inject constructor(
                                 )
                             }
                             else -> {
-                                // For STUDY and MATH PROBLEM types
-                                // Relaxed language filter: also accept entries with empty language for backward compatibility
                                 val progress = allProgress.find { it.itemType == "CONCEPT" && it.itemId == concept.conceptId && (it.language == language || it.language.isEmpty()) }
                                 val prevStatus = if (index > 0) {
                                     allProgress.find { it.itemType == "CONCEPT" && it.itemId == concepts[index - 1].conceptId && (it.language == language || it.language.isEmpty()) }?.status
@@ -211,12 +207,12 @@ class ConceptViewModel @Inject constructor(
                         )
                     }
 
-                    // Auto-unlock first concept if not started
                     if (conceptUiModels.isNotEmpty() && conceptUiModels[0].status == DomainProgressStatus.NOT_STARTED) {
                         unlockFirstConcept(studentId, conceptUiModels[0].id)
                     }
 
-                    // Calculate overall chapter progress using the chapter summary flow
+                    // ✅ CRITICAL FIX: Get chapter progress from the real-time flow
+                    // This is the source of truth for progress bar display on this screen
                     val summary = progressSummaries.find { it.chapterId == chapterId }
                     val totalConcepts = summary?.totalConcepts ?: concepts.size
                     val completedConcepts = summary?.completedConcepts ?: 0
@@ -224,7 +220,11 @@ class ConceptViewModel @Inject constructor(
 
                     DebugLogger.debugLog(
                         "ConceptVM",
-                        "Progress for Chapter $chapterId [$language]: completed=$completedConcepts of $totalConcepts (overall chapter progress)"
+                        "✅ Chapter Progress Updated [$language]: $completedConcepts/$totalConcepts concepts completed (${progressUiModel.progressPercentage}%)"
+                    )
+                    DebugLogger.debugLog(
+                        "ConceptVM",
+                        "   Concept Card Statuses: ${conceptUiModels.joinToString(", ") { "${it.name}=${it.status.name}" }}"
                     )
 
                     _state.value = _state.value.copy(

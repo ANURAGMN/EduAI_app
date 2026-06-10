@@ -213,16 +213,15 @@ interface ProgressDao {
     suspend fun getTodayCompletedSimulations(studentId: String): Int
 
     /**
+     * ✅ FIXED: Real-time chapter-wise progress calculation
      *
-     * we calculate progress directly from concepts and progress tables.
-     *
-     * Returns Flow<List<ChapterProgressSummary>> that emits updates whenever
-     * the progress table changes (real-time updates).
-     *
-     * Logic:
-     * - totalConcepts: Count of STUDY + SIMULATION + MATH PROBLEM concepts in chapter
-     * - completedConcepts: Count of those concepts with status = COMPLETED in progress table
+     * Counts ONLY visible concepts for the language:
+     * - totalConcepts: Count of STUDY + SIMULATION + MATH PROBLEM concepts that have content for this language
+     * - completedConcepts: Count of those concepts with ALL required components COMPLETED in progress table
      * - completionPercentage: (completedConcepts / totalConcepts) * 100
+     *
+     * CRITICAL: Only concepts with valid content for the language are included in totalConcepts
+     * This ensures the same progress % across ProgressScreen, ChapterScreen, and ConceptScreen header
      */
     @Query(
         """
@@ -331,126 +330,129 @@ interface ProgressDao {
                         )
                     )
                 )
-            ), 0) AS completedConcepts,
-            CAST(ROUND(COALESCE((
-                SELECT COUNT(*) FROM concepts c 
-                WHERE c.chapterId = ch.chapterId 
-                AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
-                AND (
-                    -- If STUDY or MATH PROBLEM
-                    (c.type IN ('STUDY', 'MATH PROBLEM') AND EXISTS (
-                        SELECT 1 FROM progress p 
-                        WHERE p.itemId = c.conceptId 
-                        AND p.studentId = :studentId 
-                        AND (p.itemType = 'CONCEPT' OR p.itemType = 'MATH_AGENT')
-                        AND p.status = :completedStatus 
-                        AND p.language = :language
-                        AND p.appName = :appName
-                    ))
-                    OR
-                    -- If SIMULATION
-                    (c.type = 'SIMULATION' AND 
-                        -- Check if simulation is valid for the language
-                        (
-                            CASE 
-                                WHEN :language = 'en' THEN
-                                    (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
-                                    OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
-                                WHEN :language = 'kn' THEN
-                                    (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
-                                    OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
-                                ELSE 1
-                            END
-                        ) AND
-                        -- Check agent component if it exists
-                        (
-                            CASE
-                                WHEN :language = 'en' THEN
-                                    (c.simulationId IS NULL OR c.simulationId = '' OR c.simulationId = 'null' OR EXISTS (
-                                        SELECT 1 FROM progress p 
-                                        WHERE p.itemId = c.conceptId 
-                                        AND p.studentId = :studentId 
-                                        AND p.itemType = 'SIMULATION_AGENT' 
-                                        AND p.status = :completedStatus 
-                                        AND p.language = :language
-                                        AND p.appName = :appName
-                                    ))
-                                WHEN :language = 'kn' THEN
-                                    (c.simulationIdKannada IS NULL OR c.simulationIdKannada = '' OR c.simulationIdKannada = 'null' OR EXISTS (
-                                        SELECT 1 FROM progress p 
-                                        WHERE p.itemId = c.conceptId 
-                                        AND p.studentId = :studentId 
-                                        AND p.itemType = 'SIMULATION_AGENT' 
-                                        AND p.status = :completedStatus 
-                                        AND p.language = :language
-                                        AND p.appName = :appName
-                                    ))
-                                ELSE 1
-                            END
-                        ) AND
-                        -- Check URL component if it exists
-                        (
-                            CASE
-                                WHEN :language = 'en' THEN
-                                    (c.simulationUrl IS NULL OR c.simulationUrl = '' OR c.simulationUrl = 'null' OR EXISTS (
-                                        SELECT 1 FROM progress p 
-                                        WHERE p.itemId = c.conceptId 
-                                        AND p.studentId = :studentId 
-                                        AND p.itemType = 'SIMULATION' 
-                                        AND p.status = :completedStatus 
-                                        AND p.language = :language
-                                        AND p.appName = :appName
-                                    ))
-                                WHEN :language = 'kn' THEN
-                                    (c.simulationUrlKannada IS NULL OR c.simulationUrlKannada = '' OR c.simulationUrlKannada = 'null' OR EXISTS (
-                                        SELECT 1 FROM progress p 
-                                        WHERE p.itemId = c.conceptId 
-                                        AND p.studentId = :studentId 
-                                        AND p.itemType = 'SIMULATION' 
-                                        AND p.status = :completedStatus 
-                                        AND p.language = :language
-                                        AND p.appName = :appName
-                                    ))
-                                ELSE 1
-                            END
-                        )
-                    )
-                )
-            ), 0) * 100.0 / 
-            CASE WHEN COALESCE((
-                SELECT COUNT(*) FROM concepts c 
-                WHERE c.chapterId = ch.chapterId 
-                AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
-                AND (
-                    c.type != 'SIMULATION' OR
-                    (CASE 
-                        WHEN :language = 'en' THEN
-                            (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
-                            OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
-                        WHEN :language = 'kn' THEN
-                            (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
-                            OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
-                        ELSE 1
-                    END)
-                )
-            ), 0) = 0 THEN 1 
-            ELSE COALESCE((
-                SELECT COUNT(*) FROM concepts c 
-                WHERE c.chapterId = ch.chapterId 
-                AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
-                AND (
-                    c.type != 'SIMULATION' OR
-                    (CASE 
-                        WHEN :language = 'en' THEN
-                            (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
-                            OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
-                        WHEN :language = 'kn' THEN
-                            (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
-                            OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
-                        ELSE 1
-                    END)
-                )
-            ), 1) END) AS INTEGER) AS completionPercentage
+             ), 0) AS completedConcepts,
+             CAST(
+                 COALESCE((
+                     SELECT COUNT(*) FROM concepts c 
+                     WHERE c.chapterId = ch.chapterId 
+                     AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
+                     AND (
+                         -- If STUDY or MATH PROBLEM
+                         (c.type IN ('STUDY', 'MATH PROBLEM') AND EXISTS (
+                             SELECT 1 FROM progress p 
+                             WHERE p.itemId = c.conceptId 
+                             AND p.studentId = :studentId 
+                             AND (p.itemType = 'CONCEPT' OR p.itemType = 'MATH_AGENT')
+                             AND p.status = :completedStatus 
+                             AND p.language = :language
+                             AND p.appName = :appName
+                         ))
+                         OR
+                         -- If SIMULATION
+                         (c.type = 'SIMULATION' AND 
+                             -- Check if simulation is valid for the language
+                             (
+                                 CASE 
+                                     WHEN :language = 'en' THEN
+                                         (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
+                                         OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
+                                     WHEN :language = 'kn' THEN
+                                         (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
+                                         OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
+                                     ELSE 1
+                                 END
+                             ) AND
+                             -- Check agent component if it exists
+                             (
+                                 CASE
+                                     WHEN :language = 'en' THEN
+                                         (c.simulationId IS NULL OR c.simulationId = '' OR c.simulationId = 'null' OR EXISTS (
+                                             SELECT 1 FROM progress p 
+                                             WHERE p.itemId = c.conceptId 
+                                             AND p.studentId = :studentId 
+                                             AND p.itemType = 'SIMULATION_AGENT' 
+                                             AND p.status = :completedStatus 
+                                             AND p.language = :language
+                                             AND p.appName = :appName
+                                         ))
+                                     WHEN :language = 'kn' THEN
+                                         (c.simulationIdKannada IS NULL OR c.simulationIdKannada = '' OR c.simulationIdKannada = 'null' OR EXISTS (
+                                             SELECT 1 FROM progress p 
+                                             WHERE p.itemId = c.conceptId 
+                                             AND p.studentId = :studentId 
+                                             AND p.itemType = 'SIMULATION_AGENT' 
+                                             AND p.status = :completedStatus 
+                                             AND p.language = :language
+                                             AND p.appName = :appName
+                                         ))
+                                     ELSE 1
+                                 END
+                             ) AND
+                             -- Check URL component if it exists
+                             (
+                                 CASE
+                                     WHEN :language = 'en' THEN
+                                         (c.simulationUrl IS NULL OR c.simulationUrl = '' OR c.simulationUrl = 'null' OR EXISTS (
+                                             SELECT 1 FROM progress p 
+                                             WHERE p.itemId = c.conceptId 
+                                             AND p.studentId = :studentId 
+                                             AND p.itemType = 'SIMULATION' 
+                                             AND p.status = :completedStatus 
+                                             AND p.language = :language
+                                             AND p.appName = :appName
+                                         ))
+                                     WHEN :language = 'kn' THEN
+                                         (c.simulationUrlKannada IS NULL OR c.simulationUrlKannada = '' OR c.simulationUrlKannada = 'null' OR EXISTS (
+                                             SELECT 1 FROM progress p 
+                                             WHERE p.itemId = c.conceptId 
+                                             AND p.studentId = :studentId 
+                                             AND p.itemType = 'SIMULATION' 
+                                             AND p.status = :completedStatus 
+                                             AND p.language = :language
+                                             AND p.appName = :appName
+                                         ))
+                                     ELSE 1
+                                 END
+                             )
+                         )
+                     )
+                 ), 0) * 100 / 
+                 CASE WHEN COALESCE((
+                     SELECT COUNT(*) FROM concepts c 
+                     WHERE c.chapterId = ch.chapterId 
+                     AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
+                     AND (
+                         c.type != 'SIMULATION' OR
+                         (CASE 
+                             WHEN :language = 'en' THEN
+                                 (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
+                                 OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
+                             WHEN :language = 'kn' THEN
+                                 (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
+                                 OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
+                             ELSE 1
+                         END)
+                     )
+                 ), 0) = 0 THEN 1 
+                 ELSE COALESCE((
+                     SELECT COUNT(*) FROM concepts c 
+                     WHERE c.chapterId = ch.chapterId 
+                     AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
+                     AND (
+                         c.type != 'SIMULATION' OR
+                         (CASE 
+                             WHEN :language = 'en' THEN
+                                 (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
+                                 OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
+                             WHEN :language = 'kn' THEN
+                                 (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
+                                 OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
+                             ELSE 1
+                         END)
+                     )
+                 ), 1) 
+                 END
+             AS INTEGER) AS completionPercentage
         FROM chapters ch
         LEFT JOIN progress p_dummy ON p_dummy.studentId = :studentId AND 1=0
         WHERE ch.subjectId = :subjectId

@@ -50,6 +50,9 @@ class ConceptSimulationViewModel @Inject constructor(
     /**
      * Mark the simulation URL for [conceptId] as loaded/completed.
      * Safe to call multiple times — idempotent at the DB level.
+     *
+     *  FIXED: Properly marks both SIMULATION (URL) and updates chapter progress
+     * This ensures progress bars update in real-time across all 3 screens
      */
     fun markSimulationUrlCompleted(conceptId: String) {
         if (conceptId.isBlank()) return
@@ -58,8 +61,11 @@ class ConceptSimulationViewModel @Inject constructor(
                 DebugLogger.errorLog(TAG, "No studentId — cannot mark simulation URL completed")
                 return@launch
             }
-            progressEventTracker.markSimulationUrlCompleted(studentId, conceptId)
-            DebugLogger.debugLog(TAG, "Simulation URL completed tracked: conceptId=$conceptId")
+            val language = if (isKannada()) "kn" else "en"
+
+            // Mark the URL as completed - this triggers chapter progress update via ProgressEventTracker
+            progressEventTracker.markSimulationUrlCompleted(studentId, conceptId, language)
+            DebugLogger.debugLog(TAG, " Simulation URL completed tracked: conceptId=$conceptId [$language]")
         }
     }
 
@@ -181,62 +187,49 @@ class ConceptSimulationViewModel @Inject constructor(
     /**
      * Track that a simulation has completed
      * Called when the simulation WebView finishes loading successfully
-     * Sets status to COMPLETED and records both startedAt and completedAt times
-     * This simplifies the flow - when simulation loads, it's considered completed by the user
+     * ✅ FIXED: Uses ProgressEventTracker to ensure chapter progress is updated
+     * and flows through all 3 screens (ProgressScreen, ChapterScreen, ConceptScreen header)
      */
     fun markSimulationCompleted(conceptId: String) {
         viewModelScope.launch {
             try {
                 val studentId = sharedPrefs.getUserId() ?: ""
-                val currentTime = System.currentTimeMillis()
+                val language = if (isKannada()) "kn" else "en"
+
                 DebugLogger.debugLog(
-                    "ConceptViewModel",
-                    "markSimulationCompleted called for conceptId: $conceptId, studentId: $studentId"
+                    TAG,
+                    "🔄 markSimulationCompleted called for conceptId: $conceptId, studentId: $studentId [$language]"
                 )
 
                 if (studentId.isNotEmpty() && conceptId.isNotEmpty()) {
-                    val language = if (isKannada()) "kn" else "en"
-                    conceptRepository.updateProgressStatus(
-                        studentId = studentId,
-                        itemType = "CONCEPT",
-                        itemId = conceptId,
-                        language = language,
-                        newStatus = "COMPLETED",
-                        progressPercentage = 100,
-                        timestamp = currentTime
-                    )
+                    // Use ProgressEventTracker to ensure chapter progress is recalculated
+                    // This triggers updates in ALL 3 screens via the reactive Flow
+                    progressEventTracker.markSimulationUrlCompleted(studentId, conceptId, language)
+
                     DebugLogger.debugLog(
-                        "ConceptViewModel",
-                        " Simulation marked as COMPLETED for concept: $conceptId at $currentTime ($language)"
+                        TAG,
+                        "✅ Simulation URL marked as COMPLETED for concept: $conceptId [$language] - Progress bars should update!"
                     )
 
                     // Update user's streak when simulation is completed
-                    DebugLogger.debugLog(
-                        "ConceptViewModel",
-                        "Updating streak on simulation completion"
-                    )
                     streakManager.onConceptOpened { newStreak ->
-                        DebugLogger.debugLog(
-                            "ConceptViewModel",
-                            "Streak updated to: $newStreak on simulation completion"
-                        )
+                        DebugLogger.debugLog(TAG, "Streak updated to: $newStreak on simulation completion")
                     }
 
                     // Trigger real-time sync to Firestore
-                    // Get the progress ID from the database to sync
-                    val progress = conceptRepository.getProgress(studentId, "CONCEPT", conceptId, language)
+                    val progress = conceptRepository.getProgress(studentId, "SIMULATION", conceptId, language)
                     if (progress != null) {
                         DataSyncService.syncProgressUpdate(progress.progressId, studentId)
                     }
                 } else {
                     DebugLogger.errorLog(
-                        "ConceptViewModel",
+                        TAG,
                         " Failed to mark simulation completed - studentId: $studentId, conceptId: $conceptId"
                     )
                 }
             } catch (e: Exception) {
                 DebugLogger.errorLog(
-                    "ConceptViewModel",
+                    TAG,
                     " Error marking simulation completed: ${e.message} | ${e.stackTraceToString()}"
                 )
             }
