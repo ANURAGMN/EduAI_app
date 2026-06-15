@@ -273,6 +273,7 @@
     <string name="simulation_icon">Simulation Icon</string>
     <string name="score_icon">Star Icon</string>
     <string name="graph_icon">Graph Icon</string>
+    <string name="remove_image">Remove Image</string>
 
     <!-- Progress Text -->
     <string name="completed_concepts_format">%1$d/%2$d</string>

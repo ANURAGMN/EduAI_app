@@ -24,7 +24,9 @@ data class MathUiState(
     val selectedImageUri: String? = null,
     val showImagePicker: Boolean = false,
     val pendingProblemForDialog: String? = null,
-    val showSessionDialog: Boolean = false
+    val showSessionDialog: Boolean = false,
+    val shouldStartTTS: Boolean = false,
+    val fullTextForTTS: String = ""
 )
 
 /**
@@ -38,4 +40,3 @@ val MathUiState.lastAiMessage: MathMessageModel?
  */
 val MathUiState.isConversationStarted: Boolean
     get() = messages.isNotEmpty()
-

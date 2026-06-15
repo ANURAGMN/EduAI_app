@@ -2,16 +2,19 @@ package com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Icon
@@ -22,16 +25,21 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.ncert7.aitutorandlab.R
 import com.ncert7.aitutorandlab.ui.theme.AccentBlue
 import com.ncert7.aitutorandlab.ui.theme.HeaderGradientStart
 import com.ncert7.aitutorandlab.ui.theme.IconPrimary
+import com.ncert7.aitutorandlab.ui.theme.IconSecondary
 import com.ncert7.aitutorandlab.ui.theme.LocalDimensions
 import com.ncert7.aitutorandlab.ui.theme.TextPrimary
 import com.ncert7.aitutorandlab.ui.theme.White
@@ -57,11 +65,13 @@ fun InputSection(
     shouldDisableSend: Boolean = false,
     showImageIcon: Boolean = true,
     onImagePickerClick: (() -> Unit)? = null,
+    selectedImageUri: String? = null,
+    onRemoveImage: (() -> Unit)? = null,
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(White)
     ) {
         // Auto-suggestions
         val shouldShowAutosuggestions = !sttState.isListening &&
@@ -78,6 +88,14 @@ fun InputSection(
         }
         //input field
         if (!sttState.isListening) {
+            // Selected image preview - lets the user see and remove the
+            // image they attached before sending it
+            if (selectedImageUri != null) {
+                SelectedImagePreview(
+                    imageUri = selectedImageUri,
+                    onRemoveClick = { onRemoveImage?.invoke() }
+                )
+            }
             InputField(
                 textValue = chatState.inputText,
                 onTextChange = onTextChange,
@@ -93,6 +111,50 @@ fun InputSection(
                 amplitude = sttState.audioAmplitude,
                 statusMessage = sttState.statusMessage,
                 onStopClick = onStopListening
+            )
+        }
+    }
+}
+
+/**
+ * Shows a thumbnail of the image the user has attached, with a remove (X)
+ * button so they can clear it before sending the message.
+ */
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun SelectedImagePreview(
+    imageUri: String,
+    onRemoveClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimens = LocalDimensions.current
+    Box(
+        modifier = modifier
+            .padding(start = dimens.inputPadding, top = dimens.spaceSmall)
+            .size(72.dp)
+    ) {
+        GlideImage(
+            model = imageUri,
+            contentDescription = stringResource(R.string.attach_image),
+            modifier = Modifier
+                .size(72.dp)
+                .clip(RoundedCornerShape(dimens.cornerRadiusSmall))
+                .border(dimens.inputBorderWidth, AccentBlue, RoundedCornerShape(dimens.cornerRadiusSmall))
+        )
+
+        // Remove button
+        IconButton(
+            onClick = onRemoveClick,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(20.dp)
+                .background(White, CircleShape)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Cancel,
+                contentDescription = stringResource(R.string.remove_image),
+                tint = IconPrimary,
+                modifier = Modifier.size(18.dp)
             )
         }
     }
@@ -163,7 +225,7 @@ private fun InputField(
                         )
                     }
                 }
-                },
+            },
             trailingIcon ={
                 if (hasText) {
                     // Send Icon
@@ -181,7 +243,7 @@ private fun InputField(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Send,
                             contentDescription = stringResource(R.string.send_message),
-                            tint = if (canSend) HeaderGradientStart else Color.Gray.copy(alpha = 0.5f),
+                            tint = if (canSend) HeaderGradientStart else IconSecondary.copy(alpha = 0.5f),
                         )
                     }
                 } else {
@@ -198,7 +260,7 @@ private fun InputField(
                         )
                     }
                 }
-                          },
+            },
             keyboardOptions = KeyboardOptions(
                 imeAction = if (canSend) {
                     ImeAction.Send

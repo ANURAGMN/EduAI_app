@@ -4,13 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
 import com.ncert7.aitutorandlab.debug.DebugLogger
+import com.ncert7.aitutorandlab.domain.chatbot.usecase.AvatarChangeUseCase
 import com.ncert7.aitutorandlab.domain.mathagent.usecase.MathIntent
 import com.ncert7.aitutorandlab.domain.mathagent.usecase.MathImageHandlingUseCase
 import com.ncert7.aitutorandlab.domain.mathagent.usecase.MathProblemsUseCase
 import com.ncert7.aitutorandlab.domain.mathagent.usecase.MathSendMessageUseCase
 import com.ncert7.aitutorandlab.domain.mathagent.usecase.MathSessionUseCase
 import com.ncert7.aitutorandlab.domain.progress.ProgressEventTracker
+import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.ncert7.aitutorandlab.ui.screens.mathagentscreen.dataclass.MathUiState
+import com.ncert7.aitutorandlab.ui.viewModel.TextToSpeech
 import com.ncert7.aitutorandlab.utils.isKannada
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +31,8 @@ class MathViewModel @Inject constructor(
     private val mathSendMessageUseCase: MathSendMessageUseCase,
     private val mathImageHandlingUseCase: MathImageHandlingUseCase,
     private val sharedPreferenceUtils: SharedPreferenceUtils,
-    private val progressEventTracker: ProgressEventTracker
+    private val progressEventTracker: ProgressEventTracker,
+    private val avatarChangeUseCase: AvatarChangeUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MathUiState())
@@ -68,6 +72,8 @@ class MathViewModel @Inject constructor(
         is MathIntent.ContinueExistingSession -> continuePreviousSession(intent.problemId)
         is MathIntent.StartFreshSession -> startFreshSession(intent.problemId)
         is MathIntent.DismissSessionDialog -> dismissSessionDialog()
+        is MathIntent.ConsumeTTSTrigger -> consumeTTSTrigger()
+        is MathIntent.ClearSelectedImage -> clearSelectedImage()
         is MathIntent.HideAutosuggestions -> hideAutosuggestions()
         is MathIntent.MarkUserActive -> markUserActive()
         is MathIntent.MarkUserInactive -> markUserInactive()
@@ -238,7 +244,11 @@ class MathViewModel @Inject constructor(
                             metadata = sessionResult.metadata ?: it.metadata,
                             messages = sessionResult.messages,
                             threadId = sessionResult.threadId,
-                            problemId = problemId
+                            problemId = problemId,
+                            // Auto-speak the agent's first message + drive highlight,
+                            // mirroring ChatViewModel's shouldStartTTS/fullTextForTTS pattern
+                            shouldStartTTS = sessionResult.messages.lastOrNull { msg -> msg.role.lowercase() == "assistant" }?.content?.isNotEmpty() == true,
+                            fullTextForTTS = sessionResult.messages.lastOrNull { msg -> msg.role.lowercase() == "assistant" }?.content ?: it.fullTextForTTS
                         )
                     }
 
@@ -325,8 +335,17 @@ class MathViewModel @Inject constructor(
             return
         }
 
-        // Create user message using usecase
-        val userMessage = mathSendMessageUseCase.createUserMessage(message, null)
+        // Backend requires a non-empty user message for every turn.
+        // If the user only attached an image without typing anything,
+        // append a default text so the request is valid.
+        val effectiveMessage = if (message.isBlank() && imageUri != null) {
+            "Here is the image of my answer."
+        } else {
+            message
+        }
+
+        // Create user message using usecase (attach image so it can be shown in chat history)
+        val userMessage = mathSendMessageUseCase.createUserMessage(effectiveMessage, imageUri)
 
         // Add user message to chat
         _uiState.update { state ->
@@ -369,7 +388,7 @@ class MathViewModel @Inject constructor(
                 // Continue session with optional image URI
                 val sessionResult = mathSessionUseCase.continueSession(
                     problemId = problemId,
-                    userMessage = message,
+                    userMessage = effectiveMessage,
                     isKannada = isKannada,
                     imageUri = imageUri
                 )
@@ -457,7 +476,10 @@ class MathViewModel @Inject constructor(
                                 problemId = problemId,
                                 messages = sessionResult.messages,
                                 currentState = sessionResult.currentState ?: it.currentState,
-                                metadata = sessionResult.metadata ?: it.metadata
+                                metadata = sessionResult.metadata ?: it.metadata,
+                                // Auto-speak the resumed agent's last message + drive highlight
+                                shouldStartTTS = sessionResult.messages.lastOrNull { msg -> msg.role.lowercase() == "assistant" }?.content?.isNotEmpty() == true,
+                                fullTextForTTS = sessionResult.messages.lastOrNull { msg -> msg.role.lowercase() == "assistant" }?.content ?: it.fullTextForTTS
                             )
                         }
                         DebugLogger.debugLog("MathViewModel", "Session resumed successfully with ${sessionResult.messages.size} messages")
@@ -556,6 +578,15 @@ class MathViewModel @Inject constructor(
     }
 
     /**
+     * Reset the shouldStartTTS flag after the screen has consumed it and
+     * triggered ttsController.speak(...). This mirrors ChatViewModel's
+     * shouldStartTTS pattern so the auto-speak doesn't re-trigger on recomposition.
+     */
+    private fun consumeTTSTrigger() {
+        _uiState.update { it.copy(shouldStartTTS = false) }
+    }
+
+    /**
      * Update input text
      */
     private fun updateInput(text: String) {
@@ -646,6 +677,47 @@ class MathViewModel @Inject constructor(
                 DebugLogger.errorLog("MathViewModel", "Error selecting image: ${e.message}")
             }
         }
+    }
+
+    /**
+     * Handles avatar change with proper validation and delegation to use case.
+     * This mirrors ChatViewModel.handleAvatarChange so the Math Agent screen's
+     * avatar selection (boy/girl/disable) actually switches the character and voice.
+     * @param displayName The localized display name from UI
+     * @param boyDisplayName The localized "boy" string
+     * @param girlDisplayName The localized "girl" string
+     * @param ttsController The TTS controller to apply voice/character changes
+     * @param currentState The current settings state
+     * @return Updated ChatBotSettingsState with normalized code and display name
+     */
+    fun handleAvatarChange(
+        displayName: String,
+        boyDisplayName: String,
+        girlDisplayName: String,
+        ttsController: TextToSpeech,
+        currentState: ChatBotSettingsState
+    ): ChatBotSettingsState {
+        // Convert display name to code
+        val avatarCode = avatarChangeUseCase.getAvatarCodeFromDisplayName(
+            displayName = displayName,
+            boyDisplayName = boyDisplayName,
+            girlDisplayName = girlDisplayName
+        )
+
+        // Apply avatar change through use case (switches character + voice in the WebView)
+        val normalizedCode = avatarChangeUseCase.changeAvatar(
+            avatarCode = avatarCode,
+            ttsController = ttsController,
+            currentLanguage = _uiState.value.currentLanguage
+        )
+
+        DebugLogger.debugLog("MathViewModel", "Avatar changed to: $normalizedCode")
+
+        // Return updated state with both code and display name
+        return currentState.copy(
+            selectedAvatar = normalizedCode,
+            selectedAvatarDisplayName = displayName
+        )
     }
 
     /**
