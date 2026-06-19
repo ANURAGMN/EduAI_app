@@ -53,10 +53,9 @@ object RetrofitProvider {
             .addInterceptor(proactiveTokenInterceptor)      // Ensure fresh token BEFORE request
             .addInterceptor(logging)                        //  Log request with fresh token
             .addNetworkInterceptor(errorLoggingInterceptor) //  Network-level error logging
-            .connectTimeout(20, TimeUnit.SECONDS)
-            .readTimeout(20, TimeUnit.SECONDS)
-            .writeTimeout(20, TimeUnit.SECONDS)
-            .retryOnConnectionFailure(true)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
             .build()
 
         val gson = GsonBuilder()
@@ -81,3 +80,4 @@ object RetrofitProvider {
             .build()
     }
 }
+

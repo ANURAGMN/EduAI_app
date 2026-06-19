@@ -395,12 +395,15 @@ class MathViewModel @Inject constructor(
 
                 if (sessionResult.success) {
                     _uiState.update { state ->
+                        val lastAssistantMsg = sessionResult.messages.lastOrNull { it.role.lowercase() == "assistant" }
                         state.copy(
                             messages = state.messages + sessionResult.messages,
                             currentState = sessionResult.currentState ?: state.currentState,
                             metadata = sessionResult.metadata ?: state.metadata,
                             isLoading = false,
-                            isTyping = false
+                            isTyping = false,
+                            shouldStartTTS = lastAssistantMsg?.content?.isNotEmpty() == true,
+                            fullTextForTTS = lastAssistantMsg?.content ?: state.fullTextForTTS
                         )
                     }
                     DebugLogger.debugLog("MathViewModel", "✓ Message sent successfully with threadId: $threadId")

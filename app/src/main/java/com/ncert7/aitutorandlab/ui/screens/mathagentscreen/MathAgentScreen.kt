@@ -83,16 +83,38 @@ fun MathAgentScreen(
     // Settings state
     var settingsState by remember { mutableStateOf(ChatBotSettingsState()) }
 
-    // Image picker launcher
+    val imageTooLargeMessage = stringResource(R.string.image_too_large)
+    val imageProcessingMessage = stringResource(R.string.image_processing_may_take_time)
+
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let {
+            val fileSizeBytes = try {
+                context.contentResolver.openFileDescriptor(it, "r")?.use { pfd ->
+                    pfd.statSize
+                } ?: 0L
+            } catch (e: Exception) {
+                DebugLogger.errorLog("MathAgentScreen", "Failed to read image size: ${e.message}")
+                0L
+            }
+
+            val fiveMbInBytes = 5 * 1024 * 1024L
+
+            if (fileSizeBytes > fiveMbInBytes) {
+                android.widget.Toast.makeText(
+                    context,
+                    imageTooLargeMessage,
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+                return@let
+            }
+
             DebugLogger.debugLog("MathAgentScreen", "Image selected: $it")
             mathViewModel.onIntent(MathIntent.SelectImage(it.toString()))
         }
     }
-
     // Convert math messages to chat messages for display
     val mathMessagesAsChatMessages = remember(mathState.messages) {
         mathState.messages.map { mathMsg ->
@@ -106,15 +128,14 @@ fun MathAgentScreen(
     }
 
     // Create a temporary chat state with math messages for display
-    val displayChatState = remember(chatState, mathMessagesAsChatMessages, mathState) {
-        chatState.copy(
-            messages = mathMessagesAsChatMessages,
-            inputText = mathState.inputText,
-            isLoading = mathState.isLoading,
-            isTyping = mathState.isTyping,
-            typingText = mathState.typingText
-        )
-    }
+    // remove remember wrapper, keep as plain copy
+    val displayChatState = chatState.copy(
+        messages = mathMessagesAsChatMessages,
+        inputText = mathState.inputText,
+        isLoading = mathState.isLoading,
+        isTyping = mathState.isTyping,
+        typingText = mathState.typingText
+    )
 
     // Auto-speak agent's first message on session start/resume + drive highlight,
     // mirroring ConceptScreen/ChatEffects' shouldStartTTS -> ttsController.speak() flow
@@ -245,6 +266,11 @@ fun MathAgentScreen(
                         if (mathState.inputText.isNotBlank() || mathState.selectedImageUri != null) {
                             // Send message with or without image
                             if (mathState.selectedImageUri != null) {
+                                android.widget.Toast.makeText(
+                                    context,
+                                    imageProcessingMessage,
+                                    android.widget.Toast.LENGTH_LONG
+                                ).show()
                                 mathViewModel.onIntent(
                                     MathIntent.SendMessageWithImage(mathState.inputText, mathState.selectedImageUri!!)
                                 )
@@ -331,13 +357,6 @@ fun MathAgentScreen(
                         )
                     }
 
-                    // Logs for debug
-                    LogOverlay(
-                        metadata = mathState.metadata,
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(8.dp)
-                    )
                 }
             }
         }

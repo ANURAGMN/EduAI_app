@@ -71,7 +71,7 @@ class ChapterViewModel @Inject constructor(
                         conceptRepository.getStudyConceptCount(chapter.chapterId) > 0
                     }
                     val hasSimulation = conceptRepository.getSimulationConceptCount(chapter.chapterId, language) > 0
-                    val hasRevision   = chapter.revisionId.isNotEmpty()
+                    val hasRevision   = if (isMathSubject) false else chapter.revisionId.isNotEmpty()
 
                     val shouldInclude = hasStudy || hasSimulation || hasRevision
                     DebugLogger.debugLog(

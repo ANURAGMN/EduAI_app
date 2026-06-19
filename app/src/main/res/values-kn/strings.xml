@@ -48,6 +48,7 @@
     <string name="error_school_empty">ಶಾಲೆಯ ಹೆಸರು ಖಾಲಿ ಇರಬಾರದು</string>
     <string name="error_school_min_length">ಶಾಲೆಯ ಹೆಸರು ಕನಿಷ್ಠ 3 ಅಕ್ಷರಗಳಿರಬೇಕು</string>
     <string name="error_school_invalid_chars">ಶಾಲೆಯ ಹೆಸರಿನಲ್ಲಿ ಅಕ್ಷರಗಳು, ಸಂಖ್ಯೆಗಳು ಮತ್ತು ಸರಳ ಚಿಹ್ನೆಗಳು ಮಾತ್ರ ಇರಬೇಕು</string>
+    <string name="image_too_large">ಚಿತ್ರದ ಗಾತ್ರವು 5 MB ಕ್ಕಿಂತ ಕಡಿಮೆ ಇರಬೇಕು</string>
 
     <!-- Success Messages -->
     <string name="login_successful">ಲಾಗಿನ್ ಯಶಸ್ವಿಯಾಗಿದೆ</string>
@@ -328,6 +329,7 @@
     <string name="math_session_failed_resume">ಸೆಶನ್ ಪುನರಾರಂಭಿಸಲು ವಿಫಲವಾಗಿದೆ</string>
     <string name="math_error_prefix">ದೋಷ: %1$s</string>
     <string name="problem_to_solve">ಪರಿಹರಿಸಲು ಸಮಸ್ಯೆಗಳು</string>
+    <string name="image_processing_may_take_time">ಚಿತ್ರದ ಉತ್ತರ 2–3 ನಿಮಿಷ ತೆಗೆದುಕೊಳ್ಳಬಹುದು. ದಯವಿಟ್ಟು ನಿರೀಕ್ಷಿಸಿ…</string>
 
     <!-- Progress Status Strings -->
     <string name="progress_status_completed">ಪೂರ್ಣಗೊಂಡಿದೆ</string>

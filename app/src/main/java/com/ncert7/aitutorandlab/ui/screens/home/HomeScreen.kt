@@ -110,7 +110,12 @@ fun HomeScreen(
                     todayCompletedConcept = totalCompletedConceptCount,
                     todayCompletedSimulation = totalCompletedSimulationCount,
                     onShowAllChapters = {
-                        val subjectId = sharedPreferenceUtils.getSubjectSelection() ?: "9a7d0d20-7b8d-4b8c-8c12-5a1a8a55f002"
+                        val subjectId = if (selectedSubject?.contains("Math", ignoreCase = true) == true ||
+                            selectedSubject?.contains("ಗಣಿತ", ignoreCase = true) == true) {
+                            "5c0a6b6d-7c6b-4f35-9d5b-9fd0fd8e8a01"  // Math
+                        } else {
+                            "9a7d0d20-7b8d-4b8c-8c12-5a1a8a55f002"  // Science
+                        }
                         onNavigateToChapters(subjectId)
                     }
                 )

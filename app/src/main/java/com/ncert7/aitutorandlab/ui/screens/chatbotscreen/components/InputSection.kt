@@ -23,6 +23,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,7 +34,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -176,9 +182,26 @@ private fun InputField(
 ) {
 
     val dimens = LocalDimensions.current
-    val hasText = textValue.isNotBlank()
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
+
+    // Buffer input locally so recompositions from other StateFlows
+    // (chatViewModel TTS ticks etc.) don't interrupt the IME mid-keystroke.
+    // lastExternalValue tracks the last textValue we pushed INTO localText,
+    // so we only overwrite localText when the *external* source changes it
+    // (e.g. send-clear, STT inject) — never when ViewModel just echoes back
+    // what we already typed. This check is synchronous (no LaunchedEffect delay).
+    var localText by remember { mutableStateOf(TextFieldValue(textValue)) }
+    var lastExternalValue by remember { mutableStateOf(textValue) }
+
+    if (textValue != lastExternalValue) {
+        // External change (send cleared it, STT filled it) — sync localText now,
+        // in the same composition pass, with no frame delay
+        lastExternalValue = textValue
+        localText = TextFieldValue(textValue, selection = TextRange(textValue.length))
+    }
+
+    val hasText = localText.text.isNotBlank()
 
     // Determine if send should be enabled
     val canSend = hasText && !shouldDisableSend
@@ -193,9 +216,12 @@ private fun InputField(
 
         // Text Input Field
         TextField(
-            value = textValue,
+            value = localText,
             shape = RoundedCornerShape(dimens.inputRadius),
-            onValueChange = onTextChange,
+            onValueChange = { newValue ->
+                localText = newValue          // update local instantly, no recomposition lag
+                onTextChange(newValue.text)   // propagate to ViewModel
+            },
             modifier = Modifier
                 .weight(1f)
                 .border(
@@ -226,7 +252,7 @@ private fun InputField(
                     }
                 }
             },
-            trailingIcon ={
+            trailingIcon = {
                 if (hasText) {
                     // Send Icon
                     IconButton(
