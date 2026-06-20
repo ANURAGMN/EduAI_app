@@ -37,6 +37,9 @@ interface ConceptDao {
     @Query("SELECT * FROM concepts WHERE conceptId = :conceptId")
     fun getConceptFlow(conceptId: String): Flow<ConceptEntity?>
 
+    @Query("SELECT * FROM concepts WHERE problemId = :problemId LIMIT 1")
+    suspend fun getConceptByProblemId(problemId: String): ConceptEntity?
+
     // Get next 2 concepts to show as "locked" in UI
     @Query("SELECT * FROM concepts WHERE chapterId = :chapterId AND orderIndex > :currentIndex ORDER BY orderIndex ASC LIMIT :limit")
     suspend fun getNextConcepts(
@@ -130,11 +133,11 @@ interface ConceptDao {
         AND (
             CASE 
                 WHEN :language = 'en' THEN
-                    (simulationId IS NOT NULL AND simulationId != '') 
-                    OR (simulationUrl IS NOT NULL AND simulationUrl != '')
+                    (simulationId IS NOT NULL AND simulationId != '' AND simulationId != 'null' AND simulationId != 'Not found' AND simulationId != 'Not Found') 
+                    OR (simulationUrl IS NOT NULL AND simulationUrl != '' AND simulationUrl != 'null' AND simulationUrl != 'Not found' AND simulationUrl != 'Not Found')
                 WHEN :language = 'kn' THEN
-                    (simulationIdKannada IS NOT NULL AND simulationIdKannada != '') 
-                    OR (simulationUrlKannada IS NOT NULL AND simulationUrlKannada != '')
+                    (simulationIdKannada IS NOT NULL AND simulationIdKannada != '' AND simulationIdKannada != 'null' AND simulationIdKannada != 'Not found' AND simulationIdKannada != 'Not Found') 
+                    OR (simulationUrlKannada IS NOT NULL AND simulationUrlKannada != '' AND simulationUrlKannada != 'null' AND simulationUrlKannada != 'Not found' AND simulationUrlKannada != 'Not Found')
                 ELSE 1
             END
         )
@@ -191,11 +194,11 @@ interface ConceptDao {
         AND (
             CASE 
                 WHEN :language = 'en' THEN
-                    (simulationId IS NOT NULL AND simulationId != '') 
-                    OR (simulationUrl IS NOT NULL AND simulationUrl != '')
+                    (simulationId IS NOT NULL AND simulationId != '' AND simulationId != 'null' AND simulationId != 'Not found' AND simulationId != 'Not Found') 
+                    OR (simulationUrl IS NOT NULL AND simulationUrl != '' AND simulationUrl != 'null' AND simulationUrl != 'Not found' AND simulationUrl != 'Not Found')
                 WHEN :language = 'kn' THEN
-                    (simulationIdKannada IS NOT NULL AND simulationIdKannada != '') 
-                    OR (simulationUrlKannada IS NOT NULL AND simulationUrlKannada != '')
+                    (simulationIdKannada IS NOT NULL AND simulationIdKannada != '' AND simulationIdKannada != 'null' AND simulationIdKannada != 'Not found' AND simulationIdKannada != 'Not Found') 
+                    OR (simulationUrlKannada IS NOT NULL AND simulationUrlKannada != '' AND simulationUrlKannada != 'null' AND simulationUrlKannada != 'Not found' AND simulationUrlKannada != 'Not Found')
                 ELSE 1
             END
         )

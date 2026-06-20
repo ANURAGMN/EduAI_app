@@ -69,6 +69,16 @@ class HomeViewModel @Inject constructor(
     private val _languageChangeTrigger = MutableStateFlow(0)
     val languageChangeTrigger: StateFlow<Int> = _languageChangeTrigger
 
+    private val _currentLanguage = MutableStateFlow(if (isKannada()) "kn" else "en")
+    val currentLanguage: StateFlow<String> = _currentLanguage
+
+    fun setLanguage(lang: String) {
+        if (_currentLanguage.value != lang) {
+            _currentLanguage.value = lang
+            DebugLogger.debugLog("HomeViewModel", "Language dynamically changed to: $lang")
+        }
+    }
+
     val startOfDay = LocalDate.now()
         .atStartOfDay(ZoneId.systemDefault())
         .toInstant()
@@ -86,124 +96,116 @@ class HomeViewModel @Inject constructor(
         observeStreak()
         observeTodayProgress()
         observeTotalCounts()
+        observeProgressConceptsAndSimulations()
+    }
 
-        // Load CONCEPTS
+    private fun observeProgressConceptsAndSimulations() {
         viewModelScope.launch {
-            progressDao.getAllProgress(userId, AppConfig.APP_NAME )
-                .collectLatest { allProgressList ->
-                    // Filter by CONCEPT type in memory
-                    val allProgress = allProgressList.filter { it.itemType == "CONCEPT" }
+            if (userId.isEmpty()) return@launch
+            _currentLanguage.collectLatest { language ->
+                kotlinx.coroutines.coroutineScope {
+                    // Observe concepts
+                    launch {
+                        progressDao.getAllProgress(userId, AppConfig.APP_NAME)
+                            .collectLatest { allProgressList ->
+                                // Filter by CONCEPT type and LANGUAGE
+                                val allProgress = allProgressList.filter { 
+                                    it.itemType == "CONCEPT" && it.language == language 
+                                }
 
-                    // Separate by status
-                    val completedList = allProgress
-                        .filter { it.status == "COMPLETED" }
-                        .sortedByDescending { it.completedAt ?: 0L }
+                                // Separate by status
+                                val completedList = allProgress
+                                    .filter { it.status == "COMPLETED" }
+                                    .sortedByDescending { it.completedAt ?: 0L }
 
-                    val inProgressList = allProgress
-                        .filter { it.status == "IN_PROGRESS" }
-                        .sortedByDescending { it.lastAccessedAt }
+                                val inProgressList = allProgress
+                                    .filter { it.status == "IN_PROGRESS" }
+                                    .sortedByDescending { it.lastAccessedAt }
 
-                    // Build curated list for display
-                    val curatedProgress = mutableListOf<ProgressEntity>()
+                                // Build curated list for display
+                                val curatedProgress = mutableListOf<ProgressEntity>()
 
-                    // Strategy: Show ALL in-progress concepts first (these need attention)
-                    curatedProgress.addAll(inProgressList)
+                                // Strategy: Show ALL in-progress concepts first
+                                curatedProgress.addAll(inProgressList)
 
-                    // Then add most recent completed concepts to fill up to 4 items
-                    val remainingSlots = (4 - curatedProgress.size).coerceAtLeast(0)
-                    if (remainingSlots > 0) {
-                        curatedProgress.addAll(
-                            completedList.take(remainingSlots)
-                        )
+                                // Then add most recent completed concepts to fill up to 4 items
+                                val remainingSlots = (4 - curatedProgress.size).coerceAtLeast(0)
+                                if (remainingSlots > 0) {
+                                    curatedProgress.addAll(
+                                        completedList.take(remainingSlots)
+                                    )
+                                }
+
+                                // No progress at all
+                                if (curatedProgress.isEmpty()) {
+                                    val firstUnitConcepts = conceptDao.getFirstConceptsOfChapter("1", "STUDY", 4)
+                                    val combined = firstUnitConcepts.map { concept ->
+                                        null to concept
+                                    }
+                                    progressConcepts.value = combined
+                                    DebugLogger.debugLog("HomeViewModel", "First login/no progress ($language) - showing ${combined.size} default concepts")
+                                } else {
+                                    val conceptIds = curatedProgress.map { it.itemId }
+                                    val concepts = conceptDao.getConceptsByIds(conceptIds).first()
+                                    val combined = curatedProgress.map { progress ->
+                                        val concept = concepts.find { it.conceptId == progress.itemId }
+                                        progress to concept
+                                    }
+                                    progressConcepts.value = combined
+                                    DebugLogger.debugLog("HomeViewModel", "Loaded ${combined.size} concepts for $language")
+                                }
+                            }
                     }
 
-                    //  No progress at all
-                    if (curatedProgress.isEmpty()) {
-                        val firstUnitConcepts = conceptDao.getFirstConceptsOfChapter("1", "STUDY", 4)
+                    // Observe simulations
+                    launch {
+                        progressDao.getAllProgress(userId, AppConfig.APP_NAME)
+                            .collectLatest { allProgressList ->
+                                // Filter by SIMULATION or SIMULATION_AGENT type and LANGUAGE
+                                val allProgress = allProgressList.filter { 
+                                    (it.itemType == "SIMULATION" || it.itemType == "SIMULATION_AGENT") && it.language == language 
+                                }
 
-                        // Show concepts without progress entries
-                        val combined = firstUnitConcepts.map { concept ->
-                            null to concept
-                        }
+                                val completedList = allProgress
+                                    .filter { it.status == "COMPLETED" }
+                                    .sortedByDescending { it.completedAt ?: 0L }
 
-                        progressConcepts.value = combined
-                        DebugLogger.debugLog("HomeViewModel", "First login - showing ${combined.size} default concepts")
-                        return@collectLatest
+                                val inProgressList = allProgress
+                                    .filter { it.status == "IN_PROGRESS" }
+                                    .sortedByDescending { it.lastAccessedAt }
+
+                                val curatedProgress = mutableListOf<ProgressEntity>()
+                                curatedProgress.addAll(inProgressList)
+
+                                val remainingSlots = (4 - curatedProgress.size).coerceAtLeast(0)
+                                if (remainingSlots > 0) {
+                                    curatedProgress.addAll(completedList.take(remainingSlots))
+                                }
+
+                                if (curatedProgress.isEmpty()) {
+                                    val firstUnitSimulations = conceptDao.getFirstConceptsOfChapter("1", "SIMULATION", 4)
+                                    val combined = firstUnitSimulations.map { concept ->
+                                        null to concept
+                                    }
+                                    progressSimulations.value = combined
+                                    DebugLogger.debugLog("HomeViewModel", "First login/no simulations ($language) - showing ${combined.size} default simulations")
+                                } else {
+                                    val conceptIds = curatedProgress.map { it.itemId }
+                                    val concepts = conceptDao.getConceptsByIds(conceptIds).first()
+                                    val combined = curatedProgress.map { progress ->
+                                        val concept = concepts.find { it.conceptId == progress.itemId }
+                                        progress to concept
+                                    }
+                                    progressSimulations.value = combined
+                                    DebugLogger.debugLog("HomeViewModel", "Loaded ${combined.size} simulations for $language")
+                                }
+                            }
                     }
-
-                    // Normal path: fetch concepts for progress entries
-                    val conceptIds = curatedProgress.map { it.itemId }
-
-                    // Fetch concepts once for this snapshot to avoid nested long-lived collectors
-                    val concepts = conceptDao.getConceptsByIds(conceptIds).first()
-
-                    val combined = curatedProgress.map { progress ->
-                        val concept = concepts.find { it.conceptId == progress.itemId }
-                        progress to concept
-                    }
-
-                    progressConcepts.value = combined
-                    DebugLogger.debugLog(
-                        "HomeViewModel",
-                        "Loaded ${combined.size} concepts: ${inProgressList.size} in-progress, ${completedList.size} completed"
-                    )
                 }
-        }
-
-        // Load SIMULATIONS
-        viewModelScope.launch {
-            progressDao.getAllProgress(userId, AppConfig.APP_NAME)
-                .collectLatest { allProgressList ->
-                    // Filter by SIMULATION type in memory
-                    val allProgress = allProgressList.filter { it.itemType == "SIMULATION" }
-
-                    val completedList = allProgress
-                        .filter { it.status == "COMPLETED" }
-                        .sortedByDescending { it.completedAt ?: 0L }
-
-                    val inProgressList = allProgress
-                        .filter { it.status == "IN_PROGRESS" }
-                        .sortedByDescending { it.lastAccessedAt }
-
-                    val curatedProgress = mutableListOf<ProgressEntity>()
-                    curatedProgress.addAll(inProgressList)
-
-                    val remainingSlots = (4 - curatedProgress.size).coerceAtLeast(0)
-                    if (remainingSlots > 0) {
-                        curatedProgress.addAll(completedList.take(remainingSlots))
-                    }
-
-                    // FIRST LOGIN FALLBACK: No progress at all
-                    if (curatedProgress.isEmpty()) {
-                        val firstUnitSimulations = conceptDao.getFirstConceptsOfChapter("1", "SIMULATION", 4)
-
-                        val combined = firstUnitSimulations.map { concept ->
-                            null to concept
-                        }
-
-                        progressSimulations.value = combined
-                        DebugLogger.debugLog("HomeViewModel", "First login - showing ${combined.size} default simulations")
-                        return@collectLatest
-                    }
-
-                    // fetch simulations for progress entries
-                    val conceptIds = curatedProgress.map { it.itemId }
-
-                    val concepts = conceptDao.getConceptsByIds(conceptIds).first()
-
-                    val combined = curatedProgress.map { progress ->
-                        val concept = concepts.find { it.conceptId == progress.itemId }
-                        progress to concept
-                    }
-
-                    progressSimulations.value = combined
-                    DebugLogger.debugLog(
-                        "HomeViewModel",
-                        "Loaded ${combined.size} simulations: ${inProgressList.size} in-progress, ${completedList.size} completed"
-                    )
-                }
+            }
         }
     }
+
     private fun observeStreak() {
         viewModelScope.launch {
             if (userId.isEmpty()) return@launch
@@ -218,23 +220,26 @@ class HomeViewModel @Inject constructor(
     private fun observeTodayProgress() {
         viewModelScope.launch {
             if (userId.isEmpty()) return@launch
-            
-            // Observe today's concept count
-            launch {
-                progressDao.getTodayCompletedConceptCountFlow(userId, startOfDay, endOfDay, AppConfig.APP_NAME)
-                    .collectLatest { count ->
-                        _todayConceptCount.value = count
-                        DebugLogger.debugLog("HomeViewModel", "Today's concept count updated: $count")
+            _currentLanguage.collectLatest { language ->
+                kotlinx.coroutines.coroutineScope {
+                    // Observe today's concept count
+                    launch {
+                        progressDao.getTodayCompletedConceptCountFlow(userId, language, startOfDay, endOfDay, AppConfig.APP_NAME)
+                            .collectLatest { count ->
+                                _todayConceptCount.value = count
+                                DebugLogger.debugLog("HomeViewModel", "Today's concept count updated: $count ($language)")
+                            }
                     }
-            }
 
-            // Observe today's simulation count
-            launch {
-                progressDao.getTodayCompletedSimulationCountFlow(userId, startOfDay, endOfDay, AppConfig.APP_NAME)
-                    .collectLatest { count ->
-                        _todaySimulationCount.value = count
-                        DebugLogger.debugLog("HomeViewModel", "Today's simulation count updated: $count")
+                    // Observe today's simulation count
+                    launch {
+                        progressDao.getTodayCompletedSimulationCountFlow(userId, language, startOfDay, endOfDay, AppConfig.APP_NAME)
+                            .collectLatest { count ->
+                                _todaySimulationCount.value = count
+                                DebugLogger.debugLog("HomeViewModel", "Today's simulation count updated: $count ($language)")
+                            }
                     }
+                }
             }
         }
     }
@@ -246,22 +251,24 @@ class HomeViewModel @Inject constructor(
     private fun observeTotalCounts() {
         viewModelScope.launch {
             if (userId.isEmpty()) return@launch
-            val language = if (isKannada()) "kn" else "en"
-
-            launch {
-                progressDao.getTotalCompletedConceptsFlow(userId, language, AppConfig.APP_NAME)
-                    .collectLatest { count ->
-                        _totalCompletedConcept.value = count
-                        DebugLogger.debugLog("HomeViewModel", "Total completed concepts: $count")
+            _currentLanguage.collectLatest { language ->
+                kotlinx.coroutines.coroutineScope {
+                    launch {
+                        progressDao.getTotalCompletedConceptsFlow(userId, language, AppConfig.APP_NAME)
+                            .collectLatest { count ->
+                                _totalCompletedConcept.value = count
+                                DebugLogger.debugLog("HomeViewModel", "Total completed concepts: $count ($language)")
+                            }
                     }
-            }
 
-            launch {
-                progressDao.getTotalCompletedSimulationsFlow(userId, language, AppConfig.APP_NAME)
-                    .collectLatest { count ->
-                        _totalCompletedSimulation.value = count
-                        DebugLogger.debugLog("HomeViewModel", "Total completed simulations: $count")
+                    launch {
+                        progressDao.getTotalCompletedSimulationsFlow(userId, language, AppConfig.APP_NAME)
+                            .collectLatest { count ->
+                                _totalCompletedSimulation.value = count
+                                DebugLogger.debugLog("HomeViewModel", "Total completed simulations: $count ($language)")
+                            }
                     }
+                }
             }
         }
     }

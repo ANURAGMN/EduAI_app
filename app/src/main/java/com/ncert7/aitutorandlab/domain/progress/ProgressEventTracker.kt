@@ -6,6 +6,7 @@ import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.repository.ConceptRepository
 import com.ncert7.aitutorandlab.repository.ProgressRepository
 import com.ncert7.aitutorandlab.repository.StreakRepository
+import com.ncert7.aitutorandlab.utils.isKannada
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -13,10 +14,9 @@ import javax.inject.Singleton
 /**
  * Progress Event Tracker — Central entry point for all progress state updates.
  *
- * This is the ONLY class used for recording progress events throughout the app.
  * Every call:
  *   1. Writes the progress row via ProgressRepository
- *   2. Triggers chapter-level recalculation via ChapterProgressService
+ *   2. Triggers chapter-level recalculation + persistence via ChapterProgressService
  *   3. Records a streak activity via StreakRepository
  *
  * itemType constants (keep in sync with ChapterProgressCalculator):
@@ -40,63 +40,52 @@ class ProgressEventTracker @Inject constructor(
     }
 
     /**
-     * Look up which chapter a concept belongs to, then trigger chapter progress recalculation.
-     * Ensures chapter_agent_progress is always up-to-date after any concept change.
-     *  FIXED: Added detailed logging to track all progress updates across 3 screens
+     * Look up which chapter a concept belongs to, then trigger chapter progress recalculation
+     * and persistence to the chapter_agent_progress table.
      */
     private suspend fun triggerChapterProgressUpdate(
         studentId: String,
         conceptId: String,
-        language: String = if (com.ncert7.aitutorandlab.utils.isKannada()) "kn" else "en"
+        language: String
     ) {
         try {
             val concept = conceptRepository.getConcept(conceptId)
             if (concept == null) {
-                DebugLogger.errorLog(TAG, "❌ Concept not found id=$conceptId — chapter progress not updated")
+                DebugLogger.errorLog(TAG, "Concept not found id=$conceptId — chapter progress not updated")
                 return
             }
             val progress = chapterProgressService.updateChapterProgress(studentId, concept.chapterId, language)
-            DebugLogger.debugLog(TAG, "✅ Chapter ${concept.chapterId} recalculated → $progress% [$language] (All 3 screens should update now)")
+            DebugLogger.debugLog(TAG, "Chapter ${concept.chapterId} recalculated: $progress% [$language]")
         } catch (e: Exception) {
-            DebugLogger.errorLog(TAG, "❌ Error triggering chapter progress update: ${e.message}")
+            DebugLogger.errorLog(TAG, "Error triggering chapter progress update: ${e.message}")
         }
     }
 
     // ===== STUDY (non-math) =====
 
-    /** Mark a concept study session as fully COMPLETED (END node reached)
-     *   CRITICAL: When user completes study, this triggers progress updates across all 3 screens
-     */
+    /** Mark a concept study session as COMPLETED (END node reached) */
     suspend fun markStudyCompleted(studentId: String, conceptId: String, language: String? = null) {
         try {
-            val resolvedLang = language ?: if (com.ncert7.aitutorandlab.utils.isKannada()) "kn" else "en"
-            DebugLogger.debugLog(TAG, " Marking Study as COMPLETED: $conceptId ($resolvedLang)...")
-
+            val resolvedLang = language ?: if (isKannada()) "kn" else "en"
             progressRepository.markStudyCompleted(studentId, conceptId, resolvedLang)
-            DebugLogger.debugLog(TAG, "  ✓ Progress table updated with CONCEPT status=COMPLETED")
-
             triggerChapterProgressUpdate(studentId, conceptId, resolvedLang)
-            DebugLogger.debugLog(TAG, "  ✓ Chapter progress recalculated")
-
             streakRepository.recordActivity(studentId)
-            DebugLogger.debugLog(TAG, "  ✓ Streak recorded")
-
-            DebugLogger.debugLog(TAG, " Study COMPLETED: $conceptId ($resolvedLang) - Progress bars in ALL 3 screens should update")
+            DebugLogger.debugLog(TAG, "Study COMPLETED: $conceptId ($resolvedLang)")
         } catch (e: Exception) {
-            DebugLogger.errorLog(TAG, " Study mark error: ${e.message}")
+            DebugLogger.errorLog(TAG, "Study mark error: ${e.message}")
         }
     }
 
     /** Mark a concept study session as IN_PROGRESS (session started) */
     suspend fun markStudyInProgress(studentId: String, conceptId: String, language: String? = null) {
         try {
-            val resolvedLang = language ?: if (com.ncert7.aitutorandlab.utils.isKannada()) "kn" else "en"
+            val resolvedLang = language ?: if (isKannada()) "kn" else "en"
             progressRepository.markStudyInProgress(studentId, conceptId, resolvedLang)
             triggerChapterProgressUpdate(studentId, conceptId, resolvedLang)
             streakRepository.recordActivity(studentId)
             DebugLogger.debugLog(TAG, "Study IN_PROGRESS: $conceptId ($resolvedLang)")
         } catch (e: Exception) {
-            DebugLogger.errorLog(TAG, "❌ Study progress error: ${e.message}")
+            DebugLogger.errorLog(TAG, "Study progress error: ${e.message}")
         }
     }
 
@@ -105,93 +94,77 @@ class ProgressEventTracker @Inject constructor(
     /** Mark simulation agent session COMPLETED (contributes to simulation component) */
     suspend fun markSimulationAgentCompleted(studentId: String, conceptId: String, language: String? = null) {
         try {
-            val resolvedLang = language ?: if (com.ncert7.aitutorandlab.utils.isKannada()) "kn" else "en"
+            val resolvedLang = language ?: if (isKannada()) "kn" else "en"
             progressRepository.markSimulationAgentCompleted(studentId, conceptId, resolvedLang)
             triggerChapterProgressUpdate(studentId, conceptId, resolvedLang)
             streakRepository.recordActivity(studentId)
-            DebugLogger.debugLog(TAG, " Simulation Agent COMPLETED: $conceptId ($resolvedLang) - Progress bars will update in all 3 screens")
+            DebugLogger.debugLog(TAG, "Simulation Agent COMPLETED: $conceptId ($resolvedLang)")
         } catch (e: Exception) {
-            DebugLogger.errorLog(TAG, " Simulation Agent error: ${e.message}")
+            DebugLogger.errorLog(TAG, "Simulation Agent error: ${e.message}")
         }
     }
 
-    /** Mark simulation URL as loaded/COMPLETED (contributes to simulation component)
-     *   CRITICAL: When user opens simulation URL, this is called to mark it completed
-     *  This should trigger progress updates across ProgressScreen, ChapterScreen, and ConceptScreen header
-     */
+    /** Mark simulation URL as loaded/COMPLETED (contributes to simulation component) */
     suspend fun markSimulationUrlCompleted(studentId: String, conceptId: String, language: String? = null) {
         try {
-            val resolvedLang = language ?: if (com.ncert7.aitutorandlab.utils.isKannada()) "kn" else "en"
-            DebugLogger.debugLog(TAG, " Marking Simulation URL as COMPLETED: $conceptId ($resolvedLang) [provided=$language, detected=${com.ncert7.aitutorandlab.utils.isKannada()}]...")
-
+            val resolvedLang = language ?: if (isKannada()) "kn" else "en"
             progressRepository.markSimulationUrlCompleted(studentId, conceptId, resolvedLang)
-            DebugLogger.debugLog(TAG, "  ✓ Progress table updated with SIMULATION status=COMPLETED [$resolvedLang]")
-
-            // Verify the progress was actually saved
-            val savedProgress = progressRepository.getProgress(studentId, "SIMULATION", conceptId, resolvedLang)
-            if (savedProgress != null) {
-                DebugLogger.debugLog(TAG, "  ✓ Verification: Saved progress status = ${savedProgress.status} (language=${savedProgress.language})")
-            } else {
-                DebugLogger.errorLog(TAG, "  ❌ Verification FAILED: Progress not found after save!")
-            }
-
             triggerChapterProgressUpdate(studentId, conceptId, resolvedLang)
-            DebugLogger.debugLog(TAG, "  ✓ Chapter progress recalculated")
-
             streakRepository.recordActivity(studentId)
-            DebugLogger.debugLog(TAG, "   Streak recorded")
-
-            DebugLogger.debugLog(TAG, " Simulation URL COMPLETED: $conceptId ($resolvedLang) - ALL 3 screens should show updated progress NOW")
+            DebugLogger.debugLog(TAG, "Simulation URL COMPLETED: $conceptId ($resolvedLang)")
         } catch (e: Exception) {
-            DebugLogger.errorLog(TAG, " Simulation URL error: ${e.message}")
+            DebugLogger.errorLog(TAG, "Simulation URL error: ${e.message}")
         }
     }
 
     // ===== REVISION =====
 
-    /** Mark revision agent session COMPLETED for a specific concept
-     *   CRITICAL: When user completes revision, this triggers progress updates across all 3 screens
-     */
+    /** Mark revision session as IN_PROGRESS (session started) */
+    suspend fun markRevisionInProgress(studentId: String, conceptId: String, language: String? = null) {
+        try {
+            val resolvedLang = language ?: if (isKannada()) "kn" else "en"
+            progressRepository.updateProgressStatus(
+                studentId          = studentId,
+                itemType           = "REVISION_AGENT",
+                itemId             = conceptId,
+                language           = resolvedLang,
+                newStatus          = ProgressStatus.IN_PROGRESS.value,
+                progressPercentage = 5
+            )
+            triggerChapterProgressUpdate(studentId, conceptId, resolvedLang)
+            DebugLogger.debugLog(TAG, "Revision IN_PROGRESS: $conceptId ($resolvedLang)")
+        } catch (e: Exception) {
+            DebugLogger.errorLog(TAG, "Revision in-progress error: ${e.message}")
+        }
+    }
+
+    /** Mark revision session COMPLETED (END state reached) */
     suspend fun markRevisionCompleted(studentId: String, conceptId: String, language: String? = null) {
         try {
-            val resolvedLang = language ?: if (com.ncert7.aitutorandlab.utils.isKannada()) "kn" else "en"
-            DebugLogger.debugLog(TAG, " Marking Revision as COMPLETED: $conceptId ($resolvedLang)...")
-
+            val resolvedLang = language ?: if (isKannada()) "kn" else "en"
             progressRepository.markRevisionCompleted(studentId, conceptId, resolvedLang)
-            DebugLogger.debugLog(TAG, "   Progress table updated with REVISION_AGENT status=COMPLETED")
-
             triggerChapterProgressUpdate(studentId, conceptId, resolvedLang)
-            DebugLogger.debugLog(TAG, "   Chapter progress recalculated")
-
             streakRepository.recordActivity(studentId)
-            DebugLogger.debugLog(TAG, "   Streak recorded")
-
-            DebugLogger.debugLog(TAG, " Revision COMPLETED: $conceptId ($resolvedLang) - Progress bars in ALL 3 screens should update")
+            DebugLogger.debugLog(TAG, "Revision COMPLETED: $conceptId ($resolvedLang)")
         } catch (e: Exception) {
-            DebugLogger.errorLog(TAG, " Revision error: ${e.message}")
+            DebugLogger.errorLog(TAG, "Revision error: ${e.message}")
         }
     }
 
     // ===== MATH AGENT =====
 
     /**
-     * Mark math agent COMPLETED.
+     * Mark math agent COMPLETED. Called when session starts (math marks complete at session start).
      *
-     * Writes TWO rows:
+     * Writes two rows:
      *   - MATH_AGENT / conceptId = COMPLETED  (used by ChapterProgressCalculator for math study %)
      *   - CONCEPT    / conceptId = COMPLETED  (used by ConceptViewModel for lock/unlock logic)
-     *
-     * ChapterProgressCalculator checks MATH_AGENT first, falls back to CONCEPT, so both being
-     * written is correct and keeps ConceptScreen unlock logic working.
      */
     suspend fun markMathAgentCompleted(studentId: String, conceptId: String, language: String? = null) {
         try {
-            val resolvedLang = language ?: if (com.ncert7.aitutorandlab.utils.isKannada()) "kn" else "en"
-            // Primary: write MATH_AGENT row (drives chapter % on math subjects)
+            val resolvedLang = language ?: if (isKannada()) "kn" else "en"
             progressRepository.markMathAgentCompleted(studentId, conceptId, resolvedLang)
-            // Secondary: write CONCEPT row (drives ConceptScreen unlock sequence)
             progressRepository.markStudyCompleted(studentId, conceptId, resolvedLang)
-            // Recalculate chapter progress once after both writes
             triggerChapterProgressUpdate(studentId, conceptId, resolvedLang)
             streakRepository.recordActivity(studentId)
             DebugLogger.debugLog(TAG, "Math Agent COMPLETED (MATH_AGENT + CONCEPT written): $conceptId ($resolvedLang)")
@@ -200,33 +173,4 @@ class ProgressEventTracker @Inject constructor(
         }
     }
 
-    // ===== SCIENCE AGENT =====
-
-    /** Update science agent progress (partial or complete) */
-    suspend fun updateScienceAgentProgress(
-        studentId: String,
-        conceptId: String,
-        progressPercentage: Int,
-        language: String? = null
-    ) {
-        try {
-            val resolvedLang = language ?: if (com.ncert7.aitutorandlab.utils.isKannada()) "kn" else "en"
-            val status = if (progressPercentage >= 100)
-                ProgressStatus.COMPLETED.value else ProgressStatus.IN_PROGRESS.value
-
-            progressRepository.updateProgressStatus(
-                studentId          = studentId,
-                itemType           = "SCIENCE_AGENT",
-                itemId             = conceptId,
-                language           = resolvedLang,
-                newStatus          = status,
-                progressPercentage = progressPercentage.coerceIn(0, 100)
-            )
-            triggerChapterProgressUpdate(studentId, conceptId, resolvedLang)
-            if (progressPercentage > 0) streakRepository.recordActivity(studentId)
-            DebugLogger.debugLog(TAG, "Science Agent updated: $conceptId ($progressPercentage%) ($resolvedLang)")
-        } catch (e: Exception) {
-            DebugLogger.errorLog(TAG, "Science Agent error: ${e.message}")
-        }
-    }
 }

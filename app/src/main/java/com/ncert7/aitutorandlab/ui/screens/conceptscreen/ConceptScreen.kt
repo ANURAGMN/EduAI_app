@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import com.ncert7.aitutorandlab.R
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ncert7.aitutorandlab.debug.DebugLogger
@@ -26,6 +27,7 @@ import com.ncert7.aitutorandlab.ui.screens.simulation_agent.viewmodel.Simulation
 import com.ncert7.aitutorandlab.ui.theme.BackgroundPrimary
 import com.ncert7.aitutorandlab.ui.theme.LocalDimensions
 import com.ncert7.aitutorandlab.ui.theme.TextPrimary
+import com.ncert7.aitutorandlab.domain.progress.model.ProgressStatus
 
 @Composable
 fun ConceptScreen(
@@ -77,8 +79,11 @@ fun ConceptScreen(
     LaunchedEffect(Unit) {
         simulationViewModel.loadAvailableSimulations()
     }
-    LaunchedEffect(chapterId, type) {
-        viewModel.loadConcepts(chapterId, type)
+    val configuration = LocalConfiguration.current
+    val currentLanguage = configuration.locales[0]?.language ?: "en"
+
+    LaunchedEffect(chapterId, type, currentLanguage) {
+        viewModel.loadConcepts(chapterId, type, currentLanguage)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -143,6 +148,9 @@ fun ConceptScreen(
                                     }
                                 },
                                 onSimulationAgentClick = { simId, conceptId ->
+                                    if (conceptUiModel.status == ProgressStatus.NOT_STARTED) {
+                                        simulationViewModel.clearSessionMapping(simId)
+                                    }
                                     viewModel.onSimulationOpened(simId, conceptId)
                                 },
                                 onSimulationClick = { title, url, conceptId ->

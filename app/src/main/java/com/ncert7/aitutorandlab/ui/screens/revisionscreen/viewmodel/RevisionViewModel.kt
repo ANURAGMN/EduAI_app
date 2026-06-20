@@ -185,17 +185,19 @@ class RevisionViewModel @Inject constructor(
             }
         }
 
-        // Track Revision Progress - mark each concept in this chapter as REVISION_AGENT completed
+        // Mark revision as COMPLETED when session starts (only STUDY + MATH concepts, NOT simulation)
         viewModelScope.launch {
             try {
-                // Get all STUDY concepts in the chapter and mark each as REVISION_AGENT COMPLETED
-                val concepts = conceptDao.getConceptsForChapterSync(currentChapterId, "STUDY")
-                concepts.forEach { concept ->
-                    progressEventTracker.markRevisionCompleted(userId, concept.conceptId)
+                val lang = if (_uiState.value.isKannada) "kn" else "en"
+                val studyConcepts = conceptDao.getConceptsForChapterSync(currentChapterId, "STUDY")
+                val mathConcepts = conceptDao.getConceptsForChapterSync(currentChapterId, "MATH PROBLEM")
+                val conceptsToMark = studyConcepts + mathConcepts
+                conceptsToMark.forEach { concept ->
+                    progressEventTracker.markRevisionCompleted(userId, concept.conceptId, lang)
                 }
-                DebugLogger.debugLog("RevisionViewModel", "Marked ${concepts.size} concepts as revision-completed for revisionId: $revisionId")
+                DebugLogger.debugLog("RevisionViewModel", "Marked ${conceptsToMark.size} concepts as revision-completed (STUDY=${studyConcepts.size}, MATH=${mathConcepts.size}) for revisionId: $revisionId")
             } catch (e: Exception) {
-                DebugLogger.errorLog("RevisionViewModel", "Error tracking revision progress: ${e.message}")
+                DebugLogger.errorLog("RevisionViewModel", "Error tracking revision completion on start: ${e.message}")
             }
         }
 
@@ -332,6 +334,24 @@ class RevisionViewModel @Inject constructor(
                 shouldStartTTS = true,
                 isTypingComplete = false
             )
+        }
+
+        // Mark revision COMPLETED when session reaches END state (only STUDY + MATH, NOT simulation)
+        if (result.currentState?.uppercase() == "END") {
+            viewModelScope.launch {
+                try {
+                    val lang = if (isKannada) "kn" else "en"
+                    val studyConcepts = conceptDao.getConceptsForChapterSync(currentChapterId, "STUDY")
+                    val mathConcepts = conceptDao.getConceptsForChapterSync(currentChapterId, "MATH PROBLEM")
+                    val conceptsToMark = studyConcepts + mathConcepts
+                    conceptsToMark.forEach { concept ->
+                        progressEventTracker.markRevisionCompleted(userId, concept.conceptId, lang)
+                    }
+                    DebugLogger.debugLog("RevisionViewModel", "Revision END reached: marked ${conceptsToMark.size} concepts as revision-completed (STUDY=${studyConcepts.size}, MATH=${mathConcepts.size})")
+                } catch (e: Exception) {
+                    DebugLogger.errorLog("RevisionViewModel", "Error marking revision complete on END: ${e.message}")
+                }
+            }
         }
 
         // Start typing animation

@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.domain.progress.ChapterProgressService
-import com.ncert7.aitutorandlab.domain.progress.buildProgressUiModel
 import com.ncert7.aitutorandlab.domain.progress.model.ProgressStatus
 import com.ncert7.aitutorandlab.repository.ChapterRepository
 import com.ncert7.aitutorandlab.repository.ConceptRepository
@@ -27,7 +26,7 @@ class ChapterViewModel @Inject constructor(
     private val subjectRepository: SubjectRepository,
     private val conceptRepository: ConceptRepository,
     private val sharedPrefs: SharedPreferenceUtils,
-    private val chapterProgressService: ChapterProgressService,
+    private val chapterProgressService: ChapterProgressService
 ) : ViewModel() {
 
     companion object {
@@ -133,7 +132,13 @@ class ChapterViewModel @Inject constructor(
                                 status           = status,
                                 revisionId       = chapter.revisionId,
                                 subjectId        = chapter.subjectId,
-                                progressUiModel  = buildProgressUiModel(completedConcepts, totalConcepts),
+                                progressUiModel  = com.ncert7.aitutorandlab.ui.models.ChapterProgressUiModel(
+                                    completed = completedConcepts,
+                                    total = totalConcepts,
+                                    progressFraction = overallPct / 100f,
+                                    progressPercentage = overallPct,
+                                    remaining = (totalConcepts - completedConcepts).coerceAtLeast(0)
+                                ),
                                 hasStudy         = flags.first,
                                 hasSimulation    = flags.second,
                                 hasRevision      = flags.third

@@ -366,7 +366,7 @@ class ChatViewModel @Inject constructor(
         if (conceptEntity != null && userId.isNotEmpty()) {
             conceptProgressUseCase.markConceptInProgress(userId, conceptEntity.conceptId)
 
-            // ✅ Track study start with ProgressEventTracker
+            //  Track study start with ProgressEventTracker
             // This marks study as in progress and triggers streak update
             progressEventTracker.markStudyInProgress(
                 studentId = userId,
@@ -561,17 +561,21 @@ class ChatViewModel @Inject constructor(
             if (conceptEntity != null && userId.isNotEmpty()) {
                 if (response.currentState?.uppercase() == "END") {
                     // Mark as COMPLETED when END node is reached
+                    val lang = _uiState.value.currentLanguage.ifBlank { "en" }
                     progressEventTracker.markStudyCompleted(
                         studentId = userId,
-                        conceptId = conceptEntity.conceptId
+                        conceptId = conceptEntity.conceptId,
+                        language = lang
                     )
                     conceptProgressUseCase.markConceptCompleted(userId, conceptEntity.conceptId)
-                    DebugLogger.debugLog("ChatViewModel", "Concept ${conceptEntity.conceptId} marked COMPLETED - END node reached")
+                    DebugLogger.debugLog("ChatViewModel", "Concept ${conceptEntity.conceptId} marked COMPLETED - END node reached [$lang]")
                 } else {
                     // Mark as IN_PROGRESS for all intermediate exchanges
+                    val lang = _uiState.value.currentLanguage.ifBlank { "en" }
                     progressEventTracker.markStudyInProgress(
                         studentId = userId,
-                        conceptId = conceptEntity.conceptId
+                        conceptId = conceptEntity.conceptId,
+                        language = lang
                     )
                 }
             }

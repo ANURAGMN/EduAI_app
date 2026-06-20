@@ -65,7 +65,7 @@ class ConceptSimulationViewModel @Inject constructor(
                 DebugLogger.errorLog(TAG, "No studentId — cannot mark simulation URL completed")
                 return@launch
             }
-            val language = if (isKannada()) "kn" else "en"
+            val language = sharedPrefs.getLanguagePreference() ?: "en"
 
             // Mark the URL as completed - this triggers chapter progress update via ProgressEventTracker
             progressEventTracker.markSimulationUrlCompleted(studentId, conceptId, language)
@@ -198,7 +198,7 @@ class ConceptSimulationViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val studentId = sharedPrefs.getUserId() ?: ""
-                val language = if (isKannada()) "kn" else "en"
+                val language = sharedPrefs.getLanguagePreference() ?: "en"
 
                 DebugLogger.debugLog(
                     TAG,

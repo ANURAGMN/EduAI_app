@@ -14,8 +14,6 @@ import com.ncert7.aitutorandlab.ui.models.ConceptUiModel
 import com.ncert7.aitutorandlab.ui.screens.conceptscreen.dataclass.ConceptScreenState
 import com.ncert7.aitutorandlab.utils.getLocalizedName
 import com.ncert7.aitutorandlab.utils.isKannada
-import com.ncert7.aitutorandlab.domain.progress.buildProgressUiModel
-import com.ncert7.aitutorandlab.domain.progress.ChapterProgressService
 import com.ncert7.aitutorandlab.data.local.dao.ProgressDao
 import com.ncert7.aitutorandlab.config.AppConfig
 import com.ncert7.aitutorandlab.domain.progress.ProgressEventTracker
@@ -43,8 +41,6 @@ class ConceptViewModel @Inject constructor(
     private val conceptRepository: ConceptRepository,
     private val chapterRepository: ChapterRepository,
     private val subjectRepository: SubjectRepository,
-    private val studentRepository: StudentLocalRepository,
-    private val chapterProgressService: ChapterProgressService,
     private val progressEventTracker: ProgressEventTracker,
     private val progressDao: ProgressDao,
     private val sharedPrefs: SharedPreferenceUtils
@@ -97,12 +93,11 @@ class ConceptViewModel @Inject constructor(
         _pendingNavigation.value = null
     }
 
-    fun loadConcepts(chapterId: String, type: String) {
+    fun loadConcepts(chapterId: String, type: String, language: String) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
                 val studentId = sharedPrefs.getUserId() ?: ""
-                val language = if (isKannada()) "kn" else "en"
                 val chapter = chapterRepository.getChapter(chapterId)
                 val subject = chapter?.let { subjectRepository.getSubject(it.subjectId) }
                 val classLevel = 7 // Force class 7 syllabus display
@@ -174,8 +169,8 @@ class ConceptViewModel @Inject constructor(
                             concept.simulationUrl
                         }
 
-                        val hasAgent = !simId.isNullOrBlank() && !simId.equals("null", ignoreCase = true)
-                        val hasUrl = !simUrl.isNullOrBlank() && !simUrl.equals("null", ignoreCase = true)
+                        val hasAgent = !simId.isNullOrBlank() && !simId.equals("null", ignoreCase = true) && !simId.trim().equals("not found", ignoreCase = true)
+                        val hasUrl = !simUrl.isNullOrBlank() && !simUrl.equals("null", ignoreCase = true) && !simUrl.trim().equals("not found", ignoreCase = true)
 
                         val status = when {
                             type.equals("SIMULATION", ignoreCase = true) -> {
@@ -227,7 +222,15 @@ class ConceptViewModel @Inject constructor(
                     val summary = progressSummaries.find { it.chapterId == chapterId }
                     val totalConcepts = summary?.totalConcepts ?: concepts.size
                     val completedConcepts = summary?.completedConcepts ?: 0
-                    val progressUiModel = buildProgressUiModel(completedConcepts, totalConcepts)
+                    val overallPct = summary?.completionPercentage ?: 0
+                    
+                    val progressUiModel = com.ncert7.aitutorandlab.ui.models.ChapterProgressUiModel(
+                        completed = completedConcepts,
+                        total = totalConcepts,
+                        progressFraction = overallPct / 100f,
+                        progressPercentage = overallPct,
+                        remaining = (totalConcepts - completedConcepts).coerceAtLeast(0)
+                    )
 
                     DebugLogger.debugLog(
                         "ConceptVM",
@@ -259,7 +262,7 @@ class ConceptViewModel @Inject constructor(
 
     /**
      * Determine the status for SIMULATION type concepts
-     * Both Agent and URL must be completed for SIMULATION to be marked COMPLETED
+     * Any present component (Agent or URL) must be completed for SIMULATION to be marked COMPLETED
      */
     private fun determineSimulationStatus(
         allProgress: List<ProgressEntity>,
@@ -291,15 +294,13 @@ class ConceptViewModel @Inject constructor(
 
                 DebugLogger.debugLog("ConceptVM", "   Concept $conceptId [hasAgent+hasUrl]: agent=$agentDone, url=$urlDone, language=$language")
 
-                when {
-                    agentDone && urlDone -> ProgressStatus.COMPLETED.value
-                    agentDone || urlDone -> ProgressStatus.IN_PROGRESS.value
-                    else -> {
-                        val prevStatus = if (index > 0) {
-                            allProgress.find { it.itemId == concepts[index - 1].conceptId && it.language == language }?.status
-                        } else null
-                        determineConceptStatus(null, index == 0, prevStatus)
-                    }
+                if (agentDone || urlDone) {
+                    ProgressStatus.COMPLETED.value
+                } else {
+                    val prevStatus = if (index > 0) {
+                        allProgress.find { it.itemId == concepts[index - 1].conceptId && it.language == language }?.status
+                    } else null
+                    determineConceptStatus(null, index == 0, prevStatus)
                 }
             }
             hasAgent -> {

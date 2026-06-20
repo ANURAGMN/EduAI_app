@@ -170,6 +170,10 @@ import kotlinx.coroutines.flow.first
         return conceptDao.getConcept(conceptId)
     }
 
+    suspend fun getConceptByProblemId(problemId: String): ConceptEntity? {
+        return conceptDao.getConceptByProblemId(problemId)
+    }
+
     fun getConceptFlow(conceptId: String): Flow<ConceptEntity?> {
         return conceptDao.getConceptFlow(conceptId)
     }
