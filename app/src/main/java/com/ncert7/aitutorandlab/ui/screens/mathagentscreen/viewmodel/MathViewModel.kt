@@ -12,6 +12,7 @@ import com.ncert7.aitutorandlab.domain.mathagent.usecase.MathSendMessageUseCase
 import com.ncert7.aitutorandlab.domain.mathagent.usecase.MathSessionUseCase
 import com.ncert7.aitutorandlab.domain.progress.ProgressEventTracker
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
+import com.ncert7.aitutorandlab.repository.ConceptRepository
 import com.ncert7.aitutorandlab.ui.screens.mathagentscreen.dataclass.MathUiState
 import com.ncert7.aitutorandlab.ui.viewModel.TextToSpeech
 import com.ncert7.aitutorandlab.utils.isKannada
@@ -32,7 +33,11 @@ class MathViewModel @Inject constructor(
     private val mathImageHandlingUseCase: MathImageHandlingUseCase,
     private val sharedPreferenceUtils: SharedPreferenceUtils,
     private val progressEventTracker: ProgressEventTracker,
+
     private val avatarChangeUseCase: AvatarChangeUseCase
+
+    private val conceptRepository: ConceptRepository
+
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MathUiState())
@@ -110,9 +115,7 @@ class MathViewModel @Inject constructor(
                         )
                     }
                     DebugLogger.debugLog("MathViewModel", "Problems loaded: ${problems.size}")
-                    // NOTE: We do NOT auto-start here.
-                    // The screen's LaunchedEffect will call AutoStartWithProblem
-                    // with the correct problemId passed from the concept click.
+              
                 }.onFailure { exception ->
                     _uiState.update {
                         it.copy(
@@ -252,12 +255,18 @@ class MathViewModel @Inject constructor(
                         )
                     }
 
-                    // Track Math Agent progress
+                    // Track Math Agent progress using conceptId instead of problemId
                     // markMathAgentCompleted also marks CONCEPT/COMPLETED for the study component
                     viewModelScope.launch {
                         try {
-                            progressEventTracker.markMathAgentCompleted(userId, problemId)
-                            DebugLogger.debugLog("MathViewModel", "Math agent progress tracked for problem: $problemId")
+                            val concept = conceptRepository.getConceptByProblemId(problemId)
+                            val actualId = concept?.conceptId ?: problemId
+                            // Use language from uiState (set by SetKannada intent), fallback to SharedPrefs
+                            val lang = _uiState.value.currentLanguage.ifBlank {
+                                if (sharedPreferenceUtils.getLanguagePreference() == "kn") "kn" else "en"
+                            }
+                            progressEventTracker.markMathAgentCompleted(userId, actualId, lang)
+                            DebugLogger.debugLog("MathViewModel", "Math agent progress tracked for concept: $actualId (problem: $problemId) [$lang]")
                         } catch (e: Exception) {
                             DebugLogger.errorLog("MathViewModel", "Error tracking math progress: ${e.message}")
                         }

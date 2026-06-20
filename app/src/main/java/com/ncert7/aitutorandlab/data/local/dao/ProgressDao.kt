@@ -195,11 +195,11 @@ interface ProgressDao {
      */
     @Query(
         """
-        SELECT COUNT(*) 
+        SELECT COUNT(DISTINCT p.itemId) 
         FROM progress p
         INNER JOIN concepts c ON p.itemId = c.conceptId
         WHERE p.studentId = :studentId 
-        AND p.itemType = 'CONCEPT' 
+        AND p.itemType IN ('SIMULATION_AGENT', 'SIMULATION') 
         AND p.status = 'COMPLETED'
         AND c.type = 'SIMULATION'
         AND DATE(p.completedAt / 1000, 'unixepoch', 'localtime') = DATE('now', 'localtime')
@@ -225,238 +225,121 @@ interface ProgressDao {
      */
     @Query(
         """
-        SELECT 
-            ch.chapterId,
-            ch.chapterName,
-            ch.chapterNameKannada,
-            COALESCE((
-                SELECT COUNT(*) FROM concepts c 
-                WHERE c.chapterId = ch.chapterId 
-                AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
-                AND (
-                    c.type != 'SIMULATION' OR
-                    (CASE 
-                        WHEN :language = 'en' THEN
-                            (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
-                            OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
-                        WHEN :language = 'kn' THEN
-                            (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
-                            OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
-                        ELSE 1
-                    END)
-                )
-            ), 0) AS totalConcepts,
-            COALESCE((
-                SELECT COUNT(*) FROM concepts c 
-                WHERE c.chapterId = ch.chapterId 
-                AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
-                AND (
-                    -- If STUDY or MATH PROBLEM
-                    (c.type IN ('STUDY', 'MATH PROBLEM') AND EXISTS (
-                        SELECT 1 FROM progress p 
-                        WHERE p.itemId = c.conceptId 
-                        AND p.studentId = :studentId 
-                        AND (p.itemType = 'CONCEPT' OR p.itemType = 'MATH_AGENT')
-                        AND p.status = :completedStatus 
-                        AND p.language = :language
-                        AND p.appName = :appName
-                    ))
-                    OR
-                    -- If SIMULATION
-                    (c.type = 'SIMULATION' AND 
-                        -- Check if simulation is valid for the language
-                        (
-                            CASE 
-                                WHEN :language = 'en' THEN
-                                    (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
-                                    OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
-                                WHEN :language = 'kn' THEN
-                                    (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
-                                    OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
-                                ELSE 1
-                            END
-                        ) AND
-                        -- Check agent component if it exists
-                        (
-                            CASE
-                                WHEN :language = 'en' THEN
-                                    (c.simulationId IS NULL OR c.simulationId = '' OR c.simulationId = 'null' OR EXISTS (
-                                        SELECT 1 FROM progress p 
-                                        WHERE p.itemId = c.conceptId 
-                                        AND p.studentId = :studentId 
-                                        AND p.itemType = 'SIMULATION_AGENT' 
-                                        AND p.status = :completedStatus 
-                                        AND p.language = :language
-                                        AND p.appName = :appName
-                                    ))
-                                WHEN :language = 'kn' THEN
-                                    (c.simulationIdKannada IS NULL OR c.simulationIdKannada = '' OR c.simulationIdKannada = 'null' OR EXISTS (
-                                        SELECT 1 FROM progress p 
-                                        WHERE p.itemId = c.conceptId 
-                                        AND p.studentId = :studentId 
-                                        AND p.itemType = 'SIMULATION_AGENT' 
-                                        AND p.status = :completedStatus 
-                                        AND p.language = :language
-                                        AND p.appName = :appName
-                                    ))
-                                ELSE 1
-                            END
-                        ) AND
-                        -- Check URL component if it exists
-                        (
-                            CASE
-                                WHEN :language = 'en' THEN
-                                    (c.simulationUrl IS NULL OR c.simulationUrl = '' OR c.simulationUrl = 'null' OR EXISTS (
-                                        SELECT 1 FROM progress p 
-                                        WHERE p.itemId = c.conceptId 
-                                        AND p.studentId = :studentId 
-                                        AND p.itemType = 'SIMULATION' 
-                                        AND p.status = :completedStatus 
-                                        AND p.language = :language
-                                        AND p.appName = :appName
-                                    ))
-                                WHEN :language = 'kn' THEN
-                                    (c.simulationUrlKannada IS NULL OR c.simulationUrlKannada = '' OR c.simulationUrlKannada = 'null' OR EXISTS (
-                                        SELECT 1 FROM progress p 
-                                        WHERE p.itemId = c.conceptId 
-                                        AND p.studentId = :studentId 
-                                        AND p.itemType = 'SIMULATION' 
-                                        AND p.status = :completedStatus 
-                                        AND p.language = :language
-                                        AND p.appName = :appName
-                                    ))
-                                ELSE 1
-                            END
-                        )
-                    )
-                )
-             ), 0) AS completedConcepts,
-             CAST(
-                 COALESCE((
-                     SELECT COUNT(*) FROM concepts c 
-                     WHERE c.chapterId = ch.chapterId 
-                     AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
-                     AND (
-                         -- If STUDY or MATH PROBLEM
-                         (c.type IN ('STUDY', 'MATH PROBLEM') AND EXISTS (
-                             SELECT 1 FROM progress p 
-                             WHERE p.itemId = c.conceptId 
-                             AND p.studentId = :studentId 
-                             AND (p.itemType = 'CONCEPT' OR p.itemType = 'MATH_AGENT')
-                             AND p.status = :completedStatus 
-                             AND p.language = :language
-                             AND p.appName = :appName
-                         ))
+        WITH chapter_counts AS (
+            SELECT 
+                ch.chapterId,
+                ch.chapterName,
+                ch.chapterNameKannada,
+                
+                -- 1. STUDY components total and completed
+                (SELECT COUNT(*) FROM concepts c 
+                 WHERE c.chapterId = ch.chapterId 
+                 AND (
+                     (ch.subjectId = '5c0a6b6d-7c6b-4f35-9d5b-9fd0fd8e8a01' AND c.type = 'MATH PROBLEM' AND c.problemId IS NOT NULL AND c.problemId != '')
+                     OR
+                     (ch.subjectId != '5c0a6b6d-7c6b-4f35-9d5b-9fd0fd8e8a01' AND c.type = 'STUDY')
+                 )
+                ) AS totalStudy,
+                
+                (SELECT COUNT(*) FROM concepts c 
+                 WHERE c.chapterId = ch.chapterId 
+                 AND (
+                     (ch.subjectId = '5c0a6b6d-7c6b-4f35-9d5b-9fd0fd8e8a01' AND c.type = 'MATH PROBLEM' AND c.problemId IS NOT NULL AND c.problemId != '' AND (
+                         EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'MATH_AGENT' AND p.status = :completedStatus AND p.language = :language AND p.appName = :appName)
                          OR
-                         -- If SIMULATION
-                         (c.type = 'SIMULATION' AND 
-                             -- Check if simulation is valid for the language
-                             (
-                                 CASE 
-                                     WHEN :language = 'en' THEN
-                                         (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
-                                         OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
-                                     WHEN :language = 'kn' THEN
-                                         (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
-                                         OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
-                                     ELSE 1
-                                 END
-                             ) AND
-                             -- Check agent component if it exists
-                             (
-                                 CASE
-                                     WHEN :language = 'en' THEN
-                                         (c.simulationId IS NULL OR c.simulationId = '' OR c.simulationId = 'null' OR EXISTS (
-                                             SELECT 1 FROM progress p 
-                                             WHERE p.itemId = c.conceptId 
-                                             AND p.studentId = :studentId 
-                                             AND p.itemType = 'SIMULATION_AGENT' 
-                                             AND p.status = :completedStatus 
-                                             AND p.language = :language
-                                             AND p.appName = :appName
-                                         ))
-                                     WHEN :language = 'kn' THEN
-                                         (c.simulationIdKannada IS NULL OR c.simulationIdKannada = '' OR c.simulationIdKannada = 'null' OR EXISTS (
-                                             SELECT 1 FROM progress p 
-                                             WHERE p.itemId = c.conceptId 
-                                             AND p.studentId = :studentId 
-                                             AND p.itemType = 'SIMULATION_AGENT' 
-                                             AND p.status = :completedStatus 
-                                             AND p.language = :language
-                                             AND p.appName = :appName
-                                         ))
-                                     ELSE 1
-                                 END
-                             ) AND
-                             -- Check URL component if it exists
-                             (
-                                 CASE
-                                     WHEN :language = 'en' THEN
-                                         (c.simulationUrl IS NULL OR c.simulationUrl = '' OR c.simulationUrl = 'null' OR EXISTS (
-                                             SELECT 1 FROM progress p 
-                                             WHERE p.itemId = c.conceptId 
-                                             AND p.studentId = :studentId 
-                                             AND p.itemType = 'SIMULATION' 
-                                             AND p.status = :completedStatus 
-                                             AND p.language = :language
-                                             AND p.appName = :appName
-                                         ))
-                                     WHEN :language = 'kn' THEN
-                                         (c.simulationUrlKannada IS NULL OR c.simulationUrlKannada = '' OR c.simulationUrlKannada = 'null' OR EXISTS (
-                                             SELECT 1 FROM progress p 
-                                             WHERE p.itemId = c.conceptId 
-                                             AND p.studentId = :studentId 
-                                             AND p.itemType = 'SIMULATION' 
-                                             AND p.status = :completedStatus 
-                                             AND p.language = :language
-                                             AND p.appName = :appName
-                                         ))
-                                     ELSE 1
-                                 END
-                             )
-                         )
-                     )
-                 ), 0) * 100 / 
-                 CASE WHEN COALESCE((
-                     SELECT COUNT(*) FROM concepts c 
-                     WHERE c.chapterId = ch.chapterId 
-                     AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
-                     AND (
-                         c.type != 'SIMULATION' OR
-                         (CASE 
-                             WHEN :language = 'en' THEN
-                                 (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
-                                 OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
-                             WHEN :language = 'kn' THEN
-                                 (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
-                                 OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
-                             ELSE 1
-                         END)
-                     )
-                 ), 0) = 0 THEN 1 
-                 ELSE COALESCE((
-                     SELECT COUNT(*) FROM concepts c 
-                     WHERE c.chapterId = ch.chapterId 
-                     AND c.type IN ('STUDY', 'SIMULATION', 'MATH PROBLEM')
-                     AND (
-                         c.type != 'SIMULATION' OR
-                         (CASE 
-                             WHEN :language = 'en' THEN
-                                 (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
-                                 OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
-                             WHEN :language = 'kn' THEN
-                                 (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
-                                 OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
-                             ELSE 1
-                         END)
-                     )
-                 ), 1) 
-                 END
-             AS INTEGER) AS completionPercentage
-        FROM chapters ch
+                         EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'CONCEPT' AND p.status = :completedStatus AND p.language = :language AND p.appName = :appName)
+                     ))
+                     OR
+                     (ch.subjectId != '5c0a6b6d-7c6b-4f35-9d5b-9fd0fd8e8a01' AND c.type = 'STUDY' AND EXISTS (
+                         SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'CONCEPT' AND p.status = :completedStatus AND p.language = :language AND p.appName = :appName
+                     ))
+                 )
+                ) AS completedStudy,
+
+                -- 2. SIMULATION components total and completed
+                (SELECT COUNT(*) FROM concepts c 
+                 WHERE c.chapterId = ch.chapterId 
+                 AND c.type = 'SIMULATION'
+                 AND (
+                     CASE 
+                         WHEN :language = 'en' THEN
+                             (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null' AND c.simulationId != 'Not found' AND c.simulationId != 'Not Found') 
+                             OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null' AND c.simulationUrl != 'Not found' AND c.simulationUrl != 'Not Found')
+                         WHEN :language = 'kn' THEN
+                             (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null' AND c.simulationIdKannada != 'Not found' AND c.simulationIdKannada != 'Not Found') 
+                             OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null' AND c.simulationUrlKannada != 'Not found' AND c.simulationUrlKannada != 'Not Found')
+                         ELSE 1
+                     END
+                 )
+                ) AS totalSim,
+
+                (SELECT COUNT(*) FROM concepts c 
+                 WHERE c.chapterId = ch.chapterId 
+                 AND c.type = 'SIMULATION'
+                 AND (
+                     CASE 
+                         WHEN :language = 'en' THEN
+                             (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null' AND c.simulationId != 'Not found' AND c.simulationId != 'Not Found') 
+                             OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null' AND c.simulationUrl != 'Not found' AND c.simulationUrl != 'Not Found')
+                         WHEN :language = 'kn' THEN
+                             (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null' AND c.simulationIdKannada != 'Not found' AND c.simulationIdKannada != 'Not Found') 
+                             OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null' AND c.simulationUrlKannada != 'Not found' AND c.simulationUrlKannada != 'Not Found')
+                         ELSE 1
+                     END
+                 )
+                 AND (
+                     EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'SIMULATION_AGENT' AND p.status = :completedStatus AND p.language = :language AND p.appName = :appName)
+                     OR
+                     EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'SIMULATION' AND p.status = :completedStatus AND p.language = :language AND p.appName = :appName)
+                 )
+                ) AS completedSim,
+
+                -- 3. REVISION component availability and completion
+                (CASE WHEN ch.revisionId IS NOT NULL AND ch.revisionId != '' THEN 1 ELSE 0 END) AS hasRevision,
+                
+                (CASE WHEN (ch.revisionId IS NOT NULL AND ch.revisionId != '') AND EXISTS (
+                    SELECT 1 FROM progress p 
+                    INNER JOIN concepts c ON p.itemId = c.conceptId 
+                    WHERE c.chapterId = ch.chapterId 
+                    AND p.studentId = :studentId 
+                    AND p.itemType = 'REVISION_AGENT' 
+                    AND p.status = :completedStatus 
+                    AND p.language = :language 
+                    AND p.appName = :appName
+                 ) THEN 1 ELSE 0 END) AS completedRevision,
+
+                 ch.orderIndex
+            FROM chapters ch
+            WHERE ch.subjectId = :subjectId
+        )
+        SELECT 
+            cc.chapterId,
+            cc.chapterName,
+            cc.chapterNameKannada,
+            (cc.totalStudy + cc.totalSim) AS totalConcepts,
+            (cc.completedStudy + cc.completedSim) AS completedConcepts,
+            CAST(
+                (
+                    (CASE WHEN cc.totalStudy > 0 THEN (cc.completedStudy * 100 / cc.totalStudy) ELSE 0 END) +
+                    (CASE WHEN cc.totalSim > 0 THEN (cc.completedSim * 100 / cc.totalSim) ELSE 0 END) +
+                    (CASE WHEN cc.hasRevision > 0 THEN (cc.completedRevision * 100) ELSE 0 END)
+                ) / 
+                CASE 
+                    WHEN (
+                        (CASE WHEN cc.totalStudy > 0 THEN 1 ELSE 0 END) +
+                        (CASE WHEN cc.totalSim > 0 THEN 1 ELSE 0 END) +
+                        (CASE WHEN cc.hasRevision > 0 THEN 1 ELSE 0 END)
+                    ) = 0 THEN 1
+                    ELSE (
+                        (CASE WHEN cc.totalStudy > 0 THEN 1 ELSE 0 END) +
+                        (CASE WHEN cc.totalSim > 0 THEN 1 ELSE 0 END) +
+                        (CASE WHEN cc.hasRevision > 0 THEN 1 ELSE 0 END)
+                    )
+                END
+            AS INTEGER) AS completionPercentage
+        FROM chapter_counts cc
         LEFT JOIN progress p_dummy ON p_dummy.studentId = :studentId AND 1=0
-        WHERE ch.subjectId = :subjectId
-        ORDER BY ch.orderIndex ASC
+        ORDER BY cc.orderIndex ASC
         """
     )
     fun getChapterWiseProgressFlow(
@@ -469,13 +352,23 @@ interface ProgressDao {
 
     @Query(
         """
-        SELECT COUNT(*) 
-        FROM progress 
-        WHERE studentId = :studentId 
-        AND itemType = 'CONCEPT' 
-        AND status = :completedStatus
-        AND language = :language
-        AND appName = :appName
+        SELECT 
+            (SELECT COUNT(DISTINCT itemId) 
+             FROM progress 
+             WHERE studentId = :studentId 
+             AND itemType = 'CONCEPT'
+             AND status = :completedStatus
+             AND language = :language
+             AND appName = :appName)
+            +
+            (SELECT COUNT(DISTINCT c.chapterId)
+             FROM progress p
+             INNER JOIN concepts c ON p.itemId = c.conceptId
+             WHERE p.studentId = :studentId
+             AND p.itemType = 'REVISION_AGENT'
+             AND p.status = :completedStatus
+             AND p.language = :language
+             AND p.appName = :appName)
     """
     )
     fun getTotalCompletedConceptsFlow(
@@ -486,49 +379,21 @@ interface ProgressDao {
     ): Flow<Int>
 
     /**
-     * Get the total number of fully completed simulation-type concepts for a specific language.
-     * A simulation concept is COMPLETED only if all its required components (Agent and/or URL) are COMPLETED.
+     * Get the total number of completed simulation-type concepts for a specific language.
+     * A simulation concept is COMPLETED if ANY of its components (Agent OR URL) is marked COMPLETED.
+     * This matches the concept card UI logic in ConceptViewModel.determineSimulationStatus().
      */
     @Query(
         """
-        SELECT COUNT(*) FROM concepts c
+        SELECT COUNT(DISTINCT p.itemId)
+        FROM progress p
+        INNER JOIN concepts c ON p.itemId = c.conceptId
         WHERE c.type = 'SIMULATION'
-        -- Ensure it has at least one valid component to be counted for this language
-        AND (
-            CASE 
-                WHEN :language = 'en' THEN
-                    (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
-                    OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null')
-                WHEN :language = 'kn' THEN
-                    (c.simulationIdKannada IS NOT NULL AND c.simulationIdKannada != '' AND c.simulationIdKannada != 'null') 
-                    OR (c.simulationUrlKannada IS NOT NULL AND c.simulationUrlKannada != '' AND c.simulationUrlKannada != 'null')
-                ELSE 1
-            END
-        )
-        AND (
-            -- Check agent completion
-            CASE
-                WHEN :language = 'en' THEN
-                    (c.simulationId IS NULL OR c.simulationId = '' OR c.simulationId = 'null' OR 
-                     EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'SIMULATION_AGENT' AND p.status = :completedStatus AND p.language = :language AND p.appName = :appName))
-                WHEN :language = 'kn' THEN
-                    (c.simulationIdKannada IS NULL OR c.simulationIdKannada = '' OR c.simulationIdKannada = 'null' OR 
-                     EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'SIMULATION_AGENT' AND p.status = :completedStatus AND p.language = :language AND p.appName = :appName))
-                ELSE 1
-            END
-        )
-        AND (
-            -- Check URL completion
-            CASE
-                WHEN :language = 'en' THEN
-                    (c.simulationUrl IS NULL OR c.simulationUrl = '' OR c.simulationUrl = 'null' OR 
-                     EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'SIMULATION' AND p.status = :completedStatus AND p.language = :language AND p.appName = :appName))
-                WHEN :language = 'kn' THEN
-                    (c.simulationUrlKannada IS NULL OR c.simulationUrlKannada = '' OR c.simulationUrlKannada = 'null' OR 
-                     EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'SIMULATION' AND p.status = :completedStatus AND p.language = :language AND p.appName = :appName))
-                ELSE 1
-            END
-        )
+        AND p.studentId = :studentId
+        AND p.itemType IN ('SIMULATION_AGENT', 'SIMULATION')
+        AND p.status = :completedStatus
+        AND p.language = :language
+        AND p.appName = :appName
     """
     )
     fun getTotalCompletedSimulationsFlow(
@@ -546,10 +411,10 @@ interface ProgressDao {
         """
         SELECT 
             DATE(completedAt / 1000, 'unixepoch', 'localtime') as date,
-            COUNT(*) as count
+            COUNT(DISTINCT itemId) as count
         FROM progress
         WHERE studentId = :studentId
-        AND itemType = 'CONCEPT'
+        AND itemType IN ('CONCEPT', 'REVISION_AGENT')
         AND status = :completedStatus
         AND completedAt >= :sevenDaysAgoTimestamp
         AND appName = :appName
@@ -565,20 +430,35 @@ interface ProgressDao {
     ): List<DailyConceptCount>
 
     /**
-     * Get count of CONCEPT completed today (Reactive Flow) */
+     * Get count of CONCEPT items completed today (Reactive Flow).
+     * Only counts itemType='CONCEPT' — math completions also write CONCEPT rows via markMathAgentCompleted.
+     */
     @Query(
         """
-    SELECT COUNT(*) 
-    FROM progress
-    WHERE studentId = :studentId
-      AND itemType = 'CONCEPT'
-      AND status = :completedStatus
-      AND completedAt BETWEEN :startOfDay AND :endOfDay
-      AND appName = :appName
+        SELECT 
+            (SELECT COUNT(DISTINCT itemId) 
+             FROM progress 
+             WHERE studentId = :studentId 
+             AND itemType = 'CONCEPT'
+             AND status = :completedStatus
+             AND language = :language
+             AND completedAt BETWEEN :startOfDay AND :endOfDay
+             AND appName = :appName)
+            +
+            (SELECT COUNT(DISTINCT c.chapterId)
+             FROM progress p
+             INNER JOIN concepts c ON p.itemId = c.conceptId
+             WHERE p.studentId = :studentId
+             AND p.itemType = 'REVISION_AGENT'
+             AND p.status = :completedStatus
+             AND p.language = :language
+             AND p.completedAt BETWEEN :startOfDay AND :endOfDay
+             AND p.appName = :appName)
     """
     )
     fun getTodayCompletedConceptCountFlow(
         studentId: String,
+        language: String,
         startOfDay: Long,
         endOfDay: Long,
         appName: String,
@@ -586,20 +466,35 @@ interface ProgressDao {
     ): Flow<Int>
 
     /**
-     * Get count of CONCEPT completed today (Synchronous) */
+     * Get count of CONCEPT items completed today (Synchronous).
+     * Only counts itemType='CONCEPT' — math completions also write CONCEPT rows via markMathAgentCompleted.
+     */
     @Query(
         """
-    SELECT COUNT(*) 
-    FROM progress
-    WHERE studentId = :studentId
-      AND itemType = 'CONCEPT'
-      AND status = :completedStatus
-      AND completedAt BETWEEN :startOfDay AND :endOfDay
-      AND appName = :appName
+        SELECT 
+            (SELECT COUNT(DISTINCT itemId) 
+             FROM progress 
+             WHERE studentId = :studentId 
+             AND itemType = 'CONCEPT'
+             AND status = :completedStatus
+             AND language = :language
+             AND completedAt BETWEEN :startOfDay AND :endOfDay
+             AND appName = :appName)
+            +
+            (SELECT COUNT(DISTINCT c.chapterId)
+             FROM progress p
+             INNER JOIN concepts c ON p.itemId = c.conceptId
+             WHERE p.studentId = :studentId
+             AND p.itemType = 'REVISION_AGENT'
+             AND p.status = :completedStatus
+             AND p.language = :language
+             AND p.completedAt BETWEEN :startOfDay AND :endOfDay
+             AND p.appName = :appName)
     """
     )
     suspend fun getTodayCompletedConceptCount(
         studentId: String,
+        language: String,
         startOfDay: Long,
         endOfDay: Long,
         appName: String,
@@ -607,38 +502,27 @@ interface ProgressDao {
     ): Int
 
     /**
-     * Get count of simulation concepts fully completed today (Reactive Flow).
-     * A simulation concept is COMPLETED only if all its required components (Agent and/or URL) are COMPLETED.
-     * At least one component must have been completed within the today's time range.
+     * Get count of simulation concepts completed today (Reactive Flow).
+     * A simulation concept counts as completed today if ANY component (Agent OR URL)
+     * was marked COMPLETED today. This matches the concept card OR logic.
      */
     @Query(
         """
-    SELECT COUNT(*) FROM concepts c
+    SELECT COUNT(DISTINCT p.itemId)
+    FROM progress p
+    INNER JOIN concepts c ON p.itemId = c.conceptId
     WHERE c.type = 'SIMULATION'
-    -- Ensure it has at least one valid component
-    AND ( (c.simulationId IS NOT NULL AND c.simulationId != '' AND c.simulationId != 'null') 
-          OR (c.simulationUrl IS NOT NULL AND c.simulationUrl != '' AND c.simulationUrl != 'null') )
-    -- ALL existing components must be completed
-    AND (
-        (c.simulationId IS NULL OR c.simulationId = '' OR c.simulationId = 'null' OR 
-         EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'SIMULATION_AGENT' AND p.status = :completedStatus AND p.appName = :appName))
-        AND
-        (c.simulationUrl IS NULL OR c.simulationUrl = '' OR c.simulationUrl = 'null' OR 
-         EXISTS (SELECT 1 FROM progress p WHERE p.itemId = c.conceptId AND p.studentId = :studentId AND p.itemType = 'SIMULATION' AND p.status = :completedStatus AND p.appName = :appName))
-    )
-    -- AT LEAST ONE component must have been completed TODAY
-    AND EXISTS (
-        SELECT 1 FROM progress p 
-        WHERE p.itemId = c.conceptId 
-        AND p.studentId = :studentId 
-        AND p.status = :completedStatus 
-        AND p.appName = :appName 
-        AND p.completedAt BETWEEN :startOfDay AND :endOfDay
-    )
+    AND p.studentId = :studentId
+    AND p.itemType IN ('SIMULATION_AGENT', 'SIMULATION')
+    AND p.status = :completedStatus
+    AND p.language = :language
+    AND p.appName = :appName
+    AND p.completedAt BETWEEN :startOfDay AND :endOfDay
     """
     )
     fun getTodayCompletedSimulationCountFlow(
         studentId: String,
+        language: String,
         startOfDay: Long,
         endOfDay: Long,
         appName: String,
@@ -649,11 +533,12 @@ interface ProgressDao {
      * Get count of SIMULATION completed today (Synchronous) */
     @Query(
         """
-    SELECT COUNT(*) 
+    SELECT COUNT(DISTINCT itemId) 
     FROM progress
     WHERE studentId = :studentId
-      AND (itemType = 'SIMULATION' OR itemType = 'SIMULATION_AGENT')
+      AND itemType IN ('SIMULATION', 'SIMULATION_AGENT')
       AND status = :completedStatus
+      AND language = :language
       AND completedAt BETWEEN :startOfDay AND :endOfDay
       AND appName = :appName
       AND itemId IS NOT NULL AND itemId != ''
@@ -661,6 +546,7 @@ interface ProgressDao {
     )
     suspend fun getTodayCompletedSimulationCount(
         studentId: String,
+        language: String,
         startOfDay: Long,
         endOfDay: Long,
         appName: String,

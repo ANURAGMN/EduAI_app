@@ -55,17 +55,26 @@ fun ConceptSimulationViewer(
     } catch (e: Exception) {
         simulationUrl
     }
+
+    val decodedConceptId = remember(conceptId) {
+        try {
+            URLDecoder.decode(conceptId, "UTF-8")
+        } catch (e: Exception) {
+            conceptId
+        }
+    }
+
     // Prevent double-marking if the WebView fires onPageFinished multiple times
     var progressMarked by remember { mutableStateOf(false) }
 
-    LaunchedEffect(conceptId, decodedUrl, decodedTitle) {
-        if (conceptId.isNotEmpty() && decodedUrl.isNotEmpty() && decodedTitle.isNotEmpty()) {
+    LaunchedEffect(decodedConceptId, decodedUrl, decodedTitle) {
+        if (decodedConceptId.isNotEmpty() && decodedUrl.isNotEmpty() && decodedTitle.isNotEmpty()) {
             DebugLogger.debugLog(
                 "ConceptSimulationViewer",
-                "LaunchedEffect: Initializing ad check for conceptId=$conceptId"
+                "LaunchedEffect: Initializing ad check for conceptId=$decodedConceptId"
             )
             viewModel.initializeSimulationWithAdCheck(
-                conceptId = conceptId,
+                conceptId = decodedConceptId,
                 simulationUrl = decodedUrl,
                 simulationTitle = decodedTitle
             )
@@ -73,11 +82,12 @@ fun ConceptSimulationViewer(
     }
     // Handle page loaded
     val handlePageLoaded = {
-        if (conceptId.isNotEmpty()) {
-            viewModel.markSimulationCompleted(conceptId)
+        if (decodedConceptId.isNotEmpty() && decodedConceptId != "empty" && !progressMarked) {
+            progressMarked = true
+            viewModel.markSimulationCompleted(decodedConceptId)
             DebugLogger.debugLog(
                 "ConceptSimulationViewer",
-                "Simulation page loaded for concept: $conceptId"
+                "Simulation page loaded for concept: $decodedConceptId"
             )
         }
     }
@@ -115,7 +125,7 @@ fun ConceptSimulationViewer(
                     .background(Color.White)
             ) {
                 SimulationWebView(
-                    url = simulationUrl,
+                    url = decodedUrl,
                     modifier = Modifier.fillMaxSize(),
                     onPageFinished = handlePageLoaded
                 )

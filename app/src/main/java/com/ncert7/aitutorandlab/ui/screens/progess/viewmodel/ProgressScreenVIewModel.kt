@@ -23,7 +23,7 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 /**
- * ✅ FIXED: ProgressScreenViewModel
+ *  FIXED: ProgressScreenViewModel
  *
  * Changes:
  * 1. Removed ChapterRepository dependency (not needed)
@@ -107,6 +107,16 @@ class ProgressScreenViewModel @Inject constructor(
     // Holds the active collection Job so we can cancel it when subject changes
     private var chapterProgressJob: Job? = null
 
+    private val _currentLanguage = MutableStateFlow(if (isKannada()) "kn" else "en")
+    val currentLanguage: StateFlow<String> = _currentLanguage
+
+    fun setLanguage(lang: String) {
+        if (_currentLanguage.value != lang) {
+            _currentLanguage.value = lang
+            DebugLogger.debugLog("ProgressVM", "Language dynamically changed to: $lang")
+        }
+    }
+
     init {
         getStudent()
         observeStreak()
@@ -119,37 +129,49 @@ class ProgressScreenViewModel @Inject constructor(
 
     private fun observeConceptCount() {
         viewModelScope.launch {
-            val language = if (isKannada()) "kn" else "en"
-            progressRepository.getTotalCompletedConceptsFlow(userId, language)
-                .collectLatest { count ->
-                    _totalCompletedConcept.value = count
-                    DebugLogger.debugLog("ProgressVM", "Concepts updated: $count ($language)")
+            if (userId.isEmpty()) return@launch
+            _currentLanguage.collectLatest { language ->
+                kotlinx.coroutines.coroutineScope {
+                    progressRepository.getTotalCompletedConceptsFlow(userId, language)
+                        .collectLatest { count ->
+                            _totalCompletedConcept.value = count
+                            DebugLogger.debugLog("ProgressVM", "Concepts updated: $count ($language)")
+                        }
                 }
+            }
         }
     }
 
     private fun observeSimulationCount() {
         viewModelScope.launch {
-            val language = if (isKannada()) "kn" else "en"
-            progressRepository.getTotalCompletedSimulationsFlow(userId, language)
-                .collectLatest { count ->
-                    _totalCompletedSimulation.value = count
-                    DebugLogger.debugLog("ProgressVM", "Simulations updated: $count ($language)")
+            if (userId.isEmpty()) return@launch
+            _currentLanguage.collectLatest { language ->
+                kotlinx.coroutines.coroutineScope {
+                    progressRepository.getTotalCompletedSimulationsFlow(userId, language)
+                        .collectLatest { count ->
+                            _totalCompletedSimulation.value = count
+                            DebugLogger.debugLog("ProgressVM", "Simulations updated: $count ($language)")
+                        }
                 }
+            }
         }
     }
 
     private fun observeTotalScore() {
         viewModelScope.launch {
-            val language = if (isKannada()) "kn" else "en"
-            kotlinx.coroutines.flow.combine(
-                progressRepository.getTotalCompletedConceptsFlow(userId, language),
-                progressRepository.getTotalCompletedSimulationsFlow(userId, language)
-            ) { concepts, sims ->
-                (concepts * 10) + (sims * 20)
-            }.collectLatest { score ->
-                _totalScore.value = score
-                DebugLogger.debugLog("ProgressVM", "Total score updated: $score ($language)")
+            if (userId.isEmpty()) return@launch
+            _currentLanguage.collectLatest { language ->
+                kotlinx.coroutines.coroutineScope {
+                    kotlinx.coroutines.flow.combine(
+                        progressRepository.getTotalCompletedConceptsFlow(userId, language),
+                        progressRepository.getTotalCompletedSimulationsFlow(userId, language)
+                    ) { concepts, sims ->
+                        (concepts * 10) + (sims * 20)
+                    }.collectLatest { score ->
+                        _totalScore.value = score
+                        DebugLogger.debugLog("ProgressVM", "Total score updated: $score ($language)")
+                    }
+                }
             }
         }
     }
@@ -193,12 +215,11 @@ class ProgressScreenViewModel @Inject constructor(
      * @param classLevel Class level (currently unused, kept for compatibility)
      * @param subjectId Subject ID to filter chapters
      */
-    fun getChapterProgressSummary(classLevel: Int, subjectId: String) {
+    fun getChapterProgressSummary(classLevel: Int, subjectId: String, language: String) {
         // Cancel the previous flow collection before starting a new one
         chapterProgressJob?.cancel()
         chapterProgressJob = viewModelScope.launch {
             try {
-                val language = if (isKannada()) "kn" else "en"
                 DebugLogger.debugLog(
                     "ProgressVM",
                     "Starting chapter progress observation for subject=$subjectId, language=$language"

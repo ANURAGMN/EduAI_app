@@ -161,6 +161,15 @@ fun ChapterCard(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(dimens.spaceExtraSmall)
                         ) {
+                            // Percentage text at top end
+                            Text(
+                                text = "${progress.progressPercentage}%",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary,
+                                modifier = Modifier.align(Alignment.End)
+                            )
+
                             // Progress bar
                             LinearProgressIndicator(
                                 progress = { progress.progressFraction },
