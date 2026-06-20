@@ -70,6 +70,9 @@ fun MathAgentScreen(
     // State collectors - using consolidated UI state
     val chatState by chatViewModel.uiState.collectAsState()
     val ttsState by ttsController.state.collectAsState()
+    val avatarBoyDisplayName = stringResource(R.string.boy)
+    val avatarGirlDisplayName = stringResource(R.string.girl)
+    val avatarDisableDisplayName = stringResource(R.string.disable)
     val sttState by sttController.state.collectAsState()
     val mathState by mathViewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -80,16 +83,38 @@ fun MathAgentScreen(
     // Settings state
     var settingsState by remember { mutableStateOf(ChatBotSettingsState()) }
 
-    // Image picker launcher
+    val imageTooLargeMessage = stringResource(R.string.image_too_large)
+    val imageProcessingMessage = stringResource(R.string.image_processing_may_take_time)
+
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let {
+            val fileSizeBytes = try {
+                context.contentResolver.openFileDescriptor(it, "r")?.use { pfd ->
+                    pfd.statSize
+                } ?: 0L
+            } catch (e: Exception) {
+                DebugLogger.errorLog("MathAgentScreen", "Failed to read image size: ${e.message}")
+                0L
+            }
+
+            val fiveMbInBytes = 5 * 1024 * 1024L
+
+            if (fileSizeBytes > fiveMbInBytes) {
+                android.widget.Toast.makeText(
+                    context,
+                    imageTooLargeMessage,
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+                return@let
+            }
+
             DebugLogger.debugLog("MathAgentScreen", "Image selected: $it")
             mathViewModel.onIntent(MathIntent.SelectImage(it.toString()))
         }
     }
-
     // Convert math messages to chat messages for display
     val mathMessagesAsChatMessages = remember(mathState.messages) {
         mathState.messages.map { mathMsg ->
@@ -103,14 +128,31 @@ fun MathAgentScreen(
     }
 
     // Create a temporary chat state with math messages for display
-    val displayChatState = remember(chatState, mathMessagesAsChatMessages, mathState) {
-        chatState.copy(
-            messages = mathMessagesAsChatMessages,
-            inputText = mathState.inputText,
-            isLoading = mathState.isLoading,
-            isTyping = mathState.isTyping,
-            typingText = mathState.typingText
-        )
+    // remove remember wrapper, keep as plain copy
+    val displayChatState = chatState.copy(
+        messages = mathMessagesAsChatMessages,
+        inputText = mathState.inputText,
+        isLoading = mathState.isLoading,
+        isTyping = mathState.isTyping,
+        typingText = mathState.typingText
+    )
+
+    // Auto-speak agent's first message on session start/resume + drive highlight,
+    // mirroring ConceptScreen/ChatEffects' shouldStartTTS -> ttsController.speak() flow
+    LaunchedEffect(mathState.shouldStartTTS, ttsState.isInitialized) {
+        if (mathState.shouldStartTTS && ttsState.isInitialized) {
+            val textToSpeak = mathState.fullTextForTTS
+            if (textToSpeak.isNotEmpty()) {
+                if (ttsState.isSpeaking) {
+                    ttsController.stop()
+                    delay(50)
+                }
+                DebugLogger.debugLog("MathAgentScreen", "Auto-starting TTS on session start: ${textToSpeak.take(50)}...")
+                ttsController.speak(textToSpeak)
+            }
+            // Reset the flag so this doesn't re-fire on recomposition
+            mathViewModel.onIntent(MathIntent.ConsumeTTSTrigger)
+        }
     }
 
     // TTS trigger - start speaking when typing animation begins
@@ -200,9 +242,9 @@ fun MathAgentScreen(
         conceptId = problemId,
         settingsState = settingsState,
         onSettingsStateUpdate = { settingsState = it },
-        avatarBoyDisplayName = stringResource(R.string.boy),
-        avatarGirlDisplayName = stringResource(R.string.girl),
-        avatarDisableDisplayName = stringResource(R.string.disable)
+        avatarBoyDisplayName = avatarBoyDisplayName,
+        avatarGirlDisplayName = avatarGirlDisplayName,
+        avatarDisableDisplayName = avatarDisableDisplayName
     )
 
     // Background
@@ -220,19 +262,24 @@ fun MathAgentScreen(
                     chatState = displayChatState,
                     sttState = sttState,
                     onTextChange = { mathViewModel.onIntent(MathIntent.UpdateInputText(it)) },
-                onSendClick = {
-                    if (mathState.inputText.isNotBlank()) {
-                        // Send message with or without image
-                        if (mathState.selectedImageUri != null) {
-                            mathViewModel.onIntent(
-                                MathIntent.SendMessageWithImage(mathState.inputText, mathState.selectedImageUri!!)
-                            )
-                        } else {
-                            mathViewModel.onIntent(MathIntent.SendMessage(mathState.inputText))
+                    onSendClick = {
+                        if (mathState.inputText.isNotBlank() || mathState.selectedImageUri != null) {
+                            // Send message with or without image
+                            if (mathState.selectedImageUri != null) {
+                                android.widget.Toast.makeText(
+                                    context,
+                                    imageProcessingMessage,
+                                    android.widget.Toast.LENGTH_LONG
+                                ).show()
+                                mathViewModel.onIntent(
+                                    MathIntent.SendMessageWithImage(mathState.inputText, mathState.selectedImageUri!!)
+                                )
+                            } else {
+                                mathViewModel.onIntent(MathIntent.SendMessage(mathState.inputText))
+                            }
+                            mathViewModel.onIntent(MathIntent.UpdateInputText(""))
                         }
-                        mathViewModel.onIntent(MathIntent.UpdateInputText(""))
-                    }
-                },
+                    },
                     onSpeakClick = {
                         mathViewModel.onIntent(MathIntent.HideAutosuggestions)
                         mathViewModel.onIntent(MathIntent.MarkUserActive)
@@ -250,6 +297,8 @@ fun MathAgentScreen(
                     onImagePickerClick = {
                         imagePickerLauncher.launch("image/*")
                     },
+                    selectedImageUri = mathState.selectedImageUri,
+                    onRemoveImage = { mathViewModel.onIntent(MathIntent.ClearSelectedImage) },
                     modifier = Modifier.imePadding()
                 )
             }
@@ -308,13 +357,6 @@ fun MathAgentScreen(
                         )
                     }
 
-                    // Logs for debug
-                    LogOverlay(
-                        metadata = mathState.metadata,
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(8.dp)
-                    )
                 }
             }
         }
@@ -333,9 +375,12 @@ fun MathAgentScreen(
                     isLoadingConcepts = mathState.problems.isEmpty() && mathState.isLoading
                 ),
                 onAvatarChange = { displayName ->
-                    settingsState = settingsState.copy(
-                        selectedAvatar = displayName,
-                        selectedAvatarDisplayName = displayName
+                    settingsState = mathViewModel.handleAvatarChange(
+                        displayName = displayName,
+                        boyDisplayName = avatarBoyDisplayName,
+                        girlDisplayName = avatarGirlDisplayName,
+                        ttsController = ttsController,
+                        currentState = settingsState
                     )
                 },
                 onVoiceChange = { selectedDisplayName ->

@@ -48,6 +48,7 @@
     <string name="error_school_empty">School name cannot be empty</string>
     <string name="error_school_min_length">School name must be at least 3 characters</string>
     <string name="error_school_invalid_chars">School name should only contain letters, numbers, and basic punctuation</string>
+    <string name="image_too_large">Image size should be less than 5 MB</string>
 
     <!-- Success Messages -->
     <string name="login_successful">Login Successful</string>
@@ -273,6 +274,7 @@
     <string name="simulation_icon">Simulation Icon</string>
     <string name="score_icon">Star Icon</string>
     <string name="graph_icon">Graph Icon</string>
+    <string name="remove_image">Remove Image</string>
 
     <!-- Progress Text -->
     <string name="completed_concepts_format">%1$d/%2$d</string>
@@ -328,6 +330,7 @@
     <string name="math_session_failed_resume">Failed to resume session</string>
     <string name="math_error_prefix">Error: %1$s</string>
     <string name="problem_to_solve">Problems to Solve</string>
+    <string name="image_processing_may_take_time">Image response may take 2–3 minutes. Please wait…</string>
 
 
     <!-- Progress Status Strings -->

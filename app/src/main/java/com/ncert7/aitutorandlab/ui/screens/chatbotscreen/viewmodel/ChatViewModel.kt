@@ -207,11 +207,15 @@ class ChatViewModel @Inject constructor(
      */
     private fun updateInput(text: String) {
         _uiState.update {
-            it.copy(inputText = text,
-                isUserActive = text.isNotBlank(),
-                showAutosuggestions = false)
+            it.copy(inputText = text, isUserActive = text.isNotBlank(), showAutosuggestions = false)
         }
-        if (text.isNotBlank()) markUserActive()
+        if (text.isNotBlank()) {
+            idleTimerController.markUserActive(
+                scope = viewModelScope,
+                onActive = { /* no-op: already handled above */ },
+                onInactive = { _uiState.update { it.copy(isUserActive = false) } }
+            )
+        }
     }
 
     /**

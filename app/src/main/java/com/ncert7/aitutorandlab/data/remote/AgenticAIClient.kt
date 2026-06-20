@@ -602,18 +602,59 @@ class AgenticAIClient(
         }
 
         try {
-            val response = callWithRetry {
-                service.continueMathSession(
-                    threadId = threadIdPart,
-                    userMessage = userMessagePart,
-                    isKannada = isKannadaPart,
-                    image = imagePart
-                )
+            // When an image is attached the backend needs time to process/store it before
+            // it can generate a response. The first call often returns success=false with
+            // "failed to continue" because callWithRetry breaks immediately on app-level
+            // failures. We handle this with a dedicated polling loop only for image requests
+            // so we don't change callWithRetry behaviour for any other endpoint.
+            val maxImageRetryAttempts = if (hasImage) 5 else 1
+            val imageRetryDelayMs = 3000L // 3 seconds between retries while backend processes image
+
+            var lastResult: Result<MathContinueSessionResponse>? = null
+            for (imageAttempt in 1..maxImageRetryAttempts) {
+                DebugLogger.debugLog("AgenticAIClient", "Image-aware attempt $imageAttempt/$maxImageRetryAttempts for continueMathSession")
+
+                val response = callWithRetry {
+                    service.continueMathSession(
+                        threadId = threadIdPart,
+                        userMessage = userMessagePart,
+                        isKannada = isKannadaPart,
+                        image = imagePart
+                    )
+                }
+
+                lastResult = response
+
+                if (response.isSuccess) {
+                    DebugLogger.debugLog("AgenticAIClient", "✓ Multipart continue session request completed on attempt $imageAttempt")
+                    return@withContext response
+                }
+
+                // If no image is attached there is no reason to retry an app-level failure
+                if (!hasImage) {
+                    DebugLogger.debugLog("AgenticAIClient", "No image attached, not retrying app-level failure")
+                    break
+                }
+
+                // Image is attached and backend returned failure — it is likely still processing
+                // the image. Wait and retry unless this was the last attempt.
+                if (imageAttempt < maxImageRetryAttempts) {
+                    DebugLogger.debugLog(
+                        "AgenticAIClient",
+                        "Image still processing on backend (attempt $imageAttempt). Waiting ${imageRetryDelayMs}ms before retry..."
+                    )
+                    delay(imageRetryDelayMs)
+                } else {
+                    DebugLogger.errorLog(
+                        "AgenticAIClient",
+                        "✗ All $maxImageRetryAttempts image-aware attempts exhausted. Last error: ${response.exceptionOrNull()?.message}"
+                    )
+                }
             }
-            DebugLogger.debugLog("AgenticAIClient", " Multipart continue session request completed")
-            response
+
+            lastResult ?: Result.failure(IOException("No response received"))
         } catch (e: Exception) {
-            DebugLogger.errorLog("AgenticAIClient", " Error in multipart continue session: ${e.message}")
+            DebugLogger.errorLog("AgenticAIClient", "✗ Error in multipart continue session: ${e.message}")
             throw e
         }
     }

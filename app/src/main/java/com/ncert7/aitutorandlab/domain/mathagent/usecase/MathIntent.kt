@@ -17,4 +17,6 @@ sealed interface MathIntent {
     object RefreshProblems : MathIntent
     object StartIdleTimer : MathIntent
     object DismissSessionDialog : MathIntent
+    object ConsumeTTSTrigger : MathIntent
+    object ClearSelectedImage : MathIntent
 }

@@ -233,18 +233,20 @@ fun ChapterCard(
                                 )
                             }
 
-                            ChapterActionButton(
-                                label = stringResource(R.string.revision),
-                                icon = {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                                        contentDescription = stringResource(R.string.revision),
-                                        tint = TextPrimary
-                                    )
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                onClick = onRevisionClick
-                            )
+                            if (chapter.hasRevision) {
+                                ChapterActionButton(
+                                    label = stringResource(R.string.revision),
+                                    icon = {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                                            contentDescription = stringResource(R.string.revision),
+                                            tint = TextPrimary
+                                        )
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onClick = onRevisionClick
+                                )
+                            }
                         }
                     }
                 }
