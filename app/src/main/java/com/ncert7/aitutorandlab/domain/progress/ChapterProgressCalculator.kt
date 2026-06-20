@@ -1,43 +1,24 @@
 package com.ncert7.aitutorandlab.domain.progress
 
-import com.ncert7.aitutorandlab.data.local.entities.ConceptEntity
 import com.ncert7.aitutorandlab.domain.progress.model.ProgressStatus
 import com.ncert7.aitutorandlab.debug.DebugLogger
-import com.ncert7.aitutorandlab.domain.revisionagent.usecase.RevisionUseCase
 import com.ncert7.aitutorandlab.repository.ConceptRepository
 import com.ncert7.aitutorandlab.repository.ProgressRepository
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.math.round
 
 /**
- * Chapter Progress Calculator — Unified progress computation engine
+ * Calculates chapter progress from the progress table.
  *
- * LOGIC:
- *
- * STUDY (equal share):
- *   - Math subject (has MATH PROBLEM concepts): counts MATH_AGENT completions per concept
- *   - Other subjects: counts CONCEPT completions per STUDY-type concept
- *
- * SIMULATION (equal share): Average across simulation concepts filtered by language
- *   - Per concept with Agent + URL: each 50%  → 100% when both done
- *   - Per concept with only Agent OR only URL: that one = 100%
- *   - If neither agent nor URL → concept skipped (not in denominator)
- *
- * REVISION (equal share, only if chapter has a revision agent):
- *   - % of STUDY concepts with REVISION_AGENT = COMPLETED
- *
- * OVERALL = sum of available components / count of available components
- *   - Available means: study concepts exist, OR simulation concepts exist, OR revision agent exists
- *   - Dynamic divisor ensures each present component contributes equally
- *
- * NOTE: Uses ConceptRepository and ProgressRepository — no direct DAO access.
+ * Counts ONLY concepts visible on screen for the current language:
+ * - Study/Math concepts: COMPLETED when CONCEPT or MATH_AGENT row = COMPLETED
+ * - Simulation concepts: COMPLETED when ANY present component (SIMULATION_AGENT OR SIMULATION) = COMPLETED
+ * - Revision also contributes: REVISION_AGENT = COMPLETED counts toward that concept's completion
  */
 @Singleton
 class ChapterProgressCalculator @Inject constructor(
     private val conceptRepository: ConceptRepository,
-    private val progressRepository: ProgressRepository,
-    private val revisionUseCase: RevisionUseCase
+    private val progressRepository: ProgressRepository
 ) {
     companion object {
         private const val TAG = "ChapterProgressCalc"
@@ -45,237 +26,152 @@ class ChapterProgressCalculator @Inject constructor(
     }
 
     /**
-     * Calculate overall chapter progress (0–100) and persist it to chapter_agent_progress.
-     *
-     * @param studentId  Student identifier
-     * @param chapterId  Chapter identifier
-     * @param language   "en" or "kn" — determines which simulation concepts to include
-     * @return           Overall progress percentage (0–100)
+     * Data class to hold detailed component-wise progress.
+     */
+    data class ChapterProgressCalculationResult(
+        val overallPercentage: Int,
+        val studyPercentage: Int,
+        val simulationPercentage: Int,
+        val revisionPercentage: Int
+    )
+
+    /**
+     * Calculate chapter progress component-wise based on study, simulation, and revision.
+     */
+    suspend fun calculateDetailedChapterProgress(
+        studentId: String,
+        chapterId: String,
+        language: String = "en"
+    ): ChapterProgressCalculationResult {
+        try {
+            val chapter = conceptRepository.getChapter(chapterId) 
+                ?: return ChapterProgressCalculationResult(0, 0, 0, 0)
+            val isMathSubject = chapter.subjectId == MATH_SUBJECT_ID
+
+            // Load ONLY the concepts that are visible on screen for this language
+            val studyConcepts = if (isMathSubject) {
+                conceptRepository.getMathProblemConceptsForChapter(chapterId)
+            } else {
+                conceptRepository.getStudyConceptsForChapter(chapterId)
+            }
+
+            val simulationConcepts = conceptRepository.getSimulationConceptsForChapter(chapterId, language)
+            val hasRevision = chapter.revisionId.isNotEmpty()
+
+            val components = mutableListOf<Int>()
+            var studyPct = 0
+            var simPct = 0
+            var revPct = 0
+
+            // 1. Study Component
+            if (studyConcepts.isNotEmpty()) {
+                var completedStudyCount = 0
+                for (concept in studyConcepts) {
+                    val studyDone = if (isMathSubject) {
+                        val mathDone = progressRepository.getProgress(studentId, "MATH_AGENT", concept.conceptId, language)
+                            ?.status == ProgressStatus.COMPLETED.value
+                        val conceptDone = progressRepository.getProgress(studentId, "CONCEPT", concept.conceptId, language)
+                            ?.status == ProgressStatus.COMPLETED.value
+                        mathDone || conceptDone
+                    } else {
+                        progressRepository.getProgress(studentId, "CONCEPT", concept.conceptId, language)
+                            ?.status == ProgressStatus.COMPLETED.value
+                    }
+                    if (studyDone) {
+                        completedStudyCount++
+                    }
+                }
+                studyPct = (completedStudyCount * 100) / studyConcepts.size
+                components.add(studyPct)
+            }
+
+            // 2. Simulation Component
+            if (simulationConcepts.isNotEmpty()) {
+                var completedSimCount = 0
+                for (concept in simulationConcepts) {
+                    val simId = if (language.equals("kn", ignoreCase = true)) {
+                        concept.simulationIdKannada
+                    } else {
+                        concept.simulationId
+                    }
+                    val simUrl = if (language.equals("kn", ignoreCase = true)) {
+                        concept.simulationUrlKannada
+                    } else {
+                        concept.simulationUrl
+                    }
+
+                    val hasAgent = !simId.isNullOrBlank() && simId != "null" && simId.trim().lowercase() != "not found"
+                    val hasUrl = !simUrl.isNullOrBlank() && simUrl != "null" && simUrl.trim().lowercase() != "not found"
+
+                    val agentDone = progressRepository.getProgress(studentId, "SIMULATION_AGENT", concept.conceptId, language)
+                        ?.status == ProgressStatus.COMPLETED.value
+                    val urlDone = progressRepository.getProgress(studentId, "SIMULATION", concept.conceptId, language)
+                        ?.status == ProgressStatus.COMPLETED.value
+
+                    // Simulation is done if ANY present component is completed (OR logic)
+                    val simulationDone = when {
+                        hasAgent && hasUrl -> agentDone || urlDone
+                        hasAgent -> agentDone
+                        hasUrl -> urlDone
+                        else -> false
+                    }
+
+                    if (simulationDone) {
+                        completedSimCount++
+                    }
+                }
+                simPct = (completedSimCount * 100) / simulationConcepts.size
+                components.add(simPct)
+            }
+
+            // 3. Revision Component
+            if (hasRevision) {
+                val allConcepts = studyConcepts + simulationConcepts
+                val isRevisionCompleted = allConcepts.any { concept ->
+                    progressRepository.getProgress(studentId, "REVISION_AGENT", concept.conceptId, language)
+                        ?.status == ProgressStatus.COMPLETED.value
+                }
+                revPct = if (isRevisionCompleted) 100 else 0
+                components.add(revPct)
+            }
+
+            val overall = if (components.isNotEmpty()) {
+                components.sum() / components.size
+            } else {
+                0
+            }
+
+            val overallClamped = overall.coerceIn(0, 100)
+            DebugLogger.debugLog(
+                TAG,
+                "Chapter $chapterId [$language] components: Study=$studyPct%, Sim=$simPct%, Rev=$revPct% -> Overall=$overallClamped%"
+            )
+
+            return ChapterProgressCalculationResult(
+                overallPercentage = overallClamped,
+                studyPercentage = studyPct,
+                simulationPercentage = simPct,
+                revisionPercentage = revPct
+            )
+        } catch (e: Exception) {
+            DebugLogger.errorLog(TAG, "Error calculating detailed progress for $chapterId: ${e.message}")
+            return ChapterProgressCalculationResult(0, 0, 0, 0)
+        }
+    }
+
+    /**
+     * Calculate chapter progress based on ONLY loaded concepts on screen
+     * Returning overall percentage.
      */
     suspend fun calculateChapterProgress(
         studentId: String,
         chapterId: String,
         language: String = "en"
     ): Int {
-        return try {
-            // 1. Determine subject type for this chapter
-            val chapter = conceptRepository.getChapter(chapterId)
-            val isMathSubject = chapter?.subjectId == MATH_SUBJECT_ID
-
-            // 2. Load the correct study-type concepts
-            val studyConcepts: List<ConceptEntity>
-            val mathConcepts: List<ConceptEntity>
-
-            if (isMathSubject) {
-                studyConcepts = emptyList() // math uses mathConcepts instead
-                mathConcepts = conceptRepository.getMathProblemConceptsForChapter(chapterId)
-            } else {
-                studyConcepts = conceptRepository.getStudyConceptsForChapter(chapterId)
-                mathConcepts = emptyList()
-            }
-
-            // 3. Simulation concepts filtered by language
-            val simulationConcepts = conceptRepository.getSimulationConceptsForChapter(chapterId, language)
-
-            // 4. Check for revision agent
-            val hasRevisionAgent = checkChapterHasRevisionAgent(chapterId)
-
-            // 5. Calculate each component
-            val study = if (isMathSubject) {
-                calculateMathProgress(studentId, mathConcepts, language)
-            } else {
-                calculateStudyProgress(studentId, studyConcepts, language)
-            }
-            val simulation = calculateSimulationProgress(studentId, simulationConcepts, language)
-            val revision = if (hasRevisionAgent) {
-                // Revision is always based on STUDY concepts, not math concepts
-                val revisionBase = if (isMathSubject) {
-                    conceptRepository.getStudyConceptsForChapter(chapterId)
-                } else {
-                    studyConcepts
-                }
-                calculateRevisionProgress(studentId, revisionBase, language)
-            } else {
-                0
-            }
-
-            // 6. Dynamic divisor — only count components that actually exist for this chapter
-            var divisor = 0
-            var sum = 0
-
-            val hasStudyComponent = if (isMathSubject) mathConcepts.isNotEmpty() else studyConcepts.isNotEmpty()
-            if (hasStudyComponent) {
-                divisor++
-                sum += study
-            }
-            if (simulationConcepts.isNotEmpty()) {
-                divisor++
-                sum += simulation
-            }
-            if (hasRevisionAgent) {
-                divisor++
-                sum += revision
-            }
-
-            val overall = if (divisor > 0) {
-                round(sum.toFloat() / divisor).toInt()
-            } else {
-                0
-            }
-            val finalProgress = overall.coerceIn(0, 100)
-
-            // 7. Persist to chapter_agent_progress via ProgressRepository
-            progressRepository.updateChapterAgentProgress(
-                studentId            = studentId,
-                chapterId            = chapterId,
-                language             = language,
-                studyPercentage      = study,
-                simulationPercentage = simulation,
-                revisionPercentage   = revision,
-                overallPercentage    = finalProgress
-            )
-
-            DebugLogger.debugLog(
-                TAG,
-                "Chapter $chapterId [$language]: " +
-                        "isMath=$isMathSubject " +
-                        "Study=$study% (${if (isMathSubject) mathConcepts.size else studyConcepts.size}) " +
-                        "Sim=$simulation% (${simulationConcepts.size}) " +
-                        "Rev=$revision% (hasAgent=$hasRevisionAgent) " +
-                        "Divisor=$divisor Overall=$finalProgress%"
-            )
-            finalProgress
-        } catch (e: Exception) {
-            DebugLogger.errorLog(TAG, "Error calculating chapter progress for $chapterId: ${e.message}")
-            0
-        }
+        return calculateDetailedChapterProgress(studentId, chapterId, language).overallPercentage
     }
 
-    // ===== PRIVATE HELPERS =====
 
-    /** Returns true if the chapter has a revision agent available */
-    private suspend fun checkChapterHasRevisionAgent(chapterId: String): Boolean {
-        return try {
-            revisionUseCase.getAvailableChapters().contains(chapterId)
-        } catch (e: Exception) {
-            DebugLogger.errorLog(TAG, "Error checking revision agent for $chapterId: ${e.message}")
-            false
-        }
-    }
-
-    /**
-     * Study progress for non-math subjects.
-     * Counts CONCEPT items with status = COMPLETED.
-     */
-    private suspend fun calculateStudyProgress(
-        studentId: String,
-        concepts: List<ConceptEntity>,
-        language: String
-    ): Int {
-        if (concepts.isEmpty()) return 0
-        val completed = concepts.count { concept ->
-            progressRepository.getProgress(studentId, "CONCEPT", concept.conceptId, language)
-                ?.status == ProgressStatus.COMPLETED.value
-        }
-        val pct = (completed * 100) / concepts.size
-        DebugLogger.debugLog(TAG, "Study: $completed/${concepts.size} = $pct%")
-        return pct.coerceIn(0, 100)
-    }
-
-    /**
-     * Study progress for Math subject.
-     * Counts MATH_AGENT items with status = COMPLETED.
-     * A math concept is "done" when its MATH_AGENT row is COMPLETED
-     * (markMathAgentCompleted also marks CONCEPT/COMPLETED, but we key on MATH_AGENT here
-     *  to stay consistent with what the Math screen actually tracks).
-     */
-    private suspend fun calculateMathProgress(
-        studentId: String,
-        concepts: List<ConceptEntity>,
-        language: String
-    ): Int {
-        if (concepts.isEmpty()) return 0
-        val completed = concepts.count { concept ->
-            // Accept either MATH_AGENT or CONCEPT completion — whichever was written
-            val mathAgentDone = progressRepository.getProgress(studentId, "MATH_AGENT", concept.conceptId, language)
-                ?.status == ProgressStatus.COMPLETED.value
-            val conceptDone = progressRepository.getProgress(studentId, "CONCEPT", concept.conceptId, language)
-                ?.status == ProgressStatus.COMPLETED.value
-            mathAgentDone || conceptDone
-        }
-        val pct = (completed * 100) / concepts.size
-        DebugLogger.debugLog(TAG, "Math study: $completed/${concepts.size} = $pct%")
-        return pct.coerceIn(0, 100)
-    }
-
-    /**
-     * Average progress across SIMULATION concepts.
-     * Per-concept logic:
-     *   - Both Agent & URL exist: 50% each.
-     *   - Only one exists: 100% for that one.
-     *   - Neither: skip.
-     */
-    private suspend fun calculateSimulationProgress(
-        studentId: String,
-        concepts: List<ConceptEntity>,
-        language: String
-    ): Int {
-        if (concepts.isEmpty()) return 0
-
-        var totalScore = 0f
-        var counted = 0
-
-        for (concept in concepts) {
-            val simId = if (language.equals("kn", ignoreCase = true)) concept.simulationIdKannada else concept.simulationId
-            val simUrl = if (language.equals("kn", ignoreCase = true)) concept.simulationUrlKannada else concept.simulationUrl
-
-            val hasAgent = !simId.isNullOrBlank() && simId != "null"
-            val hasUrl = !simUrl.isNullOrBlank() && simUrl != "null"
-
-            if (!hasAgent && !hasUrl) continue
-
-            val agentDone = progressRepository.getProgress(studentId, "SIMULATION_AGENT", concept.conceptId, language)
-                ?.status == ProgressStatus.COMPLETED.value
-            val urlDone = progressRepository.getProgress(studentId, "SIMULATION", concept.conceptId, language)
-                ?.status == ProgressStatus.COMPLETED.value
-
-            val conceptScore = when {
-                hasAgent && hasUrl -> {
-                    var score = 0f
-                    if (agentDone) score += 50f
-                    if (urlDone) score += 50f
-                    score
-                }
-                hasAgent -> if (agentDone) 100f else 0f
-                else     -> if (urlDone)  100f else 0f
-            }
-
-            totalScore += conceptScore
-            counted++
-        }
-
-        val pct = if (counted > 0) round(totalScore / counted).toInt() else 0
-        DebugLogger.debugLog(TAG, "Simulation: $totalScore/$counted concepts = $pct%")
-        return pct.coerceIn(0, 100)
-    }
-
-    /** % of STUDY concepts that have REVISION_AGENT = COMPLETED */
-    private suspend fun calculateRevisionProgress(
-        studentId: String,
-        concepts: List<ConceptEntity>,
-        language: String
-    ): Int {
-        if (concepts.isEmpty()) return 0
-        val revised = concepts.count { concept ->
-            progressRepository.getProgress(studentId, "REVISION_AGENT", concept.conceptId, language)
-                ?.status == ProgressStatus.COMPLETED.value
-        }
-        val pct = (revised * 100) / concepts.size
-        DebugLogger.debugLog(TAG, "Revision: $revised/${concepts.size} = $pct%")
-        return pct.coerceIn(0, 100)
-    }
-
-    // ===== PUBLIC HELPERS =====
 
     /** Returns true if the chapter's stored progress is 100% COMPLETED */
     suspend fun isChapterFullyCompleted(
@@ -305,8 +201,7 @@ class ChapterProgressCalculator @Inject constructor(
             cal.set(java.util.Calendar.SECOND, 59)
             val endOfDay = cal.timeInMillis
 
-            progressRepository.getTodayCompletedConceptCount(studentId, startOfDay, endOfDay) +
-                    progressRepository.getTodayCompletedSimulationCount(studentId, startOfDay, endOfDay)
+            progressRepository.getTodayFullyCompletedActivityCount(studentId, startOfDay, endOfDay)
         } catch (e: Exception) {
             DebugLogger.errorLog(TAG, "Error getting today activity count: ${e.message}")
             0

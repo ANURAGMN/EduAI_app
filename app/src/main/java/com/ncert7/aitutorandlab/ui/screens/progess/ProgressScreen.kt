@@ -22,6 +22,7 @@ import com.ncert7.aitutorandlab.ui.screens.progess.component.StatusCardGrid
 import com.ncert7.aitutorandlab.ui.screens.progess.component.WeeklyActivitySection
 import com.ncert7.aitutorandlab.ui.theme.BackgroundSecondary
 import com.ncert7.aitutorandlab.ui.theme.LocalDimensions
+import androidx.compose.ui.platform.LocalConfiguration
 import com.ncert7.aitutorandlab.ui.screens.progess.viewmodel.ProgressScreenViewModel
 
 /**
@@ -59,6 +60,15 @@ fun ProgressScreen(
     // Get class level from student (with default)
     val classLevel = student?.classLevel ?: 7
 
+    // Use LocalConfiguration.current so Compose re-reads this on config changes (locale, dark mode, etc.)
+    // This is reactive - it triggers recomposition + LaunchedEffect when language changes
+    val configuration = LocalConfiguration.current
+    val currentLanguage = configuration.locales[0]?.language ?: "en"
+
+    LaunchedEffect(currentLanguage) {
+        viewModel.setLanguage(currentLanguage)
+    }
+
     // Load data when screen launches
     LaunchedEffect(Unit) {
         viewModel.getSevenDayProgress(viewModel.getSevenDaysAgoInMillis())
@@ -69,12 +79,13 @@ fun ProgressScreen(
         viewModel.loadSubjects(classLevel)
     }
 
-    // Load chapter progress when subject is selected
-    LaunchedEffect(selectedSubject) {
+    // Load chapter progress when subject is selected or language changes
+    LaunchedEffect(selectedSubject, currentLanguage) {
         selectedSubject?.let { subject ->
             viewModel.getChapterProgressSummary(
                 classLevel = classLevel,
-                subjectId = subject.subjectId
+                subjectId = subject.subjectId,
+                language = currentLanguage
             )
         }
     }

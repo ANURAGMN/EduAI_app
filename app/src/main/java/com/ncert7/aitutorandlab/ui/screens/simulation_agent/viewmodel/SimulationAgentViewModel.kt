@@ -513,8 +513,9 @@ class SimulationAgentViewModel @Inject constructor(
                 if (conceptId != null) {
                     val studentId = sharedPrefs.getUserId()
                     if (studentId != null) {
-                        progressEventTracker.markSimulationUrlCompleted(studentId, conceptId)
-                        DebugLogger.debugLog(TAG, " Marked Simulation URL as completed for concept: $conceptId")
+                        val lang = sharedPrefs.getLanguagePreference() ?: "en"
+                        progressEventTracker.markSimulationUrlCompleted(studentId, conceptId, lang)
+                        DebugLogger.debugLog(TAG, " Marked Simulation URL as completed for concept: $conceptId [$lang]")
                     } else {
                         DebugLogger.errorLog(TAG, "Could not retrieve studentId for progress tracking")
                     }
@@ -645,6 +646,13 @@ class SimulationAgentViewModel @Inject constructor(
     }
 
     /**
+     * Clear session mapping without starting a new session
+     */
+    fun clearSessionMapping(simulationId: String) {
+        simulationSessionUseCase.clearSession(simulationId)
+    }
+
+    /**
      * Dismiss session resume dialog
      */
     fun dismissSessionDialog() {
@@ -678,8 +686,9 @@ class SimulationAgentViewModel @Inject constructor(
                         currentConceptId = conceptId
                         val studentId = sharedPrefs.getUserId()
                         if (studentId != null) {
-                            progressEventTracker.markSimulationAgentCompleted(studentId, conceptId)
-                            DebugLogger.debugLog(TAG, " Marked Simulation Agent as completed for concept: $conceptId")
+                            val lang = sharedPrefs.getLanguagePreference() ?: "en"
+                            progressEventTracker.markSimulationAgentCompleted(studentId, conceptId, lang)
+                            DebugLogger.debugLog(TAG, " Marked Simulation Agent as completed for concept: $conceptId [$lang]")
                         } else {
                             DebugLogger.errorLog(TAG, "Could not retrieve studentId for progress tracking")
                         }

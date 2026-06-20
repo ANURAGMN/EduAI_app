@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.domain.progress.ChapterProgressService
-import com.ncert7.aitutorandlab.domain.progress.buildProgressUiModel
 import com.ncert7.aitutorandlab.domain.progress.model.ProgressStatus
 import com.ncert7.aitutorandlab.repository.ChapterRepository
 import com.ncert7.aitutorandlab.repository.ConceptRepository
@@ -27,7 +26,7 @@ class ChapterViewModel @Inject constructor(
     private val subjectRepository: SubjectRepository,
     private val conceptRepository: ConceptRepository,
     private val sharedPrefs: SharedPreferenceUtils,
-    private val chapterProgressService: ChapterProgressService,
+    private val chapterProgressService: ChapterProgressService
 ) : ViewModel() {
 
     companion object {
@@ -101,14 +100,17 @@ class ChapterViewModel @Inject constructor(
                 // ANY progress row for this subject changes, the Flow emits and the UI redraws.
                 chapterRepository.getChapterWiseProgress(userId, subjectId, language)
                     .collect { progressSummaries ->
+                        DebugLogger.debugLog(TAG, "🔄 CHAPTER PROGRESS FLOW TRIGGERED - Updating ${progressSummaries.size} chapter(s)...")
+
                         val progressMap = progressSummaries.associateBy { it.chapterId }
 
                         val chapterUiModels = filteredChapters.map { chapter ->
                             val summary = progressMap[chapter.chapterId]
                             val flags = chapterFlags[chapter.chapterId] ?: Triple(false, false, false)
 
-                            // Prefer live summary data; fall back to chapter metadata
-                            val totalConcepts     = summary?.totalConcepts ?: chapter.totalConcepts
+                            // ✅ FIXED: Use the real-time summary data directly
+                            // This ensures consistent progress across all screens
+                            val totalConcepts     = summary?.totalConcepts ?: 0
                             val completedConcepts = summary?.completedConcepts ?: 0
                             val overallPct        = summary?.completionPercentage ?: 0
 
@@ -117,6 +119,8 @@ class ChapterViewModel @Inject constructor(
                                 overallPct > 0    -> ProgressStatus.IN_PROGRESS
                                 else               -> ProgressStatus.NOT_STARTED
                             }
+
+                            DebugLogger.debugLog(TAG, "  Chapter ${chapter.chapterName}: $completedConcepts/$totalConcepts ($overallPct%) - $status")
 
                             ChapterUiModel(
                                 id               = chapter.chapterId,
@@ -128,12 +132,20 @@ class ChapterViewModel @Inject constructor(
                                 status           = status,
                                 revisionId       = chapter.revisionId,
                                 subjectId        = chapter.subjectId,
-                                progressUiModel  = buildProgressUiModel(completedConcepts, totalConcepts),
+                                progressUiModel  = com.ncert7.aitutorandlab.ui.models.ChapterProgressUiModel(
+                                    completed = completedConcepts,
+                                    total = totalConcepts,
+                                    progressFraction = overallPct / 100f,
+                                    progressPercentage = overallPct,
+                                    remaining = (totalConcepts - completedConcepts).coerceAtLeast(0)
+                                ),
                                 hasStudy         = flags.first,
                                 hasSimulation    = flags.second,
                                 hasRevision      = flags.third
                             )
                         }
+
+                        DebugLogger.debugLog(TAG, "✅ All chapter progress bars updated")
 
                         _state.value = _state.value.copy(
                             chapters    = chapterUiModels,

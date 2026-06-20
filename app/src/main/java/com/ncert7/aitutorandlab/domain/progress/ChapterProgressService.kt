@@ -28,14 +28,34 @@ class ChapterProgressService @Inject constructor(
     }
 
     /**
-     * Recalculate chapter progress and persist it.
-     * Call this after any activity is marked complete.
+     * Recalculate chapter progress, persist it to the chapter_agent_progress table, and return it.
+     * Must be called after any activity is marked complete.
+     *
+     * Critical: without persisting here, getChapterProgressFlow() always emits 0%
+     * because it reads from chapter_agent_progress which is never written to otherwise.
      */
     suspend fun updateChapterProgress(
         studentId: String,
         chapterId: String,
         language: String = "en"
-    ): Int = calculator.calculateChapterProgress(studentId, chapterId, language)
+    ): Int {
+        val result = calculator.calculateDetailedChapterProgress(studentId, chapterId, language)
+        try {
+            progressRepository.updateChapterAgentProgress(
+                studentId            = studentId,
+                chapterId            = chapterId,
+                language             = language,
+                studyPercentage      = result.studyPercentage,
+                simulationPercentage = result.simulationPercentage,
+                revisionPercentage   = result.revisionPercentage,
+                overallPercentage    = result.overallPercentage
+            )
+            DebugLogger.debugLog(TAG, "Chapter $chapterId [$language] persisted: ${result.overallPercentage}% (Study=${result.studyPercentage}%, Sim=${result.simulationPercentage}%, Rev=${result.revisionPercentage}%)")
+        } catch (e: Exception) {
+            DebugLogger.errorLog(TAG, "Failed to persist chapter progress for $chapterId: ${e.message}")
+        }
+        return result.overallPercentage
+    }
 
     /** Returns true if chapter overall progress is 100% (status = COMPLETED) */
     suspend fun isChapterCompleted(
@@ -83,7 +103,7 @@ class ChapterProgressService @Inject constructor(
     }
 
     /**
-     * Get all chapters for a subject with their overall progress (LEFT JOIN — includes 0% chapters).
+     * Get all chapters for a subject with their overall progress.
      */
     suspend fun getSubjectChapters(
         studentId: String,

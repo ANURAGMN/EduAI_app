@@ -1,6 +1,7 @@
 package com.ncert7.aitutorandlab.ui.screens.home
 
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -61,9 +62,6 @@ fun HomeScreen(
     val student by viewModel.student.collectAsState()
     val greeting by viewModel.greeting.collectAsState()
 
-    // Observe language change trigger to force recomposition
-    val languageChangeTrigger by viewModel.languageChangeTrigger.collectAsState()
-
     // Testing if user is added to LocalDB or not
     LaunchedEffect(Unit) { DebugLogger.debugLog("HomeScreen", "CurrentUser:\n $student") }
 
@@ -71,12 +69,13 @@ fun HomeScreen(
         DebugLogger.debugLog("HomeScreen", "Concept:\n $progressConcepts")
     }
 
-    // Detect language changes by observing configuration changes
-    val currentLanguage = AppCompatDelegate.getApplicationLocales()[0]?.language ?: "en"
+    // Use LocalConfiguration.current so Compose re-reads this on config changes (locale, dark mode, etc.)
+    // This is reactive - it triggers recomposition + LaunchedEffect when language changes
+    val configuration = LocalConfiguration.current
+    val currentLanguage = configuration.locales[0]?.language ?: "en"
 
-    LaunchedEffect(currentLanguage, languageChangeTrigger) {
-        // Trigger refresh when configuration locale or app language changes
-        viewModel.onLanguageChanged()
+    LaunchedEffect(currentLanguage) {
+        viewModel.setLanguage(currentLanguage)
     }
 
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -107,8 +106,8 @@ fun HomeScreen(
                 TodayProgressCard(
                     progressConcepts = progressConcepts,
                     onLessonClick = onLessonClick,
-                    todayCompletedConcept = totalCompletedConceptCount,
-                    todayCompletedSimulation = totalCompletedSimulationCount,
+                    todayCompletedConcept = todayCompletedConceptCount,
+                    todayCompletedSimulation = todayCompletedSimulationCount,
                     onShowAllChapters = {
                         val subjectId = sharedPreferenceUtils.getSubjectSelection() ?: "9a7d0d20-7b8d-4b8c-8c12-5a1a8a55f002"
                         onNavigateToChapters(subjectId)

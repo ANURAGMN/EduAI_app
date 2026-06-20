@@ -87,27 +87,37 @@ class ProgressRepository(
     /** Count completed activities today (for streak) (Reactive Flow) */
     fun getTodayCompletedConceptCountFlow(
         studentId: String,
+        language: String,
         startOfDay: Long,
         endOfDay: Long
-    ): Flow<Int> = progressDao.getTodayCompletedConceptCountFlow(studentId, startOfDay, endOfDay, AppConfig.APP_NAME)
+    ): Flow<Int> = progressDao.getTodayCompletedConceptCountFlow(studentId, language, startOfDay, endOfDay, AppConfig.APP_NAME)
 
     fun getTodayCompletedSimulationCountFlow(
         studentId: String,
+        language: String,
         startOfDay: Long,
         endOfDay: Long
-    ): Flow<Int> = progressDao.getTodayCompletedSimulationCountFlow(studentId, startOfDay, endOfDay, AppConfig.APP_NAME)
+    ): Flow<Int> = progressDao.getTodayCompletedSimulationCountFlow(studentId, language, startOfDay, endOfDay, AppConfig.APP_NAME)
+
+    suspend fun getTodayFullyCompletedActivityCount(
+        studentId: String,
+        startOfDay: Long,
+        endOfDay: Long
+    ): Int = progressDao.getTodayFullyCompletedActivityCount(studentId, startOfDay, endOfDay, AppConfig.APP_NAME)
 
     suspend fun getTodayCompletedConceptCount(
         studentId: String,
+        language: String,
         startOfDay: Long,
         endOfDay: Long
-    ): Int = progressDao.getTodayCompletedConceptCount(studentId, startOfDay, endOfDay, AppConfig.APP_NAME)
+    ): Int = progressDao.getTodayCompletedConceptCount(studentId, language, startOfDay, endOfDay, AppConfig.APP_NAME)
 
     suspend fun getTodayCompletedSimulationCount(
         studentId: String,
+        language: String,
         startOfDay: Long,
         endOfDay: Long
-    ): Int = progressDao.getTodayCompletedSimulationCount(studentId, startOfDay, endOfDay, AppConfig.APP_NAME)
+    ): Int = progressDao.getTodayCompletedSimulationCount(studentId, language, startOfDay, endOfDay, AppConfig.APP_NAME)
 
 
     // ===== CHAPTER-WISE PROGRESS (REAL-TIME) =====
