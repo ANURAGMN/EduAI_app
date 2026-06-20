@@ -5,6 +5,7 @@ import com.ncert7.aitutorandlab.data.local.entities.ChapterAgentProgressEntity
 import com.ncert7.aitutorandlab.data.local.entities.ProgressEntity
 import com.ncert7.aitutorandlab.data.local.entities.SessionEntity
 import com.ncert7.aitutorandlab.data.local.entities.StreakEntity
+import com.ncert7.aitutorandlab.utils.resolveProgressLanguageFromFirestore
 import com.google.firebase.firestore.DocumentSnapshot
 
 /**
@@ -20,7 +21,7 @@ object FirebaseProgressMapper {
             itemId = document.getString("itemId") ?: "",
             status = document.getString("status") ?: "NOT_STARTED",
             progressPercentage = document.getLong("progressPercentage")?.toInt() ?: 0,
-            language = document.getString("language") ?: "en",
+            language = resolveProgressLanguageFromFirestore(document.id, document.getString("language")),
             appName = document.getString("appName") ?: "",
             startedAt = document.getLong("startedAt"),
             completedAt = document.getLong("completedAt"),

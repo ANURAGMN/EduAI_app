@@ -8,6 +8,8 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.ncert7.aitutorandlab.data.local.entities.ProgressEntity
 import com.ncert7.aitutorandlab.domain.progress.model.ProgressStatus
+import com.ncert7.aitutorandlab.utils.legacyProgressLanguageAlias
+import com.ncert7.aitutorandlab.utils.normalizeLanguageCode
 import kotlinx.coroutines.flow.Flow
 
 /** Data Access Object for managing student progress in learning items. */
@@ -56,6 +58,31 @@ interface ProgressDao {
     @Query("UPDATE progress SET isSynced = 1 WHERE progressId IN (:ids)")
     suspend fun markProgressAsSynced(ids: List<Long>)
 
+    /** Mark pre-fix English rows that duplicate an explicit Kannada row for the same item. */
+    @Query(
+        """
+        UPDATE progress SET language = 'legacy'
+        WHERE language IN ('en', 'English')
+        AND EXISTS (
+            SELECT 1 FROM progress AS p2
+            WHERE p2.itemId = progress.itemId
+            AND p2.studentId = progress.studentId
+            AND p2.itemType = progress.itemType
+            AND p2.appName = progress.appName
+            AND p2.language IN ('kn', 'Kannada')
+        )
+        """
+    )
+    suspend fun markDuplicateLegacyEnglishProgress()
+
+    @Query(
+        """
+        UPDATE progress SET language = 'legacy'
+        WHERE language IN ('English', 'Kannada')
+        """
+    )
+    suspend fun markFullWordLegacyLanguages()
+
     @Query(
         "DELETE FROM progress WHERE studentId = :studentId AND itemType = :itemType AND itemId = :itemId AND appName = :appName"
     )
@@ -75,10 +102,17 @@ interface ProgressDao {
         progressPercentage: Int,
         timestamp: Long = System.currentTimeMillis()
     ) {
-        val existing = getProgress(studentId, itemType, itemId, language, appName)
+        val lang = normalizeLanguageCode(language)
+        var existing = getProgress(studentId, itemType, itemId, lang, appName)
+        if (existing == null) {
+            legacyProgressLanguageAlias(lang)?.let { legacy ->
+                existing = getProgress(studentId, itemType, itemId, legacy, appName)
+            }
+        }
         if (existing != null) {
             val updated =
                 existing.copy(
+                    language = lang,
                     status = newStatus,
                     completedAt =
                         if (newStatus == ProgressStatus.COMPLETED.value) timestamp
@@ -99,7 +133,7 @@ interface ProgressDao {
                     itemId = itemId,
                     appName = appName,
                     status = newStatus,
-                    language = language,
+                    language = lang,
                     progressPercentage = progressPercentage.coerceIn(0, 100),
                     startedAt = if (newStatus == ProgressStatus.IN_PROGRESS.value) timestamp else null,
                     completedAt = if (newStatus == ProgressStatus.COMPLETED.value) timestamp else null,
@@ -358,7 +392,7 @@ interface ProgressDao {
              WHERE studentId = :studentId 
              AND itemType = 'CONCEPT'
              AND status = :completedStatus
-             AND language = :language
+             AND (language = :language OR (:language = 'en' AND language = 'legacy'))
              AND appName = :appName)
             +
             (SELECT COUNT(DISTINCT c.chapterId)
@@ -367,7 +401,7 @@ interface ProgressDao {
              WHERE p.studentId = :studentId
              AND p.itemType = 'REVISION_AGENT'
              AND p.status = :completedStatus
-             AND p.language = :language
+             AND (p.language = :language OR (:language = 'en' AND p.language = 'legacy'))
              AND p.appName = :appName)
     """
     )
@@ -392,7 +426,7 @@ interface ProgressDao {
         AND p.studentId = :studentId
         AND p.itemType IN ('SIMULATION_AGENT', 'SIMULATION')
         AND p.status = :completedStatus
-        AND p.language = :language
+        AND (p.language = :language OR (:language = 'en' AND p.language = 'legacy'))
         AND p.appName = :appName
     """
     )
@@ -441,6 +475,7 @@ interface ProgressDao {
              WHERE studentId = :studentId 
              AND itemType = 'CONCEPT'
              AND status = :completedStatus
+             AND language IN ('en', 'kn')
              AND language = :language
              AND completedAt BETWEEN :startOfDay AND :endOfDay
              AND appName = :appName)
@@ -451,6 +486,7 @@ interface ProgressDao {
              WHERE p.studentId = :studentId
              AND p.itemType = 'REVISION_AGENT'
              AND p.status = :completedStatus
+             AND p.language IN ('en', 'kn')
              AND p.language = :language
              AND p.completedAt BETWEEN :startOfDay AND :endOfDay
              AND p.appName = :appName)
@@ -477,6 +513,7 @@ interface ProgressDao {
              WHERE studentId = :studentId 
              AND itemType = 'CONCEPT'
              AND status = :completedStatus
+             AND language IN ('en', 'kn')
              AND language = :language
              AND completedAt BETWEEN :startOfDay AND :endOfDay
              AND appName = :appName)
@@ -487,6 +524,7 @@ interface ProgressDao {
              WHERE p.studentId = :studentId
              AND p.itemType = 'REVISION_AGENT'
              AND p.status = :completedStatus
+             AND p.language IN ('en', 'kn')
              AND p.language = :language
              AND p.completedAt BETWEEN :startOfDay AND :endOfDay
              AND p.appName = :appName)
@@ -515,6 +553,7 @@ interface ProgressDao {
     AND p.studentId = :studentId
     AND p.itemType IN ('SIMULATION_AGENT', 'SIMULATION')
     AND p.status = :completedStatus
+    AND p.language IN ('en', 'kn')
     AND p.language = :language
     AND p.appName = :appName
     AND p.completedAt BETWEEN :startOfDay AND :endOfDay
@@ -538,6 +577,7 @@ interface ProgressDao {
     WHERE studentId = :studentId
       AND itemType IN ('SIMULATION', 'SIMULATION_AGENT')
       AND status = :completedStatus
+      AND language IN ('en', 'kn')
       AND language = :language
       AND completedAt BETWEEN :startOfDay AND :endOfDay
       AND appName = :appName

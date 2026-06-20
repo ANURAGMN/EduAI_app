@@ -8,10 +8,13 @@ import androidx.compose.runtime.LaunchedEffect
  * Tracks screen entry and exit events for analytics purposes.
  */
 @Composable
-fun TrackScreenEvent(screenName: ScreenName) {
+fun TrackScreenEvent(
+    screenName: ScreenName,
+    conceptId: String? = null
+) {
     // Track entry when screen appears
-    LaunchedEffect(screenName) {
-        SessionManager.trackScreenEntry(screenName)
+    LaunchedEffect(screenName, conceptId) {
+        SessionManager.trackScreenEntry(screenName, conceptId)
     }
 
     // Track exit when screen disappears

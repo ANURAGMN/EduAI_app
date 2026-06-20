@@ -1,0 +1,19 @@
+# Copy to local.properties and fill in real values (local.properties is gitignored).
+
+sdk.dir=C\:\\Users\\YOUR_USER\\AppData\\Local\\Android\\Sdk
+
+# --- AdMob (production) ---
+# Create at https://admob.google.com → Apps → EduAI → Ad units → Banner
+# Link to Firebase project eduai-e090e for revenue analytics.
+# Console checklist: scripts/admob-firebase-setup.md
+# Verify locally: .\scripts\verify-admob-config.ps1
+ADMOB_APP_ID=ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY
+BANNER_AD_UNIT_ID=ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ
+
+# Optional: hashed test device ID from logcat ("Use RequestConfiguration.Builder().setTestDeviceIds...")
+ADMOB_TEST_DEVICE_ID=
+
+# --- Other keys (existing) ---
+# AUTH_KEY=
+# GEMINI_API_KEY=
+# ...

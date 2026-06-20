@@ -7,8 +7,12 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
+import com.ncert7.aitutorandlab.data.local.database.EduAiDatabase
 import com.ncert7.aitutorandlab.debug.DebugLogger
+import com.ncert7.aitutorandlab.service.analytics.ContentClickAnalyticsTracker
 import com.ncert7.aitutorandlab.service.analytics.SessionManager
+import com.ncert7.aitutorandlab.service.ads.ClickAdGate
+import com.ncert7.aitutorandlab.service.analytics.SimulationAnalyticsTracker
 import com.ncert7.aitutorandlab.service.sync.DataSyncService
 import com.ncert7.aitutorandlab.service.sync.WeeklySyncWorker
 import com.ncert7.aitutorandlab.utils.AppLifecycleObserver
@@ -41,8 +45,13 @@ class EduAiApplication : Application(), Configuration.Provider {
         // Initialize DataSyncService for real-time and offline sync
         DataSyncService.initialize(this)
 
+        migrateLegacyProgressLanguages()
+
         // Initialize SessionManager (handles both sessions and analytics)
         SessionManager.initialize(this)
+        SimulationAnalyticsTracker.initialize(this)
+        ContentClickAnalyticsTracker.initialize(this)
+        ClickAdGate.initialize(this)
 
         // Register app lifecycle observer (this will handle session start/end)
         appLifecycleObserver = AppLifecycleObserver()
@@ -55,6 +64,25 @@ class EduAiApplication : Application(), Configuration.Provider {
         }
 
         scheduleDailySync()
+    }
+
+    private fun migrateLegacyProgressLanguages() {
+        applicationScope.launch(Dispatchers.IO) {
+            try {
+                val prefs = SharedPreferenceUtils(this@EduAiApplication)
+                if (prefs.isLegacyProgressMigrationDone()) return@launch
+                val dao = EduAiDatabase.getInstance(this@EduAiApplication).progressDao()
+                dao.markFullWordLegacyLanguages()
+                dao.markDuplicateLegacyEnglishProgress()
+                prefs.setLegacyProgressMigrationDone()
+                DebugLogger.debugLog("EduAiApplication", "Legacy progress language migration completed")
+            } catch (e: Exception) {
+                DebugLogger.errorLog(
+                    "EduAiApplication",
+                    "Legacy progress language migration failed: ${e.message}"
+                )
+            }
+        }
     }
 
     private fun initializeLanguage() {

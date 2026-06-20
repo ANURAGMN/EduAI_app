@@ -9,7 +9,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import com.ncert7.aitutorandlab.R
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -45,12 +44,14 @@ fun ConceptScreen(
     TrackScreenEvent(screenName = ScreenName.CONCEPT)
 
     val dimes = LocalDimensions.current
-    val context = LocalContext.current
+    val configuration = LocalConfiguration.current
     val state by viewModel.state.collectAsState()
     val chatState by chatViewModel.uiState.collectAsState()
     val pendingNavigation by viewModel.pendingNavigation.collectAsState()
+    val showAdDialog by viewModel.showAdDialog.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val currentLanguage = configuration.locales[0]?.language ?: "en"
 
-    // Handle Ad-Interception Navigation
     LaunchedEffect(pendingNavigation) {
         pendingNavigation?.let { nav ->
             if (nav.isDirect) {
@@ -79,8 +80,6 @@ fun ConceptScreen(
     LaunchedEffect(Unit) {
         simulationViewModel.loadAvailableSimulations()
     }
-    val configuration = LocalConfiguration.current
-    val currentLanguage = configuration.locales[0]?.language ?: "en"
 
     LaunchedEffect(chapterId, type, currentLanguage) {
         viewModel.loadConcepts(chapterId, type, currentLanguage)
@@ -162,13 +161,11 @@ fun ConceptScreen(
                 }
             }
 
-            // Ad Banner Dialog - Shown after 5 free simulations
-            if (pendingNavigation != null && !pendingNavigation!!.isDirect) {
+            // Ad after 5 tracked clicks per day
+            if (showAdDialog) {
                 AdDialog(
                     context = context,
-                    onDismiss = {
-                        viewModel.markAdShown()
-                    }
+                    onDismiss = { viewModel.dismissAdAndNavigate() }
                 )
             }
 

@@ -16,6 +16,7 @@ import com.ncert7.aitutorandlab.repository.ConceptRepository
 import com.ncert7.aitutorandlab.ui.screens.mathagentscreen.dataclass.MathUiState
 import com.ncert7.aitutorandlab.ui.viewModel.TextToSpeech
 import com.ncert7.aitutorandlab.utils.isKannada
+import com.ncert7.aitutorandlab.utils.resolveProgressLanguage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,8 +35,7 @@ class MathViewModel @Inject constructor(
     private val sharedPreferenceUtils: SharedPreferenceUtils,
     private val progressEventTracker: ProgressEventTracker,
 
-    private val avatarChangeUseCase: AvatarChangeUseCase
-
+    private val avatarChangeUseCase: AvatarChangeUseCase,
     private val conceptRepository: ConceptRepository
 
 ) : ViewModel() {
@@ -262,9 +262,7 @@ class MathViewModel @Inject constructor(
                             val concept = conceptRepository.getConceptByProblemId(problemId)
                             val actualId = concept?.conceptId ?: problemId
                             // Use language from uiState (set by SetKannada intent), fallback to SharedPrefs
-                            val lang = _uiState.value.currentLanguage.ifBlank {
-                                if (sharedPreferenceUtils.getLanguagePreference() == "kn") "kn" else "en"
-                            }
+                            val lang = resolveProgressLanguage(_uiState.value.currentLanguage.takeIf { it.isNotBlank() })
                             progressEventTracker.markMathAgentCompleted(userId, actualId, lang)
                             DebugLogger.debugLog("MathViewModel", "Math agent progress tracked for concept: $actualId (problem: $problemId) [$lang]")
                         } catch (e: Exception) {

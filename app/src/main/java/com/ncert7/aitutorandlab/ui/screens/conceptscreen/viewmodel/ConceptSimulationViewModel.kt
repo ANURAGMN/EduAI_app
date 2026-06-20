@@ -6,9 +6,12 @@ import com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.domain.progress.ProgressEventTracker
 import com.ncert7.aitutorandlab.repository.ConceptRepository
+import com.ncert7.aitutorandlab.service.analytics.SimulationAnalyticsTracker
+import com.ncert7.aitutorandlab.service.analytics.SimulationInteraction
 import com.ncert7.aitutorandlab.service.sync.DataSyncService
 import com.ncert7.aitutorandlab.ui.screens.conceptscreen.dataclass.ConceptScreenState
 import com.ncert7.aitutorandlab.utils.StreakManager
+import com.ncert7.aitutorandlab.utils.getCurrentLanguageCode
 import com.ncert7.aitutorandlab.utils.isKannada
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,8 +41,8 @@ class ConceptSimulationViewModel @Inject constructor(
     private val _state = MutableStateFlow(ConceptScreenState())
     val state: StateFlow<ConceptScreenState> = _state.asStateFlow()
 
-    private val _showAdBeforeSimulation = MutableStateFlow(false)
-    val showAdBeforeSimulation: StateFlow<Boolean> = _showAdBeforeSimulation.asStateFlow()
+    private val _isAdCheckPending = MutableStateFlow(true)
+    val isAdCheckPending: StateFlow<Boolean> = _isAdCheckPending.asStateFlow()
 
     private val _simulationTitle = MutableStateFlow("")
     val simulationTitle: StateFlow<String> = _simulationTitle.asStateFlow()
@@ -65,7 +68,7 @@ class ConceptSimulationViewModel @Inject constructor(
                 DebugLogger.errorLog(TAG, "No studentId — cannot mark simulation URL completed")
                 return@launch
             }
-            val language = sharedPrefs.getLanguagePreference() ?: "en"
+            val language = getCurrentLanguageCode()
 
             // Mark the URL as completed - this triggers chapter progress update via ProgressEventTracker
             progressEventTracker.markSimulationUrlCompleted(studentId, conceptId, language)
@@ -74,50 +77,14 @@ class ConceptSimulationViewModel @Inject constructor(
     }
 
     /**
-     * Check if ad should be shown before viewing a simulation
-     * Shows ad AFTER the first 3 simulations are completed
-     * 1st, 2nd, 3rd simulations = NO AD
-     * 4th simulation onwards = ALWAYS SHOW AD
-     * Returns true if ad should be shown before simulation
-     */
-    suspend fun shouldShowAdBeforeSimulation(): Boolean {
-        return try {
-            val studentId = sharedPrefs.getUserId() ?: ""
-            if (studentId.isEmpty()) return false
-
-            val todayCompleted = conceptRepository.getTodayCompletedSimulations(studentId)
-
-            // Show ad if user has completed 5 or more simulations today (6th onwards)
-            // This means: 1st 5 simulations per day = no ad, 6th onwards = always show ad
-            val shouldShow = todayCompleted >= 5
-
-            DebugLogger.debugLog(
-                "ConceptViewModel",
-                "shouldShowAdBeforeSimulation: $shouldShow | Simulations completed today: $todayCompleted"
-            )
-
-            shouldShow
-        } catch (e: Exception) {
-            DebugLogger.errorLog("ConceptViewModel", "Error checking ad before simulation: ${e.message}")
-            false
-        }
-    }
-
-    /**
-     * Initialize ad display when entering simulation viewer
-     *
-     * @param conceptId The ID of the concept
-     * @param simulationUrl Optional pre-computed URL (if provided, skips state search)
-     * @param simulationTitle Optional title (if provided, uses this instead of searching state)
-     *
-     * If URL/title are not provided, searches in ViewModel state
-     * If provided, uses them directly (useful for PracticeSimulationCard which has data ready)
+     * Prepare simulation viewer state. Ad gate runs at navigation time (before this screen).
      */
     fun initializeSimulationWithAdCheck(
         conceptId: String,
         simulationUrl: String? = null,
         simulationTitle: String? = null
     ) {
+        _isAdCheckPending.value = true
         viewModelScope.launch {
             try {
                 if (simulationUrl != null && simulationTitle != null) {
@@ -148,27 +115,16 @@ class ConceptSimulationViewModel @Inject constructor(
                     )
                 }
 
-                // Check if ad should be shown
-                val shouldShowAd = shouldShowAdBeforeSimulation()
-                _showAdBeforeSimulation.value = shouldShowAd
-
                 DebugLogger.debugLog(
                     "ConceptViewModel",
-                    "Ad check result: shouldShowAd=$shouldShowAd"
+                    "Simulation viewer ready for $conceptId"
                 )
             } catch (e: Exception) {
-                DebugLogger.errorLog("ConceptViewModel", "Error initializing simulation ad: ${e.message} | ${e.stackTraceToString()}")
-                _showAdBeforeSimulation.value = false
+                DebugLogger.errorLog("ConceptViewModel", "Error initializing simulation: ${e.message} | ${e.stackTraceToString()}")
+            } finally {
+                _isAdCheckPending.value = false
             }
         }
-    }
-
-    /**
-     * Dismiss the ad and allow simulation to load
-     */
-    fun dismissAd() {
-        _showAdBeforeSimulation.value = false
-        DebugLogger.debugLog("ConceptViewModel", "Ad dismissed, showing simulation")
     }
 
     /**
@@ -198,7 +154,7 @@ class ConceptSimulationViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val studentId = sharedPrefs.getUserId() ?: ""
-                val language = sharedPrefs.getLanguagePreference() ?: "en"
+                val language = getCurrentLanguageCode()
 
                 DebugLogger.debugLog(
                     TAG,
@@ -227,6 +183,11 @@ class ConceptSimulationViewModel @Inject constructor(
                     streakManager.onConceptOpened { newStreak ->
                         DebugLogger.debugLog(TAG, "Streak updated to: $newStreak on simulation completion")
                     }
+
+                    SimulationAnalyticsTracker.trackSimulationComplete(
+                        conceptId = conceptId,
+                        interaction = SimulationInteraction.URL
+                    )
 
                     // Trigger real-time sync to Firestore
                     if (progress != null) {

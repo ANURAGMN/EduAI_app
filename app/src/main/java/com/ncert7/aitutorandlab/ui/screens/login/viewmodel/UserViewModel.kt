@@ -273,16 +273,24 @@ class UserViewModel @Inject constructor(
                     )
                     localRepo.saveStudentLocally(studentEntity)
 
-                    // Sync content from Firebase
+                    // Sync content and restore any cloud progress (same as existing-user login)
                     val syncManager = FirebaseSyncManager(
                         subjectDao = db.subjectDao(),
                         chapterDao = db.chapterDao(),
                         conceptDao = db.conceptDao(),
                         progressDao = db.progressDao(),
+                        streakDao = db.streakDao(),
+                        chapterProgressDao = db.chapterAgentProgressDao(),
                         context = context
                     )
-                    val result = syncManager.syncAllContent()
-                    DebugLogger.debugLog("UserViewModel", "Content sync: ${result.message}")
+                    val contentResult = syncManager.syncAllContent()
+                    DebugLogger.debugLog("UserViewModel", "Content sync: ${contentResult.message}")
+
+                    val progressResult = syncManager.syncUserProgress(currentUser.id)
+                    DebugLogger.debugLog("UserViewModel", "Progress sync: ${progressResult.message}")
+
+                    val chapterProgressResult = syncManager.syncChapterAgentProgress(currentUser.id)
+                    DebugLogger.debugLog("UserViewModel", "Chapter progress sync: ${chapterProgressResult.message}")
 
                     // Create initial streak for new user
                     DebugLogger.debugLog("UserViewModel", "Creating initial streak for new user")

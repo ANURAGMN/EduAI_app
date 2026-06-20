@@ -18,6 +18,9 @@ import com.ncert7.aitutorandlab.data.local.dao.ProgressDao
 import com.ncert7.aitutorandlab.config.AppConfig
 import com.ncert7.aitutorandlab.domain.progress.ProgressEventTracker
 import com.ncert7.aitutorandlab.domain.progress.model.ProgressStatus as DomainProgressStatus
+import com.ncert7.aitutorandlab.service.analytics.SimulationAnalyticsTracker
+import com.ncert7.aitutorandlab.service.analytics.SimulationInteraction
+import com.ncert7.aitutorandlab.service.analytics.SimulationSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,39 +55,67 @@ class ConceptViewModel @Inject constructor(
     private val _pendingNavigation = MutableStateFlow<PendingNavigation?>(null)
     val pendingNavigation: StateFlow<PendingNavigation?> = _pendingNavigation.asStateFlow()
 
+    private val _showAdDialog = MutableStateFlow(false)
+    val showAdDialog: StateFlow<Boolean> = _showAdDialog.asStateFlow()
+
+    private var pendingAfterAd: PendingNavigation? = null
+
     fun onSimulationOpened(simId: String, conceptId: String) {
-        // Simulation Agent navigates directly - no ad interception here.
-        // The ad is shown inside ConceptSimulationViewer (URL viewer) only.
-        DebugLogger.debugLog("ConceptVM", "Simulation Agent Clicked: simId=$simId, conceptId=$conceptId")
-        _pendingNavigation.value = PendingNavigation(
-            route = "simulation_agent",
-            simulationId = simId,
-            conceptId = conceptId,
-            isDirect = true
-        )
+        viewModelScope.launch {
+            val pending = PendingNavigation(
+                route = "simulation_agent",
+                simulationId = simId,
+                conceptId = conceptId,
+                isDirect = true
+            )
+            val needsAd = com.ncert7.aitutorandlab.service.ads.ClickAdGate.shouldShowAdBeforeNextClick()
+            SimulationAnalyticsTracker.trackSimulationClickAndWait(
+                conceptId = conceptId,
+                interaction = SimulationInteraction.AGENT,
+                source = SimulationSource.CONCEPT_LIST
+            )
+            DebugLogger.debugLog("ConceptVM", "Simulation Agent Clicked: simId=$simId, conceptId=$conceptId")
+            if (needsAd) {
+                pendingAfterAd = pending
+                _showAdDialog.value = true
+            } else {
+                _pendingNavigation.value = pending
+            }
+        }
     }
 
     fun onSimulationUrlOpened(title: String, url: String, conceptId: String) {
-        val count = sharedPrefs.getSimulationOpenCount()
-        DebugLogger.debugLog("ConceptVM", "Simulation URL Clicked. Current Count: $count")
-        val nav = PendingNavigation(
-            route = "concept_sim_view",
-            simulationUrl = url,
-            simulationTitle = title,
-            conceptId = conceptId
-        )
-        if (count >= 5) {
-            _pendingNavigation.value = nav
-        } else {
-            sharedPrefs.incrementSimulationOpenCount()
-            _pendingNavigation.value = nav.copy(isDirect = true)
+        viewModelScope.launch {
+            val pending = PendingNavigation(
+                route = "concept_sim_view",
+                simulationUrl = url,
+                simulationTitle = title,
+                conceptId = conceptId,
+                isDirect = true
+            )
+            val needsAd = com.ncert7.aitutorandlab.service.ads.ClickAdGate.shouldShowAdBeforeNextClick()
+            SimulationAnalyticsTracker.trackSimulationClickAndWait(
+                conceptId = conceptId,
+                interaction = SimulationInteraction.URL,
+                source = SimulationSource.CONCEPT_LIST
+            )
+            if (needsAd) {
+                pendingAfterAd = pending
+                _showAdDialog.value = true
+            } else {
+                _pendingNavigation.value = pending
+            }
         }
+    }
+
+    fun dismissAdAndNavigate() {
+        _showAdDialog.value = false
+        pendingAfterAd?.let { _pendingNavigation.value = it }
+        pendingAfterAd = null
     }
 
     fun markAdShown() {
         _pendingNavigation.value?.let { nav ->
-            DebugLogger.debugLog("ConceptVM", "Ad shown, marking as direct. Incrementing count.")
-            sharedPrefs.incrementSimulationOpenCount()
             _pendingNavigation.value = nav.copy(isDirect = true)
         }
     }

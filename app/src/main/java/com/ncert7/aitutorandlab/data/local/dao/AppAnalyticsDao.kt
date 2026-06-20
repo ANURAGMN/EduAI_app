@@ -13,7 +13,7 @@ import com.ncert7.aitutorandlab.data.local.entities.AppAnalyticsEntity
 interface AppAnalyticsDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAnalytics(analytics: AppAnalyticsEntity)
+    suspend fun insertAnalytics(analytics: AppAnalyticsEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAnalyticsList(analyticsList: List<AppAnalyticsEntity>)
@@ -22,7 +22,8 @@ interface AppAnalyticsDao {
         UPDATE app_analytics 
         SET eventType = :eventType, 
             exitTime = :exitTime, 
-            durationMillis = :durationMillis 
+            durationMillis = :durationMillis,
+            isSynced = 0
         WHERE analyticsId = :analyticsId
     """)
     suspend fun updateAnalyticsExit(
@@ -56,6 +57,9 @@ interface AppAnalyticsDao {
     """)
     suspend fun getScreenVisitCount(screenName: String): Int
 
+    @Query("SELECT * FROM app_analytics WHERE analyticsId = :analyticsId LIMIT 1")
+    suspend fun getAnalyticsById(analyticsId: Long): AppAnalyticsEntity?
+
     @Query("SELECT * FROM app_analytics WHERE isSynced = 0")
     suspend fun getUnsyncedAnalytics(): List<AppAnalyticsEntity>
 
@@ -64,6 +68,20 @@ interface AppAnalyticsDao {
 
     @Query("DELETE FROM app_analytics WHERE entryTime < :cutoffTimestamp")
     suspend fun deleteOldAnalytics(cutoffTimestamp: Long)
+
+    @Query("""
+        SELECT COUNT(*) FROM app_analytics
+        WHERE studentId = :studentId
+        AND eventType = 'CLICK'
+        AND entryTime BETWEEN :startOfDay AND :endOfDay
+        AND appName = :appName
+    """)
+    suspend fun getTodayClickCount(
+        studentId: String,
+        startOfDay: Long,
+        endOfDay: Long,
+        appName: String
+    ): Int
 
     // ===== Aggregation Queries for Multiple Visits =====
 

@@ -21,6 +21,7 @@ import com.ncert7.aitutorandlab.repository.ConceptRepository
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
 import com.ncert7.aitutorandlab.ui.viewModel.TextToSpeech
 import com.ncert7.aitutorandlab.utils.ErrorHandler
+import com.ncert7.aitutorandlab.utils.getCurrentLanguageCode
 import com.ncert7.aitutorandlab.utils.isKannada
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -513,7 +514,7 @@ class SimulationAgentViewModel @Inject constructor(
                 if (conceptId != null) {
                     val studentId = sharedPrefs.getUserId()
                     if (studentId != null) {
-                        val lang = sharedPrefs.getLanguagePreference() ?: "en"
+                        val lang = getCurrentLanguageCode()
                         progressEventTracker.markSimulationUrlCompleted(studentId, conceptId, lang)
                         DebugLogger.debugLog(TAG, " Marked Simulation URL as completed for concept: $conceptId [$lang]")
                     } else {
@@ -686,7 +687,7 @@ class SimulationAgentViewModel @Inject constructor(
                         currentConceptId = conceptId
                         val studentId = sharedPrefs.getUserId()
                         if (studentId != null) {
-                            val lang = sharedPrefs.getLanguagePreference() ?: "en"
+                            val lang = getCurrentLanguageCode()
                             progressEventTracker.markSimulationAgentCompleted(studentId, conceptId, lang)
                             DebugLogger.debugLog(TAG, " Marked Simulation Agent as completed for concept: $conceptId [$lang]")
                         } else {

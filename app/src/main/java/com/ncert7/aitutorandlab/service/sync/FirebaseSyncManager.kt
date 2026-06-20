@@ -1,7 +1,6 @@
 package com.ncert7.aitutorandlab.service.sync
 
 import android.content.Context
-import com.ncert7.aitutorandlab.config.AppConfig
 import com.ncert7.aitutorandlab.data.local.dao.AppAnalyticsDao
 import com.ncert7.aitutorandlab.data.local.dao.ChapterAgentProgressDao
 import com.ncert7.aitutorandlab.data.local.dao.ChapterDao
@@ -154,7 +153,7 @@ class FirebaseSyncManager(
         return try {
             if (progressDao == null) return SyncResult(true, "ProgressDao not available")
 
-            val studentAppDocId = "${AppConfig.APP_NAME}_$userId"
+            val studentAppDocId = FirestoreSyncUtils.studentAppDocId(userId)
             DebugLogger.debugLog(TAG, "Syncing user progress for: $studentAppDocId")
 
             val snapshot = firestore.collection(PROGRESS_COLLECTION)
@@ -163,15 +162,33 @@ class FirebaseSyncManager(
                 .get()
                 .await()
 
-            val progressList = snapshot.documents.mapNotNull { 
-                try { FirebaseProgressMapper.map(it, userId) } catch (e: Exception) { null }
+            val now = System.currentTimeMillis()
+            val progressList = snapshot.documents.mapNotNull {
+                try {
+                    FirebaseProgressMapper.map(it, userId)
+                } catch (e: Exception) {
+                    null
+                }
+            }.filter { progress ->
+                FirestoreSyncUtils.shouldRestoreProgressRecord(
+                    lastAccessedAt = progress.lastAccessedAt,
+                    completedAt = progress.completedAt,
+                    updatedAt = progress.updatedAt,
+                    now = now
+                )
             }
 
             if (progressList.isNotEmpty()) {
                 progressDao.insertProgressList(progressList)
             }
 
-            SyncResult(true, "Synced ${progressList.size} progress entries")
+            val skipped = snapshot.size() - progressList.size
+            val message = if (skipped > 0) {
+                "Synced ${progressList.size} progress entries (skipped $skipped older than restore window)"
+            } else {
+                "Synced ${progressList.size} progress entries"
+            }
+            SyncResult(true, message)
         } catch (e: Exception) {
             SyncResult(false, "Progress sync failed: ${e.message}")
         }
@@ -184,7 +201,7 @@ class FirebaseSyncManager(
         return try {
             if (streakDao == null) return SyncResult(true, "StreakDao not available")
 
-            val studentAppDocId = "${AppConfig.APP_NAME}_$userId"
+            val studentAppDocId = FirestoreSyncUtils.studentAppDocId(userId)
             val snapshot = firestore.collection(STREAK_COLLECTION)
                 .document(studentAppDocId)
                 .collection("data")
@@ -211,7 +228,7 @@ class FirebaseSyncManager(
         return try {
             if (chapterProgressDao == null) return SyncResult(true, "ChapterProgressDao not available")
 
-            val studentAppDocId = "${AppConfig.APP_NAME}_$userId"
+            val studentAppDocId = FirestoreSyncUtils.studentAppDocId(userId)
             val snapshot = firestore.collection(CHAPTER_PROGRESS_COLLECTION)
                 .document(studentAppDocId)
                 .collection("records")

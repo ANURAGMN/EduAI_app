@@ -22,5 +22,33 @@ enum class ScreenName(val displayName: String) {
 
 enum class EventType(val type: String) {
     ENTRY("ENTRY"),
-    EXIT("EXIT")
+    EXIT("EXIT"),
+    CLICK("CLICK"),
+    COMPLETE("COMPLETE")
+}
+
+enum class ClickSource(val value: String) {
+    HOME("HOME"),
+    CONCEPT_LIST("CONCEPT_LIST"),
+    CHAPTER_LIST("CHAPTER_LIST"),
+    SUBJECT_LIST("SUBJECT_LIST")
+}
+
+/** @deprecated Use [ClickSource] — kept for simulation call sites. */
+typealias SimulationSource = ClickSource
+
+enum class ContentClickType(val value: String) {
+    LESSON("LESSON"),
+    STUDY("STUDY"),
+    MATH_PROBLEM("MATH_PROBLEM"),
+    CHAPTER_STUDY("CHAPTER_STUDY"),
+    CHAPTER_MATH("CHAPTER_MATH"),
+    CHAPTER_SIMULATION("CHAPTER_SIMULATION"),
+    SUBJECT("SUBJECT"),
+    REVISION("REVISION")
+}
+
+enum class SimulationInteraction(val value: String) {
+    URL("URL"),
+    AGENT("AGENT")
 }

@@ -9,6 +9,7 @@ import com.ncert7.aitutorandlab.data.local.dao.StreakDao
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.ncert7.aitutorandlab.service.analytics.AnalyticsFirestorePayload
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -36,7 +37,7 @@ class ProgressAnalyticsSessionSyncManager(
     }
 
     // Unique document ID for the student in this specific app
-    private val studentAppDocId = "${AppConfig.APP_NAME}_$studentId"
+    private val studentAppDocId = FirestoreSyncUtils.studentAppDocId(studentId)
 
     /**
      * Syncs all unsynced data to Firestore
@@ -85,23 +86,19 @@ class ProgressAnalyticsSessionSyncManager(
                     val docRef = firestore.collection(PROGRESS_COLLECTION)
                         .document(studentAppDocId)
                         .collection("records")
-                        .document("${progress.itemType}_${progress.itemId}")
-                    
-                    val data = mapOf(
-                        "progressId" to progress.progressId,
-                        "studentId" to progress.studentId,
-                        "itemType" to progress.itemType,
-                        "itemId" to progress.itemId,
-                        "status" to progress.status,
-                        "progressPercentage" to progress.progressPercentage,
-                        "startedAt" to progress.startedAt,
-                        "completedAt" to progress.completedAt,
-                        "lastAccessedAt" to progress.lastAccessedAt,
-                        "updatedAt" to progress.updatedAt,
-                        "appName" to AppConfig.APP_NAME,
-                        "syncedAt" to System.currentTimeMillis()
+                        .document(
+                            FirestoreSyncUtils.progressRecordDocId(
+                                progress.itemType,
+                                progress.itemId,
+                                progress.language
+                            )
+                        )
+
+                    firestoreBatch.set(
+                        docRef,
+                        FirestoreSyncUtils.progressRecordPayload(progress),
+                        SetOptions.merge()
                     )
-                    firestoreBatch.set(docRef, data, SetOptions.merge())
                 }
                 firestoreBatch.commit().await()
             }
@@ -129,18 +126,7 @@ class ProgressAnalyticsSessionSyncManager(
                         .collection("events")
                         .document(analytics.analyticsId.toString())
                     
-                    val data = mapOf(
-                        "analyticsId" to analytics.analyticsId,
-                        "studentId" to studentId,
-                        "sessionId" to analytics.sessionId,
-                        "screenName" to analytics.screenName,
-                        "eventType" to analytics.eventType,
-                        "entryTime" to analytics.entryTime,
-                        "exitTime" to analytics.exitTime,
-                        "durationMillis" to analytics.durationMillis,
-                        "appName" to AppConfig.APP_NAME,
-                        "syncedAt" to System.currentTimeMillis()
-                    )
+                    val data = AnalyticsFirestorePayload.build(analytics, studentId)
                     firestoreBatch.set(docRef, data, SetOptions.merge())
                 }
                 firestoreBatch.commit().await()
@@ -282,26 +268,17 @@ class ProgressAnalyticsSessionSyncManager(
             if (progress != null) {
                 val docRef = firestore
                     .collection(PROGRESS_COLLECTION)
-                    .document(studentId)
+                    .document(studentAppDocId)
                     .collection("records")
-                    .document("${progress.itemType}_${progress.itemId}")
+                    .document(
+                        FirestoreSyncUtils.progressRecordDocId(
+                            progress.itemType,
+                            progress.itemId,
+                            progress.language
+                        )
+                    )
 
-                val data = mapOf(
-                    "progressId" to progress.progressId,
-                    "studentId" to progress.studentId,
-                    "itemType" to progress.itemType,
-                    "itemId" to progress.itemId,
-                    "status" to progress.status,
-                    "progressPercentage" to progress.progressPercentage,
-                    "startedAt" to progress.startedAt,
-                    "completedAt" to progress.completedAt,
-                    "lastAccessedAt" to progress.lastAccessedAt,
-                    "updatedAt" to progress.updatedAt,
-                    "appName" to progress.appName,
-                    "syncedAt" to System.currentTimeMillis()
-                )
-
-                docRef.set(data).await()
+                docRef.set(FirestoreSyncUtils.progressRecordPayload(progress)).await()
                 progressDao.markProgressAsSynced(listOf(progressId))
                 DebugLogger.debugLog(TAG, " Progress synced to Firestore: $progressId, Type: ${progress.itemType}")
                 true
@@ -323,28 +300,17 @@ class ProgressAnalyticsSessionSyncManager(
         return try {
             DebugLogger.debugLog(TAG, "Real-time sync triggered for analytics: $analyticsId")
 
-            val allAnalytics = analyticsDao.getUnsyncedAnalytics()
-            val analytics = allAnalytics.find { it.analyticsId == analyticsId }
+            val analytics = analyticsDao.getAnalyticsById(analyticsId)
+                ?: analyticsDao.getUnsyncedAnalytics().find { it.analyticsId == analyticsId }
 
-            if (analytics != null) {
+            if (analytics != null && !analytics.isSynced) {
                 val docRef = firestore
                     .collection(ANALYTICS_COLLECTION)
-                    .document(studentId)
+                    .document(studentAppDocId)
                     .collection("events")
                     .document(analytics.analyticsId.toString())
 
-                val data = mapOf(
-                    "analyticsId" to analytics.analyticsId,
-                    "studentId" to studentId,
-                    "sessionId" to analytics.sessionId,
-                    "screenName" to analytics.screenName,
-                    "eventType" to analytics.eventType,
-                    "entryTime" to analytics.entryTime,
-                    "exitTime" to analytics.exitTime,
-                    "durationMillis" to analytics.durationMillis,
-                    "appName" to analytics.appName,
-                    "syncedAt" to System.currentTimeMillis()
-                )
+                val data = AnalyticsFirestorePayload.build(analytics, studentId)
 
                 docRef.set(data).await()
                 analyticsDao.markAnalyticsAsSynced(analytics.analyticsId)
@@ -372,9 +338,10 @@ class ProgressAnalyticsSessionSyncManager(
             val session = sessionDao.getSession(sessionId)
 
             if (session != null) {
+                val sessionDocId = FirestoreSyncUtils.studentAppDocId(session.studentId)
                 val docRef = firestore
                     .collection(SESSIONS_COLLECTION)
-                    .document(session.studentId)  // Use session's studentId, not sync manager's
+                    .document(sessionDocId)
                     .collection("records")
                     .document(session.sessionId)
 

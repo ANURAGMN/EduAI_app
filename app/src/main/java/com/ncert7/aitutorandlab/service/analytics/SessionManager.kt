@@ -6,6 +6,7 @@ import com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
 import com.ncert7.aitutorandlab.data.local.entities.AppAnalyticsEntity
 import com.ncert7.aitutorandlab.data.local.entities.SessionEntity
 import com.ncert7.aitutorandlab.debug.DebugLogger
+import com.ncert7.aitutorandlab.service.sync.DataSyncService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -136,7 +137,10 @@ object SessionManager {
     /**
      * Track screen entry - async and non-blocking
      */
-    suspend fun trackScreenEntry(screenName: ScreenName) = withContext(Dispatchers.IO) {
+    suspend fun trackScreenEntry(
+        screenName: ScreenName,
+        conceptId: String? = null
+    ) = withContext(Dispatchers.IO) {
         try {
             val sessionId = getCurrentSessionId()
             if (sessionId == null) {
@@ -144,19 +148,21 @@ object SessionManager {
                 return@withContext
             }
 
-            val analytics = AppAnalyticsEntity(
-                sessionId = sessionId,
-                studentId = sharedPrefs.getUserId() ?: "",
-                screenName = screenName.displayName,
-                eventType = EventType.ENTRY.type,
-                entryTime = System.currentTimeMillis(),
-                exitTime = null,
-                durationMillis = 0,
-                appName = com.ncert7.aitutorandlab.config.AppConfig.APP_NAME,
-                isSynced = false
+            val analyticsId = database.appAnalyticsDao().insertAnalytics(
+                AppAnalyticsEntity(
+                    sessionId = sessionId,
+                    studentId = sharedPrefs.getUserId() ?: "",
+                    screenName = screenName.displayName,
+                    eventType = EventType.ENTRY.type,
+                    entryTime = System.currentTimeMillis(),
+                    exitTime = null,
+                    durationMillis = 0,
+                    conceptId = conceptId?.takeIf { it.isNotBlank() && it != "empty" },
+                    appName = com.ncert7.aitutorandlab.config.AppConfig.APP_NAME,
+                    isSynced = false
+                )
             )
-
-            database.appAnalyticsDao().insertAnalytics(analytics)
+            DataSyncService.syncAnalyticsUpdate(analyticsId)
             DebugLogger.debugLog("SessionManager", "Entry: ${screenName.displayName}")
 
         } catch (e: Exception) {
@@ -189,6 +195,8 @@ object SessionManager {
                     exitTime = exitTime,
                     durationMillis = duration
                 )
+
+                DataSyncService.syncAnalyticsUpdate(activeAnalytics.analyticsId)
 
                 DebugLogger.debugLog(
                     "SessionManager","Exit: ${screenName.displayName}, Duration: ${duration / 1000}s"

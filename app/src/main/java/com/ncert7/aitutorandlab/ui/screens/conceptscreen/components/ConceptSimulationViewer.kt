@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -13,10 +14,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ncert7.aitutorandlab.debug.DebugLogger
-import com.ncert7.aitutorandlab.ui.components.AdDialog
+import com.ncert7.aitutorandlab.service.analytics.ScreenName
+import com.ncert7.aitutorandlab.service.analytics.TrackScreenEvent
 import com.ncert7.aitutorandlab.ui.screens.conceptscreen.viewmodel.ConceptSimulationViewModel
 import com.ncert7.aitutorandlab.ui.screens.simulation_agent.components.SimulationWebView
 import java.net.URLDecoder
@@ -40,8 +41,20 @@ fun ConceptSimulationViewer(
     onBackClick: () -> Unit = {},
     viewModel: ConceptSimulationViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
-    val showAdDialog by viewModel.showAdBeforeSimulation.collectAsState()
+    val decodedConceptId = remember(conceptId) {
+        try {
+            URLDecoder.decode(conceptId, "UTF-8")
+        } catch (e: Exception) {
+            conceptId
+        }
+    }
+
+    TrackScreenEvent(
+        screenName = ScreenName.SIMULATIONVIEWER,
+        conceptId = decodedConceptId
+    )
+
+    val isInitPending by viewModel.isAdCheckPending.collectAsState()
 
     // Decode URL-encoded title to show original name (URL stays encoded for web requests)
     val decodedTitle = try {
@@ -56,14 +69,6 @@ fun ConceptSimulationViewer(
         simulationUrl
     }
 
-    val decodedConceptId = remember(conceptId) {
-        try {
-            URLDecoder.decode(conceptId, "UTF-8")
-        } catch (e: Exception) {
-            conceptId
-        }
-    }
-
     // Prevent double-marking if the WebView fires onPageFinished multiple times
     var progressMarked by remember { mutableStateOf(false) }
 
@@ -71,7 +76,7 @@ fun ConceptSimulationViewer(
         if (decodedConceptId.isNotEmpty() && decodedUrl.isNotEmpty() && decodedTitle.isNotEmpty()) {
             DebugLogger.debugLog(
                 "ConceptSimulationViewer",
-                "LaunchedEffect: Initializing ad check for conceptId=$decodedConceptId"
+                "LaunchedEffect: Initializing viewer for conceptId=$decodedConceptId"
             )
             viewModel.initializeSimulationWithAdCheck(
                 conceptId = decodedConceptId,
@@ -96,20 +101,13 @@ fun ConceptSimulationViewer(
         onBackClick()
     }
 
-    val handleAdDismiss = {
-        viewModel.dismissAd()
-    }
-
-    // Show ad dialog if needed
-    if (showAdDialog) {
-        AdDialog(
-            context = context,
-            onDismiss = handleAdDismiss
-        )
-    }
-    if (!showAdDialog) {
-
-        Column(
+    when {
+        isInitPending -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+        else -> Column(
             modifier = Modifier.fillMaxSize()
         ) {
             // Header
@@ -126,7 +124,6 @@ fun ConceptSimulationViewer(
             ) {
                 SimulationWebView(
                     url = decodedUrl,
-                    modifier = Modifier.fillMaxSize(),
                     onPageFinished = handlePageLoaded
                 )
             }

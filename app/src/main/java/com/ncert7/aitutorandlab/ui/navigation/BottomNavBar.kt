@@ -21,6 +21,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.ncert7.aitutorandlab.debug.DebugLogger
+import com.ncert7.aitutorandlab.service.analytics.ContentClickNavigation
+import com.ncert7.aitutorandlab.service.analytics.SimulationAnalyticsTracker
+import com.ncert7.aitutorandlab.service.analytics.SimulationInteraction
+import com.ncert7.aitutorandlab.service.analytics.SimulationSource
 import com.ncert7.aitutorandlab.ui.screens.chapterscreen.ChapterScreen
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.ChatbotScreen
 import com.ncert7.aitutorandlab.ui.screens.conceptscreen.ConceptScreen
@@ -38,6 +42,16 @@ import com.ncert7.aitutorandlab.ui.theme.TextSecondary
 
 @Composable
 fun BottomNavBar(onLogout: () -> Unit = {}) {
+    NavigationAdGate { gated ->
+        BottomNavBarContent(onLogout = onLogout, gated = gated)
+    }
+}
+
+@Composable
+private fun BottomNavBarContent(
+    onLogout: () -> Unit,
+    gated: GatedNavigationAction
+) {
     val items = listOf(BottomNavItem.Home, BottomNavItem.Progress, BottomNavItem.Setting)
     val navController = rememberNavController()
 
@@ -107,16 +121,44 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                         navController.navigate("chapters/$subjectId")
                     },
                     onLessonClick = { conceptId ->
-                        navController.navigate("chatbot?conceptId=$conceptId")
+                        gated.run(
+                            trackClick = { ContentClickNavigation.trackHomeLessonClick(conceptId) },
+                            navigate = { navController.navigate("chatbot?conceptId=$conceptId") }
+                        )
                     },
                     onSimulationClick = { simulationId, conceptId ->
-                        navController.navigate("simulation_agent/$simulationId?conceptId=$conceptId")
+                        gated.run(
+                            trackClick = {
+                                SimulationAnalyticsTracker.trackSimulationClickAndWait(
+                                    conceptId = conceptId,
+                                    interaction = SimulationInteraction.AGENT,
+                                    source = SimulationSource.HOME
+                                )
+                            },
+                            navigate = {
+                                navController.navigate("simulation_agent/$simulationId?conceptId=$conceptId")
+                            }
+                        )
                     },
                     onSimulationUrlClick = { title, url, conceptId ->
-                        // Encoded the URL to prevent navigation crashes due to '/'
-                        val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
-                        val encodedConceptId = if (conceptId.isNotBlank()) java.net.URLEncoder.encode(conceptId, "UTF-8") else "empty"
-                        navController.navigate("concept_sim_view/$encodedUrl/$title/$encodedConceptId")
+                        gated.run(
+                            trackClick = {
+                                SimulationAnalyticsTracker.trackSimulationClickAndWait(
+                                    conceptId = conceptId,
+                                    interaction = SimulationInteraction.URL,
+                                    source = SimulationSource.HOME
+                                )
+                            },
+                            navigate = {
+                                val encodedUrl = java.net.URLEncoder.encode(url, "UTF-8")
+                                val encodedConceptId = if (conceptId.isNotBlank()) {
+                                    java.net.URLEncoder.encode(conceptId, "UTF-8")
+                                } else {
+                                    "empty"
+                                }
+                                navController.navigate("concept_sim_view/$encodedUrl/$title/$encodedConceptId")
+                            }
+                        )
                     }
                 )
             }
@@ -178,14 +220,25 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                     subjectId = subjectId,
                     onBackClick = { navController.popBackStack() },
                     onStudyClick = { chapterId, type ->
-                        navController.navigate("concepts/$chapterId/$type")
+                        gated.run(
+                            trackClick = { ContentClickNavigation.trackChapterListClick(chapterId, type) },
+                            navigate = { navController.navigate("concepts/$chapterId/$type") }
+                        )
                     },
                     onSimulationClick = { chapterId, type ->
-                        navController.navigate("concepts/$chapterId/$type")
+                        gated.run(
+                            trackClick = { ContentClickNavigation.trackChapterListClick(chapterId, type) },
+                            navigate = { navController.navigate("concepts/$chapterId/$type") }
+                        )
                     },
                     onRevisionClick = { chapterId ->
-                        com.ncert7.aitutorandlab.debug.DebugLogger.debugLog("BottomNavBar", "Navigating to revision with chapterId: $chapterId")
-                        navController.navigate("revision/$chapterId")
+                        gated.run(
+                            trackClick = { ContentClickNavigation.trackRevisionClick(chapterId) },
+                            navigate = {
+                                DebugLogger.debugLog("BottomNavBar", "Navigating to revision with chapterId: $chapterId")
+                                navController.navigate("revision/$chapterId")
+                            }
+                        )
                     },
                     onGoHome = {
                         navController.navigate("home") {
@@ -217,10 +270,17 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                     type = type,
                     onBackClick = { navController.popBackStack() },
                     onConceptClick = { conceptId, problemId, conceptType ->
-                        when (conceptType) {
-                            "MATH PROBLEM" -> navController.navigate("math_agent?chapterId=$chapterId&problemId=$problemId")
-                            else -> navController.navigate("chatbot?conceptId=$conceptId")
-                        }
+                        gated.run(
+                            trackClick = {
+                                ContentClickNavigation.trackConceptClick(conceptId, problemId, conceptType)
+                            },
+                            navigate = {
+                                when (conceptType) {
+                                    "MATH PROBLEM" -> navController.navigate("math_agent?chapterId=$chapterId&problemId=$problemId")
+                                    else -> navController.navigate("chatbot?conceptId=$conceptId")
+                                }
+                            }
+                        )
                     },
                     onGoHome = {
                         navController.navigate("home") {
@@ -257,7 +317,10 @@ fun BottomNavBar(onLogout: () -> Unit = {}) {
                         }
                     },
                     onSubjectClick = { subject ->
-                        navController.navigate("chapters/${subject}")
+                        gated.run(
+                            trackClick = { ContentClickNavigation.trackSubjectClick(subject) },
+                            navigate = { navController.navigate("chapters/${subject}") }
+                        )
                     },
                     onGoHome = {
                         navController.navigate("home") {

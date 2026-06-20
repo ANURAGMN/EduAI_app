@@ -4,17 +4,23 @@ import kotlin.apply
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.2.21"
     id("com.google.gms.google-services")
     alias(libs.plugins.firebase.crashlytics)
     id("kotlin-parcelize")
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.21"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.2.21"
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
 android {
     namespace = "com.ncert7.aitutorandlab"
     compileSdk = 36
+
+    val localProps = Properties().apply {
+        val f = rootProject.file("local.properties")
+        if (f.exists()) load(f.inputStream())
+    }
+    fun prop(name: String, default: String = ""): String = localProps.getProperty(name, default)
 
     defaultConfig {
         applicationId = "com.ncert7.aitutorandlab"
@@ -24,11 +30,6 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        val localProps = Properties().apply {
-            val f = rootProject.file("local.properties")
-            if (f.exists()) load(f.inputStream())
-        }
-        fun prop(name: String, default: String = ""): String = localProps.getProperty(name, default)
         buildConfigField("String", "AUTH_KEY", "\"${prop("AUTH_KEY")}\"")
         buildConfigField("String", "AGENTIC_AI_BASE_URL", "\"${prop("AGENTIC_AI_BASE_URL")}\"")
         buildConfigField("String", "GEMINI_API_KEY", "\"${prop("GEMINI_API_KEY")}\"")
@@ -39,6 +40,7 @@ android {
         buildConfigField("String", "API_KEY_HEADER_NAME", "\"${prop("API_KEY_HEADER_NAME")}\"")
         buildConfigField("String", "ADMOB_APP_ID", "\"${prop("ADMOB_APP_ID")}\"")
         buildConfigField("String", "BANNER_AD_UNIT_ID", "\"${prop("BANNER_AD_UNIT_ID")}\"")
+        buildConfigField("String", "ADMOB_TEST_DEVICE_ID", "\"${prop("ADMOB_TEST_DEVICE_ID")}\"")
         // Manifest placeholders for runtime value substitution
         manifestPlaceholders["ADMOB_APP_ID"] = prop("ADMOB_APP_ID")
 
@@ -50,10 +52,6 @@ android {
 
     signingConfigs {
         create("release") {
-            val localProps = Properties().apply {
-                val f = rootProject.file("local.properties")
-                if (f.exists()) load(f.inputStream())
-            }
             storeFile = file(localProps.getProperty("KEYSTORE_PATH", "keystore.jks"))
             storePassword = localProps.getProperty("KEYSTORE_PASSWORD")
             keyAlias = localProps.getProperty("KEY_ALIAS")
@@ -71,6 +69,18 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+    }
+
+    applicationVariants.configureEach {
+        if (buildType.name == "release") {
+            val appId = prop("ADMOB_APP_ID")
+            val bannerId = prop("BANNER_AD_UNIT_ID")
+            if (appId.contains("3940256099942544") || bannerId.contains("3940256099942544")) {
+                logger.warn(
+                    "RELEASE uses Google sample AdMob IDs — set production ADMOB_APP_ID and BANNER_AD_UNIT_ID in local.properties"
+                )
+            }
         }
     }
 
@@ -126,6 +136,7 @@ dependencies {
 // Firebase
     implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
     implementation("com.google.firebase:firebase-firestore-ktx:25.0.0")
+    implementation("com.google.firebase:firebase-analytics")
     implementation(libs.firebase.crashlytics)
 
 
@@ -169,5 +180,7 @@ dependencies {
     implementation("com.google.android.play:app-update:2.1.0")
 
     // Google Mobile Ads SDK
-    implementation("com.google.android.gms:play-services-ads:22.6.0")
+    implementation("com.google.android.gms:play-services-ads:25.4.0")
+
+    testImplementation("junit:junit:4.13.2")
 }

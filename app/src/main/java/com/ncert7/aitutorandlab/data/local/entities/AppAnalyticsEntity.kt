@@ -36,5 +36,8 @@ data class AppAnalyticsEntity(
     val exitTime: Long? = null, // Timestamp when screen was exited (null if still active)
     val durationMillis: Long = 0, // Time spent on screen (exitTime - entryTime)
     val appName: String = "",
-    val isSynced: Boolean = false
+    val isSynced: Boolean = false,
+    val conceptId: String? = null,
+    val source: String? = null,
+    val interactionType: String? = null
 )

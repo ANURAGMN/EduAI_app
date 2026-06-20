@@ -20,3 +20,7 @@
 local.properties
 app/google-services.json
 app/release/
+.tools/
+node-v24.17.0-win-x64.zip
+.tools/firebase-ci-token.txt
+/reports/

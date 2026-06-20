@@ -38,7 +38,7 @@ import com.ncert7.aitutorandlab.data.local.entities.SubjectEntity
         StreakEntity::class,
         ChapterAgentProgressEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class EduAiDatabase : RoomDatabase() {
@@ -66,6 +66,7 @@ abstract class EduAiDatabase : RoomDatabase() {
                     EduAiDatabase::class.java,
                     DATABASE_NAME
                 )
+                    .addMigrations(MIGRATION_1_2)
                     .fallbackToDestructiveMigration(false)
                     .build()
                 INSTANCE = instance

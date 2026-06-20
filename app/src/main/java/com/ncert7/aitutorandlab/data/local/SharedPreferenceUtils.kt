@@ -3,6 +3,7 @@ package com.ncert7.aitutorandlab.data.local
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.ncert7.aitutorandlab.utils.normalizeLanguageCode
 
 class SharedPreferenceUtils(context: Context) {
 
@@ -19,6 +20,7 @@ class SharedPreferenceUtils(context: Context) {
         private const val KEY_SESSION = "key_current_session"
         private const val KEY_SIM_OPEN_COUNT = "key_sim_open_count"
         private const val KEY_SIM_OPEN_DATE = "key_sim_open_date"
+        private const val KEY_LEGACY_PROGRESS_MIGRATION = "legacy_progress_migration_v1"
     }
 
     fun setIdToken(idToken: String) {
@@ -93,11 +95,11 @@ class SharedPreferenceUtils(context: Context) {
     }
 
     fun setLanguagePreference(lang: String) {
-        prefs.edit { putString(KEY_LANGUAGE, lang) }
+        prefs.edit { putString(KEY_LANGUAGE, normalizeLanguageCode(lang)) }
     }
 
     fun getLanguagePreference(): String? {
-        return prefs.getString(KEY_LANGUAGE, "en")
+        return normalizeLanguageCode(prefs.getString(KEY_LANGUAGE, "en"))
     }
 
     fun setSubjectSelection(subject: String) {
@@ -176,5 +178,12 @@ class SharedPreferenceUtils(context: Context) {
         } else {
             0
         }
+    }
+
+    fun isLegacyProgressMigrationDone(): Boolean =
+        prefs.getBoolean(KEY_LEGACY_PROGRESS_MIGRATION, false)
+
+    fun setLegacyProgressMigrationDone() {
+        prefs.edit { putBoolean(KEY_LEGACY_PROGRESS_MIGRATION, true) }
     }
 }

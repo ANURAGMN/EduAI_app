@@ -6,7 +6,7 @@ import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.repository.ConceptRepository
 import com.ncert7.aitutorandlab.repository.ProgressRepository
 import com.ncert7.aitutorandlab.repository.StreakRepository
-import com.ncert7.aitutorandlab.utils.isKannada
+import com.ncert7.aitutorandlab.utils.resolveProgressLanguage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -66,7 +66,7 @@ class ProgressEventTracker @Inject constructor(
     /** Mark a concept study session as COMPLETED (END node reached) */
     suspend fun markStudyCompleted(studentId: String, conceptId: String, language: String? = null) {
         try {
-            val resolvedLang = language ?: if (isKannada()) "kn" else "en"
+            val resolvedLang = resolveProgressLanguage(language)
             progressRepository.markStudyCompleted(studentId, conceptId, resolvedLang)
             triggerChapterProgressUpdate(studentId, conceptId, resolvedLang)
             streakRepository.recordActivity(studentId)
@@ -79,7 +79,7 @@ class ProgressEventTracker @Inject constructor(
     /** Mark a concept study session as IN_PROGRESS (session started) */
     suspend fun markStudyInProgress(studentId: String, conceptId: String, language: String? = null) {
         try {
-            val resolvedLang = language ?: if (isKannada()) "kn" else "en"
+            val resolvedLang = resolveProgressLanguage(language)
             progressRepository.markStudyInProgress(studentId, conceptId, resolvedLang)
             triggerChapterProgressUpdate(studentId, conceptId, resolvedLang)
             streakRepository.recordActivity(studentId)
@@ -94,7 +94,7 @@ class ProgressEventTracker @Inject constructor(
     /** Mark simulation agent session COMPLETED (contributes to simulation component) */
     suspend fun markSimulationAgentCompleted(studentId: String, conceptId: String, language: String? = null) {
         try {
-            val resolvedLang = language ?: if (isKannada()) "kn" else "en"
+            val resolvedLang = resolveProgressLanguage(language)
             progressRepository.markSimulationAgentCompleted(studentId, conceptId, resolvedLang)
             triggerChapterProgressUpdate(studentId, conceptId, resolvedLang)
             streakRepository.recordActivity(studentId)
@@ -107,7 +107,7 @@ class ProgressEventTracker @Inject constructor(
     /** Mark simulation URL as loaded/COMPLETED (contributes to simulation component) */
     suspend fun markSimulationUrlCompleted(studentId: String, conceptId: String, language: String? = null) {
         try {
-            val resolvedLang = language ?: if (isKannada()) "kn" else "en"
+            val resolvedLang = resolveProgressLanguage(language)
             progressRepository.markSimulationUrlCompleted(studentId, conceptId, resolvedLang)
             triggerChapterProgressUpdate(studentId, conceptId, resolvedLang)
             streakRepository.recordActivity(studentId)
@@ -122,7 +122,7 @@ class ProgressEventTracker @Inject constructor(
     /** Mark revision session as IN_PROGRESS (session started) */
     suspend fun markRevisionInProgress(studentId: String, conceptId: String, language: String? = null) {
         try {
-            val resolvedLang = language ?: if (isKannada()) "kn" else "en"
+            val resolvedLang = resolveProgressLanguage(language)
             progressRepository.updateProgressStatus(
                 studentId          = studentId,
                 itemType           = "REVISION_AGENT",
@@ -141,7 +141,7 @@ class ProgressEventTracker @Inject constructor(
     /** Mark revision session COMPLETED (END state reached) */
     suspend fun markRevisionCompleted(studentId: String, conceptId: String, language: String? = null) {
         try {
-            val resolvedLang = language ?: if (isKannada()) "kn" else "en"
+            val resolvedLang = resolveProgressLanguage(language)
             progressRepository.markRevisionCompleted(studentId, conceptId, resolvedLang)
             triggerChapterProgressUpdate(studentId, conceptId, resolvedLang)
             streakRepository.recordActivity(studentId)
@@ -162,7 +162,7 @@ class ProgressEventTracker @Inject constructor(
      */
     suspend fun markMathAgentCompleted(studentId: String, conceptId: String, language: String? = null) {
         try {
-            val resolvedLang = language ?: if (isKannada()) "kn" else "en"
+            val resolvedLang = resolveProgressLanguage(language)
             progressRepository.markMathAgentCompleted(studentId, conceptId, resolvedLang)
             progressRepository.markStudyCompleted(studentId, conceptId, resolvedLang)
             triggerChapterProgressUpdate(studentId, conceptId, resolvedLang)

@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
-import com.google.android.gms.ads.MobileAds
+import com.ncert7.aitutorandlab.service.ads.MobileAdsInitializer
 import com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.service.logging.ErrorLoggerInitializer
@@ -30,8 +30,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         // Enable edge-to-edge
         enableEdgeToEdge()
-        // Initialize Google Mobile Ads SDK
-        MobileAds.initialize(this)
+        // Initialize Google Mobile Ads SDK (test devices + config from local.properties)
+        MobileAdsInitializer.initialize(this)
 
         // Initialize Firestore Error Logger
         // This enables error logging to Firebase in both debug and release modes

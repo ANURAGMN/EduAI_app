@@ -39,10 +39,57 @@ fun isKannada(): Boolean {
 }
 
 /**
- * Get current app language code
+ * Get current app language code (`en` or `kn`).
  */
 fun getCurrentLanguageCode(): String {
     val currentLocale = AppCompatDelegate.getApplicationLocales()[0]?.language
-    return currentLocale ?: "en"
+    return normalizeLanguageCode(currentLocale)
+}
+
+/**
+ * Normalize profile/UI language values to progress language codes used in Room DB.
+ * Accepts: en, kn, English, Kannada, en-IN, kn-IN, etc.
+ */
+fun normalizeLanguageCode(raw: String?): String {
+    if (raw.isNullOrBlank()) return "en"
+    return when (raw.trim().lowercase()) {
+        "kn", "kannada" -> "kn"
+        "en", "english" -> "en"
+        else -> if (raw.startsWith("kn", ignoreCase = true)) "kn" else "en"
+    }
+}
+
+/**
+ * Resolve language for progress writes/queries: explicit value first, else current app locale.
+ */
+fun resolveProgressLanguage(language: String? = null): String {
+    return if (language.isNullOrBlank()) getCurrentLanguageCode() else normalizeLanguageCode(language)
+}
+
+/** Legacy Firestore/local rows without explicit language — excluded from today's counts. */
+const val LEGACY_PROGRESS_LANGUAGE = "legacy"
+
+/** Language codes used for new progress writes and today's progress queries. */
+fun isExplicitProgressLanguage(language: String): Boolean =
+    language == "en" || language == "kn"
+
+/**
+ * Resolve language when restoring progress from Firestore.
+ * Legacy docs (no language field, no _en/_kn doc suffix) map to [LEGACY_PROGRESS_LANGUAGE].
+ */
+fun resolveProgressLanguageFromFirestore(documentId: String, languageField: String?): String {
+    if (!languageField.isNullOrBlank()) return normalizeLanguageCode(languageField)
+    return when {
+        documentId.endsWith("_kn") -> "kn"
+        documentId.endsWith("_en") -> "en"
+        else -> LEGACY_PROGRESS_LANGUAGE
+    }
+}
+
+/** Legacy values stored before normalization (Firebase profile / early builds). */
+fun legacyProgressLanguageAlias(normalized: String): String? = when (normalized) {
+    "en" -> "English"
+    "kn" -> "Kannada"
+    else -> null
 }
 
