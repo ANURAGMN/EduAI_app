@@ -25,11 +25,12 @@ import com.ncert7.aitutorandlab.ui.theme.BackgroundPrimary
 import com.ncert7.aitutorandlab.ui.theme.LocalDimensions
 import com.ncert7.aitutorandlab.ui.theme.TextPrimary
 import com.ncert7.aitutorandlab.utils.getLocalizedName
-import com.ncert7.aitutorandlab.utils.isKannada
+import com.ncert7.aitutorandlab.utils.isKannadaLanguage
 
 @Composable
 fun PracticeSimulationCard(
     progressSimulations: List<Pair<ProgressEntity?, ConceptEntity?>>,
+    languageCode: String,
     onSimulationClick: (String, String) -> Unit, // Click agent button - navigates to simulation agent
     onSimulationUrlClick: (String, String, String) -> Unit = { _, _, _ -> } // Click simulation button - opens URL viewer
 ) {
@@ -64,7 +65,7 @@ fun PracticeSimulationCard(
                     concept?.let { sim ->
                         val conceptUiModel = ConceptUiModel(
                             id = sim.conceptId,
-                            name = sim.getLocalizedName(),
+                            name = sim.getLocalizedName(languageCode),
                             order = sim.orderIndex,
                             status = when (progress?.status) {
                                 "COMPLETED" -> ProgressStatus.COMPLETED
@@ -72,9 +73,8 @@ fun PracticeSimulationCard(
                                 else -> ProgressStatus.NOT_STARTED
                             },
                             type = sim.type,
-                            // Pass only the correct language-based URL and ID
-                            simulationUrl = if (isKannada()) sim.simulationUrlKannada else sim.simulationUrl,
-                            simulationId = if (isKannada()) sim.simulationIdKannada else sim.simulationId
+                            simulationUrl = if (isKannadaLanguage(languageCode)) sim.simulationUrlKannada else sim.simulationUrl,
+                            simulationId = if (isKannadaLanguage(languageCode)) sim.simulationIdKannada else sim.simulationId
                         )
 
                         ConceptCard(

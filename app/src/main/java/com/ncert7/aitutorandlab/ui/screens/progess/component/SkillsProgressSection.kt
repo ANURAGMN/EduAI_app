@@ -19,7 +19,7 @@ import com.ncert7.aitutorandlab.data.local.entities.SubjectEntity
 import com.ncert7.aitutorandlab.ui.theme.*
 import com.ncert7.aitutorandlab.ui.screens.progess.viewmodel.ProgressColorType
 import com.ncert7.aitutorandlab.utils.getLocalizedName
-import com.ncert7.aitutorandlab.utils.isKannada
+import com.ncert7.aitutorandlab.utils.isKannadaLanguage
 
 /**
  * Skills Progress Section Component
@@ -34,13 +34,13 @@ fun SkillsProgressSection(
     showAllChapters: Boolean,
     hasMoreChapters: Boolean,
     hiddenChaptersCount: Int,
+    languageCode: String,
     onSubjectSelected: (SubjectEntity) -> Unit,
     onToggleShowAll: () -> Unit,
     getProgressColor: (Int) -> ProgressColorType,
     capitalizeSubjectName: (String) -> String
 ) {
     val dimes = LocalDimensions.current
-    val isKannadaMode = isKannada()
     var expanded by remember { mutableStateOf(false) }
 
     Column {
@@ -68,7 +68,7 @@ fun SkillsProgressSection(
             ) {
                 TextField(
                     readOnly = true,
-                    value = selectedSubject?.let { capitalizeSubjectName(it.getLocalizedName()) }
+                    value = selectedSubject?.let { capitalizeSubjectName(it.getLocalizedName(languageCode)) }
                         ?: stringResource(R.string.select_subject),
                     onValueChange = {},
                     modifier = Modifier
@@ -99,7 +99,7 @@ fun SkillsProgressSection(
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    text = subject.getLocalizedName(),
+                                    text = subject.getLocalizedName(languageCode),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = DropdownTextColor
                                 )
@@ -140,7 +140,7 @@ fun SkillsProgressSection(
                     Column(verticalArrangement = Arrangement.spacedBy(dimes.spaceMedium)) {
                         chaptersToShow.forEach { chapter ->
                             // Use the localized chapter name when app is in Kannada
-                            val displayName = if (isKannadaMode && chapter.chapterNameKannada.isNotBlank()) {
+                            val displayName = if (isKannadaLanguage(languageCode) && chapter.chapterNameKannada.isNotBlank()) {
                                 chapter.chapterNameKannada
                             } else {
                                 chapter.chapterName

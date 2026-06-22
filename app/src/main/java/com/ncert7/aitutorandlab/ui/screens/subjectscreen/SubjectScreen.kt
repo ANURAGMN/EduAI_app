@@ -12,10 +12,12 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ncert7.aitutorandlab.R
@@ -39,6 +41,12 @@ fun SubjectScreen(
     TrackScreenEvent(screenName = ScreenName.SUBJECT)
     val dimens = LocalDimensions.current
     val state by viewModel.state.collectAsState()
+    val configuration = LocalConfiguration.current
+    val currentLanguage = configuration.locales[0]?.language ?: "en"
+
+    LaunchedEffect(currentLanguage) {
+        viewModel.reloadSubjects(currentLanguage)
+    }
 
     Column(
         modifier = Modifier
@@ -79,7 +87,7 @@ fun SubjectScreen(
                     SubjectCard(
                         subject = subject,
                         onClick = {
-                            viewModel.onSubjectSelected(subject.name)
+                            viewModel.onSubjectSelected(subject.id)
                             onSubjectClick(subject.id)
                         }
                     )

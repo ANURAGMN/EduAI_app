@@ -12,7 +12,7 @@ import com.ncert7.aitutorandlab.repository.SubjectRepository
 import com.ncert7.aitutorandlab.ui.models.ChapterUiModel
 import com.ncert7.aitutorandlab.ui.screens.chapterscreen.dataclass.ChapterUiState
 import com.ncert7.aitutorandlab.utils.getLocalizedName
-import com.ncert7.aitutorandlab.utils.isKannada
+import com.ncert7.aitutorandlab.utils.normalizeLanguageCode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,27 +37,27 @@ class ChapterViewModel @Inject constructor(
     private val _state = MutableStateFlow(ChapterUiState())
     val state: StateFlow<ChapterUiState> = _state.asStateFlow()
 
-    fun loadChapters(subjectId: String) {
+    fun loadChapters(subjectId: String, language: String) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 val userId   = sharedPrefs.getUserId() ?: ""
-                val language = if (isKannada()) "kn" else "en"
+                val lang = normalizeLanguageCode(language)
                 val subject  = subjectRepository.getSubject(subjectId)
                 val chapters = chapterRepository.getChaptersForSubject(subjectId)
                 val isMathSubject = subjectId == MATH_SUBJECT_ID
 
-                DebugLogger.debugLog(TAG, "loadChapters: subjectId=$subjectId, isMath=$isMathSubject, language=$language")
+                DebugLogger.debugLog(TAG, "loadChapters: subjectId=$subjectId, isMath=$isMathSubject, language=$lang")
 
                 // ── Background seed: ensure a chapter_agent_progress row exists ──────────
                 // This is fire-and-forget; the reactive Flow below drives the UI.
                 viewModelScope.launch {
                     chapters.forEach { chapter ->
                         val existing = chapterProgressService.getChapterProgressBreakdown(
-                            userId, chapter.chapterId, language
+                            userId, chapter.chapterId, lang
                         )
                         if (existing.overallPercentage == 0 && existing.studyPercentage == 0) {
-                            chapterProgressService.updateChapterProgress(userId, chapter.chapterId, language)
+                            chapterProgressService.updateChapterProgress(userId, chapter.chapterId, lang)
                         }
                     }
                 }
@@ -69,7 +69,7 @@ class ChapterViewModel @Inject constructor(
                     } else {
                         conceptRepository.getStudyConceptCount(chapter.chapterId) > 0
                     }
-                    val hasSimulation = conceptRepository.getSimulationConceptCount(chapter.chapterId, language) > 0
+                    val hasSimulation = conceptRepository.getSimulationConceptCount(chapter.chapterId, lang) > 0
                     val hasRevision   = if (isMathSubject) false else chapter.revisionId.isNotEmpty()
 
                     val shouldInclude = hasStudy || hasSimulation || hasRevision
@@ -89,7 +89,7 @@ class ChapterViewModel @Inject constructor(
                     } else {
                         conceptRepository.getStudyConceptCount(chapter.chapterId) > 0
                     }
-                    val hasSimulation = conceptRepository.getSimulationConceptCount(chapter.chapterId, language) > 0
+                    val hasSimulation = conceptRepository.getSimulationConceptCount(chapter.chapterId, lang) > 0
                     val hasRevision   = chapter.revisionId.isNotEmpty()
 
                     chapter.chapterId to Triple(hasStudy, hasSimulation, hasRevision)
@@ -98,7 +98,7 @@ class ChapterViewModel @Inject constructor(
                 // ── Reactive collection: updates every time progress changes ──────────────
                 // getChapterWiseProgress() returns a Flow backed by ProgressDao — so whenever
                 // ANY progress row for this subject changes, the Flow emits and the UI redraws.
-                chapterRepository.getChapterWiseProgress(userId, subjectId, language)
+                chapterRepository.getChapterWiseProgress(userId, subjectId, lang)
                     .collect { progressSummaries ->
                         DebugLogger.debugLog(TAG, "🔄 CHAPTER PROGRESS FLOW TRIGGERED - Updating ${progressSummaries.size} chapter(s)...")
 
@@ -125,7 +125,7 @@ class ChapterViewModel @Inject constructor(
                             ChapterUiModel(
                                 id               = chapter.chapterId,
                                 orderIndex       = chapter.orderIndex,
-                                name             = chapter.getLocalizedName(),
+                                name             = chapter.getLocalizedName(lang),
                                 englishName      = chapter.chapterName,
                                 totalConcepts    = totalConcepts,
                                 completedConcepts = completedConcepts,
@@ -149,7 +149,7 @@ class ChapterViewModel @Inject constructor(
 
                         _state.value = _state.value.copy(
                             chapters    = chapterUiModels,
-                            subjectName = subject?.getLocalizedName() ?: "",
+                            subjectName = subject?.getLocalizedName(lang) ?: "",
                             classLevel  = 7,
                             isLoading   = false,
                             error       = null

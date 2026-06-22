@@ -15,10 +15,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.ncert7.aitutorandlab.R
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ncert7.aitutorandlab.R
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
 import com.ncert7.aitutorandlab.service.analytics.ScreenName
@@ -65,21 +66,22 @@ fun ChapterScreen(
     val dimens = LocalDimensions.current
     val state by viewModel.state.collectAsState()
     val mathState by mathViewModel.uiState.collectAsState()
+    val configuration = LocalConfiguration.current
+    val currentLanguage = configuration.locales[0]?.language ?: "en"
 
     // State for revision dialog
     var showRevisionDialog by remember { mutableStateOf(false) }
     var pendingRevisionChapter by remember { mutableStateOf<String?>(null) }
 
-    // Load chapters when subjectId changes
-    LaunchedEffect(subjectId) {
-        viewModel.loadChapters(subjectId)
+    // Load chapters when subject or language changes
+    LaunchedEffect(subjectId, currentLanguage) {
+        viewModel.loadChapters(subjectId, currentLanguage)
     }
 
     // Initialize MathViewModel if needed
     val context = LocalContext.current
-    LaunchedEffect(state.subjectName, mathState.problems.isEmpty()) {
-        val isMathSubject = state.subjectName.contains("Math", ignoreCase = true) ||
-                state.subjectName.contains("ಗಣಿತ", ignoreCase = true)
+    LaunchedEffect(subjectId, mathState.problems.isEmpty()) {
+        val isMathSubject = subjectId == "5c0a6b6d-7c6b-4f35-9d5b-9fd0fd8e8a01"
         if (isMathSubject && mathState.problems.isEmpty()) {
             val sharedPrefs = SharedPreferenceUtils(context)
             val userId = sharedPrefs.getUserId() ?: ""

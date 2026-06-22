@@ -134,6 +134,7 @@ fun ProgressScreen(
                 showAllChapters = showAllChapters,
                 hasMoreChapters = hasMoreChapters,
                 hiddenChaptersCount = viewModel.getHiddenChaptersCount(),
+                languageCode = currentLanguage,
                 onSubjectSelected = { subject -> viewModel.selectSubject(subject) },
                 onToggleShowAll = { viewModel.toggleShowAllChapters() },
                 getProgressColor = { percentage -> viewModel.getProgressColor(percentage) },

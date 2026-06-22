@@ -45,6 +45,7 @@ import com.ncert7.aitutorandlab.utils.getLocalizedName
 @Composable
 fun TodayProgressCard(
     progressConcepts: List<Pair<ProgressEntity?, ConceptEntity?>>,
+    languageCode: String,
     todayCompletedConcept: Int,
     todayCompletedSimulation: Int,
     onLessonClick: (String) -> Unit,
@@ -149,8 +150,8 @@ fun TodayProgressCard(
 
                 val progressPercentage = progress?.progressPercentage ?: 0
                 LessonStatusCard(
-                    title = concept?.getLocalizedName()
-                        ?: stringResource(R.string.unknown_concept),
+                    title = concept.getLocalizedName(languageCode)
+                        .ifBlank { stringResource(R.string.unknown_concept) },
                     subtitle = stringResource(R.string.status_label, progressStatus.value),
                     iconColor = when (progressStatus) {
                         ProgressStatus.COMPLETED -> AccentGreen

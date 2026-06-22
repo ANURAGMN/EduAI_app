@@ -5,25 +5,48 @@ import com.ncert7.aitutorandlab.data.local.entities.ChapterEntity
 import com.ncert7.aitutorandlab.data.local.entities.ConceptEntity
 import com.ncert7.aitutorandlab.data.local.entities.SubjectEntity
 
-/**
- * Extension functions to get localized names based on current app language
- */
-
-fun SubjectEntity.getLocalizedName(): String {
-    return if (isKannada())
-        subjectNameKannada else subjectName
+object SubjectIds {
+    const val MATH = "5c0a6b6d-7c6b-4f35-9d5b-9fd0fd8e8a01"
+    const val SCIENCE = "9a7d0d20-7b8d-4b8c-8c12-5a1a8a55f002"
 }
 
-fun ChapterEntity.getLocalizedName(): String {
-    return if (isKannada()) {
+/**
+ * Resolve legacy subject name prefs to stable subject IDs.
+ */
+fun resolveStoredSubjectId(stored: String?): String {
+    if (stored.isNullOrBlank()) return SubjectIds.SCIENCE
+    if (stored.contains("-") && stored.length >= 32) return stored
+    return when {
+        stored.equals("science", ignoreCase = true) -> SubjectIds.SCIENCE
+        stored.contains("math", ignoreCase = true) ||
+            stored.contains("ಗಣಿತ", ignoreCase = false) -> SubjectIds.MATH
+        stored.contains("science", ignoreCase = true) ||
+            stored.contains("ವಿಜ್ಞಾನ", ignoreCase = false) -> SubjectIds.SCIENCE
+        else -> SubjectIds.SCIENCE
+    }
+}
+
+fun isKannadaLanguage(languageCode: String): Boolean =
+    normalizeLanguageCode(languageCode) == "kn"
+
+/**
+ * Extension functions to get localized names based on app language
+ */
+
+fun SubjectEntity.getLocalizedName(languageCode: String = getCurrentLanguageCode()): String {
+    return if (isKannadaLanguage(languageCode)) subjectNameKannada else subjectName
+}
+
+fun ChapterEntity.getLocalizedName(languageCode: String = getCurrentLanguageCode()): String {
+    return if (isKannadaLanguage(languageCode)) {
         chapterNameKannada.ifBlank { chapterName }
     } else {
         chapterName
     }
 }
 
-fun ConceptEntity.getLocalizedName(): String {
-    return if (isKannada()) {
+fun ConceptEntity.getLocalizedName(languageCode: String = getCurrentLanguageCode()): String {
+    return if (isKannadaLanguage(languageCode)) {
         conceptNameKannada.ifBlank { conceptName }
     } else {
         conceptName

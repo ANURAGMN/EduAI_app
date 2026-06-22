@@ -33,7 +33,6 @@ import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.ChatHeaderIc
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.ConversationView
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.InitialAvatarView
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.InputSection
-import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.LogOverlay
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.ResourcesCard
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
 import com.ncert7.aitutorandlab.ui.theme.White
@@ -291,14 +290,6 @@ fun ChatbotScreen(
             }
         }
 
-        // Debug LogOverlay
-        LogOverlay(
-            metadata = chatState.agentMetadata,
-            conceptMapStatus = chatState.conceptMapStatus,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-        )
     }
 
 

@@ -12,7 +12,10 @@ import com.ncert7.aitutorandlab.data.local.entities.ProgressEntity
 import com.ncert7.aitutorandlab.data.local.entities.StudentEntity
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.repository.StreakRepository
+import com.ncert7.aitutorandlab.repository.SubjectRepository
+import com.ncert7.aitutorandlab.utils.getLocalizedName
 import com.ncert7.aitutorandlab.utils.isKannada
+import com.ncert7.aitutorandlab.utils.normalizeLanguageCode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,7 +33,8 @@ class HomeViewModel @Inject constructor(
     private val progressDao: ProgressDao,
     private val studentDao: StudentDao,
     private val streakRepository: StreakRepository,
-    private val sharedPrefs: SharedPreferenceUtils
+    private val sharedPrefs: SharedPreferenceUtils,
+    private val subjectRepository: SubjectRepository
 ) : ViewModel(){
 
     private val userId: String
@@ -72,10 +76,23 @@ class HomeViewModel @Inject constructor(
     private val _currentLanguage = MutableStateFlow(if (isKannada()) "kn" else "en")
     val currentLanguage: StateFlow<String> = _currentLanguage
 
+    private val _selectedSubjectName = MutableStateFlow("")
+    val selectedSubjectName: StateFlow<String> = _selectedSubjectName
+
     fun setLanguage(lang: String) {
-        if (_currentLanguage.value != lang) {
-            _currentLanguage.value = lang
-            DebugLogger.debugLog("HomeViewModel", "Language dynamically changed to: $lang")
+        val normalized = normalizeLanguageCode(lang)
+        if (_currentLanguage.value != normalized) {
+            _currentLanguage.value = normalized
+            DebugLogger.debugLog("HomeViewModel", "Language dynamically changed to: $normalized")
+        }
+    }
+
+    fun refreshSelectedSubjectName() {
+        viewModelScope.launch {
+            val language = _currentLanguage.value
+            val subjectId = sharedPrefs.getSubjectSelectionId()
+            val subject = subjectRepository.getSubject(subjectId)
+            _selectedSubjectName.value = subject?.getLocalizedName(language) ?: ""
         }
     }
 
@@ -92,11 +109,19 @@ class HomeViewModel @Inject constructor(
 
     init {
         getStudent()
-        getGreeting()
         observeStreak()
         observeTodayProgress()
         observeTotalCounts()
         observeProgressConceptsAndSimulations()
+        observeSelectedSubjectName()
+    }
+
+    private fun observeSelectedSubjectName() {
+        viewModelScope.launch {
+            _currentLanguage.collectLatest {
+                refreshSelectedSubjectName()
+            }
+        }
     }
 
     private fun observeProgressConceptsAndSimulations() {

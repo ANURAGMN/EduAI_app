@@ -12,8 +12,10 @@ import com.ncert7.aitutorandlab.repository.StudentLocalRepository
 import com.ncert7.aitutorandlab.repository.SubjectRepository
 import com.ncert7.aitutorandlab.ui.models.ConceptUiModel
 import com.ncert7.aitutorandlab.ui.screens.conceptscreen.dataclass.ConceptScreenState
+import com.ncert7.aitutorandlab.utils.getCurrentLanguageCode
 import com.ncert7.aitutorandlab.utils.getLocalizedName
-import com.ncert7.aitutorandlab.utils.isKannada
+import com.ncert7.aitutorandlab.utils.isKannadaLanguage
+import com.ncert7.aitutorandlab.utils.normalizeLanguageCode
 import com.ncert7.aitutorandlab.data.local.dao.ProgressDao
 import com.ncert7.aitutorandlab.config.AppConfig
 import com.ncert7.aitutorandlab.domain.progress.ProgressEventTracker
@@ -132,13 +134,14 @@ class ConceptViewModel @Inject constructor(
                 val chapter = chapterRepository.getChapter(chapterId)
                 val subject = chapter?.let { subjectRepository.getSubject(it.subjectId) }
                 val classLevel = 7 // Force class 7 syllabus display
+                val lang = normalizeLanguageCode(language)
 
                 DebugLogger.debugLog("ConceptVM", " Loading concepts: chapterId=$chapterId, type=$type, language=$language")
 
                 // Load concepts based on type using specialized repository methods
                 val concepts = when {
                     type.equals("SIMULATION", ignoreCase = true) -> {
-                        val simConcepts = conceptRepository.getSimulationConceptsForChapter(chapterId, language)
+                        val simConcepts = conceptRepository.getSimulationConceptsForChapter(chapterId, lang)
                         DebugLogger.debugLog("ConceptVM", " Loaded SIMULATION concepts: ${simConcepts.size}")
                         simConcepts
                     }
@@ -167,34 +170,33 @@ class ConceptViewModel @Inject constructor(
                 // Reactively collect progress changes for this chapter and overall chapter progress
                 // NOTE: getAllProgress() returns all progress entries, but we filter by language in determineSimulationStatus()
                 val progressFlow = progressDao.getAllProgress(studentId, AppConfig.APP_NAME)
-                val chapterProgressFlow = progressDao.getChapterWiseProgressFlow(studentId, subjectId, language, AppConfig.APP_NAME)
+                val chapterProgressFlow = progressDao.getChapterWiseProgressFlow(studentId, subjectId, lang, AppConfig.APP_NAME)
 
                 combine(progressFlow, chapterProgressFlow) { allProgress, progressSummaries ->
-                    DebugLogger.debugLog("ConceptVM", " PROGRESS FLOW TRIGGERED - Language=$language, Progress entries=${allProgress.size}")
-                    DebugLogger.debugLog("ConceptVM", "  Filtering progress for language=$language only")
+                    DebugLogger.debugLog("ConceptVM", " PROGRESS FLOW TRIGGERED - Language=$lang, Progress entries=${allProgress.size}")
+                    DebugLogger.debugLog("ConceptVM", "  Filtering progress for language=$lang only")
 
                     val conceptUiModels = concepts.mapIndexed { index, concept ->
-                        // ...existing code...
                         val displayName = when {
                             type.equals("MATH PROBLEM", ignoreCase = true) -> {
-                                if (isKannada()) {
-                                    concept.problemTopicNameKn.ifEmpty { concept.conceptName }
+                                if (isKannadaLanguage(lang)) {
+                                    concept.problemTopicNameKn.ifEmpty { concept.conceptNameKannada.ifBlank { concept.conceptName } }
                                 } else {
                                     concept.problemTopicName.ifEmpty { concept.conceptName }
                                 }
                             }
                             else -> {
-                                concept.getLocalizedName()
+                                concept.getLocalizedName(lang)
                             }
                         }
 
-                        val simId = if (isKannada()) {
+                        val simId = if (isKannadaLanguage(lang)) {
                             concept.simulationIdKannada
                         } else {
                             concept.simulationId
                         }
 
-                        val simUrl = if (isKannada()) {
+                        val simUrl = if (isKannadaLanguage(lang)) {
                             concept.simulationUrlKannada
                         } else {
                             concept.simulationUrl
@@ -206,13 +208,13 @@ class ConceptViewModel @Inject constructor(
                         val status = when {
                             type.equals("SIMULATION", ignoreCase = true) -> {
                                 determineSimulationStatus(
-                                    allProgress, concept.conceptId, hasAgent, hasUrl, index, concepts, language
+                                    allProgress, concept.conceptId, hasAgent, hasUrl, index, concepts, lang
                                 )
                             }
                             else -> {
-                                val progress = allProgress.find { it.itemType == "CONCEPT" && it.itemId == concept.conceptId && it.language == language }
+                                val progress = allProgress.find { it.itemType == "CONCEPT" && it.itemId == concept.conceptId && it.language == lang }
                                 val prevStatus = if (index > 0) {
-                                    allProgress.find { it.itemType == "CONCEPT" && it.itemId == concepts[index - 1].conceptId && it.language == language }?.status
+                                    allProgress.find { it.itemType == "CONCEPT" && it.itemId == concepts[index - 1].conceptId && it.language == lang }?.status
                                 } else null
                                 determineConceptStatus(progress, index == 0, prevStatus)
                             }
@@ -224,15 +226,15 @@ class ConceptViewModel @Inject constructor(
                             order = concept.orderIndex,
                             status = when (status) {
                                 ProgressStatus.COMPLETED.value -> {
-                                    DebugLogger.debugLog("ConceptVM", "   ✅ $displayName [$language] → COMPLETED")
+                                    DebugLogger.debugLog("ConceptVM", "   ✅ $displayName [$lang] → COMPLETED")
                                     DomainProgressStatus.COMPLETED
                                 }
                                 ProgressStatus.IN_PROGRESS.value, "STARTED" -> {
-                                    DebugLogger.debugLog("ConceptVM", "   🔄 $displayName [$language] → IN_PROGRESS")
+                                    DebugLogger.debugLog("ConceptVM", "   🔄 $displayName [$lang] → IN_PROGRESS")
                                     DomainProgressStatus.IN_PROGRESS
                                 }
                                 else -> {
-                                    DebugLogger.debugLog("ConceptVM", "   ⭕ $displayName [$language] → NOT_STARTED")
+                                    DebugLogger.debugLog("ConceptVM", "   ⭕ $displayName [$lang] → NOT_STARTED")
                                     DomainProgressStatus.NOT_STARTED
                                 }
                             },
@@ -240,7 +242,7 @@ class ConceptViewModel @Inject constructor(
                             simulationUrl = simUrl ?: "",
                             simulationId = simId ?: "",
                             problemId = concept.problemId,
-                            problemTopicName = if (isKannada()) concept.problemTopicNameKn else concept.problemTopicName
+                            problemTopicName = if (isKannadaLanguage(lang)) concept.problemTopicNameKn else concept.problemTopicName
                         )
                     }
 
@@ -265,7 +267,7 @@ class ConceptViewModel @Inject constructor(
 
                     DebugLogger.debugLog(
                         "ConceptVM",
-                        " Chapter Progress Updated [$language]: $completedConcepts/$totalConcepts concepts completed (${progressUiModel.progressPercentage}%)"
+                        " Chapter Progress Updated [$lang]: $completedConcepts/$totalConcepts concepts completed (${progressUiModel.progressPercentage}%)"
                     )
                     DebugLogger.debugLog(
                         "ConceptVM",
@@ -274,11 +276,11 @@ class ConceptViewModel @Inject constructor(
 
                     _state.value = _state.value.copy(
                         concepts = conceptUiModels,
-                        chapterName = chapter?.getLocalizedName() ?: "",
+                        chapterName = chapter?.getLocalizedName(lang) ?: "",
                         chapterId = chapterId,
                         type = type,
                         progressUiModel = progressUiModel,
-                        subjectName = subject?.getLocalizedName() ?: "",
+                        subjectName = subject?.getLocalizedName(lang) ?: "",
                         classLevel = classLevel,
                         isLoading = false,
                         error = null
@@ -389,7 +391,7 @@ class ConceptViewModel @Inject constructor(
 
     private suspend fun unlockFirstConcept(studentId: String, conceptId: String) {
         try {
-            val language = if (isKannada()) "kn" else "en"
+            val language = getCurrentLanguageCode()
             progressEventTracker.markStudyInProgress(studentId, conceptId, language)
             DebugLogger.debugLog("ConceptVM", "First concept unlocked: $conceptId")
         } catch (e: Exception) {

@@ -8,6 +8,7 @@ import com.ncert7.aitutorandlab.ui.screens.subjectscreen.dataclass.SubjectScreen
 import com.ncert7.aitutorandlab.ui.models.SubjectUiModel
 import com.ncert7.aitutorandlab.ui.theme.BrandPrimary
 import com.ncert7.aitutorandlab.utils.getLocalizedName
+import com.ncert7.aitutorandlab.utils.getCurrentLanguageCode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,17 +29,16 @@ class SubjectViewModel @Inject constructor(
         loadSubjects()
     }
 
-    private fun loadSubjects() {
+    private fun loadSubjects(languageCode: String = getCurrentLanguageCode()) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
-                // Hardcode to class 7 to ensure syllabus is independent of user's profile class level
                 val subjectEntities = repository.getSubjectsForClass(7)
 
                 val subjectUiModels = subjectEntities.map { entity ->
                     SubjectUiModel(
                         id = entity.subjectId,
-                        name = entity.getLocalizedName(),
+                        name = entity.getLocalizedName(languageCode),
                         color = BrandPrimary,
                         totalChapters = entity.totalChapters,
                         iconUrl = entity.iconUrl
@@ -64,7 +64,11 @@ class SubjectViewModel @Inject constructor(
         loadSubjects()
     }
 
-    fun onSubjectSelected(subjectName: String) {
-        sharedPreferenceUtils.setSubjectSelection(subjectName)
+    fun reloadSubjects(languageCode: String) {
+        loadSubjects(languageCode)
+    }
+
+    fun onSubjectSelected(subjectId: String) {
+        sharedPreferenceUtils.setSubjectSelectionId(subjectId)
     }
 }

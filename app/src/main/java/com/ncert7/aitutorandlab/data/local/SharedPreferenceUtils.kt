@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.ncert7.aitutorandlab.utils.normalizeLanguageCode
+import com.ncert7.aitutorandlab.utils.resolveStoredSubjectId
 
 class SharedPreferenceUtils(context: Context) {
 
@@ -17,6 +18,7 @@ class SharedPreferenceUtils(context: Context) {
         private const val KEY_LANGUAGE = "key_language"
         private const val KEY_IS_LOGGED_IN = "key_is_logged_in"
         private const val KEY_SELECTED_SUBJECT = "selected_subject"
+        private const val KEY_SELECTED_SUBJECT_ID = "selected_subject_id"
         private const val KEY_SESSION = "key_current_session"
         private const val KEY_SIM_OPEN_COUNT = "key_sim_open_count"
         private const val KEY_SIM_OPEN_DATE = "key_sim_open_date"
@@ -102,13 +104,32 @@ class SharedPreferenceUtils(context: Context) {
         return normalizeLanguageCode(prefs.getString(KEY_LANGUAGE, "en"))
     }
 
-    fun setSubjectSelection(subject: String) {
-        prefs.edit { putString(KEY_SELECTED_SUBJECT, subject) }
+    fun setSubjectSelectionId(subjectId: String) {
+        prefs.edit {
+            putString(KEY_SELECTED_SUBJECT_ID, subjectId)
+            remove(KEY_SELECTED_SUBJECT)
+        }
     }
 
-    fun getSubjectSelection(): String? {
-        return prefs.getString(KEY_SELECTED_SUBJECT, "science")
+    /** @deprecated Legacy name storage — use [getSubjectSelectionId] */
+    fun setSubjectSelection(subject: String) {
+        setSubjectSelectionId(resolveStoredSubjectId(subject))
     }
+
+    fun getSubjectSelectionId(): String {
+        val storedId = prefs.getString(KEY_SELECTED_SUBJECT_ID, null)
+        if (!storedId.isNullOrBlank()) return resolveStoredSubjectId(storedId)
+        val legacyName = prefs.getString(KEY_SELECTED_SUBJECT, null)
+        val resolved = resolveStoredSubjectId(legacyName)
+        prefs.edit {
+            putString(KEY_SELECTED_SUBJECT_ID, resolved)
+            remove(KEY_SELECTED_SUBJECT)
+        }
+        return resolved
+    }
+
+    /** @deprecated Use [getSubjectSelectionId] — kept for callers not yet migrated */
+    fun getSubjectSelection(): String? = getSubjectSelectionId()
 
     fun setLoggedIn(isLoggedIn: Boolean) {
         prefs.edit { putBoolean(KEY_IS_LOGGED_IN, isLoggedIn) }
@@ -139,6 +160,7 @@ class SharedPreferenceUtils(context: Context) {
         prefs.edit {
             remove(KEY_USER_ID)
             remove(KEY_SELECTED_SUBJECT)
+            remove(KEY_SELECTED_SUBJECT_ID)
             remove(KEY_SESSION)
             remove(KEY_IS_LOGGED_IN)
             remove(KEY_SIM_OPEN_COUNT)
