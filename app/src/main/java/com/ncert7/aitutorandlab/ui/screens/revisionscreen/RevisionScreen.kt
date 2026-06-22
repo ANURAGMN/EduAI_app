@@ -303,6 +303,7 @@ fun RevisionScreen(
                         avatarSize = avatarSize,
                         ttsController = ttsController,
                         isLoading = chatState.isLoading,
+                        languageCode = chatState.currentLanguage,
                         modifier = Modifier.weight(1f)
                     )
                 }

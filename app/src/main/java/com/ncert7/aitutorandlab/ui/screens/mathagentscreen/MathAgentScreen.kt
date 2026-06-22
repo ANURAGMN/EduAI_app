@@ -329,7 +329,8 @@ fun MathAgentScreen(
                             InitialAvatarView(
                                 avatarSize = avatarSize,
                                 ttsController = ttsController,
-                                isLoading = mathState.isLoading
+                                isLoading = mathState.isLoading,
+                                languageCode = mathState.currentLanguage,
                             )
                         } else {
                             ConversationView(

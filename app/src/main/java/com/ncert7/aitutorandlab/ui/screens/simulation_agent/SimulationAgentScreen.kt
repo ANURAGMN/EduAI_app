@@ -37,6 +37,7 @@ import com.ncert7.aitutorandlab.ui.screens.simulation_agent.viewmodel.Simulation
 import com.ncert7.aitutorandlab.domain.simulation.usecase.SimulationIntent
 import com.ncert7.aitutorandlab.ui.viewModel.SpeechToText
 import com.ncert7.aitutorandlab.ui.viewModel.TextToSpeech
+import com.ncert7.aitutorandlab.utils.normalizeLanguageCode
 
 /**
  * Simulation Agent Screen - PURELY PRESENTATIONAL
@@ -359,6 +360,7 @@ fun SimulationAgentScreen(
                 onParamsChanged = { viewModel.handleIntent(SimulationIntent.ParametersChanged(it)) },
                 simulationUrl = sessionData?.simulation?.htmlUrl?.takeIf { it.isNotBlank() },
                 onPageFinished = { viewModel.onSimulationUrlLoaded(simulationId) },
+                languageCode = normalizeLanguageCode(currentLanguage),
                 modifier = Modifier.weight(1f).background(White),
             )
 

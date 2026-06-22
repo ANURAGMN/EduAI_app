@@ -26,11 +26,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import com.ncert7.aitutorandlab.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
+import com.ncert7.aitutorandlab.ui.components.LoadingInsightPanel
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.domain.chatbot.usecase.ChatIntent
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.dataclass.ChatBotSettingsState
@@ -51,7 +54,8 @@ fun InitialAvatarView(
     avatarSize: Dp,
     ttsController: TextToSpeech,
     modifier: Modifier = Modifier,
-    isLoading: Boolean = false
+    isLoading: Boolean = false,
+    languageCode: String = "en",
 ) {
     val dimens = LocalDimensions.current
 
@@ -84,17 +88,13 @@ fun InitialAvatarView(
             // Show "Teacher is thinking..." when loading
             if (isLoading) {
                 Spacer(Modifier.height(dimens.spaceMedium))
-                Text(
-                    text = "Teacher is thinking...",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary,
-                    modifier = Modifier.padding(horizontal = dimens.cardPadding)
-                )
-                Spacer(Modifier.height(dimens.spaceSmall))
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = dimens.progressIndicatorStrokeWidth,
-                    color = TextSecondary
+                LoadingInsightPanel(
+                    statusText = stringResource(R.string.teacher_thinking),
+                    languageCode = languageCode,
+                    centered = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = dimens.cardPadding),
                 )
             }
         }
@@ -150,6 +150,7 @@ fun ConversationView(
             typingText = chatState.typingText,
             ttsController = ttsController,
             isResourceCardShowing = chatState.resourceCardState !is ResourceCardUiState.Hidden,
+            languageCode = chatState.currentLanguage,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()

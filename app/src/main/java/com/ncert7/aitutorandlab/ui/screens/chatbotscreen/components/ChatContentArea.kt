@@ -9,8 +9,7 @@ import androidx.compose.ui.graphics.Color
 import com.ncert7.aitutorandlab.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.ncert7.aitutorandlab.ui.theme.BrandPrimary
-import com.ncert7.aitutorandlab.ui.theme.TextSecondary
+import com.ncert7.aitutorandlab.ui.components.LoadingInsightPanel
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Brush
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.dataclass.ChatMessageModel
@@ -29,6 +28,7 @@ fun ChatContentArea(
     typingText: String,
     ttsController: TextToSpeech,
     isResourceCardShowing: Boolean = false,
+    languageCode: String = "en",
     modifier: Modifier = Modifier
 ) {
     val dimens= LocalDimensions.current
@@ -46,25 +46,13 @@ fun ChatContentArea(
                         .fillMaxWidth(),
                     contentAlignment = Alignment.TopStart
                 ) {
-                    Row(
+                    LoadingInsightPanel(
+                        statusText = loadingResourceMessage ?: stringResource(R.string.thinking),
+                        languageCode = languageCode,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(dimens.spaceMedium),
-                        horizontalArrangement = Arrangement.Start,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(dimens.iconLarge),
-                            strokeWidth =dimens.inputBorderWidth,
-                            color = BrandPrimary
-                        )
-                        Spacer(modifier = Modifier.width(dimens.spaceMedium))
-                        Text(
-                            text = loadingResourceMessage ?: stringResource(R.string.thinking),
-                            color = TextSecondary,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+                    )
                 }
             }
 

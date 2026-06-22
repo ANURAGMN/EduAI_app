@@ -4,30 +4,26 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.ncert7.aitutorandlab.R
+import com.ncert7.aitutorandlab.ui.components.LoadingInsightPanel
 import com.ncert7.aitutorandlab.ui.screens.chatbotscreen.components.AgentMessage
 import com.ncert7.aitutorandlab.ui.theme.LocalDimensions
 import com.ncert7.aitutorandlab.ui.viewModel.TextToSpeech
+import com.ncert7.aitutorandlab.utils.getCurrentLanguageCode
 
 /** Conversation view with agent message (25%) and single simulation (75%) */
 @Composable
@@ -38,6 +34,7 @@ fun SimulationConversationView(
     ttsController: TextToSpeech,
     modifier: Modifier = Modifier,
     simulationUrl: String? = null,
+    languageCode: String = getCurrentLanguageCode(),
     onParamsChanged: (Map<String, Any>) -> Unit = {},
     onPageFinished: () -> Unit = {}
 ) {
@@ -53,25 +50,14 @@ fun SimulationConversationView(
                 .padding(horizontal = dimens.spaceMedium, vertical = 0.dp)
         ) {
             if (isLoading) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(dimens.iconLarge),
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = dimens.inputBorderWidth
-                    )
-                    Spacer(modifier = Modifier.height(dimens.spaceSmall))
-                    Text(
-                        text = stringResource(R.string.sim_teacher_thinking),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        fontStyle = FontStyle.Italic,
-                        textAlign = TextAlign.Center
-                    )
-                }
+                LoadingInsightPanel(
+                    statusText = stringResource(R.string.sim_teacher_thinking),
+                    languageCode = languageCode,
+                    centered = true,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(dimens.spaceMedium),
+                )
             } else {
                 AgentMessage(
                     text = currentMessage,
@@ -94,26 +80,14 @@ fun SimulationConversationView(
                 .background(White)
         ) {
             if (isLoading) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(dimens.iconLarge),
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = dimens.inputBorderWidth
-                    )
-                    Spacer(modifier = Modifier.height(dimens.spaceSmall))
-
-                    Text(
-                        text = stringResource(R.string.sim_loading_simulation),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        fontStyle = FontStyle.Italic,
-                        textAlign = TextAlign.Center
-                    )
-                }
+                LoadingInsightPanel(
+                    statusText = stringResource(R.string.sim_loading_simulation),
+                    languageCode = languageCode,
+                    centered = true,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(dimens.spaceMedium),
+                )
             } else if (simulationUrl == null) {
                 Column(
                     modifier = Modifier

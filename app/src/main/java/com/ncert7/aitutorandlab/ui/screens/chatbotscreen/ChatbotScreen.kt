@@ -260,7 +260,8 @@ fun ChatbotScreen(
                         avatarSize = avatarSize,
                         ttsController = ttsController,
                         modifier = Modifier.weight(0.1f).background(White),
-                        isLoading = chatState.isLoading
+                        isLoading = chatState.isLoading,
+                        languageCode = chatState.currentLanguage,
                     )
                 } else {
                     // Conversation view with avatar and scrollable content

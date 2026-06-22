@@ -147,6 +147,8 @@
     <string name="sorry_i_couldn_t_process_that_please_try_again">ಕ್ಷಮಿಸಿ, ಅದನ್ನು ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
     <string name="close_settings">ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಮುಚ್ಚಿ\n</string>
     <string name="thinking">ಯೋಚಿಸಲಾಗುತ್ತಿದೆ...</string>
+    <string name="teacher_thinking">ಗುರು ಯೋಚಿಸುತ್ತಿದ್ದಾರೆ...</string>
+    <string name="loading_insight_label">ನಿರೀಕ್ಷಿಸುವಾಗ</string>
 
     <!--    Setting Screen-->
     <string name="profile_photo">ಪ್ರೊಫೈಲ್ ಫೋಟೋ</string>
