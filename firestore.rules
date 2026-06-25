@@ -1,6 +1,89 @@
 rules_version = '2';
+
+// EduAI client sync rules (eduai-e090e).
+//
+// NOTE: The app uses Google Sign-In + local JWT for the backend API, but does NOT
+// sign in to Firebase Auth yet. Rules below scope writes by doc path + appName field.
+// For stronger security later, add FirebaseAuth.signInWithCredential(Google) and
+// switch to request.auth.token.email checks.
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isEduAiAppDoc(docId) {
+      return docId.matches('eduai_app_.+');
+    }
+
+    function eduAiStudentDocId(studentId) {
+      return 'eduai_app_' + studentId;
+    }
+
+    function isEduAiWrite() {
+      return request.resource.data.appName == 'eduai_app';
+    }
+
+    function studentIdMatchesParent(parentDocId) {
+      return isEduAiWrite()
+        && request.resource.data.keys().hasAll(['studentId'])
+        && parentDocId == eduAiStudentDocId(request.resource.data.studentId);
+    }
+
+    // NCERT syllabus content — read-only from clients
+    match /Concept/{conceptId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // User profile documents
+    match /users/{userId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.appName == 'eduai_app';
+      allow delete: if false;
+    }
+
+    // Progress: progress/eduai_app_{studentId}/records/{recordId}
+    match /progress/{parentDoc}/records/{recordId} {
+      allow read: if isEduAiAppDoc(parentDoc);
+      allow create, update: if isEduAiAppDoc(parentDoc) && studentIdMatchesParent(parentDoc);
+      allow delete: if false;
+    }
+
+    // Analytics: analytics/eduai_app_{studentId}/events/{eventId}
+    match /analytics/{parentDoc}/events/{eventId} {
+      allow read: if isEduAiAppDoc(parentDoc);
+      allow create, update: if isEduAiAppDoc(parentDoc) && studentIdMatchesParent(parentDoc);
+      allow delete: if false;
+    }
+
+    // Sessions: sessions/eduai_app_{studentId}/records/{sessionId}
+    match /sessions/{parentDoc}/records/{sessionId} {
+      allow read: if isEduAiAppDoc(parentDoc);
+      allow create, update: if isEduAiAppDoc(parentDoc) && studentIdMatchesParent(parentDoc);
+      allow delete: if false;
+    }
+
+    // Streak: streak/eduai_app_{studentId}/data/{docId}
+    match /streak/{parentDoc}/data/{docId} {
+      allow read: if isEduAiAppDoc(parentDoc);
+      allow create, update: if isEduAiAppDoc(parentDoc) && studentIdMatchesParent(parentDoc);
+      allow delete: if false;
+    }
+
+    // Chapter agent progress: chapterprogress/eduai_app_{studentId}/records/{recordId}
+    match /chapterprogress/{parentDoc}/records/{recordId} {
+      allow read: if isEduAiAppDoc(parentDoc);
+      allow create, update: if isEduAiAppDoc(parentDoc) && studentIdMatchesParent(parentDoc);
+      allow delete: if false;
+    }
+
+    // Client error logs: errors/eduai_app/logs/{logId}
+    match /errors/{appName}/logs/{logId} {
+      allow read: if false;
+      allow create: if appName == 'eduai_app'
+        && request.resource.data.appName == 'eduai_app';
+      allow update, delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

@@ -56,4 +56,17 @@ object AnalyticsEventRecorder {
             DebugLogger.errorLog(TAG, "Failed to record $eventType: ${e.message}")
         }
     }
+
+    suspend fun recordFunnelStep(
+        screenName: String,
+        step: FunnelStep
+    ) {
+        recordClick(
+            screenName = screenName,
+            itemId = step.value,
+            source = null,
+            interactionType = step.value,
+            eventType = EventType.FUNNEL.type
+        )
+    }
 }

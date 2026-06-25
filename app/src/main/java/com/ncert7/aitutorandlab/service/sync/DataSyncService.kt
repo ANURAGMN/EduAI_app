@@ -256,6 +256,24 @@ object DataSyncService {
     }
 
     /**
+     * Call after sign-in: backfill pre-login analytics/sessions, then sync everything.
+     */
+    fun onUserAuthenticated(studentId: String) {
+        scope.launch {
+            try {
+                database.appAnalyticsDao().backfillEmptyStudentId(studentId)
+                database.sessionDao().backfillEmptyStudentId(studentId)
+                updateStudentId(studentId)
+                triggerFullSync()
+                DebugLogger.debugLog(TAG, "User authenticated — funnel + session backfill synced for $studentId")
+            } catch (e: Exception) {
+                DebugLogger.errorLog(TAG, "onUserAuthenticated failed: ${e.message}")
+                updateStudentId(studentId)
+            }
+        }
+    }
+
+    /**
      * Cleanup - call this from Application.onTerminate()
      * DO NOT call from Activity.onDestroy() - this is a singleton
      */

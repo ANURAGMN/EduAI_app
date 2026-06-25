@@ -49,11 +49,8 @@ class AgenticAIClient(
             try {
                 DebugLogger.debugLog("AgenticAIClient", "Call attempt=$attempt for call (starting)")
 
-                // Log full token before making the call
                 val currentToken = TokenManager.getIdToken(context)
-                if (currentToken != null) {
-                    DebugLogger.debugLog("AgenticAIClient", "Full token being used: $currentToken")
-                } else {
+                if (currentToken == null) {
                     DebugLogger.errorLog("AgenticAIClient", "No token found in storage")
                 }
 
@@ -70,8 +67,6 @@ class AgenticAIClient(
                     if (hv != null) {
                         val masked = if (hv.length <= 6) "****" else "****" + hv.takeLast(4)
                         DebugLogger.debugLog("AgenticAIClient", "Request contained header $headerName with value=$masked")
-                        // Log full token in request header as well
-                        DebugLogger.debugLog("AgenticAIClient", "Full token in request header: $hv")
                     } else {
                         DebugLogger.debugLog("AgenticAIClient", "Request did not contain header $headerName")
                     }

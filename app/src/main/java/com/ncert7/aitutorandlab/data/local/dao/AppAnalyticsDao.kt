@@ -66,6 +66,10 @@ interface AppAnalyticsDao {
     @Query("UPDATE app_analytics SET isSynced = 1 WHERE analyticsId = :analyticsId")
     suspend fun markAnalyticsAsSynced(analyticsId: Long)
 
+    /** Attach pre-login funnel events to the authenticated user before Firestore sync. */
+    @Query("UPDATE app_analytics SET studentId = :studentId, isSynced = 0 WHERE studentId = ''")
+    suspend fun backfillEmptyStudentId(studentId: String)
+
     @Query("DELETE FROM app_analytics WHERE entryTime < :cutoffTimestamp")
     suspend fun deleteOldAnalytics(cutoffTimestamp: Long)
 

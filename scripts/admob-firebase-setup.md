@@ -63,11 +63,32 @@ Until this is done, ads can still serve in test/production, but **payouts are bl
 
 ---
 
-## Step 4 — Policy & app-ads.txt (recommended before scale)
+## Step 4 — Policy & app-ads.txt (required for Class 7 / child audience)
 
-1. AdMob → **Policy center** — resolve any violations
-2. Play Console → link app when published
-3. Optional: host `app-ads.txt` on your marketing domain if you use web redirect
+**Play rejected ads when child-safe settings were missing.** Code now sets:
+- `TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE`
+- `TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE`
+- `MAX_AD_CONTENT_RATING_G` (General audiences only)
+
+### AdMob console (do before resubmit)
+
+1. [AdMob](https://apps.admob.com/) → **Apps** → EduAI → **App settings**
+2. Set **Child-directed** / COPPA treatment to **Yes** (or match your Play target audience)
+3. **Blocking controls** → **Block sensitive categories** — enable blocks for:
+   - Dating, Mature, Gambling, Get rich quick, Politics (recommended)
+4. **Policy center** — resolve any active violations
+
+### Play Console (do before resubmit)
+
+1. **Policy** → **App content** → **Target audience** — if users under 13, declare accurately (Families policy applies)
+2. **Policy** → **App content** → **Ads** — declare that app contains ads
+3. **Policy** → **App content** → **Content ratings** → **Start questionnaire** (or **Update**) — answer ad-related questions consistently with child-directed ads
+4. If rated **Everyone** / **PEGI 3** / **USK 0**, ads must be G-rated only (matches code above)
+
+### app-ads.txt
+
+1. Play Console → link app when published
+2. Host `app-ads.txt` on your developer website domain if required
 
 ---
 

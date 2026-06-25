@@ -26,8 +26,8 @@ android {
         applicationId = "com.ncert7.aitutorandlab"
         minSdk = 28
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 9
+        versionName = "1.0.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "AUTH_KEY", "\"${prop("AUTH_KEY")}\"")
@@ -40,7 +40,7 @@ android {
         buildConfigField("String", "API_KEY_HEADER_NAME", "\"${prop("API_KEY_HEADER_NAME")}\"")
         buildConfigField("String", "ADMOB_APP_ID", "\"${prop("ADMOB_APP_ID")}\"")
         buildConfigField("String", "BANNER_AD_UNIT_ID", "\"${prop("BANNER_AD_UNIT_ID")}\"")
-        buildConfigField("String", "ADMOB_TEST_DEVICE_ID", "\"${prop("ADMOB_TEST_DEVICE_ID")}\"")
+        buildConfigField("String", "PADAAMS_SIGNIN_PASSWORD", "\"${prop("PADAAMS_SIGNIN_PASSWORD")}\"")
         // Manifest placeholders for runtime value substitution
         manifestPlaceholders["ADMOB_APP_ID"] = prop("ADMOB_APP_ID")
 
@@ -60,8 +60,15 @@ android {
     }
 
     buildTypes {
+        debug {
+            manifestPlaceholders["NATIVE_AD_DEBUGGER"] = "true"
+            buildConfigField("String", "ADMOB_TEST_DEVICE_ID", "\"${prop("ADMOB_TEST_DEVICE_ID")}\"")
+        }
         release {
             signingConfig = signingConfigs.getByName("release")
+            manifestPlaceholders["NATIVE_AD_DEBUGGER"] = "false"
+            // Never treat devices as test devices in Play release builds
+            buildConfigField("String", "ADMOB_TEST_DEVICE_ID", "\"\"")
             isMinifyEnabled = true
             isShrinkResources = true
             isDebuggable = false

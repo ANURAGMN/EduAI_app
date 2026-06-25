@@ -159,7 +159,8 @@ private fun BottomNavBarContent(
                                 navController.navigate("concept_sim_view/$encodedUrl/$title/$encodedConceptId")
                             }
                         )
-                    }
+                    },
+                    onSessionInvalid = onLogout
                 )
             }
             composable(BottomNavItem.Progress.route) {

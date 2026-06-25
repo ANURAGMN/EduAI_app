@@ -69,6 +69,7 @@ async function main() {
   events.sort((a, b) => (b.entryTime || 0) - (a.entryTime || 0));
 
   const clicks = events.filter((e) => e.eventType === "CLICK");
+  const funnel = events.filter((e) => e.eventType === "FUNNEL");
   const contentClicks = events.filter(
     (e) => e.screenName === "CONTENT" && e.eventType === "CLICK"
   );
@@ -83,6 +84,15 @@ async function main() {
   console.log(`\n=== Analytics for ${email} ===`);
   console.log(`Total events: ${events.length}`);
   console.log(`CLICK events: ${clicks.length} (content=${contentClicks.length}, simulation=${simClicks.length})`);
+  console.log(`FUNNEL events: ${funnel.length}`);
+  if (funnel.length > 0) {
+    const funnelCounts = {};
+    for (const e of funnel) {
+      const step = e.interactionType || e.conceptId || "?";
+      funnelCounts[step] = (funnelCounts[step] || 0) + 1;
+    }
+    console.log("Funnel breakdown:", funnelCounts);
+  }
   console.log(`SIMULATION_VIEWER exits: ${viewerExits.length}`);
   console.log(`COMPLETE events: ${completes.length}`);
 

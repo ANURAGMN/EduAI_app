@@ -8,10 +8,12 @@ import com.ncert7.aitutorandlab.data.local.database.EduAiDatabase
 import com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
 import com.ncert7.aitutorandlab.data.local.entities.StudentEntity
 import com.ncert7.aitutorandlab.debug.DebugLogger
+import com.ncert7.aitutorandlab.config.AppConfig
 import com.ncert7.aitutorandlab.repository.FirebaseRepository
 import com.ncert7.aitutorandlab.repository.StreakRepository
 import com.ncert7.aitutorandlab.repository.StudentLocalRepository
 import com.ncert7.aitutorandlab.repository.UserCheckResult
+import com.ncert7.aitutorandlab.service.auth.PadaamsEmailAuth
 import com.ncert7.aitutorandlab.service.sync.DataSyncService
 import com.ncert7.aitutorandlab.service.sync.FirebaseSyncManager
 import com.ncert7.aitutorandlab.utils.LanguageHelper
@@ -27,6 +29,7 @@ import javax.inject.Inject
 class UserViewModel @Inject constructor(
     private val repo: FirebaseRepository,
     private val streakRepository: StreakRepository,
+    private val studentLocalRepository: StudentLocalRepository,
     private val sharedPreferenceUtils: SharedPreferenceUtils,
 ) : ViewModel() {
 
@@ -51,6 +54,30 @@ class UserViewModel @Inject constructor(
 
     init {
         DebugLogger.debugLog("UserViewModel", "UserViewModel initialized")
+    }
+
+    /**
+     * Returns true only when login prefs match a student row in the local database.
+     * Clears stale prefs (e.g. cloud backup restored isLoggedIn without Room data).
+     */
+    suspend fun hasValidLocalSession(): Boolean {
+        if (!sharedPreferenceUtils.isLoggedIn()) return false
+        val userId = sharedPreferenceUtils.getUserId()
+        if (userId.isNullOrBlank()) {
+            sharedPreferenceUtils.clearAllUserData()
+            return false
+        }
+        val student = studentLocalRepository.getStudentSync(userId)
+        if (student == null) {
+            DebugLogger.warnLog(
+                "UserViewModel",
+                "Stale session: isLoggedIn=true but no local student for $userId — clearing prefs"
+            )
+            sharedPreferenceUtils.clearAllUserData()
+            sharedPreferenceUtils.clearAllAuthData()
+            return false
+        }
+        return true
     }
 
     fun updateId(id: String) {
@@ -115,6 +142,33 @@ class UserViewModel @Inject constructor(
 
             // Apply language change to app
             LanguageHelper.setLanguage(langCode)
+        }
+    }
+
+    /**
+     * In-app sign-in for @padaams.in emails (no Google OAuth). Goes straight to home after sync.
+     */
+    fun signInWithPadaamsEmail(context: Context, email: String, password: String) {
+        viewModelScope.launch {
+            _loginState.value = LoginState.Loading
+            if (!PadaamsEmailAuth.validateCredentials(email, password)) {
+                _loginState.value = LoginState.Error(IllegalArgumentException("Invalid credentials"))
+                return@launch
+            }
+
+            val normalizedEmail = email.trim().lowercase()
+            val language = _selectedLanguage.value
+            _user.value = User(
+                id = normalizedEmail,
+                email = normalizedEmail,
+                displayName = PadaamsEmailAuth.displayNameFor(normalizedEmail),
+                language = language,
+                studentClass = 7,
+                appName = AppConfig.APP_NAME
+            )
+            _loginState.value = LoginState.Idle
+            DebugLogger.debugLog("UserViewModel", "Padaams email sign-in: $normalizedEmail")
+            saveExistingUserLocally(context)
         }
     }
 
@@ -205,6 +259,14 @@ class UserViewModel @Inject constructor(
                     chapterProgressDao = db.chapterAgentProgressDao(),
                     context = context
                 )
+
+                // Fresh install / empty DB: pull syllabus before progress sync
+                val existingSubjects = db.subjectDao().getSubjectsForClassSync(currentUser.studentClass)
+                if (existingSubjects.isEmpty()) {
+                    val contentResult = syncManager.syncAllContent()
+                    DebugLogger.debugLog("UserViewModel", "Content sync: ${contentResult.message}")
+                }
+
                 // Sync user progress from Firebase (restores concept/simulation progress rows)
                 val progressResult = syncManager.syncUserProgress(currentUser.id)
                 DebugLogger.debugLog("UserViewModel", "Progress sync: ${progressResult.message}")
@@ -222,8 +284,8 @@ class UserViewModel @Inject constructor(
                 sharedPreference.setLanguagePreference(currentUser.language)
                 sharedPreference.setUserId(currentUser.id)
 
-                // Initialize DataSyncService with the student ID for real-time sync
-                DataSyncService.updateStudentId(currentUser.id)
+                // Initialize DataSyncService and sync pre-login funnel events
+                DataSyncService.onUserAuthenticated(currentUser.id)
                 DebugLogger.debugLog("UserViewModel", "DataSyncService initialized with studentId: ${currentUser.id}")
 
                 _existingUserSyncState.value = ExistingUserSyncState.Success
@@ -302,8 +364,8 @@ class UserViewModel @Inject constructor(
                     sharedPreference.setLanguagePreference(currentUser.language)
                     sharedPreference.setUserId(currentUser.id)
 
-                    // Initialize DataSyncService with the student ID for real-time sync
-                    DataSyncService.updateStudentId(currentUser.id)
+                    // Initialize DataSyncService and sync pre-login funnel events
+                    DataSyncService.onUserAuthenticated(currentUser.id)
                     DebugLogger.debugLog("UserViewModel", "DataSyncService initialized with studentId: ${currentUser.id}")
 
                     _userSaveState.value = UserSaveState.Success

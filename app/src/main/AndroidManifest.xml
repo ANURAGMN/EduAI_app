@@ -21,7 +21,7 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${ADMOB_APP_ID}" />
         <meta-data android:name="com.google.android.gms.ads.flag.NATIVE_AD_DEBUGGER_ENABLED"
-            android:value="true" />
+            android:value="${NATIVE_AD_DEBUGGER}" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

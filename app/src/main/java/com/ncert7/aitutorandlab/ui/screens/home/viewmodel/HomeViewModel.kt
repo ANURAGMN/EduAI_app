@@ -66,6 +66,9 @@ class HomeViewModel @Inject constructor(
     private val _student = MutableStateFlow<StudentEntity?>(null)
     val student: StateFlow<StudentEntity?> = _student
 
+    private val _studentLoaded = MutableStateFlow(false)
+    val studentLoaded: StateFlow<Boolean> = _studentLoaded
+
     private val _greeting = MutableStateFlow("")
     val greeting: StateFlow<String> = _greeting
 
@@ -321,6 +324,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             val result = studentDao.getStudentSync(userId)
             _student.value = result
+            _studentLoaded.value = true
             DebugLogger.debugLog("HomeViewModel", "Student loaded: ${result?.studentName}")
         }
     }

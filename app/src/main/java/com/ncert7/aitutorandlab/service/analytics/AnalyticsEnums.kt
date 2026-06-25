@@ -24,7 +24,18 @@ enum class EventType(val type: String) {
     ENTRY("ENTRY"),
     EXIT("EXIT"),
     CLICK("CLICK"),
-    COMPLETE("COMPLETE")
+    COMPLETE("COMPLETE"),
+    FUNNEL("FUNNEL")
+}
+
+/** Onboarding / sign-in funnel steps (stored with screenName = FUNNEL). */
+enum class FunnelStep(val value: String) {
+    LOGIN_VIEW("login_view"),
+    GMAIL_TAP("gmail_tap"),
+    INSTITUTIONAL_EXPAND("institutional_expand"),
+    INSTITUTIONAL_SIGN_IN("institutional_sign_in"),
+    PROFILE_SUBMIT("profile_submit"),
+    HOME_VIEW("home_view")
 }
 
 enum class ClickSource(val value: String) {

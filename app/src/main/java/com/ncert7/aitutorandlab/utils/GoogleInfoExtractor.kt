@@ -31,7 +31,10 @@ class GoogleInfoExtractor {
             DebugLogger.debugLog("GoogleUserInfo", "Email: ${userInfo.email}")
             DebugLogger.debugLog("GoogleUserInfo", "Display Name: ${userInfo.displayName}")
             DebugLogger.debugLog("GoogleUserInfo", "Profile Picture: ${userInfo.profilePictureUri}")
-            DebugLogger.debugLog("GoogleUserInfo", "JWT Token: ${userInfo.jwtToken}")
+            DebugLogger.debugLog(
+                "GoogleUserInfo",
+                "JWT received (length=${userInfo.jwtToken.length})"
+            )
 
             return userInfo
         }

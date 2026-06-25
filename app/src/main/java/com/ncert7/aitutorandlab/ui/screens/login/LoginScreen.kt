@@ -42,8 +42,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.ncert7.aitutorandlab.R
+import com.ncert7.aitutorandlab.service.analytics.FunnelStep
+import com.ncert7.aitutorandlab.service.analytics.FunnelAnalyticsTracker
 import com.ncert7.aitutorandlab.service.analytics.ScreenName
 import com.ncert7.aitutorandlab.service.analytics.TrackScreenEvent
+import com.ncert7.aitutorandlab.ui.screens.login.components.EmailSignInForm
 import com.ncert7.aitutorandlab.ui.screens.login.components.FooterCard
 import com.ncert7.aitutorandlab.ui.screens.login.components.GoogleLoginButton
 import com.ncert7.aitutorandlab.ui.screens.login.components.LanguageSelector
@@ -69,6 +72,10 @@ fun LoginScreen(
 
     // Analytics Tracking
     TrackScreenEvent(screenName = ScreenName.LOGIN)
+
+    LaunchedEffect(Unit) {
+        FunnelAnalyticsTracker.track(FunnelStep.LOGIN_VIEW)
+    }
 
     // Check for in-app updates when LoginScreen is displayed
     // Google's native in-app update UI will appear automatically if update is available
@@ -177,6 +184,16 @@ fun LoginScreen(
 
                             // Google Sign in
                             GoogleLoginButton(
+                                navController = navController,
+                                userViewModel = userViewModel,
+                                onError = { error ->
+                                    errorMessage = error
+                                }
+                            )
+
+                            Spacer(modifier = Modifier.height(dimens.spaceMedium))
+
+                            EmailSignInForm(
                                 navController = navController,
                                 userViewModel = userViewModel,
                                 onError = { error ->

@@ -54,6 +54,14 @@ object FirebaseAnalyticsHelper {
         )
     }
 
+    fun logFunnelStep(step: FunnelStep) {
+        val bundle = Bundle().apply {
+            putString("funnel_step", step.value)
+            putString("language", getCurrentLanguageCode())
+        }
+        firebaseAnalytics?.logEvent("funnel_step", bundle)
+    }
+
     private fun logEvent(
         eventName: String,
         itemId: String,

@@ -36,6 +36,8 @@ import com.ncert7.aitutorandlab.R
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.service.auth.GoogleSignIn
 import com.ncert7.aitutorandlab.service.auth.NetworkException
+import com.ncert7.aitutorandlab.service.analytics.FunnelAnalyticsTracker
+import com.ncert7.aitutorandlab.service.analytics.FunnelStep
 import com.ncert7.aitutorandlab.ui.theme.ColorHint
 import com.ncert7.aitutorandlab.ui.theme.LocalDimensions
 import com.ncert7.aitutorandlab.ui.theme.TextPrimary
@@ -120,8 +122,31 @@ fun GoogleLoginButton(
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        // The actual result handling is done in GoogleSignIn.doGoogleSignIn
-        DebugLogger.debugLog("GoogleLoginButton", "Activity result received: ${result.resultCode}")
+        GoogleSignIn.handleSignInActivityResult(
+            context = context,
+            resultCode = result.resultCode,
+            data = result.data,
+            onLoginSuccess = { firebaseUser ->
+                scope.launch {
+                    userViewModel.handleGoogleLogin(firebaseUser)
+                }
+                DebugLogger.debugLog("GoogleLoginButton", "Google sign-in successful: ${firebaseUser.email}")
+            },
+            onLoginFailed = { error ->
+                val errorMessage = when (error) {
+                    is NetworkException -> error.message ?: "Network error. Please try again."
+                    else -> when {
+                        error.message?.contains("network", ignoreCase = true) == true ||
+                            error.message?.contains("timeout", ignoreCase = true) == true ||
+                            error.message?.contains("connection", ignoreCase = true) == true ->
+                            "Network error. Please check your connection and try again."
+                        else -> "Sign-in failed. Please try again."
+                    }
+                }
+                onError(errorMessage)
+                DebugLogger.debugLog("GoogleLoginButton", "Google sign-in failed: ${error.message}")
+            }
+        )
     }
 
     val isLoading = loginState is LoginState.Loading
@@ -129,6 +154,7 @@ fun GoogleLoginButton(
     OutlinedButton(
         onClick = {
             if (!isLoading) {
+                FunnelAnalyticsTracker.track(FunnelStep.GMAIL_TAP)
                 GoogleSignIn.doGoogleSignIn(
                     context = context,
                     scope = scope,

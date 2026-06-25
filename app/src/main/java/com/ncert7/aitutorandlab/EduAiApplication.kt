@@ -10,6 +10,7 @@ import com.ncert7.aitutorandlab.data.local.SharedPreferenceUtils
 import com.ncert7.aitutorandlab.data.local.database.EduAiDatabase
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.service.analytics.ContentClickAnalyticsTracker
+import com.ncert7.aitutorandlab.service.analytics.FunnelAnalyticsTracker
 import com.ncert7.aitutorandlab.service.analytics.SessionManager
 import com.ncert7.aitutorandlab.service.ads.ClickAdGate
 import com.ncert7.aitutorandlab.service.analytics.SimulationAnalyticsTracker
@@ -51,6 +52,7 @@ class EduAiApplication : Application(), Configuration.Provider {
         SessionManager.initialize(this)
         SimulationAnalyticsTracker.initialize(this)
         ContentClickAnalyticsTracker.initialize(this)
+        FunnelAnalyticsTracker.initialize(this)
         ClickAdGate.initialize(this)
 
         // Register app lifecycle observer (this will handle session start/end)

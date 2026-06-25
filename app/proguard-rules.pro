@@ -102,6 +102,31 @@
     native <methods>;
 }
 
+# ========== HILT / DAGGER ==========
+-keep class dagger.** { *; }
+-keep class javax.inject.** { *; }
+-keep class * extends dagger.internal.Factory
+-keep class * extends dagger.internal.ModuleAdapter
+-keepclasseswithmembers class * {
+    @dagger.* <methods>;
+    @javax.inject.* <fields>;
+    @javax.inject.* <methods>;
+}
+
+# ========== FIREBASE / FIRESTORE ==========
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
+-dontwarn com.google.firebase.**
+
+# ========== GOOGLE SIGN-IN / CREDENTIAL MANAGER ==========
+-keep class com.google.android.libraries.identity.googleid.** { *; }
+-keep class androidx.credentials.** { *; }
+
+# ========== ROOM ==========
+-keep class * extends androidx.room.RoomDatabase
+-keep @androidx.room.Entity class *
+-dontwarn androidx.room.paging.**
+
 # Keep setters in Views for animations
 -keepclassmembers public class * extends android.view.View {
     void set*(***);

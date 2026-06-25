@@ -51,6 +51,9 @@ interface SessionDao {
     @Query("UPDATE sessions SET isSynced = 1 WHERE sessionId = :sessionId")
     suspend fun markSessionAsSynced(sessionId: String)
 
+    @Query("UPDATE sessions SET studentId = :studentId, isSynced = 0 WHERE studentId = ''")
+    suspend fun backfillEmptyStudentId(studentId: String)
+
     // Delete a session
     @Query("DELETE FROM sessions WHERE sessionId = :sessionId")
     suspend fun deleteSession(sessionId: String)

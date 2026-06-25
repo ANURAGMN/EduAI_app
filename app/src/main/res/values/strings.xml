@@ -13,6 +13,13 @@
     <string name="forget_password">Forgot Password?</string>
     <string name="policy_msg">By signing up, you agree to our Terms of Service and Privacy Policy</string>
     <string name="continue_with_google">Continue with Gmail</string>
+    <string name="padaams_sign_in">Institutional sign in</string>
+    <string name="padaams_sign_in_subtitle">For @padaams.in accounts only. Use Continue with Gmail for personal Google accounts.</string>
+    <string name="padaams_email_label">Padaams email</string>
+    <string name="padaams_email_hint">you@padaams.in</string>
+    <string name="padaams_email_helper">Not for Gmail — use the button above for Google sign-in</string>
+    <string name="password_label">Password</string>
+    <string name="sign_in_with_email">Sign in with Email</string>
     <string name="full_name">Full Name</string>
     <string name="confirm_password">Confirm Password</string>
     <string name="day_streak">Day Streak</string>

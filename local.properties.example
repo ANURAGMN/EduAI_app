@@ -2,6 +2,14 @@
 
 sdk.dir=C\:\\Users\\YOUR_USER\\AppData\\Local\\Android\\Sdk
 
+# --- Release signing (required for bundleRelease / Play upload) ---
+# Generate once: keytool -genkey -v -keystore eduai-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias eduai
+# Path is relative to the app/ module (use ../ for project root)
+KEYSTORE_PATH=../eduai-upload.jks
+KEYSTORE_PASSWORD=your_keystore_password
+KEY_ALIAS=eduai
+KEY_PASSWORD=your_key_password
+
 # --- AdMob (production) ---
 # Create at https://admob.google.com → Apps → EduAI → Ad units → Banner
 # Link to Firebase project eduai-e090e for revenue analytics.
@@ -10,10 +18,18 @@ sdk.dir=C\:\\Users\\YOUR_USER\\AppData\\Local\\Android\\Sdk
 ADMOB_APP_ID=ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY
 BANNER_AD_UNIT_ID=ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ
 
-# Optional: hashed test device ID from logcat ("Use RequestConfiguration.Builder().setTestDeviceIds...")
+# Optional: hashed test device ID from logcat — debug builds ONLY (release AAB ignores this)
 ADMOB_TEST_DEVICE_ID=
 
-# --- Other keys (existing) ---
-# AUTH_KEY=
-# GEMINI_API_KEY=
-# ...
+# --- Backend & AI (required for full app functionality) ---
+AUTH_KEY=
+AGENTIC_AI_BASE_URL=
+GEMINI_API_KEY=
+GROQ_API_KEY=
+SIMULATION_BASE_URL=
+API_KEYS=
+API_KEY_HEADER_NAME=
+
+# --- Padaams in-app sign-in (Play review / @padaams.in accounts) ---
+# Shown on login when set. Use check@padaams.in + this password in Play Console Sign-in details.
+PADAAMS_SIGNIN_PASSWORD=

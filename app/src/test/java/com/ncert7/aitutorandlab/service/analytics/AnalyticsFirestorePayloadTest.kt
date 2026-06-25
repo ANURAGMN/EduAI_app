@@ -33,6 +33,26 @@ class AnalyticsFirestorePayloadTest {
     }
 
     @Test
+    fun build_includesFunnelStepMetadata() {
+        val entity = AppAnalyticsEntity(
+            analyticsId = 99L,
+            sessionId = "session-1",
+            screenName = "FUNNEL",
+            eventType = "FUNNEL",
+            entryTime = 1_000L,
+            conceptId = "gmail_tap",
+            interactionType = "gmail_tap",
+            appName = "eduai_app"
+        )
+
+        val payload = AnalyticsFirestorePayload.build(entity, "student-1")
+
+        assertEquals("FUNNEL", payload["eventType"])
+        assertEquals("gmail_tap", payload["interactionType"])
+        assertEquals("gmail_tap", payload["conceptId"])
+    }
+
+    @Test
     fun build_omitsOptionalFieldsWhenNull() {
         val entity = AppAnalyticsEntity(
             analyticsId = 1L,

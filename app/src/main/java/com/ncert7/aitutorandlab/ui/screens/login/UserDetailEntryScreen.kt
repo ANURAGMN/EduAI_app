@@ -53,6 +53,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.ncert7.aitutorandlab.R
 import com.ncert7.aitutorandlab.debug.DebugLogger
+import com.ncert7.aitutorandlab.service.analytics.FunnelAnalyticsTracker
+import com.ncert7.aitutorandlab.service.analytics.FunnelStep
 import com.ncert7.aitutorandlab.service.analytics.ScreenName
 import com.ncert7.aitutorandlab.service.analytics.TrackScreenEvent
 import com.ncert7.aitutorandlab.ui.components.DropDownMenu
@@ -356,6 +358,7 @@ fun UserDetailEntryScreen(
                                 phoneNumber.isNotBlank() && schoolName.isNotBlank(),
                         onClick = {
                             DebugLogger.debugLog("UserDetailEntryScreen", "Get Started Button Clicked")
+                            FunnelAnalyticsTracker.track(FunnelStep.PROFILE_SUBMIT)
 
                             // Update user data in ViewModel
                             userViewModel.updateName(fullName)

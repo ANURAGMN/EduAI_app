@@ -18,6 +18,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+*.jks
+*.keystore
 app/google-services.json
 app/release/
 .tools/

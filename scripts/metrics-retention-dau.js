@@ -287,7 +287,9 @@ async function main() {
   const analyticsActivity = new Map();
   const clicksByDay = new Map();
   const clickTypeCounts = new Map();
+  const funnelCounts = new Map();
   let totalClicks = 0;
+  let totalFunnel = 0;
   for (const container of await listTopLevel(client, "analytics")) {
     const email = emailFromContainer(container);
     for (const e of await listSubRecords(client, `analytics/${container}`, "events")) {
@@ -302,6 +304,11 @@ async function main() {
         clickTypeCounts.set(type, (clickTypeCounts.get(type) || 0) + 1);
         if (day) clicksByDay.set(day, (clicksByDay.get(day) || 0) + 1);
       }
+      if (eventType === "FUNNEL") {
+        totalFunnel++;
+        const step = fv(f, "interactionType") || fv(f, "conceptId") || "?";
+        funnelCounts.set(step, (funnelCounts.get(step) || 0) + 1);
+      }
     }
   }
 
@@ -311,7 +318,7 @@ async function main() {
   const recentDays = sortedDays.slice(-dauWindow);
   const todayStr = dayFn(Date.now());
 
-  console.log(`Users: ${users.length} | Session records: ${sessionCount} | Analytics clicks: ${totalClicks}`);
+  console.log(`Users: ${users.length} | Session records: ${sessionCount} | Analytics clicks: ${totalClicks} | Funnel steps: ${totalFunnel}`);
   console.log(`Users with activity: ${combined.size}\n`);
 
   console.log(`--- DAU (last ${dauWindow} days) ---`);
@@ -346,6 +353,12 @@ async function main() {
     console.log(`  ${type}: ${count}`);
   }
 
+  console.log("\n--- Funnel steps (all users) ---");
+  const funnelSteps = [...funnelCounts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  for (const [step, count] of funnelSteps) {
+    console.log(`  ${step}: ${count}`);
+  }
+
   if (args.includes("--html") || args.includes("--html-only")) {
     const report = {
       generatedAt: new Date().toISOString(),
@@ -354,10 +367,12 @@ async function main() {
       activeUsers: combined.size,
       todayDau: dau.get(todayStr)?.size || 0,
       totalClicks,
+      totalFunnel,
       totalSessions: sessionCount,
       dauDays,
       cohorts,
       topClickTypes,
+      funnelSteps,
     };
     const outPath = path.resolve(htmlOut);
     fs.mkdirSync(path.dirname(outPath), { recursive: true });

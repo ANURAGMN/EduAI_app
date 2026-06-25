@@ -1,23 +1,29 @@
 package com.ncert7.aitutorandlab.service.auth
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.provider.Settings
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.result.ActivityResult
 import androidx.credentials.CredentialManager
-import androidx.credentials.CredentialOption
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
+import com.google.android.gms.auth.api.signin.GoogleSignIn as GmsGoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
+import com.google.android.gms.common.api.ApiException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.ncert7.aitutorandlab.BuildConfig
+import com.ncert7.aitutorandlab.config.AppConfig
 import com.ncert7.aitutorandlab.data.firebase.model.User
 import com.ncert7.aitutorandlab.debug.DebugLogger
 import com.ncert7.aitutorandlab.utils.GoogleInfoExtractor
 import com.ncert7.aitutorandlab.utils.TokenManager
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -27,6 +33,8 @@ import java.net.UnknownHostException
 class GoogleSignIn {
 
     companion object {
+        private const val TAG = "GoogleSignIn"
+
         fun doGoogleSignIn(
             context: Context,
             scope: CoroutineScope,
@@ -35,119 +43,161 @@ class GoogleSignIn {
             onLoginFailed: (error: Throwable) -> Unit
         ) {
             val credentialManager = CredentialManager.create(context)
-
             val request = GetCredentialRequest.Builder()
-                .addCredentialOption(getCredentialOptions(context))
+                .addCredentialOption(getCredentialOptions())
                 .build()
 
             scope.launch {
                 try {
                     val result = credentialManager.getCredential(context, request)
-
                     when (result.credential) {
                         is CustomCredential -> {
                             if (result.credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-
                                 val googleIdTokenCredential =
                                     GoogleIdTokenCredential.createFrom(result.credential.data)
-
-                                val user: User =
-                                    GoogleInfoExtractor.extractAndLogUserInfo(googleIdTokenCredential)
-
-                                // Store Google ID token for API authentication and silent refresh
-                                TokenManager.saveIdToken(context, googleIdTokenCredential.idToken)
-
-                                onLoginSuccess(user)
+                                completeSignIn(
+                                    context = context,
+                                    user = GoogleInfoExtractor.extractAndLogUserInfo(googleIdTokenCredential),
+                                    idToken = googleIdTokenCredential.idToken,
+                                    onLoginSuccess = onLoginSuccess
+                                )
                             } else {
-                                val error = IllegalStateException("Unexpected credential type: ${result.credential.type}")
-                                DebugLogger.errorLog("GoogleSignIn", error.message ?: "")
-                                onLoginFailed(error)
+                                onLoginFailed(
+                                    IllegalStateException("Unexpected credential type: ${result.credential.type}")
+                                )
                             }
                         }
-                        else -> {
-                            val error = IllegalStateException("Unknown credential object")
-                            DebugLogger.errorLog("GoogleSignIn", error.message ?: "")
-                            onLoginFailed(error)
-                        }
+                        else -> onLoginFailed(IllegalStateException("Unknown credential object"))
                     }
-
                 } catch (e: NoCredentialException) {
-                    // This is not an error - user needs to add an account
-                    // Launch account picker without calling onLoginFailed
-                    DebugLogger.debugLog("GoogleSignIn", "No credentials found, launching account picker")
-                    launcher?.launch(getIntent())
-
+                    DebugLogger.debugLog(TAG, "No cached credential — opening Google account picker")
+                    launcher?.launch(createAccountPickerIntent(context))
+                        ?: onLoginFailed(IllegalStateException("Unable to open Google sign-in"))
                 } catch (e: GetCredentialException) {
-                    // Check if it's a network-related error
-                    val networkError = isNetworkError(e)
-                    if (networkError) {
-                        DebugLogger.errorLog("GoogleSignIn", "Network error during credential fetch: ${e.message}")
-                        onLoginFailed(NetworkException("Network error. Please check your connection and try again.", e))
+                    if (isNetworkError(e)) {
+                        onLoginFailed(
+                            NetworkException("Network error. Please check your connection and try again.", e)
+                        )
                     } else {
-                        DebugLogger.errorLog("GoogleSignIn", "Credential exception: ${e.message}")
-                        onLoginFailed(e)
+                        DebugLogger.debugLog(TAG, "Credential Manager failed, using account picker: ${e.message}")
+                        launcher?.launch(createAccountPickerIntent(context))
+                            ?: onLoginFailed(e)
                     }
-
                 } catch (e: SocketTimeoutException) {
-                    DebugLogger.errorLog("GoogleSignIn", "Connection timeout: ${e.message}")
-                    onLoginFailed(NetworkException("Connection timeout. Please check your internet connection and try again.", e))
-
+                    onLoginFailed(
+                        NetworkException("Connection timeout. Please check your internet connection and try again.", e)
+                    )
                 } catch (e: UnknownHostException) {
-                    DebugLogger.errorLog("GoogleSignIn", "Network unavailable: ${e.message}")
-                    onLoginFailed(NetworkException("No internet connection. Please check your network and try again.", e))
-
+                    onLoginFailed(
+                        NetworkException("No internet connection. Please check your network and try again.", e)
+                    )
                 } catch (e: IOException) {
-                    DebugLogger.errorLog("GoogleSignIn", "Network I/O error: ${e.message}")
                     onLoginFailed(NetworkException("Network error occurred. Please try again.", e))
-
                 } catch (e: Exception) {
-                    DebugLogger.errorLog("GoogleSignIn", "Unexpected exception: ${e.message}")
+                    DebugLogger.errorLog(TAG, "Unexpected exception: ${e.message}")
                     onLoginFailed(e)
                 }
             }
         }
 
-        private fun getIntent(): Intent {
-            return Intent(Settings.ACTION_ADD_ACCOUNT).apply {
-                putExtra(Settings.EXTRA_ACCOUNT_TYPES, arrayOf("com.google"))
+        /** Legacy Google Sign-In intent — shows accounts already on the device. */
+        fun createAccountPickerIntent(context: Context): Intent =
+            getGoogleSignInClient(context).signInIntent
+
+        fun handleSignInActivityResult(
+            context: Context,
+            resultCode: Int,
+            data: Intent?,
+            onLoginSuccess: (user: User) -> Unit,
+            onLoginFailed: (error: Throwable) -> Unit
+        ) {
+            if (resultCode != Activity.RESULT_OK) {
+                DebugLogger.debugLog(TAG, "Google sign-in cancelled (resultCode=$resultCode)")
+                return
+            }
+            try {
+                val account = GmsGoogleSignIn
+                    .getSignedInAccountFromIntent(data)
+                    .getResult(ApiException::class.java)
+                val idToken = account.idToken
+                if (idToken.isNullOrBlank()) {
+                    onLoginFailed(IllegalStateException("Google sign-in returned no ID token"))
+                    return
+                }
+                completeSignIn(
+                    context = context,
+                    user = userFromGoogleAccount(account),
+                    idToken = idToken,
+                    onLoginSuccess = onLoginSuccess
+                )
+            } catch (e: ApiException) {
+                when (e.statusCode) {
+                    GoogleSignInStatusCodes.SIGN_IN_CANCELLED ->
+                        DebugLogger.debugLog(TAG, "User cancelled Google account picker")
+                    else -> {
+                        DebugLogger.errorLog(TAG, "Google sign-in failed: ${e.statusCode} ${e.message}")
+                        onLoginFailed(e)
+                    }
+                }
+            } catch (e: Exception) {
+                DebugLogger.errorLog(TAG, "Error parsing Google sign-in result: ${e.message}")
+                onLoginFailed(e)
             }
         }
 
-        private fun getCredentialOptions(context: Context): CredentialOption {
-            return GetGoogleIdOption.Builder()
+        private fun getGoogleSignInClient(context: Context): GoogleSignInClient {
+            val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(BuildConfig.AUTH_KEY)
+                .requestEmail()
+                .build()
+            return GmsGoogleSignIn.getClient(context, options)
+        }
+
+        private fun getCredentialOptions() =
+            GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(false)
                 .setAutoSelectEnabled(false)
                 .setServerClientId(BuildConfig.AUTH_KEY)
                 .build()
+
+        private fun completeSignIn(
+            context: Context,
+            user: User,
+            idToken: String,
+            onLoginSuccess: (User) -> Unit
+        ) {
+            TokenManager.saveIdToken(context, idToken)
+            onLoginSuccess(user)
         }
 
-        /**
-         * Check if the exception is network-related
-         */
-        private fun isNetworkError(exception: Throwable): Boolean {
-            val message = exception.message?.lowercase() ?: ""
-            val cause = exception.cause
-
-            return when {
-                // Check exception message
-                message.contains("network") -> true
-                message.contains("timeout") -> true
-                message.contains("connection") -> true
-                message.contains("unable to resolve host") -> true
-                message.contains("failed to connect") -> true
-
-                // Check exception cause
-                cause is SocketTimeoutException -> true
-                cause is UnknownHostException -> true
-                cause is IOException -> true
-
-                else -> false
+        private fun userFromGoogleAccount(account: GoogleSignInAccount): User {
+            val email = account.email.orEmpty()
+            return User(
+                id = email.ifBlank { account.id.orEmpty() },
+                email = email,
+                displayName = account.displayName,
+                profilePictureUri = account.photoUrl?.toString(),
+                studentClass = 7,
+                jwtToken = account.idToken.orEmpty(),
+                appName = AppConfig.APP_NAME
+            ).also {
+                DebugLogger.debugLog(TAG, "Account picker sign-in: ${it.email}")
             }
+        }
+
+        private fun isNetworkError(exception: Throwable): Boolean {
+            val message = exception.message?.lowercase().orEmpty()
+            val cause = exception.cause
+            return message.contains("network") ||
+                message.contains("timeout") ||
+                message.contains("connection") ||
+                message.contains("unable to resolve host") ||
+                message.contains("failed to connect") ||
+                cause is SocketTimeoutException ||
+                cause is UnknownHostException ||
+                cause is IOException
         }
     }
 }
 
-/**
- * Custom exception for network-related errors
- */
 class NetworkException(message: String, cause: Throwable? = null) : Exception(message, cause)

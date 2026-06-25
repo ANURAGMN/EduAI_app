@@ -31,7 +31,11 @@ class MainActivity : AppCompatActivity() {
         // Enable edge-to-edge
         enableEdgeToEdge()
         // Initialize Google Mobile Ads SDK (test devices + config from local.properties)
-        MobileAdsInitializer.initialize(this)
+        try {
+            MobileAdsInitializer.initialize(this)
+        } catch (e: Exception) {
+            DebugLogger.errorLog("MainActivity", "Mobile Ads init failed: ${e.message}", e)
+        }
 
         // Initialize Firestore Error Logger
         // This enables error logging to Firebase in both debug and release modes
