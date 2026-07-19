@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#14171a">
 <title>Real-World Applications – Metals &amp; Non-metals</title>
+<script>
+  // Android WebView often measures 100vh/100dvh against an initial, incorrect
+  // layout pass (e.g. before useWideViewPort/fillMaxSize settle), leaving a
+  // gap of the page's dark background below a too-short #app. Computing the
+  // real height in JS and exposing it as --vh avoids that entirely.
+  function setRealVh(){
+    document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+  }
+  setRealVh();
+  window.addEventListener('resize', setRealVh);
+  window.addEventListener('orientationchange', setRealVh);
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -24,9 +36,9 @@
     --disp:'Space Grotesk',sans-serif; --body:'Source Sans 3',sans-serif; --mono:'JetBrains Mono',monospace;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{height:100%;}
+  html,body{height:100%; overflow-x:hidden;}
   body{margin:0; font-family:var(--body); background:var(--ink); color:var(--ink); -webkit-font-smoothing:antialiased; overflow:hidden;}
-  #app{max-width:480px; margin:0 auto; height:100vh; height:100dvh; background:var(--paper); display:flex; flex-direction:column; position:relative;}
+  #app{max-width:480px; width:100%; margin:0 auto; height:100vh; height:100dvh; height:calc(var(--vh, 1vh) * 100); background:var(--paper); display:flex; flex-direction:column; position:relative; overflow:hidden;}
 
   header{flex:0 0 auto; display:flex; align-items:center; gap:12px; padding:14px 16px 10px;}
   #closeBtn{border:none; background:none; font-size:20px; color:var(--ink-soft); cursor:pointer; line-height:1; padding:4px;}
@@ -70,13 +82,13 @@
   .property-line .dot{width:8px; height:8px; border-radius:50%; background:var(--brand); flex:0 0 auto;}
 
   /* ---- mascot ---- */
-  .mascotRow{display:flex; align-items:flex-start; gap:10px; margin-bottom:16px;}
+  .mascotRow{display:flex; align-items:flex-start; gap:10px; margin-bottom:16px; width:100%;}
   .mascotAvatar{width:50px; height:50px; flex:0 0 auto; animation:mascotIdle 2.6s ease-in-out infinite; transform-origin:center bottom; display:block;}
   @keyframes mascotIdle{0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-4px) rotate(-2deg);}}
   @keyframes mascotHappy{0%{transform:translateY(0) rotate(0deg);} 30%{transform:translateY(-11px) rotate(-9deg);} 60%{transform:translateY(0) rotate(7deg);} 100%{transform:translateY(0) rotate(0deg);}}
   @keyframes mascotShake{0%,100%{transform:translateX(0) rotate(0deg);} 20%{transform:translateX(-6px) rotate(-5deg);} 40%{transform:translateX(6px) rotate(5deg);} 60%{transform:translateX(-4px) rotate(-3deg);} 80%{transform:translateX(4px) rotate(3deg);}}
   @keyframes mascotThink{0%,100%{transform:rotate(0deg);} 50%{transform:rotate(-11deg);}}
-  .mascotBubble{position:relative; background:#fff; border:1px solid var(--line); border-radius:14px; padding:10px 13px; font-size:13px; line-height:1.4; font-weight:600; color:var(--ink); margin-top:2px;}
+  .mascotBubble{position:relative; flex:1 1 auto; min-width:0; background:#fff; border:1px solid var(--line); border-radius:14px; padding:10px 13px; font-size:13px; line-height:1.4; font-weight:600; color:var(--ink); margin-top:2px; overflow-wrap:break-word; word-break:break-word;}
   .mascotBubble::before{content:""; position:absolute; left:-6px; top:13px; width:11px; height:11px; background:#fff; border-left:1px solid var(--line); border-bottom:1px solid var(--line); transform:rotate(45deg);}
 
   /* ---- review concept tag ---- */
