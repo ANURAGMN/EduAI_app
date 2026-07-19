@@ -10,12 +10,26 @@
   // layout pass (e.g. before useWideViewPort/fillMaxSize settle), leaving a
   // gap of the page's dark background below a too-short #app. Computing the
   // real height in JS and exposing it as --vh avoids that entirely.
+  //
+  // IMPORTANT: that same early layout pass can report innerHeight as 0,
+  // which would set --vh to 0px and collapse #app to nothing (a solid black
+  // screen) — so we guard against implausible readings and re-check a few
+  // times as the WebView finishes settling, rather than trusting the very
+  // first call.
   function setRealVh(){
-    document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+    var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    if(h && h > 100){
+      document.documentElement.style.setProperty('--vh', (h * 0.01) + 'px');
+    }
   }
   setRealVh();
+  window.addEventListener('load', setRealVh);
   window.addEventListener('resize', setRealVh);
   window.addEventListener('orientationchange', setRealVh);
+  if(window.visualViewport){ window.visualViewport.addEventListener('resize', setRealVh); }
+  setTimeout(setRealVh, 100);
+  setTimeout(setRealVh, 400);
+  setTimeout(setRealVh, 1000);
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,7 +52,7 @@
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%; overflow-x:hidden;}
   body{margin:0; font-family:var(--body); background:var(--ink); color:var(--ink); -webkit-font-smoothing:antialiased; overflow:hidden;}
-  #app{max-width:480px; width:100%; margin:0 auto; height:100vh; height:100dvh; height:calc(var(--vh, 1vh) * 100); background:var(--paper); display:flex; flex-direction:column; position:relative; overflow:hidden;}
+  #app{max-width:480px; width:100%; margin:0 auto; height:100vh; height:100dvh; height:calc(var(--vh, 1vh) * 100); min-height:320px; background:var(--paper); display:flex; flex-direction:column; position:relative; overflow:hidden;}
 
   header{flex:0 0 auto; display:flex; align-items:center; gap:12px; padding:14px 16px 10px;}
   #closeBtn{border:none; background:none; font-size:20px; color:var(--ink-soft); cursor:pointer; line-height:1; padding:4px;}
