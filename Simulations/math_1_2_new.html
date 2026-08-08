@@ -144,10 +144,20 @@ function render(last){
   `;
   sim.querySelectorAll(".opt").forEach(b=>b.onclick=()=>choose(parseInt(b.dataset.i,10)));
   const n = sim.querySelector("#nextBtn"); if(n) n.onclick = nextRound;
+  // --- V5 Socratic coach: ask about the grouping rule, reveal the right card only if stuck ---
+  if(!st.run){
+    window.__eduRound={native:true,line:st.msg||"Relay completed!",voice:"Relay completed.",key:"done-"+st.idx};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==="good"?"Correct.":"Check both formats next time."),submit:sim.querySelector("#nextBtn"),key:"res-"+st.idx};
+  } else {
+    const _ok=st.options.findIndex(o=>o.ok);
+    window.__eduRound={native:true,hint:"Indian groups the last 3 digits then 2s; International groups in 3s. Which card has BOTH right?",hintVoice:"Which card has both formats correct?",line:"Pick the card where both the Indian and International commas are placed correctly.",voice:"Pick the card with both formats correct.",glow:sim.querySelector('.opt[data-i="'+_ok+'"]'),key:"r-"+st.idx};
+  }
 }
 
 setupRound();
 render(-1);
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -185,8 +185,12 @@ function render(){
   c.querySelectorAll(".mode-tab").forEach(b=>b.onclick=()=>{scIdx=parseInt(b.dataset.i);render()});
   c.querySelectorAll("input[type='range']").forEach(sl=>{sl.oninput=function(){state[this.dataset.k]=parseFloat(this.value);render()}});
   c.querySelector("#apply-btn").onclick=()=>render();
+  // --- V5 coach: this is an explorer (no single answer) -> gentle guiding question per scenario ---
+  const _q={journey:"Drag Speed and Duration — how fast must you go to reach the Moon (384,400 km)?",buses:"Adjust capacity and vehicles — can you fit all of Mumbai (1.24 crore people)?",weight:"Change the weight and count — when does it get too heavy for a person to lift?",time:"Change the count and rate — how long would it take to count a million?",facts:"Slide through the facts — notice how multiplication makes numbers huge."}[sc.id]||"Explore how the numbers grow as you drag the sliders.";
+  window.__eduRound={native:true,line:_q,voice:"",key:"explore-"+sc.id};
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

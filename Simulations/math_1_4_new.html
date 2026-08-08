@@ -105,8 +105,22 @@ function render(){
   const r=sim.querySelector("#resetBtn"); if(r) r.onclick=reset;
   const c=sim.querySelector("#checkBtn"); if(c) c.onclick=check;
   const n=sim.querySelector("#nextBtn"); if(n) n.onclick=next;
+  // --- V5 Socratic coach: ask which tap gets closest, reveal the exact tap only if stuck ---
+  if(!st.run){
+    window.__eduRound={native:true,line:(st.idx>=TARGETS.length?"Race complete! Tap Start to play again.":"Tap Start Race to begin."),voice:(st.idx>=TARGETS.length?"Race complete.":"Tap start."),glow:sim.querySelector("#startBtn"),key:"start-"+st.idx};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==="good"?"Target built.":"Not exact. Try the next."),submit:sim.querySelector("#nextBtn"),key:"res-"+st.idx};
+  } else if(st.current===t){
+    window.__eduRound={native:true,line:"Exactly "+t.toLocaleString("en-IN")+"! Tap Lock Build.",voice:"Tap lock build.",submit:sim.querySelector("#checkBtn"),key:"lock-"+st.idx};
+  } else if(st.current>t){
+    window.__eduRound={native:true,line:"Over by "+(st.current-t).toLocaleString("en-IN")+" — tap Reset.",voice:"Over the target. Tap reset.",glow:sim.querySelector("#resetBtn"),key:"over-"+st.idx};
+  } else {
+    const _fit=PV.find(v=>st.current+v<=t);
+    window.__eduRound={native:true,hint:"Which place-value tap gets closest without going over? (digit-sum = fewest taps)",hintVoice:"Which tap gets closest without going over?",line:"Tap +"+_fit.toLocaleString("en-IN")+" — "+(t-st.current).toLocaleString("en-IN")+" to go.",voice:"Add "+_fit,glow:sim.querySelector('.btnpv[data-v="'+_fit+'"]'),key:"add-"+st.idx+"-"+_fit};
+  }
 }
 start();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

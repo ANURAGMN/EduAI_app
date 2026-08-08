@@ -117,8 +117,18 @@ function render(){
   const s=sim.querySelector('#startBtn'); if(s) s.onclick=start;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
+  // --- V5 Socratic coach: ask which speed reaches the target, reveal the answer only if stuck ---
+  if(!st.run){
+    window.__eduRound={native:true,line:(st.idx>=MISSIONS.length?"Journey complete! Tap Start to play again.":"Tap Start Journey Run to begin."),voice:(st.idx>=MISSIONS.length?"Journey complete.":"Tap start."),glow:sim.querySelector('#startBtn'),key:(st.idx>=MISSIONS.length?"done":"start")};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?"Good choice.":"Not optimal. Move to the next."),submit:sim.querySelector('#nextBtn'),key:"res-"+st.idx};
+  } else {
+    const _ans=[...sim.querySelectorAll('[data-v]')].find(b=>+b.dataset.v===m.answer);
+    window.__eduRound={native:true,hint:"Which daily speed × "+fmt(m.days)+" days covers about "+fmt(m.dist)+" km?",hintVoice:"Which speed reaches the target?",line:m.answer+" km/day works: "+m.answer+"×"+fmt(m.days)+" ≈ "+fmt(m.answer*m.days)+" km.",voice:"Choose "+m.answer+" kilometres per day.",glow:_ans,key:"m-"+st.idx};
+  }
 }
 start();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

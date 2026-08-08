@@ -258,8 +258,27 @@ function render(){
   c.querySelectorAll(".mode-tab").forEach(b=>b.onclick=()=>{mode=b.dataset.m;num=0;clicks=0;history=[];render()});
   if(c.querySelector("#presets"))c.querySelector("#presets").addEventListener("click",e=>{const b=e.target.closest(".preset-btn");if(!b)return;tIdx=parseInt(b.dataset.i);num=0;clicks=0;history=[];render()});
   c.querySelector("#restrict-seg").addEventListener("click",e=>{const b=e.target.closest(".seg-btn");if(!b)return;restrict=b.dataset.v;num=0;clicks=0;history=[];render()});
+  // --- V5 coach: publish the next move from this sim's own state (correct by construction) ---
+  if(mode==="challenge"){
+    const _diff=challenge.n-num;
+    if(_diff===0){
+      window.__eduRound={native:true,line:"Target reached — "+fmtI(challenge.n)+"! Try it in fewer clicks, or pick a new target.",voice:"Target reached.",key:"done-"+tIdx};
+    } else if(_diff<0){
+      window.__eduRound={native:true,line:"Over the target by "+fmtI(-_diff)+" — tap Undo.",voice:"Over the target. Tap undo.",glow:"#undo-btn",key:"over-"+tIdx};
+    } else {
+      const _fit=PV.map((p,i)=>({i:i,v:p.v,short:p.short})).filter(p=>(restrict==="all"||p.v===parseInt(restrict))&&num+p.v<=challenge.n).sort((a,b)=>b.v-a.v)[0];
+      if(_fit){
+        window.__eduRound={native:true,hint:"You're "+fmtI(_diff)+" away. Which place-value button gets you closest without going over?",hintVoice:"Which button gets you closest without going over?",line:"Tap "+_fit.short+" — "+fmtI(_diff)+" to go ("+fmtI(num)+" of "+fmtI(challenge.n)+").",voice:"Add "+_fit.v,glow:'.pv-btn[data-i="'+_fit.i+'"]',key:"add-"+tIdx+"-"+_fit.v};
+      } else {
+        window.__eduRound={native:true,line:challenge.hint+" ("+fmtI(_diff)+" to go)",voice:challenge.hint,key:"hint-"+tIdx};
+      }
+    }
+  } else {
+    window.__eduRound=null;
+  }
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -157,7 +157,7 @@ const QUIZ=[
 ];
 let qIdx=0,score=0,total=0,answered=false;
 
-function renderExplore(){
+function renderExplore(){window.__eduRound=null; // explore mode has no single answer -> no coach
   const n=currentNum;
   c.innerHTML=`
   <div class="mode-tabs">
@@ -202,10 +202,14 @@ function renderQuiz(){
   <div class="feedback-box" id="fb"></div>
   <button class="next-btn" id="nxt" style="display:none">Next Question</button>`;
   answered=false;
+  // --- V5 Socratic coach: ask first, reveal the right option only if the learner lingers ---
+  const _ansEl=[...c.querySelectorAll(".quiz-opt")].find(x=>x.dataset.v===q.ans);
+  window.__eduRound={native:true,hint:"Read the number carefully — which option matches?",hintVoice:"Which option matches?",line:`The correct answer is "${q.ans}".`+(q.ex?" "+q.ex:""),voice:"The answer is "+q.ans,glow:_ansEl,key:"q"+qIdx};
   c.querySelector("#qopts").addEventListener("click",e=>{
     const b=e.target.closest(".quiz-opt");if(!b||answered)return;answered=true;total++;
     if(b.dataset.v===q.ans){b.classList.add("correct");score++;c.querySelector("#fb").innerHTML=`<div style="background:#dcfce7;color:#166534;padding:8px;border-radius:8px">Correct! ${q.ex}</div>`}
     else{b.classList.add("wrong");c.querySelectorAll(".quiz-opt").forEach(x=>{if(x.dataset.v===q.ans)x.classList.add("correct")});c.querySelector("#fb").innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:8px;border-radius:8px">Answer: ${q.ans} — ${q.ex}</div>`}
+    window.__eduRound={native:true,line:(b.dataset.v===q.ans?"Correct! ":`Answer: ${q.ans} — `)+(q.ex||""),voice:b.dataset.v===q.ans?"Correct!":"The answer is "+q.ans,submit:c.querySelector("#nxt"),key:"q"+qIdx+"-done"};
     c.querySelector("#nxt").style.display="block";
   });
   c.querySelector("#nxt").onclick=()=>{qIdx++;renderQuiz()};
@@ -214,5 +218,6 @@ function renderQuiz(){
 
 renderExplore();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>
