@@ -115,6 +115,17 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  // --- V5 Socratic coach: find the smart round-number split ---
+  const _ci=st.opts.findIndex(o=>o===r.correct);
+  if(!st.run){
+    window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||"Burst complete!"):"Tap Restart."),voice:(st.idx>=ROUNDS.length?"Burst complete.":"Restart."),glow:sim.querySelector('#restartBtn'),key:"done-"+st.idx};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?"Great split.":"See the best decomposition."),submit:sim.querySelector('#nextBtn'),key:"res-"+st.idx};
+  } else if(st.pick===null){
+    window.__eduRound={native:true,hint:`What's a smart way to split ${r.expr} using round numbers?`,hintVoice:"How can you split it using round numbers?",line:`Use: ${r.correct}`,voice:"Use the round-number split.",glow:sim.querySelector('.choice[data-i="'+_ci+'"]'),key:"pick-"+st.idx};
+  } else {
+    window.__eduRound={native:true,line:"Good choice — now tap Check Strategy.",voice:"Tap check.",submit:sim.querySelector('#checkBtn'),key:"chk-"+st.idx+"-"+st.pick};
+  }
 }
 setup();
 render();

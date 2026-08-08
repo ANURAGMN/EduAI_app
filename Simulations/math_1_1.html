@@ -268,7 +268,7 @@ function render(){
     } else {
       const _fit=PV.map((p,i)=>({i:i,v:p.v,short:p.short})).filter(p=>(restrict==="all"||p.v===parseInt(restrict))&&num+p.v<=challenge.n).sort((a,b)=>b.v-a.v)[0];
       if(_fit){
-        window.__eduRound={native:true,hint:"You're "+fmtI(_diff)+" away. Which place-value button gets you closest without going over?",hintVoice:"Which button gets you closest without going over?",line:"Tap "+_fit.short+" — "+fmtI(_diff)+" to go ("+fmtI(num)+" of "+fmtI(challenge.n)+").",voice:"Add "+_fit.v,glow:'.pv-btn[data-i="'+_fit.i+'"]',key:"add-"+tIdx+"-"+_fit.v};
+        window.__eduRound={native:true,hint:"You're "+fmtI(_diff)+" away. Which place-value button gets you closest without going over?",hintVoice:"Which button gets you closest without going over?",why:"Each place value is ten times the one below it, so adding the biggest button that still fits reaches the target in the fewest taps.",line:"Tap "+_fit.short+" — "+fmtI(_diff)+" to go ("+fmtI(num)+" of "+fmtI(challenge.n)+").",voice:"Add "+_fit.v,glow:'.pv-btn[data-i="'+_fit.i+'"]',key:"add-"+tIdx+"-"+_fit.v};
       } else {
         window.__eduRound={native:true,line:challenge.hint+" ("+fmtI(_diff)+" to go)",voice:challenge.hint,key:"hint-"+tIdx};
       }

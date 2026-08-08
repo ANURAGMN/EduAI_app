@@ -100,6 +100,14 @@ function render(){
   const s=sim.querySelector('#startBtn'); if(s) s.onclick=start;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
+  // --- V5 Socratic coach: addition is associative, so regrouping preserves the total ---
+  if(!st.run){
+    window.__eduRound={native:true,line:(st.idx>=MISSIONS.length?(st.msg||"All reactors stabilized!"):"Tap Start Reactor Run to begin."),voice:(st.idx>=MISSIONS.length?"Series complete.":"Tap start."),glow:sim.querySelector('#startBtn'),key:(st.idx>=MISSIONS.length?"done":"start")+"-"+st.idx};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?"Value preserved.":"That changed the value."),submit:sim.querySelector('#nextBtn'),key:"res-"+st.idx};
+  } else {
+    window.__eduRound={native:true,hint:`Addition is associative — does regrouping (${m.base[0]}) + (${m.base[1]}) + (${m.base[2]}) change the total?`,hintVoice:"Does regrouping change the total?",line:"Both groupings keep the same total — tap either to confirm.",voice:"Both keep the same total.",glow:sim.querySelector('.choice[data-i="0"]'),key:"m-"+st.idx};
+  }
 }
 start();
 </script>

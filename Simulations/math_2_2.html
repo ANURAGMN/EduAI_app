@@ -152,7 +152,7 @@ let mode="learn",pIdx=0,qIdx=0,score=0,total=0,answered=false;
 
 function shuffle(arr){let a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 
-function renderLearn(){
+function renderLearn(){window.__eduRound=null; // learn mode has no single answer -> no coach
   const p=PROBLEMS[pIdx];
   const ruleBadge=p.rule==="flip"?`<div class="rule-badge flip">− before bracket → signs FLIP</div>`:`<div class="rule-badge keep">+ before bracket → signs STAY</div>`;
   let stepsHtml=p.steps.map((s,i)=>`<div class="step-card"><span class="step-num">${i+1}</span>${s}</div>`).join("");
@@ -198,6 +198,9 @@ function renderQuiz(){
   <button class="next-btn" id="nxt" style="display:none">Next Question</button>`;
 
   answered=false;
+  // --- V5 Socratic coach: state the problem, reveal the equal expression only if stuck ---
+  const _ansEl=[...c.querySelectorAll(".quiz-opt")].find(x=>x.dataset.v===q.ans);
+  window.__eduRound={native:true,hint:`Remove the brackets from ${q.q} — which expression is equal?`,hintVoice:`Remove the brackets. Which expression is equal?`,line:`The equal expression is "${q.ans}"`+(q.explain?`. ${q.explain}`:""),voice:"The answer is "+q.ans,glow:_ansEl,key:"q"+qIdx};
   c.querySelector("#qopts").addEventListener("click",e=>{
     const b=e.target.closest(".quiz-opt");if(!b||answered)return;answered=true;total++;
     if(b.dataset.v===q.ans){
@@ -208,6 +211,7 @@ function renderQuiz(){
       c.querySelectorAll(".quiz-opt").forEach(x=>{if(x.dataset.v===q.ans)x.classList.add("correct")});
       c.querySelector("#fb").innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:10px;border-radius:8px"><b>Not quite.</b> ${q.explain}. Value = ${q.val}</div>`;
     }
+    window.__eduRound={native:true,line:(b.dataset.v===q.ans?"Correct! ":`Answer: ${q.ans} — `)+(q.explain||""),voice:b.dataset.v===q.ans?"Correct!":"The answer is "+q.ans,submit:c.querySelector("#nxt"),key:"q"+qIdx+"-done"};
     c.querySelector("#nxt").style.display="block";
   });
   c.querySelector("#nxt").onclick=()=>{qIdx++;renderQuiz()};
