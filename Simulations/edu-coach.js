@@ -147,10 +147,25 @@
   function clearGlow() { G.forEach(function (e) { try { e.style.outline = ''; e.style.outlineOffset = ''; } catch (x) {} }); G = []; if (hi) { var o = hi.getAttribute('data-ph'); if (o !== null) { hi.setAttribute('placeholder', o); hi.removeAttribute('data-ph'); } hi = null; } }
   function glow(el, kind) { if (!el) return; el.style.outline = '3px solid ' + (kind === 'submit' ? '#2e9e6b' : kind === 'input' ? '#5b8bff' : kind === 'answer' ? '#e5484d' : '#ff9500'); el.style.outlineOffset = '2px'; el.style.borderRadius = '8px'; G.push(el); }
   function setBar(txt) { if (IN_APP) return; if (!bar) { bar = document.createElement('div'); bar.id = '__eduBar'; bar.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483647;background:#0e1230;color:#fff;font:600 15px system-ui,sans-serif;padding:12px 16px;border-radius:12px;box-shadow:0 -6px 24px rgba(0,0,0,.45)'; document.body.appendChild(bar); } bar.style.display = txt ? 'block' : 'none'; bar.textContent = txt ? ('Coach: ' + txt) : ''; }
+  // Speak numbers as WORDS so TTS never reads "+10000" as "plus one oh oh oh".
+  function n2w(n) {
+    n = Math.round(Math.abs(n)); if (n === 0) return 'zero';
+    var o = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+    var t = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+    function tw(x) { return x < 20 ? o[x] : t[Math.floor(x / 10)] + (x % 10 ? ' ' + o[x % 10] : ''); }
+    function th(x) { return x < 100 ? tw(x) : o[Math.floor(x / 100)] + ' hundred' + (x % 100 ? ' ' + tw(x % 100) : ''); }
+    var p = [];
+    if (n >= 1e7) { p.push(tw(Math.floor(n / 1e7)) + ' crore'); n %= 1e7; }
+    if (n >= 1e5) { p.push(tw(Math.floor(n / 1e5)) + ' lakh'); n %= 1e5; }
+    if (n >= 1e3) { p.push(tw(Math.floor(n / 1e3)) + ' thousand'); n %= 1e3; }
+    if (n > 0) p.push(th(n));
+    return p.join(' ');
+  }
+  function speakNums(s) { return ('' + s).replace(/([+])(?=\d)/g, '').replace(/\b\d[\d,]*\b/g, function (m) { var v = +m.replace(/,/g, ''); return isNaN(v) ? m : n2w(v); }); }
   function emit(text, voice, vkey) {
     if (text !== lastText) { lastText = text; if (IN_APP) { try { AB().coachText(text); } catch (e) {} } else setBar(text); }
     var vk = vkey || voice || text;
-    if (vk && vk !== lastVoice) { lastVoice = vk; if (voice) { if (IN_APP) { try { AB().coachSpeak(voice); } catch (e) {} } else say(voice); } }
+    if (vk && vk !== lastVoice) { lastVoice = vk; if (voice) { var vv = speakNums(voice); if (IN_APP) { try { AB().coachSpeak(vv); } catch (e) {} } else say(vv); } }
   }
 
   function pubEl(sel) { if (!sel) return null; if (sel.nodeType) return sel; try { return document.querySelector(sel); } catch (e) { return null; } }

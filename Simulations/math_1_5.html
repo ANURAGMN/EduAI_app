@@ -197,7 +197,7 @@ function renderQuiz(){
   answered=false;
   // --- V5 Socratic coach: ask first, reveal the right option only if the learner lingers ---
   const _ansEl=[...c.querySelectorAll(".quiz-opt")].find(x=>x.dataset.v===q.ans);
-  window.__eduRound={native:true,hint:"Estimate first — roughly how big is it? Which option is closest?",hintVoice:"Which option is closest?",line:`The answer is "${q.ans}".`+(q.ex?" "+q.ex:""),voice:"The answer is "+q.ans,glow:_ansEl,key:"q"+qIdx};
+  window.__eduRound={native:true,hint:`Here's the problem: ${q.q}  Estimate first — which option is closest?`,hintVoice:`${q.q}. Which option is closest?`,line:`The answer is "${q.ans}".`+(q.ex?" "+q.ex:""),voice:"The answer is "+q.ans,glow:_ansEl,key:"q"+qIdx};
   c.querySelector("#qopts").addEventListener("click",e=>{
     const b=e.target.closest(".quiz-opt");if(!b||answered)return;answered=true;total++;
     if(b.dataset.v===q.ans){b.classList.add("correct");score++;c.querySelector("#fb").innerHTML=`<div style="background:#dcfce7;color:#166534;padding:8px;border-radius:8px">Correct! ${q.ex}</div>`}

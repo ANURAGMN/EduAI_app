@@ -218,6 +218,25 @@ function render(){
   const ck = sim.querySelector("#checkBtn"); if(ck) ck.onclick = check;
   const nx = sim.querySelector("#nextBtn"); if(nx) nx.onclick = next;
   const rr = sim.querySelector("#restartBtn"); if(rr) rr.onclick = restart;
+  // --- V5 Socratic coach: covers ALL modes (max_sum / min_diff / max_diff) using the sim's own optimum ---
+  const _hintByMode={max_sum:"To make A + B as large as possible, where should the biggest digits go?",min_diff:"To make A and B as close as possible, how should you share the high and low digits?",max_diff:"To make the gap between A and B as large as possible, how should you split the digits?"};
+  if(!st.run){
+    window.__eduRound={native:true,line:st.msg||"Duel series complete!",voice:"Series complete.",glow:sim.querySelector("#restartBtn"),key:"done-"+st.idx};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==="good"?"Optimal arrangement.":"Not optimal — see the best pair."),submit:sim.querySelector("#nextBtn"),key:"res-"+st.idx};
+  } else if(st.A.length>=m.lenA && st.B.length>=m.lenB){
+    window.__eduRound={native:true,line:"Both numbers are filled — tap Check.",voice:"Tap check.",submit:sim.querySelector("#checkBtn"),key:"check-"+st.idx+"-"+st.A.join("")+st.B.join("")};
+  } else {
+    const _seq=st.best.bestA.concat(st.best.bestB), _placed=st.A.length+st.B.length, _t=_seq[_placed];
+    const _btn=(_t!=null && !st.used.has(_t))?sim.querySelector('.digit[data-d="'+_t+'"]'):null;
+    const _slot=st.A.length<m.lenA?"A":"B";
+    window.__eduRound={native:true,
+      hint:_placed===0?_hintByMode[m.mode]:undefined,
+      hintVoice:_placed===0?_hintByMode[m.mode]:undefined,
+      line:_btn?("Place "+_t+" into "+_slot+".") :("Aim for A="+st.best.bestA.join("")+", B="+st.best.bestB.join("")+"."),
+      voice:_btn?("Place "+_t):("Aim for A "+st.best.bestA.join("")+", B "+st.best.bestB.join("")),
+      glow:_btn,key:"place-"+st.idx+"-"+_placed};
+  }
 }
 
 setupRound();
