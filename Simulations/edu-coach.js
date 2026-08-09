@@ -199,16 +199,26 @@
     try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.rate = 1.0; var v = dPickVoice(); if (v) u.voice = v; speechSynthesis.speak(u); } catch (e) {}
   }
   function stopDetail() { try { speechSynthesis.cancel(); } catch (e) {} if (IN_APP) { try { if (AB() && AB().coachStop) AB().coachStop(); } catch (e) {} } }
+  function setExplainVisible(on) {
+    if (IN_APP) { try { if (AB() && AB().coachExplainVisible) AB().coachExplainVisible(!!on); } catch (e) {} }
+  }
+  function closeExplain() {
+    stopDetail();
+    if (modal) modal.style.display = 'none';
+    setExplainVisible(false);
+  }
+  window.__eduCloseExplain = closeExplain;
   function mkBtn(txt, fn) { var b = document.createElement('button'); b.textContent = txt; b.style.cssText = 'background:#eef0ff;color:#3a34a5;border:1px solid #d7d9f5;border-radius:16px;padding:7px 13px;font:600 13px system-ui,sans-serif;cursor:pointer'; b.onclick = fn; return b; }
   function showModal() {
     if (!curDetail) return;
     if (!modal) {
       modal = document.createElement('div'); modal.id = '__eduModal';
-      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(6,8,24,.6);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0';
+      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(6,8,24,.6);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0;display:none;align-items:flex-start;justify-content:center';
       var card = document.createElement('div');
       // Size to content (no vh/percentage height — unreliable in this WebView); the overlay scrolls if tall.
-      card.style.cssText = 'background:#fff;color:#101433;max-width:540px;width:calc(100% - 32px);margin:40px auto;border-radius:16px;padding:16px 20px 24px;box-shadow:0 14px 44px rgba(0,0,0,.45);font:400 16px/1.55 system-ui,sans-serif';
-      var close = mkBtn('✕', function () { stopDetail(); modal.style.display = 'none'; });
+      // Leave bottom room so the slim native "Explaining…" strip stays tappable above the WebView.
+      card.style.cssText = 'background:#fff;color:#101433;max-width:540px;width:calc(100% - 32px);margin:24px auto 72px;border-radius:16px;padding:16px 20px 24px;box-shadow:0 14px 44px rgba(0,0,0,.45);font:400 16px/1.55 system-ui,sans-serif';
+      var close = mkBtn('✕', closeExplain);
       close.style.cssText = 'float:right;background:none;border:none;color:#999;font-size:22px;font-weight:700;cursor:pointer';
       var controls = document.createElement('div'); controls.style.cssText = 'display:flex;gap:8px;margin:4px 0 14px;flex-wrap:wrap';
       controls.appendChild(mkBtn('▶ Listen', speakDetail));
@@ -216,13 +226,14 @@
       controls.appendChild(mkBtn('↻ Replay', function () { stopDetail(); speakDetail(); }));
       var body = document.createElement('div'); body.id = '__eduModalBody';
       card.appendChild(close); card.appendChild(body); card.appendChild(controls); modal.appendChild(card);
-      modal.onclick = function (e) { if (e.target === modal) { stopDetail(); modal.style.display = 'none'; } };
+      modal.onclick = function (e) { if (e.target === modal) closeExplain(); };
       document.body.appendChild(modal);
     }
     document.getElementById('__eduModalBody').innerHTML = curDetail; modal.style.display = 'flex';
+    setExplainVisible(true);
     speakDetail(); // auto-read on open; Stop / Replay available
   }
-  function hideKnowMore() { window.__eduHasExplain = false; if (pill) pill.style.display = 'none'; if (modal) modal.style.display = 'none'; stopDetail(); }
+  function hideKnowMore() { window.__eduHasExplain = false; if (pill) pill.style.display = 'none'; closeExplain(); }
   function stepCard(n, txt) { return '<div style="display:flex;gap:10px;align-items:flex-start;border:1px solid #e3e5f0;border-radius:12px;padding:10px 12px;margin-bottom:8px"><div style="width:22px;height:22px;border-radius:50%;background:#eeecfb;color:#4b3fbf;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 auto">' + n + '</div><div style="font-size:14px;line-height:1.5">' + esc(txt) + '</div></div>'; }
   function renderDetailHTML(o) {
     var p = ['<h2 style="margin:0 0 10px;font-size:19px;color:#4b3fbf">Let’s understand this</h2>'];
@@ -274,12 +285,12 @@
     if (!hasHint) { renderReveal(o, key); setDetail(o); exposeHint(mode, false); return; } // feedback / no-question states show at once
     var reveal;
     if (mode === 'guided') reveal = true;
-    else if (mode === 'ondemand') reveal = curLevel >= 1;
-    else reveal = curLevel >= (hasWhy ? 2 : 1); // ask / self
+    else if (mode === 'ondemand' || mode === 'ask') reveal = curLevel >= 1; // one tap reveals move + why (no separate nudge)
+    else reveal = curLevel >= (hasWhy ? 2 : 1); // self keeps: problem → nudge → reveal
     if (reveal) { renderReveal(o, key); }
     else {
       if (o.submit) glow(pubEl(o.submit), 'submit');
-      if ((mode === 'ask' || mode === 'self') && curLevel === 1 && hasWhy) {
+      if (mode === 'self' && curLevel === 1 && hasWhy) {
         emit(o.why, o.why, 'N:' + key); // nudge (the reasoning, no glow)
       } else {
         var q = (mode === 'self') ? (o.hint + '  ·  Explain your thinking, then tap Hint.') : o.hint;
