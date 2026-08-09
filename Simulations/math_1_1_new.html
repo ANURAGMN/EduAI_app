@@ -230,9 +230,12 @@ function render(){
     const _seq=st.best.bestA.concat(st.best.bestB), _placed=st.A.length+st.B.length, _t=_seq[_placed];
     const _btn=(_t!=null && !st.used.has(_t))?sim.querySelector('.digit[data-d="'+_t+'"]'):null;
     const _slot=st.A.length<m.lenA?"A":"B";
+    const _whyByMode={max_sum:"A digit is worth more in a higher place, so the biggest digits go in the highest places, shared between A and B.",min_diff:"To make A and B as close as possible, give them near-equal leading digits, then balance the remaining digits.",max_diff:"To make the gap biggest, load A's high places with the largest digits and B's with the smallest."};
     window.__eduRound={native:true,
       hint:_placed===0?_hintByMode[m.mode]:undefined,
       hintVoice:_placed===0?_hintByMode[m.mode]:undefined,
+      why:_whyByMode[m.mode],
+      detail:"Step 1 — A strong arrangement here is A="+st.best.bestA.join("")+", B="+st.best.bestB.join("")+".\nStep 2 — Work toward it: place "+(_t!=null?_t:"the next digit")+" into "+_slot+" (the highest empty place).\nStep 3 — Keep filling the highest empty places first.\nWhy it works — a digit in a higher place counts far more, so the biggest digits belong in the highest places.",
       line:_btn?("Place "+_t+" into "+_slot+".") :("Aim for A="+st.best.bestA.join("")+", B="+st.best.bestB.join("")+"."),
       voice:_btn?("Place "+_t):("Aim for A "+st.best.bestA.join("")+", B "+st.best.bestB.join("")),
       glow:_btn,key:"place-"+st.idx+"-"+_placed};

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sample — Coached Place-Value Builder</title>
+<style>
+  :root{--ink:#101433;--muted:#6b7093;--line:#e3e5f0;--accent:#4b3fbf;--accentbg:#eeecfb;--ok:#0f7a52;--okbg:#e2f5ec;--bad:#b3261e;--badbg:#fdecea;--amber:#ff9500}
+  *{box-sizing:border-box}
+  body{margin:0;font:400 16px/1.5 system-ui,-apple-system,sans-serif;color:var(--ink);background:#f4f5fb;-webkit-tap-highlight-color:transparent}
+  .wrap{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:14px 14px 0}
+  h1{font-size:16px;font-weight:600;margin:2px 0 12px;text-align:center;color:var(--muted)}
+  .sim{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;flex:1}
+  .stat{font-size:12px;color:var(--muted)}
+  .big{font-size:30px;font-weight:600;letter-spacing:1px}
+  .cur{font-size:15px;color:var(--muted);margin-top:2px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+  .pv{border:1px solid var(--line);background:#fff;border-radius:12px;padding:14px 6px;font-size:15px;font-weight:600;color:var(--ink);cursor:pointer;transition:outline .1s}
+  .pv:active{transform:scale(.97)}
+  .glow{outline:3px solid var(--amber);outline-offset:2px}
+  .row{display:flex;gap:8px;margin-top:12px}
+  .act{flex:1;border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px;font-size:14px;font-weight:600;cursor:pointer}
+  .act.reset{color:var(--bad)}
+  .act.next{background:var(--ok);color:#fff;border-color:var(--ok)}
+  .glowg{outline:3px solid var(--ok);outline-offset:2px}
+  /* coach card */
+  .coach{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin:12px 0}
+  .coachtop{display:flex;gap:10px;align-items:flex-start}
+  .ava{width:34px;height:34px;border-radius:50%;background:var(--accentbg);color:var(--accent);flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .line{font-size:14px;line-height:1.5}
+  .line b{color:var(--accent)}
+  .chips{display:flex;gap:8px;margin-top:12px;align-items:center}
+  .chip{font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:16px;padding:7px 13px;background:#fff;cursor:pointer}
+  .chip.hint{border-color:var(--accent);color:var(--accent)}
+  .chip.ex{border-color:var(--accent);color:var(--accent)}
+  .tag{font-size:11px;color:var(--muted)}
+  /* explain sheet */
+  .scrim{position:fixed;inset:0;background:rgba(6,8,24,.55);display:none;z-index:50;overflow-y:auto}
+  .scrim.open{display:block}
+  .sheet{background:#fff;max-width:480px;margin:auto;border-radius:18px 18px 0 0;padding:14px 18px 26px;position:absolute;left:0;right:0;bottom:0}
+  .handle{width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 12px}
+  .sheet h2{font-size:17px;font-weight:600;margin:0 0 4px}
+  .ansp{display:inline-block;font-size:13px;background:var(--okbg);color:var(--ok);border-radius:16px;padding:4px 12px;margin:6px 0}
+  .ctrls{display:flex;gap:8px;margin:8px 0 12px}
+  .ctrls button{font-size:13px;font-weight:600;border:1px solid var(--line);background:#f6f6fd;color:var(--accent);border-radius:16px;padding:7px 13px;cursor:pointer}
+  .step{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start}
+  .num{width:22px;height:22px;border-radius:50%;background:var(--accentbg);color:var(--accent);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .why{background:#f6f6fd;border-radius:10px;padding:10px 12px;font-size:13px;color:var(--muted);margin-top:2px}
+  .closebtn{float:right;border:none;background:none;font-size:22px;color:var(--muted);cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sample coach · learner-paced hints</h1>
+
+  <div class="sim">
+    <div class="stat">Target</div>
+    <div class="big" id="target">40,629</div>
+    <div class="cur" id="cur">Current: 0</div>
+    <div class="grid" id="grid"></div>
+    <div class="row">
+      <button class="act reset" id="reset">Reset</button>
+      <button class="act next" id="next" style="display:none">Next target</button>
+    </div>
+  </div>
+
+  <div class="coach">
+    <div class="coachtop">
+      <div class="ava">◕‿◕</div>
+      <div class="line" id="line"></div>
+    </div>
+    <div class="chips">
+      <button class="chip hint" id="hint">Hint</button>
+      <button class="chip ex" id="explain">ⓘ Explain</button>
+      <span class="tag" id="tag"></span>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim">
+  <div class="sheet">
+    <button class="closebtn" id="close" aria-label="Close">×</button>
+    <div class="handle"></div>
+    <h2 id="sh-title">Build 40,629</h2>
+    <div class="ansp" id="sh-ans"></div>
+    <div class="ctrls">
+      <button id="listen">▶ Listen</button>
+      <button id="stop">⏹ Stop</button>
+      <button id="replay">↻ Replay</button>
+    </div>
+    <div id="sh-steps"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var PV=[100000,10000,1000,100,10,1];
+  var LABEL={100000:"+1,00,000",10000:"+10,000",1000:"+1,000",100:"+100",10:"+10",1:"+1"};
+  var TARGETS=[40629,5072,8300];
+  var idx=0,current=0,hintLevel=0,wrong=0,done=false;
+
+  function fmt(n){return n.toLocaleString('en-IN');}
+  function target(){return TARGETS[idx];}
+  function fit(){return PV.filter(function(v){return current+v<=target();})[0];}
+
+  var grid=document.getElementById('grid');
+  PV.forEach(function(v){var b=document.createElement('button');b.className='pv';b.dataset.v=v;b.textContent=LABEL[v];b.onclick=function(){add(v);};grid.appendChild(b);});
+
+  function clearGlow(){[].forEach.call(document.querySelectorAll('.pv'),function(b){b.classList.remove('glow');});document.getElementById('reset').classList.remove('glowg');document.getElementById('next').classList.remove('glowg');}
+
+  function coachLine(){
+    var t=target(),gap=t-current;
+    if(done){return {txt:'You built <b>'+fmt(t)+'</b>! Tap <b>Next target</b> to try another.',glow:'next'};}
+    if(current>t){return {txt:'That’s <b>over</b> '+fmt(t)+' by '+fmt(current-t)+'. Tap <b>Reset</b> and use a smaller button.',glow:'reset'};}
+    // learner-paced levels
+    if(hintLevel===0){return {txt:'Build <b>'+fmt(t)+'</b>. You have '+fmt(current)+', so '+fmt(gap)+' to go. Which button gets you closest without going over? <span class="tag">(think, or tap Hint)</span>',glow:null};}
+    if(hintLevel===1){return {txt:'Nudge: fill the <b>biggest place first</b> — pick the largest button that still fits under '+fmt(t)+'.',glow:null};}
+    return {txt:'Add <b>'+LABEL[fit()]+'</b> — '+fmt(gap)+' to go.',glow:'pv'};
+  }
+
+  function render(){
+    document.getElementById('target').textContent=fmt(target());
+    document.getElementById('cur').textContent='Current: '+fmt(current);
+    document.getElementById('next').style.display=done?'block':'none';
+    clearGlow();
+    var c=coachLine();
+    document.getElementById('line').innerHTML=c.txt;
+    if(c.glow==='pv'){var f=fit();if(f)document.querySelector('.pv[data-v="'+f+'"]').classList.add('glow');}
+    else if(c.glow==='reset')document.getElementById('reset').classList.add('glowg');
+    else if(c.glow==='next')document.getElementById('next').classList.add('glowg');
+    document.getElementById('hint').style.display=(done||current>target())?'none':'inline-block';
+    document.getElementById('tag').textContent=(!done&&current<=target()&&hintLevel<2)?('Hint '+(hintLevel)+'/2'):'';
+  }
+
+  function add(v){
+    if(done)return;
+    current+=v;
+    if(current===target()){done=true;}
+    else if(current>target()){/* safety net: coach auto-explains overshoot */}
+    else{hintLevel=0;} // new move → fresh think
+    render();
+  }
+
+  document.getElementById('hint').onclick=function(){hintLevel=Math.min(hintLevel+1,2);render();};
+  document.getElementById('reset').onclick=function(){current=0;hintLevel=0;wrong=0;done=false;render();};
+  document.getElementById('next').onclick=function(){idx=(idx+1)%TARGETS.length;current=0;hintLevel=0;wrong=0;done=false;render();};
+
+  /* ---- Explain sheet ---- */
+  function buildSteps(t){
+    var s=String(t),places=[100000,10000,1000,100,10,1],names={100000:'one-lakh',10000:'ten-thousand',1000:'thousand',100:'hundred',10:'ten',1:'one'};
+    var steps=[],run=0;
+    places.forEach(function(p){var d=Math.floor((t%(p*10))/p);if(d>0){run+=d*p;steps.push('Add +'+fmt(p)+' × '+d+' → '+fmt(run)+'  ('+names[p]+'s place).');}});
+    return steps;
+  }
+  function openSheet(){
+    var t=target();
+    document.getElementById('sh-title').textContent='Build '+fmt(t);
+    document.getElementById('sh-ans').textContent='Fewest taps = digit sum of '+fmt(t);
+    var host=document.getElementById('sh-steps');host.innerHTML='';
+    var steps=buildSteps(t);
+    steps.forEach(function(txt,i){
+      var d=document.createElement('div');d.className='step';
+      d.innerHTML='<div class="num">'+(i+1)+'</div><div>'+txt+'</div>';host.appendChild(d);
+    });
+    var why=document.createElement('div');why.className='why';
+    why.textContent='Why it works: each button matches one place value, and the digit in each place tells you exactly how many taps you need there. Adding the biggest button that still fits never wastes a tap or overshoots.';
+    host.appendChild(why);
+    document.getElementById('scrim').classList.add('open');
+    speakSteps();
+  }
+  document.getElementById('explain').onclick=openSheet;
+  document.getElementById('close').onclick=function(){stopSpeak();document.getElementById('scrim').classList.remove('open');};
+  document.getElementById('scrim').onclick=function(e){if(e.target===this){stopSpeak();this.classList.remove('open');}};
+
+  /* ---- TTS (browser speech; numbers read as words) ---- */
+  function n2w(n){n=Math.round(Math.abs(n));if(n===0)return'zero';var o=['','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'],t=['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];function tw(x){return x<20?o[x]:t[Math.floor(x/10)]+(x%10?' '+o[x%10]:'');}function th(x){return x<100?tw(x):o[Math.floor(x/100)]+' hundred'+(x%100?' '+tw(x%100):'');}var p=[];if(n>=1e7){p.push(tw(Math.floor(n/1e7))+' crore');n%=1e7;}if(n>=1e5){p.push(tw(Math.floor(n/1e5))+' lakh');n%=1e5;}if(n>=1e3){p.push(tw(Math.floor(n/1e3))+' thousand');n%=1e3;}if(n>0)p.push(th(n));return p.join(' ');}
+  function say(s){return(''+s).replace(/\+/g,'').replace(/\b\d[\d,]*\b/g,function(m){return n2w(+m.replace(/,/g,''));});}
+  function speechText(){var t=target();return'Build '+n2w(t)+'. '+buildSteps(t).map(say).join(' ')+' '+'Each button matches one place value, so add the biggest button that still fits.';}
+  function speakSteps(){try{speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(speechText());u.rate=1;speechSynthesis.speak(u);}catch(e){}}
+  function stopSpeak(){try{speechSynthesis.cancel();}catch(e){}}
+  document.getElementById('listen').onclick=speakSteps;
+  document.getElementById('stop').onclick=stopSpeak;
+  document.getElementById('replay').onclick=function(){stopSpeak();speakSteps();};
+
+  render();
+})();
+</script>
+</body>
+</html>

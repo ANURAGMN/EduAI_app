@@ -124,7 +124,7 @@ function render(){
     window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?"Good choice.":"Not optimal. Move to the next."),submit:sim.querySelector('#nextBtn'),key:"res-"+st.idx};
   } else {
     const _ans=[...sim.querySelectorAll('[data-v]')].find(b=>+b.dataset.v===m.answer);
-    window.__eduRound={native:true,hint:"Which daily speed × "+fmt(m.days)+" days covers about "+fmt(m.dist)+" km?",hintVoice:"Which speed reaches the target?",line:m.answer+" km/day works: "+m.answer+"×"+fmt(m.days)+" ≈ "+fmt(m.answer*m.days)+" km.",voice:"Choose "+m.answer+" kilometres per day.",glow:_ans,key:"m-"+st.idx};
+    window.__eduRound={native:true,hint:"Which daily speed × "+fmt(m.days)+" days covers about "+fmt(m.dist)+" km?",hintVoice:"Which speed reaches the target?",why:"Distance covered equals daily speed times the number of days, so multiply each speed by the days and pick the total closest to the target.",detail:"Step 1 — Distance = daily speed × number of days.\nStep 2 — "+m.answer+" × "+fmt(m.days)+" = "+fmt(m.answer*m.days)+" km, closest to the target "+fmt(m.dist)+" km.\nStep 3 — Choose "+m.answer+" km/day.\nWhy it works — travelling the same distance every day means total distance is just speed × days.",line:m.answer+" km/day works: "+m.answer+"×"+fmt(m.days)+" ≈ "+fmt(m.answer*m.days)+" km.",voice:"Choose "+m.answer+" kilometres per day.",glow:_ans,key:"m-"+st.idx};
   }
 }
 start();
