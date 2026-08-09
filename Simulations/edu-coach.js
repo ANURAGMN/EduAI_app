@@ -269,8 +269,7 @@
     if (o.glow) glow(pubEl(o.glow), o.glowKind === 'answer' ? 'answer' : 'hint');
     if (o.input) { var ie = pubEl(o.input); if (ie) { glow(ie, 'input'); if (o.inputHint != null && !ie.value) { if (ie.getAttribute('data-ph') === null) ie.setAttribute('data-ph', ie.getAttribute('placeholder') || ''); ie.setAttribute('placeholder', '' + o.inputHint); hi = ie; } } }
     var revealLine = (o.line || '') + (o.why ? '  ·  Why: ' + o.why : '');
-    var rv = (o.voice != null ? o.voice : (o.line || '')); if (o.why) rv = (rv ? rv + '. ' : '') + o.why;
-    emit(revealLine, rv, 'R:' + key);
+    emit(revealLine, revealLine, 'R:' + key); // speak exactly what's shown on the coach
   }
   function exposeHint(mode, canHint) {
     window.__eduHintMode = mode;
@@ -294,7 +293,7 @@
         emit(o.why, o.why, 'N:' + key); // nudge (the reasoning, no glow)
       } else {
         var q = (mode === 'self') ? (o.hint + '  ·  Explain your thinking, then tap Hint.') : o.hint;
-        emit(q, (o.hintVoice != null ? o.hintVoice : o.hint), 'H:' + key);
+        emit(q, q, 'H:' + key); // speak exactly what's shown on the coach
       }
     }
     setDetail(o);
