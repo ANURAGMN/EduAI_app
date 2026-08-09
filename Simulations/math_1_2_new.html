@@ -151,7 +151,7 @@ function render(last){
     window.__eduRound={native:true,line:st.msg,voice:(st.msgType==="good"?"Correct.":"Check both formats next time."),submit:sim.querySelector("#nextBtn"),key:"res-"+st.idx};
   } else {
     const _ok=st.options.findIndex(o=>o.ok);
-    window.__eduRound={native:true,hint:"Indian groups the last 3 digits then 2s; International groups in 3s. Which card has BOTH right?",hintVoice:"Which card has both formats correct?",line:"Pick the card where both the Indian and International commas are placed correctly.",voice:"Pick the card with both formats correct.",glow:sim.querySelector('.opt[data-i="'+_ok+'"]'),key:"r-"+st.idx};
+    window.__eduRound={native:true,hint:"Indian groups the last 3 digits then 2s; International groups in 3s. Which card has BOTH right?",hintVoice:"Which card has both formats correct?",why:"Indian and International systems group digits differently, so a card is correct only if BOTH lines follow their own rule.",detail:"The number is "+round.raw+".\nIndian system: from the right, put the first comma after 3 digits, then after every 2 digits → "+round.indian+".\nInternational system: from the right, put a comma after every 3 digits → "+round.intl+".\nSo the correct card must show Indian "+round.indian+" AND International "+round.intl+". If either line is grouped wrongly, that card is incorrect.",line:"Pick the card where both the Indian and International commas are placed correctly.",voice:"Pick the card with both formats correct.",glow:sim.querySelector('.opt[data-i="'+_ok+'"]'),key:"r-"+st.idx};
   }
 }
 

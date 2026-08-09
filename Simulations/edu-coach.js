@@ -187,16 +187,21 @@
     pill.onclick = showModal; document.body.appendChild(pill);
   }
   function dPickVoice() { if (dpv) return dpv; try { var vs = speechSynthesis.getVoices() || []; dpv = vs.filter(function (v) { return /en[-_]?IN/i.test(v.lang); })[0] || vs.filter(function (v) { return /^en/i.test(v.lang); })[0] || null; } catch (e) {} return dpv; }
-  function speakDetail() { if (!curDetailText) return; try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(speakNums(curDetailText)); u.rate = 1.0; var v = dPickVoice(); if (v) u.voice = v; speechSynthesis.speak(u); } catch (e) {} }
-  function stopDetail() { try { speechSynthesis.cancel(); } catch (e) {} }
+  function speakDetail() {
+    if (!curDetailText) return; var t = speakNums(curDetailText);
+    if (IN_APP) { try { AB().coachSpeak(t); } catch (e) {} return; } // native TTS (WebView speechSynthesis has no voices in-app)
+    try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.rate = 1.0; var v = dPickVoice(); if (v) u.voice = v; speechSynthesis.speak(u); } catch (e) {}
+  }
+  function stopDetail() { try { speechSynthesis.cancel(); } catch (e) {} if (IN_APP) { try { if (AB() && AB().coachStop) AB().coachStop(); } catch (e) {} } }
   function mkBtn(txt, fn) { var b = document.createElement('button'); b.textContent = txt; b.style.cssText = 'background:#eef0ff;color:#3a34a5;border:1px solid #d7d9f5;border-radius:16px;padding:7px 13px;font:600 13px system-ui,sans-serif;cursor:pointer'; b.onclick = fn; return b; }
   function showModal() {
     if (!curDetail) return;
     if (!modal) {
       modal = document.createElement('div'); modal.id = '__eduModal';
-      modal.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:rgba(6,8,24,.55);display:flex;align-items:center;justify-content:center;padding:18px';
+      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(6,8,24,.6);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0';
       var card = document.createElement('div');
-      card.style.cssText = 'background:#fff;color:#101433;max-width:540px;width:100%;max-height:82vh;overflow:auto;border-radius:16px;padding:14px 22px 24px;box-shadow:0 14px 44px rgba(0,0,0,.45);font:400 16px/1.55 system-ui,sans-serif';
+      // Size to content (no vh/percentage height — unreliable in this WebView); the overlay scrolls if tall.
+      card.style.cssText = 'background:#fff;color:#101433;max-width:540px;width:calc(100% - 32px);margin:40px auto;border-radius:16px;padding:16px 20px 24px;box-shadow:0 14px 44px rgba(0,0,0,.45);font:400 16px/1.55 system-ui,sans-serif';
       var close = mkBtn('✕', function () { stopDetail(); modal.style.display = 'none'; });
       close.style.cssText = 'float:right;background:none;border:none;color:#999;font-size:22px;font-weight:700;cursor:pointer';
       var controls = document.createElement('div'); controls.style.cssText = 'display:flex;gap:8px;margin:4px 0 14px;flex-wrap:wrap';
