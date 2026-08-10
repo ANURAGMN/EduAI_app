@@ -161,7 +161,16 @@
     if (n > 0) p.push(th(n));
     return p.join(' ');
   }
-  function speakNums(s) { return ('' + s).replace(/([+])(?=\d)/g, '').replace(/\b\d[\d,]*\b/g, function (m) { var v = +m.replace(/,/g, ''); return isNaN(v) ? m : n2w(v); }); }
+  function speakNums(s) {
+    s = '' + s;
+    // Language-aware: for Indic-script text (Kannada, Hindi, Tamil, Telugu) don't inject English
+    // number words — just drop digit-grouping commas so the native voice reads digits in its own
+    // language instead of switching to English.
+    if (/[ऀ-ॿ஀-௿ఀ-౿ಀ-೿]/.test(s)) {
+      return s.replace(/(\d),(?=\d)/g, '$1');
+    }
+    return s.replace(/([+])(?=\d)/g, '').replace(/\b\d[\d,]*\b/g, function (m) { var v = +m.replace(/,/g, ''); return isNaN(v) ? m : n2w(v); });
+  }
   function emit(text, voice, vkey) {
     if (text !== lastText) { lastText = text; if (IN_APP) { try { AB().coachText(text); } catch (e) {} } else setBar(text); }
     var vk = vkey || voice || text;
