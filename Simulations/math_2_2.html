@@ -152,7 +152,7 @@ let mode="learn",pIdx=0,qIdx=0,score=0,total=0,answered=false;
 
 function shuffle(arr){let a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 
-function renderLearn(){window.__eduRound=null; // learn mode has no single answer -> no coach
+function renderLearn(){
   const p=PROBLEMS[pIdx];
   const ruleBadge=p.rule==="flip"?`<div class="rule-badge flip">− before bracket → signs FLIP</div>`:`<div class="rule-badge keep">+ before bracket → signs STAY</div>`;
   let stepsHtml=p.steps.map((s,i)=>`<div class="step-card"><span class="step-num">${i+1}</span>${s}</div>`).join("");
@@ -179,6 +179,16 @@ function renderLearn(){window.__eduRound=null; // learn mode has no single answe
   c.querySelector("#prob-sl").oninput=function(){pIdx=parseInt(this.value);renderLearn()};
   c.querySelectorAll(".preset-btn").forEach(b=>b.onclick=()=>{pIdx=parseInt(b.dataset.i);renderLearn()});
   c.querySelectorAll(".mode-tab").forEach(b=>b.onclick=()=>{if(b.dataset.m==="quiz"){mode="quiz";qIdx=0;score=0;total=0;renderQuiz()}});
+  // --- V5 coach: walk through removing the bracket for this example ---
+  var _flip=(p.rule==="flip");
+  window.__eduRound={native:true,
+    hint:'Remove the brackets from '+p.with+'. Do the signs inside flip or stay?',
+    hintVoice:'Do the signs flip or stay?',
+    why:'A + before a bracket keeps every inside sign; a − before a bracket flips every inside sign.',
+    detail:'Step 1 — Look at the sign before the bracket in '+p.with+'.\nStep 2 — '+(_flip?'It is a minus, so flip every sign inside.':'It is a plus, so every inside sign stays.')+'\nStep 3 — That gives '+p.without+' = '+p.val+'.\nWhy it works — subtracting a group means subtracting each item in it, which flips the inside signs.\nTip — the value is the same either way; brackets only change how you write it.',
+    line:p.with+' = '+p.without+' = '+p.val+'.',
+    voice:(_flip?'Minus before the bracket, so the signs flip.':'Plus before the bracket, so the signs stay.'),
+    key:'learn-'+pIdx};
 }
 
 function renderQuiz(){

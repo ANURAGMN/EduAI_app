@@ -165,6 +165,16 @@ function render(){
 
   c.querySelector("#prob-sl").oninput=function(){pIdx=parseInt(this.value);render()};
   c.querySelectorAll(".preset-btn").forEach(b=>b.onclick=()=>{pIdx=parseInt(b.dataset.i);render()});
+  // --- V5 coach: walk through evaluating the current expression ---
+  var _evalParts=p.terms.map(function(t,i){return t+' = '+p.vals[i];}).join(', ');
+  window.__eduRound={native:true,
+    hint:'Evaluate '+p.expr+'. Split it into terms, work out each one, then add. What is the total?',
+    hintVoice:'What is the value of this expression?',
+    why:'Break the expression into terms at the + and − signs. Inside each term do the × and ÷ first, then add all the term values together.',
+    detail:'Step 1 — Identify the terms: '+p.terms.join(', ')+' ('+p.terms.length+' term'+(p.terms.length>1?'s':'')+').\nStep 2 — Evaluate each term: '+_evalParts+'.\nStep 3 — Add them: '+p.vals.join(' + ')+' = '+p.result+'.\nWhy it works — a term is a chunk joined by + or −; × and ÷ bind tighter, so they are done inside a term before the terms are added.\nTip — carry the − sign with its term so the signs stay correct when you add.',
+    line:p.expr+' = '+p.result+'.',
+    voice:'The value is '+p.result,
+    key:'p'+pIdx};
 }
 render();
 </script>

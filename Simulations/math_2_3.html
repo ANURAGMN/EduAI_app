@@ -130,6 +130,43 @@ document.getElementById('helpOverlay').onclick=e=>{if(e.target===e.currentTarget
 
 const ct=document.getElementById("sim");
 let mode="dots",a=3,b=4,c2=6,mmIdx=0,qIdx=0,qScore=0,qTotal=0,qAns=false;
+// --- V5 coach: publish a per-mode round the engine can voice/glow/explain ---
+function _dec(s){return String(s).replace(/&times;/g,'×').replace(/&minus;/g,'−').replace(/&rarr;/g,'→').replace(/&mdash;/g,'—').replace(/&bull;/g,'•').replace(/&nbsp;/g,' ').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();}
+function pubCoach(){
+  try{
+  if(typeof ct==='undefined'||!ct) return;
+  if(mode==='quiz'){
+    var q=QUIZ[qIdx],_qt=_dec(q.q);
+    var _ansEl=[].slice.call(ct.querySelectorAll('.quiz-opt')).find(function(x){return x.dataset.v===q.ans;});
+    if(qAns){
+      window.__eduRound={native:true,line:'Answer: '+_dec(q.ans)+' — '+_dec(q.ex),voice:'The answer is '+_dec(q.ans)+'.',submit:ct.querySelector('#nxt'),key:'q-res-'+qIdx};
+    } else {
+      window.__eduRound={native:true,
+        hint:'Question '+(qIdx+1)+': '+_qt+' Which choice fills the blank?',
+        hintVoice:'Which sign or number completes it?',
+        why:'The distributive rule spreads the multiplier over each part inside the bracket, keeping the operation that is inside.',
+        detail:'Step 1 — Read it: '+_qt+'\nStep 2 — '+_dec(q.ex)+'\nStep 3 — So the blank is "'+_dec(q.ans)+'" → tap it.\nWhy it works — a×(p+q) = a×p + a×q, and a×(p−q) = a×p − a×q; the inside operation carries outside.\nTip — split a number near a round ten (like 97 = 100−3) to multiply mentally.',
+        line:'The blank is "'+_dec(q.ans)+'".',voice:'Choose '+_dec(q.ans),glow:_ansEl,key:'q-'+qIdx};
+    }
+  } else if(mode==='mental'){
+    var p=MM[mmIdx];
+    window.__eduRound={native:true,
+      hint:'Multiply '+p.num+' × '+p.by+' by breaking '+p.num+' into easier parts. What is a smart split?',
+      hintVoice:'How can you split this to multiply in your head?',
+      why:'Split one factor into a round number plus or minus a little, multiply each part, then combine — the distributive property.',
+      detail:'Step 1 — Decompose: '+p.num+' = '+_dec(p.decomp)+'.\nStep 2 — Distribute: '+_dec(p.decomp)+' × '+p.by+' = '+_dec(p.parts[0])+' '+_dec(p.op)+' '+_dec(p.parts[1])+'.\nStep 3 — Compute: '+p.vals[0]+' '+_dec(p.op)+' '+p.vals[1]+' = '+p.result+'.\nWhy it works — multiplying a sum or difference is the same as multiplying each part and then adding or subtracting.',
+      line:p.num+' × '+p.by+' = '+p.result+'.',voice:p.num+' times '+p.by+' equals '+p.result,key:'mm-'+mmIdx};
+  } else {
+    var _t=a*(b+c2),_pb=a*b,_pc=a*c2;
+    window.__eduRound={native:true,
+      hint:'This shows '+a+' × ('+b+' + '+c2+'). How does splitting the bracket into '+b+' and '+c2+' help?',
+      hintVoice:'How does breaking the bracket into two parts help?',
+      why:'Multiplying by a sum equals multiplying each part and adding the results — the distributive property.',
+      detail:'Step 1 — Read it: '+a+' × ('+b+' + '+c2+').\nStep 2 — Distribute: '+a+'×'+b+' + '+a+'×'+c2+' = '+_pb+' + '+_pc+'.\nStep 3 — Add: '+_pb+' + '+_pc+' = '+_t+', the same as '+a+' × '+(b+c2)+'.\nWhy it works — the '+_pb+' blue and '+_pc+' green squares together fill the whole '+a+'×'+(b+c2)+' rectangle.\nTip — drag the sliders and watch both sides stay equal.',
+      line:a+' × ('+b+' + '+c2+') = '+_pb+' + '+_pc+' = '+_t+'.',voice:a+' times '+(b+c2)+' equals '+_t,key:'da-'+mode+'-'+a+'-'+b+'-'+c2};
+  }
+  }catch(e){}
+}
 
 const MM=[
   {num:97,by:25,decomp:"(100 &minus; 3)",parts:["100 &times; 25","3 &times; 25"],vals:[2500,75],op:"&minus;",result:2425},
@@ -218,7 +255,7 @@ function renderDots(){
     <div class="result-sub"><span style="color:#3b82f6;font-weight:700">${pB} blue dots</span> + <span style="color:#22c55e;font-weight:700">${pC} green dots</span></div>
   </div>
   ${sliders()}`;
-  wireMode();wireSliders();
+  wireMode();wireSliders();pubCoach();
 }
 
 // ═══════ 2. AREA MODEL ═══════
@@ -273,7 +310,7 @@ function renderArea(){
     <div class="result-sub"><span style="color:#3b82f6;font-weight:700">${pB} blue squares</span> + <span style="color:#22c55e;font-weight:700">${pC} green squares</span></div>
   </div>
   ${sliders()}`;
-  wireMode();wireSliders();
+  wireMode();wireSliders();pubCoach();
 }
 
 // ═══════ 3. MENTAL MATH ═══════
@@ -293,6 +330,7 @@ function renderMental(){
   <div class="presets">${MM.map((pr,i)=>`<button class="preset-btn${i===mmIdx?' active':''}" data-mi="${i}">${pr.num}&times;${pr.by}</button>`).join('')}</div>`;
   wireMode();
   ct.querySelectorAll('[data-mi]').forEach(b=>b.onclick=()=>{mmIdx=parseInt(b.dataset.mi);renderMental()});
+  pubCoach();
 }
 
 // ═══════ 4. QUIZ ═══════
@@ -312,8 +350,10 @@ function renderQuiz(){
     if(b.dataset.v===q.ans){b.classList.add('correct');qScore++;ct.querySelector('#fb').innerHTML=`<div style="background:#dcfce7;color:#166534;padding:12px;border-radius:10px"><b>Correct!</b> ${q.ex}</div>`}
     else{b.classList.add('wrong');ct.querySelectorAll('.quiz-opt').forEach(x=>{if(x.dataset.v===q.ans)x.classList.add('correct')});ct.querySelector('#fb').innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px"><b>Answer: ${q.ans}</b> &mdash; ${q.ex}</div>`}
     ct.querySelector('#nxt').style.display='block';
+    pubCoach();
   });
   ct.querySelector('#nxt').onclick=()=>{qIdx++;renderQuiz()};
+  pubCoach();
 }
 
 // ═══════ SHARED SLIDERS ═══════

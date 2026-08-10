@@ -127,6 +127,19 @@ function evalExpr(tokens){
   }
 }
 
+function solveBuild(m){
+  // Find the shortest valid tile expression (3 then 5 tokens) that hits the target.
+  var nums=[], ops=[];
+  m.pool.forEach(function(tk){ if(typeof tk==='string') ops.push(tk); else nums.push(tk); });
+  var a,b,c,o1,o2,e,v;
+  for(a=0;a<nums.length;a++)for(b=0;b<nums.length;b++){ if(a===b)continue;
+    for(o1=0;o1<ops.length;o1++){ e=[nums[a],ops[o1],nums[b]]; v=evalExpr(e); if(v!==null&&Math.abs(v-m.target)<1e-9) return e; } }
+  for(a=0;a<nums.length;a++)for(b=0;b<nums.length;b++)for(c=0;c<nums.length;c++){ if(a===b||a===c||b===c)continue;
+    for(o1=0;o1<ops.length;o1++)for(o2=0;o2<ops.length;o2++){ if(o1===o2)continue;
+      e=[nums[a],ops[o1],nums[b],ops[o2],nums[c]]; v=evalExpr(e); if(v!==null&&Math.abs(v-m.target)<1e-9) return e; } }
+  return null;
+}
+
 function check(){
   if(!st.run || st.resolved) return;
   const m = mission();
@@ -216,6 +229,35 @@ function render(){
   const n = sim.querySelector("#nextBtn"); if(n) n.onclick = nextMission;
   const u = sim.querySelector("#undoBtn"); if(u) u.onclick = undo;
   const cl = sim.querySelector("#clearBtn"); if(cl) cl.onclick = clearExpr;
+  // --- V5 coach: guide the build tile-by-tile toward a real solution ---
+  try{
+    if(done){
+      window.__eduRound={native:true,line:(st.msg||'Engineering run over.'),voice:(st.msgType==='good'?'Run complete.':'Run over.'),submit:sim.querySelector('#startBtn'),key:'done-'+st.idx+'-'+(st.msg||'')};
+    } else if(st.resolved){
+      window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not the target.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+    } else {
+      var _sol=solveBuild(m);
+      var _prefixOk=_sol&&st.expr.every(function(t,k){return String(t)===String(_sol[k]);});
+      var _glowEl=null;
+      if(_sol&&_prefixOk&&st.expr.length<_sol.length){
+        var _nextTok=_sol[st.expr.length], _chips=[].slice.call(sim.querySelectorAll('.chip'));
+        _glowEl=_chips.find(function(bb){var i=parseInt(bb.dataset.i,10);return !st.used.includes(i)&&String(m.pool[i])===String(_nextTok);});
+      } else if(value!==null&&Math.abs(value-m.target)<1e-9){
+        _glowEl=sim.querySelector('#checkBtn');
+      }
+      var _matches=(value!==null&&Math.abs(value-m.target)<1e-9);
+      window.__eduRound={native:true,
+        hint:'Build an expression that equals '+m.target+' using the tiles — each tile once, alternating number and operator.',
+        hintVoice:'How can you build the target?',
+        why:'Combine the tiles with +, −, ×, ÷. Get close to the target with a × or ÷, then fine-tune with + or −.',
+        detail:'Step 1 — Target: '+m.target+'. '+m.hint+'\nStep 2 — '+(_sol?('One valid build is '+_sol.join(' ')+' = '+m.target+'.'):'Alternate a number, an operator, a number; check the Current value as you go.')+'\nStep 3 — Tap the tiles in order, then press Check Build.\nWhy it works — you engineer the value: a product or quotient sets the scale, and an add or subtract nudges it exactly onto the target.\nTip — shorter builds score bonus points.',
+        line:(_sol?('One build: '+_sol.join(' ')+' = '+m.target+'.'):m.hint),
+        voice:(_sol?('Try '+_sol.join(' ')):'Build toward '+m.target),
+        glow:_glowEl,
+        submit:_matches?sim.querySelector('#checkBtn'):null,
+        key:'m-'+st.idx};
+    }
+  }catch(e){}
 }
 
 startGame();

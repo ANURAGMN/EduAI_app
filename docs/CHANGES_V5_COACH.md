@@ -108,3 +108,40 @@ instead of steps — intentional.)
    **Explain** and confirm the steps use the current round's numbers, and try Listen/Stop/Replay.
 4. `adb logcat -s CoachBuild:D` shows the *installed* build — it will read `20260808l` until you
    commit + rebuild the app changes, after which it reads `20260808m`.
+
+---
+
+## Math Chapter 2 (Arithmetic Expressions) — production-grade per-round hooks
+
+Every English Math ch2 sim now drives the coach from its **own answer variable** (correct by
+construction): full-problem hint → brief *why* → Photomath-style stepped *Explain* with the real
+numbers → glow of the correct control. 19 sims covered.
+
+Hooked this pass: `2_1` (Terms Evaluator — per-expression walkthrough), `2_2` (Learn tab now
+coached too, was previously silent), `2_2_new` (Bracket Balance — guided bracket placement),
+`2_3` (Distributive Explorer — coach for all 4 modes: Dot Array, Area, Mental, Quiz),
+`2_3_new` (Bracket Tunnel), `2_4_new` (Distribute Maze), `2_5` (Expression Engineer — surfaces
+the current target + a valid worked idea), `2_6` (Estimation Duel — closest-value), `2_7`
+(Compare Clash — evaluates both sides at the test value), `2_8` (Engineering Bay — built-in
+solver offers a real worked expression and glows the next tile), `2_9` (Groupforge —
+quotient×group+remainder), `2_10` (Operator Ladder — first operation then value), `2_11` (Sign
+Flip), `2_12` (Subtract Nine — −10 then +1 trick), `2_13` (Term Sort) and `2_14` (Term Value
+Assembler — both guide tile-by-tile in order). Already present from earlier: `2_1_new`, `2_4`,
+`2_5_new`.
+
+### Data bug fixed
+`math_2_2_new.html` — three rounds declared a "correct bracket" (`pair`) that does **not** produce
+the target: `25 + 5 × 4` (→120), `18 + 6 × 3` (→72) and `45 − 5 − 10` (→30) all had `pair`
+pointing at the whole expression instead of the first two tokens. Corrected to `[0,2]` so both the
+sim's own feedback and the coach are right.
+
+### Verification (offline, since edits are not yet deployed)
+- `node --check` on every sim (syntax).
+- A math harness re-derived every declared answer and every value the coach computes
+  (evaluations, quotient/remainder, closest-estimate, bracket-sign equivalence, distribution,
+  a brute-force solver for the open builders, term-splitting): **116 checks, 0 failures**.
+- A DOM shim executed each sim through its render loop to confirm the hooks run without throwing
+  and publish a valid `window.__eduRound`: **all 19 OK**.
+
+Note: live in-app / deployed-site testing still needs a push + the user's Gradle build, since the
+edits are local to the working tree.

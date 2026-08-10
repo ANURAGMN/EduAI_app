@@ -124,6 +124,25 @@ function render(last=''){
   sim.querySelectorAll('.opt').forEach(b=>b.onclick=()=>pick(b.dataset.v));
   const s=sim.querySelector('#startBtn'); if(s) s.onclick=start;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  // --- V5 coach: open the bracket with the correct signs ---
+  var _m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+  var _ansEl=[].slice.call(sim.querySelectorAll('.opt')).find(function(b){return b.dataset.v===_m.ans;});
+  var _minus=/-\s*\(/.test(_m.q.replace(/\s/g,''));
+  if(done){
+    window.__eduRound={native:true,line:(st.msg||'Tunnel run over.'),voice:(st.msgType==='good'?'Tunnel escaped.':'Run over.'),submit:sim.querySelector('#startBtn'),key:'done-'+st.idx+'-'+(st.msg||'')};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else {
+    window.__eduRound={native:true,
+      hint:'Rewrite '+_m.q+' without the bracket. Which option keeps the same value?',
+      hintVoice:'How do the signs change when the bracket opens?',
+      why:'A + before a bracket leaves every inside sign unchanged; a − before a bracket flips every inside sign.',
+      detail:'Step 1 — Check the sign just before the bracket in '+_m.q+'.\nStep 2 — '+(_minus?'It is a minus, so flip the sign of every term inside.':'It is a plus, so every inside sign stays.')+' '+_m.ex+'\nStep 3 — Removing the bracket gives '+_m.ans+' → tap it.\nWhy it works — subtracting a group means subtracting each item in it, which flips the inside signs.\nTip — evaluate both forms to check they match.',
+      line:'Bracket-free form: '+_m.ans+'.',
+      voice:'Choose '+_m.ans,
+      glow:_ansEl,
+      key:'m-'+st.idx};
+  }
 }
 start();
 </script>

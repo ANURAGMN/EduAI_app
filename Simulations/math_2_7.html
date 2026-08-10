@@ -117,6 +117,24 @@ function render(){
   const s=sim.querySelector('#startBtn'); if(s) s.onclick=start;
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  // --- V5 coach: evaluate both sides at the test value, then compare ---
+  var _l=m.lv(st.x), _r=m.rv(st.x), _ans=relation(_l,_r);
+  if(!st.run){
+    window.__eduRound={native:true,line:(st.idx>=MISSIONS.length?(st.msg||'Clash series complete!'):'Tap Start Clash to begin.'),voice:(st.idx>=MISSIONS.length?'Series complete.':'Tap start.'),glow:sim.querySelector('#startBtn'),key:'start-'+st.idx};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else {
+    window.__eduRound={native:true,
+      hint:'At x = '+st.x+', is Left ('+m.L+') greater than, equal to, or less than Right ('+m.R+')?',
+      hintVoice:'Which side is bigger at this x?',
+      why:'Substitute the test value for x in both sides, work each out, then compare the two numbers.',
+      detail:'Step 1 — Put x = '+st.x+' into both sides.\nStep 2 — Left '+m.L+' = '+_l+'; Right '+m.R+' = '+_r+'.\nStep 3 — Compare '+_l+' and '+_r+': '+_l+' '+_ans+' '+_r+', so tap "'+_ans+'".\nWhy it works — an expression in x is just a rule; plug in the value to get a number you can compare.\nTip — a different x can flip the relation, so always test the given value.',
+      line:'At x='+st.x+': left='+_l+', right='+_r+' → tap "'+_ans+'".',
+      voice:'Tap '+_ans,
+      glow:sim.querySelector('.choice[data-v="'+_ans+'"]'),
+      submit:st.pick?sim.querySelector('#checkBtn'):null,
+      key:'m-'+st.idx+'-'+st.x};
+  }
 }
 start();
 </script>

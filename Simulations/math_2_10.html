@@ -189,6 +189,35 @@ function render(){
   const s = sim.querySelector("#startBtn"); if(s) s.onclick = startGame;
   const c = sim.querySelector("#checkBtn"); if(c) c.onclick = check;
   const n = sim.querySelector("#nextBtn"); if(n) n.onclick = nextMission;
+  // --- V5 coach: pick the operation to do first (× and ÷ before + and −), then the value ---
+  var _firstEl=[].slice.call(sim.querySelectorAll('.step')).find(function(b){return b.dataset.v===m.first;});
+  var _ansEl=sim.querySelector('#ans');
+  if(done){
+    window.__eduRound={native:true,line:(st.msg||'Climb over.'),voice:(st.msgType==='good'?'Summit reached.':'Climb over.'),submit:sim.querySelector('#startBtn'),key:'done-'+st.idx+'-'+(st.msg||'')};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not yet.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else if(st.pick!==m.first){
+    window.__eduRound={native:true,
+      hint:'In '+m.expr+', which operation must be done first?',
+      hintVoice:'Which operation comes first here?',
+      why:'Order of operations: do × and ÷ before + and −. So the multiplication or division is worked out first, not left-to-right.',
+      detail:'Step 1 — Scan '+m.expr+' for × or ÷.\nStep 2 — Do that first: '+m.first+'.\nStep 3 — Then finish the + or − to get '+m.value+'.\nWhy it works — × and ÷ bind tighter than + and −, so they are always resolved first regardless of position.\nTip — left-to-right only works when everything is the same rank.',
+      line:'Do '+m.first+' first, then the rest gives '+m.value+'.',
+      voice:'Do '+m.first+' first',
+      glow:_firstEl,
+      key:'first-'+st.idx};
+  } else {
+    window.__eduRound={native:true,
+      hint:'You picked the right first step ('+m.first+'). Now finish '+m.expr+' — what is the final value?',
+      hintVoice:'What is the final value?',
+      why:'After doing × or ÷ first, complete the remaining + or − to reach the final value.',
+      detail:'Step 1 — First step done: '+m.first+'.\nStep 2 — Substitute it back into '+m.expr+' and finish the + or −.\nStep 3 — The final value is '+m.value+' → type it and tap Lock Answer.\nWhy it works — once the higher-priority operation is done, the rest is a simple left-to-right + and −.',
+      line:m.expr+' = '+m.value+'.',
+      voice:'The value is '+m.value,
+      input:_ansEl,inputHint:''+m.value,
+      submit:(st.answer!==''?sim.querySelector('#checkBtn'):null),
+      key:'val-'+st.idx};
+  }
 }
 
 startGame();

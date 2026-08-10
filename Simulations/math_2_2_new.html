@@ -51,10 +51,10 @@ const sim = document.getElementById("sim");
 const ROUNDS = [
   {tokens:["34","-","9","+","12"], goal:13, pair:[2,4]},
   {tokens:["56","-","14","-","8"], goal:34, pair:[0,2]},
-  {tokens:["25","+","5","*","4"], goal:120, pair:[0,4]},
+  {tokens:["25","+","5","*","4"], goal:120, pair:[0,2]},
   {tokens:["100","-","15","+","56"], goal:29, pair:[2,4]},
-  {tokens:["18","+","6","*","3"], goal:72, pair:[0,4]},
-  {tokens:["45","-","5","-","10"], goal:30, pair:[2,4]}
+  {tokens:["18","+","6","*","3"], goal:72, pair:[0,2]},
+  {tokens:["45","-","5","-","10"], goal:30, pair:[0,2]}
 ];
 
 let st = {run:true, idx:0, score:0, lives:3, left:null, right:null, resolved:false, msg:'', msgType:'info'};
@@ -169,6 +169,28 @@ function render(){
   const c = sim.querySelector("#checkBtn"); if(c) c.onclick=check;
   const n = sim.querySelector("#nextBtn"); if(n) n.onclick=next;
   const s = sim.querySelector("#startBtn"); if(s) s.onclick=start;
+  // --- V5 coach: place brackets to hit the target value ---
+  var _correctExpr=buildExpr(r.tokens,r.pair[0],r.pair[1]);
+  var _openEl=sim.querySelector('.slot[data-i="'+r.pair[0]+'"]');
+  var _closeEl=sim.querySelector('.slot[data-i="'+r.pair[1]+'"]');
+  if(done){
+    window.__eduRound={native:true,line:(st.msg||'Anvil run over.'),voice:(st.msgType==='good'?'Complete.':'Run over.'),submit:sim.querySelector('#startBtn'),key:'done-'+st.idx+'-'+(st.msg||'')};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not the target.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else {
+    var _need=(st.left!==r.pair[0])?_openEl:(st.right!==r.pair[1]?_closeEl:sim.querySelector('#checkBtn'));
+    var _both=(st.left!==null && st.right!==null);
+    window.__eduRound={native:true,
+      hint:'Where should the brackets go in '+r.tokens.join(' ')+' to make it equal '+r.goal+'?',
+      hintVoice:'Which part should the brackets wrap?',
+      why:'Brackets decide what is calculated first. Wrap the part that changes the order so the whole expression lands on the target.',
+      detail:'Step 1 — The tokens are '+r.tokens.join(' ')+' and the target is '+r.goal+'.\nStep 2 — Putting brackets here gives '+_correctExpr+' = '+r.goal+'.\nStep 3 — Tap the "(" slot on '+r.tokens[r.pair[0]]+', the ")" slot on '+r.tokens[r.pair[1]]+', then tap Check.\nWhy it works — brackets override the usual order of operations, forcing that grouped part to be worked out first.\nTip — watch the Value box; it updates as you place the brackets.',
+      line:'Bracket it as '+_correctExpr+' = '+r.goal+'.',
+      voice:'Wrap '+r.tokens[r.pair[0]]+' to '+r.tokens[r.pair[1]],
+      glow:_need,
+      submit:_both?sim.querySelector('#checkBtn'):null,
+      key:'m-'+st.idx};
+  }
 }
 
 start();

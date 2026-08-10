@@ -185,6 +185,33 @@ function render(){
   const r=sim.querySelector('#resetBtn'); if(r) r.onclick=resetBuckets;
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  // --- V5 coach: sort each chunk into a term, joined by + separators ---
+  try{
+    if(done && !st.resolved){
+      window.__eduRound={native:true,line:'Tap Start Factory Run to begin.',voice:'Tap start.',glow:sim.querySelector('#startBtn'),key:'start'};
+    } else if(st.resolved){
+      window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not classified correctly.'),submit:sim.querySelector('#nextBtn')||sim.querySelector('#startBtn'),key:'res-'+st.idx+'-'+(st.msg||'')};
+    } else {
+      var _needTerm=st.selectedTerms.length<m.terms.length && st.selectedTerms.length===st.selectedOps.length;
+      var _needOp=st.selectedOps.length<m.ops.length && st.selectedTerms.length>st.selectedOps.length;
+      var _nextV=_needTerm?m.terms[st.selectedTerms.length]:(_needOp?m.ops[st.selectedOps.length]:null);
+      var _nextKind=_needTerm?'term':(_needOp?'op':null);
+      var _glowEl=null;
+      if(_nextV!=null){ _glowEl=[].slice.call(sim.querySelectorAll('.token')).find(function(b){return b.dataset.kind===_nextKind && b.dataset.v===_nextV;}); }
+      else { _glowEl=sim.querySelector('#checkBtn'); }
+      var _complete=(st.selectedTerms.length===m.terms.length && st.selectedOps.length===m.ops.length);
+      window.__eduRound={native:true,
+        hint:'Split '+m.expr+' into its terms and the + separators between them. What goes on the conveyors, in order?',
+        hintVoice:'What are the terms and separators?',
+        why:'A term is a chunk joined by + or −, with × and ÷ kept inside it. Subtraction is the same as adding a negative term, so every separator is a +.',
+        detail:'Step 1 — Read '+m.expr+' left to right and break at each top-level + or −.\nStep 2 — The terms are '+m.terms.join(', ')+' (a minus stays attached, e.g. −2×6 is one term).\nStep 3 — The separators between them are all + ('+m.ops.length+' of them). Place them in order, then Check.\nWhy it works — treating "− something" as "+ (−something)" turns every join into a +, which makes reordering and grouping safe.\nTip — products like 2×6 never split; they live inside one term.',
+        line:'Terms: '+m.terms.join(', ')+'  ·  Separators: '+m.ops.join(' ')+'.',
+        voice:(_nextV!=null?('Next '+_nextKind+': '+_nextV):'All placed — tap Check'),
+        glow:_glowEl,
+        submit:_complete?sim.querySelector('#checkBtn'):null,
+        key:'m-'+st.idx};
+    }
+  }catch(e){}
 }
 
 start();

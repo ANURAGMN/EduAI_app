@@ -147,6 +147,25 @@ function render(){
   const c = sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n = sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rr = sim.querySelector('#restartBtn'); if(rr) rr.onclick=restart;
+  // --- V5 coach: quotient x group + remainder ---
+  var _q=Math.floor(r.T/r.n), _rem=r.T%r.n;
+  var _ansEl=[].slice.call(sim.querySelectorAll('.choice')).find(function(b){return b.dataset.v===r.ans;});
+  if(done){
+    window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||'Groupforge complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else {
+    window.__eduRound={native:true,
+      hint:'There are '+r.T+' students and the teacher calls groups of '+r.n+'. Which expression shows the full groups and the leftover?',
+      hintVoice:'How many full groups, and how many left over?',
+      why:'Divide the total by the group size: the quotient is the number of full groups and the remainder is the leftover — write it as quotient × group + remainder.',
+      detail:'Step 1 — Divide '+r.T+' by '+r.n+'.\nStep 2 — '+r.T+' ÷ '+r.n+' = '+_q+' remainder '+_rem+'.\nStep 3 — So '+r.T+' = '+_q+'×'+r.n+'+'+_rem+' → tap "'+r.ans+'".\nWhy it works — full groups of '+r.n+' account for '+_q+'×'+r.n+' = '+(_q*r.n)+', and the extra '+_rem+' cannot form another group.\nTip — the remainder is always smaller than the group size ('+r.n+').',
+      line:r.T+' = '+r.ans+' ('+_q+' groups of '+r.n+', '+_rem+' left over).',
+      voice:'Choose '+r.ans,
+      glow:_ansEl,
+      submit:st.pick?sim.querySelector('#checkBtn'):null,
+      key:'r-'+st.idx};
+  }
 }
 
 setupRound();

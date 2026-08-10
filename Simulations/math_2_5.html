@@ -271,6 +271,27 @@ function render(){
     else{expr+=v}
     render();
   });
+  // --- V5 coach: focus the current target and offer a worked idea ---
+  try{
+    var _tgtEl=c.querySelector('.result-cell[data-tgt="'+currentTarget+'"]');
+    var _h=ch.hints&&ch.hints[currentTarget];
+    var _clean=(typeof _h==='string' && _h.length<=32 && !/No\b|Hmm|actually|Try:/.test(_h))?_h:null;
+    if(foundCount===ch.targets.length){
+      window.__eduRound={native:true,line:'All '+ch.targets.length+' targets found — brilliant!',voice:'All targets found.',key:'ch-done-'+ch.id};
+    } else if(isMatch&&expr){
+      window.__eduRound={native:true,line:'Nice — '+expr+' = '+val+'. Tap = to lock it in.',voice:'That matches. Tap equals.',key:'ch-match-'+ch.id+'-'+val};
+    } else {
+      window.__eduRound={native:true,
+        hint:'Build an expression from '+ch.digitDisplay+' that equals '+currentTarget+'. What combination works?',
+        hintVoice:'How can you reach the target?',
+        why:'Combine the given numbers with +, −, ×, ÷ and brackets. Get near the target with one operation, then adjust with the others.',
+        detail:'Step 1 — Target: make '+currentTarget+' from '+ch.digitDisplay+'.\nStep 2 — '+(_clean?('One that works: '+_clean+'.'):'Get close with a × or ÷, then fine-tune using + or − and brackets.')+'\nStep 3 — Type it with the buttons and press = to lock it in.\nWhy it works — the same digits can reach many values depending on the operations and grouping you choose.\nTip — brackets change the order, which unlocks values you cannot reach otherwise.',
+        line:(_clean?('Try '+_clean+' = '+currentTarget+'.'):('Aim for '+currentTarget+' — get close with ×/÷, then adjust.')),
+        voice:(_clean?('Try '+_clean):'Get close, then adjust'),
+        glow:_tgtEl,
+        key:'ch-'+ch.id+'-'+currentTarget};
+    }
+  }catch(e){}
 }
 render();
 </script>

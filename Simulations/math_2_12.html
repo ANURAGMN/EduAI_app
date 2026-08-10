@@ -118,6 +118,24 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const nbtn=sim.querySelector('#nextBtn'); if(nbtn) nbtn.onclick=next;
   const r=sim.querySelector('#restartBtn'); if(r) r.onclick=restart;
+  // --- V5 coach: subtract 9 = subtract 10, add 1 back ---
+  var _jetEl=sim.querySelector('.step[data-k="jet"]');
+  if(done){
+    window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||'Jetpack run complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not the best strategy.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else {
+    window.__eduRound={native:true,
+      hint:'Compute '+n+' − 9 using a mental-math shortcut. Which strategy is smartest?',
+      hintVoice:'What is a quick way to subtract nine?',
+      why:'Subtracting 9 is easier as "subtract 10, then add 1 back", because taking away a round ten is simple to do in your head.',
+      detail:'Step 1 — Note that 9 = 10 − 1.\nStep 2 — So '+n+' − 9 = '+n+' − 10 + 1.\nStep 3 — '+n+' − 10 = '+(n-10)+', then + 1 = '+(n-9)+' → tap "'+n+' − 10 + 1 = '+(n-9)+'".\nWhy it works — you overshoot by taking away a whole ten, then correct it by adding the 1 you removed too much.\nTip — the same trick works for −8 (−10 +2), −19 (−20 +1), and so on.',
+      line:n+' − 9 = '+n+' − 10 + 1 = '+(n-9)+'.',
+      voice:'Subtract ten, then add one, giving '+(n-9),
+      glow:_jetEl,
+      submit:st.pick?sim.querySelector('#checkBtn'):null,
+      key:'r-'+st.idx};
+  }
 }
 render();
 </script>

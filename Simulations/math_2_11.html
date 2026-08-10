@@ -109,6 +109,26 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  // --- V5 coach: remove the bracket with the right signs ---
+  var _ai=st.opts.indexOf(r.ans);
+  var _aiEl=sim.querySelector('.opt[data-i="'+_ai+'"]');
+  var _sign=/-\s*\(/.test(r.q.replace(/\s/g,''))|| /-\(/.test(r.q) ? 'minus' : 'plus';
+  if(done){
+    window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||'Sprint complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else {
+    window.__eduRound={native:true,
+      hint:'Rewrite '+r.q+' without the bracket. Which option keeps the value the same?',
+      hintVoice:'How do the signs change when the bracket opens?',
+      why:'A + before a bracket leaves every inside sign unchanged; a − before a bracket flips every inside sign.',
+      detail:'Step 1 — Look at the sign just before the bracket in '+r.q+'.\nStep 2 — '+(_sign==='minus'?'It is a minus, so flip the sign of every term inside the bracket.':'It is a plus, so every term inside keeps its sign.')+'\nStep 3 — Removing the bracket gives '+r.ans+' → tap it.\nWhy it works — subtracting a group means subtracting each thing in it, which is why a − flips the inside signs.\nTip — check by evaluating both forms; they must give the same number.',
+      line:'Bracket-free form: '+r.ans+'.',
+      voice:'Choose '+r.ans,
+      glow:_aiEl,
+      submit:st.pick!==null?sim.querySelector('#checkBtn'):null,
+      key:'r-'+st.idx};
+  }
 }
 setup();
 render();

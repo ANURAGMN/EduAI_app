@@ -105,6 +105,25 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  // --- V5 coach: pick the option closest to the true value ---
+  var _best=r.opts.reduce(function(a,b){return Math.abs(b-r.exact)<Math.abs(a-r.exact)?b:a;},r.opts[0]);
+  var _bestEl=[].slice.call(sim.querySelectorAll('.opt')).find(function(b){return Number(b.dataset.v)===_best;});
+  if(done){
+    window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||'Duel complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not the closest.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else {
+    window.__eduRound={native:true,
+      hint:'Estimate '+r.expr+'. Which of the four options lands closest to the true value?',
+      hintVoice:'Which option is closest?',
+      why:'Round each number to a friendly place, estimate the result, then pick the option nearest to it. The exact value here is '+fmt(r.exact)+'.',
+      detail:'Step 1 — The problem: '+r.expr+'.\nStep 2 — The exact value works out to '+fmt(r.exact)+'.\nStep 3 — Compare each option with '+fmt(r.exact)+'; '+fmt(_best)+' is the closest, so tap it.\nWhy it works — a good estimate rounds to easy numbers first, then picks the choice nearest the true total.\nTip — for "nearest lakh / crore" look only at the digit in that place to decide rounding.',
+      line:'Closest estimate: '+fmt(_best)+' (exact = '+fmt(r.exact)+').',
+      voice:'Choose '+fmt(_best),
+      glow:_bestEl,
+      submit:st.pick!==null?sim.querySelector('#checkBtn'):null,
+      key:'r-'+st.idx};
+  }
 }
 render();
 </script>

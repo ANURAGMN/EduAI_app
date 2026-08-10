@@ -104,6 +104,24 @@ function render(chosen=''){
   sim.querySelectorAll('.lane').forEach(b=>b.onclick=()=>choose(b.dataset.v));
   const s=sim.querySelector('#startBtn'); if(s) s.onclick=start;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  // --- V5 coach: distribute the multiplier over each term in the bracket ---
+  var _okEl=[].slice.call(sim.querySelectorAll('.lane')).find(function(b){return b.dataset.v===m.ok;});
+  var _isDiff=/−|-/.test(m.ok);
+  if(done){
+    window.__eduRound={native:true,line:(st.msg||'Maze run over.'),voice:(st.msgType==='good'?'Maze cleared.':'Run over.'),submit:sim.querySelector('#startBtn'),key:'done-'+st.idx+'-'+(st.msg||'')};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else {
+    window.__eduRound={native:true,
+      hint:'Expand '+m.expr+' by distributing. Which path multiplies the outside number by every term inside?',
+      hintVoice:'How does the multiplier spread over the bracket?',
+      why:'The distributive property multiplies the number outside the bracket by each term inside, keeping the sign between them.',
+      detail:'Step 1 — Read it: '+m.expr+'.\nStep 2 — Multiply the outside factor by each term inside the bracket, keeping the '+(_isDiff?'subtraction':'addition')+' sign between them.\nStep 3 — That gives '+m.ok+' → tap it.\nWhy it works — a×(p '+(_isDiff?'−':'+')+' q) = a×p '+(_isDiff?'−':'+')+' a×q; the multiplier reaches every term, not just the first.\nTip — a common trap is multiplying only the first term or dropping the sign.',
+      line:'Correct expansion: '+m.ok+'.',
+      voice:'Choose '+m.ok,
+      glow:_okEl,
+      key:'m-'+st.idx};
+  }
 }
 start();
 </script>
