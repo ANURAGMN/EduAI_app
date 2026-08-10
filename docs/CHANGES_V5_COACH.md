@@ -135,7 +135,7 @@ the target: `25 + 5 × 4` (→120), `18 + 6 × 3` (→72) and `45 − 5 − 10` 
 pointing at the whole expression instead of the first two tokens. Corrected to `[0,2]` so both the
 sim's own feedback and the coach are right.
 
-### Verification (offline, since edits are not yet deployed)
+### Verification (offline)
 - `node --check` on every sim (syntax).
 - A math harness re-derived every declared answer and every value the coach computes
   (evaluations, quotient/remainder, closest-estimate, bracket-sign equivalence, distribution,
@@ -143,5 +143,5 @@ sim's own feedback and the coach are right.
 - A DOM shim executed each sim through its render loop to confirm the hooks run without throwing
   and publish a valid `window.__eduRound`: **all 19 OK**.
 
-Note: live in-app / deployed-site testing still needs a push + the user's Gradle build, since the
-edits are local to the working tree.
+Status: pushed to `origin/main` (commit 94f6c7d). Live in-app confirmation still benefits from a
+device pass, but the changes are deployed, not local-only.
