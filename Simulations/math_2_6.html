@@ -112,13 +112,28 @@ function render(){
     window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||'Duel complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx};
   } else if(st.resolved){
     window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not the closest.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
-  } else {
+  } else if(/nearest/i.test(r.expr)){
+    // Rounding round — the answer IS the rounded value, so don't call it "exact/estimate".
+    var _place=((r.expr.match(/nearest\s+([a-z]+)/i)||[])[1]||'given place');
+    var _numPart=r.expr.replace(/\s*nearest.*/i,'').trim();
     window.__eduRound={native:true,
-      hint:'Estimate '+r.expr+'. Which of the four options lands closest to the true value?',
+      hint:'Round '+_numPart+' to the nearest '+_place+'. Which option is the rounded value?',
+      hintVoice:'Which option is the rounded value?',
+      why:'Look at the digit just after the '+_place+' place: 5 or more rounds up, less rounds down.',
+      detail:'Step 1 — Round '+_numPart+' to the nearest '+_place+'.\nStep 2 — Check the digit just after the '+_place+' place and compare it to the halfway mark.\nStep 3 — '+_numPart+' rounds to '+fmt(_best)+', so tap it.\nWhy it works — you snap to the nearest multiple of a '+_place+'; the halfway value is the tipping point.\nTip — only the digit right after the place decides up or down.',
+      line:'Nearest '+_place+': '+fmt(_best)+'.',
+      voice:'Rounds to '+fmt(_best),
+      glow:_bestEl,
+      submit:st.pick!==null?sim.querySelector('#checkBtn'):null,
+      key:'r-'+st.idx};
+  } else {
+    // Estimate round (sum/difference).
+    window.__eduRound={native:true,
+      hint:'Estimate '+r.expr+'. Round each number, then pick the option closest to the true total.',
       hintVoice:'Which option is closest?',
-      why:'Round each number to a friendly place, estimate the result, then pick the option nearest to it. The exact value here is '+fmt(r.exact)+'.',
-      detail:'Step 1 — The problem: '+r.expr+'.\nStep 2 — The exact value works out to '+fmt(r.exact)+'.\nStep 3 — Compare each option with '+fmt(r.exact)+'; '+fmt(_best)+' is the closest, so tap it.\nWhy it works — a good estimate rounds to easy numbers first, then picks the choice nearest the true total.\nTip — for "nearest lakh / crore" look only at the digit in that place to decide rounding.',
-      line:'Closest estimate: '+fmt(_best)+' (exact = '+fmt(r.exact)+').',
+      why:'Round each number to a friendly place, combine them, then pick the option nearest your estimate. The true total is '+fmt(r.exact)+'.',
+      detail:'Step 1 — The problem: '+r.expr+'.\nStep 2 — Rounding each number, the total is about '+fmt(r.exact)+'.\nStep 3 — Compare each option with '+fmt(r.exact)+'; '+fmt(_best)+' is the closest, so tap it.\nWhy it works — estimating with round numbers gets you close quickly, then you pick the nearest choice.\nTip — round both numbers the same way before combining.',
+      line:'Closest option: '+fmt(_best)+' (true total '+fmt(r.exact)+').',
       voice:'Choose '+fmt(_best),
       glow:_bestEl,
       submit:st.pick!==null?sim.querySelector('#checkBtn'):null,

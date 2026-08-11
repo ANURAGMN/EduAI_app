@@ -52,8 +52,8 @@ const ROUNDS = [
   {expr:'95×8', correct:'(100-5)×8 = 800-40 = 760', ans:760},
   {expr:'104×15', correct:'(100+4)×15 = 1500+60 = 1560', ans:1560},
   {expr:'49×50', correct:'(50-1)×50 = 2500-50 = 2450', ans:2450},
-  {expr:'63×18', correct:'(53+10)×18 = 954+180 = 1134', ans:1134},
-  {expr:'72×125', correct:'(72÷8)×1000 = 9×1000 = 9000', ans:9000}
+  {expr:'63×18', correct:'(60+3)×18 = 1080+54 = 1134', ans:1134},
+  {expr:'72×125', correct:'72×(100+25) = 7200+1800 = 9000', ans:9000}
 ];
 
 let st={run:true,idx:0,score:0,lives:3,pick:null,resolved:false,msg:'',msgType:'info',opts:[]};
@@ -122,7 +122,7 @@ function render(){
   } else if(st.resolved){
     window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?"Great split.":"See the best decomposition."),submit:sim.querySelector('#nextBtn'),key:"res-"+st.idx};
   } else if(st.pick===null){
-    window.__eduRound={native:true,hint:`What's a smart way to split ${r.expr} using round numbers?`,hintVoice:"How can you split it using round numbers?",line:`Use: ${r.correct}`,voice:"Use the round-number split.",glow:sim.querySelector('.choice[data-i="'+_ci+'"]'),key:"pick-"+st.idx};
+    window.__eduRound={native:true,hint:`What's a smart way to split ${r.expr} using round numbers?`,hintVoice:"How can you split it using round numbers?",why:"Split one factor into a round number plus or minus a little, then use a(b±c)=ab±ac to multiply the easy parts.",detail:`Step 1 — Split ${r.expr} so one factor becomes a round number.\nStep 2 — Distribute over the split: ${r.correct}.\nStep 3 — Combine the easy products to get ${r.ans}.\nWhy it works — multiplying a round number like 100 or 50 is easy; the distributive law lets you adjust with the small leftover part.\nTip — choose the split that lands on a round hundred or ten.`,line:`Use: ${r.correct}`,voice:"Use the round-number split.",glow:sim.querySelector('.choice[data-i="'+_ci+'"]'),key:"pick-"+st.idx};
   } else {
     window.__eduRound={native:true,line:"Good choice — now tap Check Strategy.",voice:"Tap check.",submit:sim.querySelector('#checkBtn'),key:"chk-"+st.idx+"-"+st.pick};
   }

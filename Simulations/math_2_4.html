@@ -146,7 +146,7 @@ function render(){
   answered=false;
   // --- V5 Socratic coach: state both sides, reveal the sign only if stuck (reason, don't calculate) ---
   const _ansEl=[...c.querySelectorAll(".ans-btn")].find(x=>x.dataset.v===q.ans);
-  window.__eduRound={native:true,hint:`Compare ${q.l} and ${q.r} — reason it out: which sign fits, <, = or >?`,hintVoice:"Compare the two expressions. Which sign fits?",line:`It's "${q.ans}". ${q.ex}`,voice:"The answer is "+q.ans,glow:_ansEl,key:"q"+qIdx};
+  window.__eduRound={native:true,hint:`Compare ${q.l} and ${q.r} — reason it out: which sign fits, <, = or >?`,hintVoice:"Compare the two expressions. Which sign fits?",why:"Compare the two sides by reasoning about how they differ, not by fully calculating each one.",detail:`Step 1 — Line up the two sides: ${q.l} and ${q.r}.\nStep 2 — Reason, don't calculate: ${q.hint}.\nStep 3 — So ${q.l} ${q.ans} ${q.r} — tap "${q.ans}". (${q.ex})\nWhy it works — tracking only the differences between the sides is faster and less error-prone than computing both totals.\nTip — a change that adds to one side and removes from the other can cancel out.`,line:`It's "${q.ans}". ${q.ex}`,voice:"The answer is "+q.ans,glow:_ansEl,key:"q"+qIdx};
   c.querySelector("#ans-row").addEventListener("click",e=>{
     const b=e.target.closest(".ans-btn");if(!b||answered)return;answered=true;total++;
     if(b.dataset.v===q.ans){b.classList.add("correct");score++;c.querySelector("#explain").innerHTML=`<b style="color:#16a34a">Correct!</b> ${q.ex}`}

@@ -210,7 +210,8 @@ function renderQuiz(){
   answered=false;
   // --- V5 Socratic coach: state the problem, reveal the equal expression only if stuck ---
   const _ansEl=[...c.querySelectorAll(".quiz-opt")].find(x=>x.dataset.v===q.ans);
-  window.__eduRound={native:true,hint:`Remove the brackets from ${q.q} — which expression is equal?`,hintVoice:`Remove the brackets. Which expression is equal?`,line:`The equal expression is "${q.ans}"`+(q.explain?`. ${q.explain}`:""),voice:"The answer is "+q.ans,glow:_ansEl,key:"q"+qIdx};
+  const _qFlip=/[−-]\s*\(/.test(q.q);
+  window.__eduRound={native:true,hint:`Remove the brackets from ${q.q} — which expression is equal?`,hintVoice:`Remove the brackets. Which expression is equal?`,why:"A + before a bracket keeps every inside sign; a − before a bracket flips every inside sign.",detail:`Step 1 — Look at the sign before the bracket in ${q.q}.\nStep 2 — ${_qFlip?'It is a minus, so flip the sign of every term inside.':'It is a plus, so every inside sign stays.'} ${q.explain||''}\nStep 3 — So the equal expression is "${q.ans}" → tap it.\nWhy it works — subtracting a group means subtracting each item in it, which flips the inside signs.\nTip — check by evaluating both forms; they give the same value.`,line:`The equal expression is "${q.ans}"`+(q.explain?`. ${q.explain}`:""),voice:"The answer is "+q.ans,glow:_ansEl,key:"q"+qIdx};
   c.querySelector("#qopts").addEventListener("click",e=>{
     const b=e.target.closest(".quiz-opt");if(!b||answered)return;answered=true;total++;
     if(b.dataset.v===q.ans){

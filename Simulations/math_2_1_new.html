@@ -75,8 +75,10 @@ function render(){
   const done=!st.run;
   const m=MISSIONS[Math.min(st.idx, MISSIONS.length-1)];
   const baseVal=val(m.base);
-  const o0 = `${expr([val([m.base[0],m.base[1]]), m.base[2]])}`;
-  const o1 = `${expr([m.base[0], val([m.base[1],m.base[2]])])}`;
+  const sgn = (n)=> n<0 ? `(−${-n})` : `${n}`;
+  // Show the true regrouping EXPRESSIONS (not evaluated partials): (a+b)+c vs a+(b+c).
+  const o0 = `(${sgn(m.base[0])} + ${sgn(m.base[1])}) + ${sgn(m.base[2])}`;
+  const o1 = `${sgn(m.base[0])} + (${sgn(m.base[1])} + ${sgn(m.base[2])})`;
   sim.innerHTML=`
     <div class="stats">
       <div class="stat"><div class="k">Mission</div><div class="v">${Math.min(st.idx+1,MISSIONS.length)}/${MISSIONS.length}</div></div>
@@ -85,8 +87,8 @@ function render(){
       <div class="stat"><div class="k">Base</div><div class="v">${baseVal}</div></div>
     </div>
     <div class="mission">
-      <h3>Choose regrouping with same value</h3>
-      <div class="expr">(${m.base[0]}) + (${m.base[1]}) + (${m.base[2]})</div>
+      <h3>Both regroupings keep the same total — tap either</h3>
+      <div class="expr">${sgn(m.base[0])} + ${sgn(m.base[1])} + ${sgn(m.base[2])}</div>
     </div>
     <div class="choices">
       ${done?``:`<button class="choice" data-i="0">${o0}</button><button class="choice" data-i="1">${o1}</button>`}
@@ -94,7 +96,7 @@ function render(){
     <div class="actions">
       ${done?`<button class="btn start" id="startBtn">Start Reactor Run</button>`:(st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">Next Mission</button>`:``)}
     </div>
-    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Pick the regrouping that preserves total.</div>`}
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Regrouping never changes the total — that's associativity. Tap either.</div>`}
   `;
   sim.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>select(parseInt(b.dataset.i,10)));
   const s=sim.querySelector('#startBtn'); if(s) s.onclick=start;
@@ -106,7 +108,7 @@ function render(){
   } else if(st.resolved){
     window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?"Value preserved.":"That changed the value."),submit:sim.querySelector('#nextBtn'),key:"res-"+st.idx};
   } else {
-    window.__eduRound={native:true,hint:`Addition is associative — does regrouping (${m.base[0]}) + (${m.base[1]}) + (${m.base[2]}) change the total?`,hintVoice:"Does regrouping change the total?",line:"Both groupings keep the same total — tap either to confirm.",voice:"Both keep the same total.",glow:sim.querySelector('.choice[data-i="0"]'),key:"m-"+st.idx};
+    window.__eduRound={native:true,hint:`Addition is associative — does regrouping (${m.base[0]}) + (${m.base[1]}) + (${m.base[2]}) change the total?`,hintVoice:"Does regrouping change the total?",why:"Addition is associative: how you group the numbers you add never changes the total.",detail:`Step 1 — Add all three: ${m.base[0]} + ${m.base[1]} + ${m.base[2]} = ${m.base[0]+m.base[1]+m.base[2]}.\nStep 2 — Group the first two or the last two: (${m.base[0]} + ${m.base[1]}) or (${m.base[1]} + ${m.base[2]}) — either way.\nStep 3 — Both regroupings still total ${m.base[0]+m.base[1]+m.base[2]}, so tap a choice to confirm.\nWhy it works — associativity means the grouping of additions doesn't affect the sum.\nTip — regroup so you can add the easy pair first.`,line:"Both groupings keep the same total — tap either to confirm.",voice:"Both keep the same total.",glow:sim.querySelector('.choice[data-i="0"]'),key:"m-"+st.idx};
   }
 }
 start();

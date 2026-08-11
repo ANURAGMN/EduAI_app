@@ -169,7 +169,27 @@
     if (/[ऀ-ॿ஀-௿ఀ-౿ಀ-೿]/.test(s)) {
       return s.replace(/(\d),(?=\d)/g, '$1');
     }
-    return s.replace(/([+])(?=\d)/g, '').replace(/\b\d[\d,]*\b/g, function (m) { var v = +m.replace(/,/g, ''); return isNaN(v) ? m : n2w(v); });
+    // English: read math notation as words so operators are never skipped or mis-said. This runs on
+    // the spoken text only (the on-screen text keeps the symbols). Order matters: expand operators,
+    // then convert numbers to words.
+    s = s
+      .replace(/[“”"]/g, ' ')          // drop quote marks
+      .replace(/[—–]/g, ', ')          // em/en dash → a natural pause, not "dash"
+      .replace(/[→⇒]/g, ', ')            // arrows → a pause, not "right arrow"
+      .replace(/[()]/g, ' ')                     // drop brackets (don't voice "parenthesis")
+      .replace(/\s*[×*]\s*/g, ' times ')          // × or * → times
+      .replace(/\s*÷\s*/g, ' divided by ')        // ÷ → divided by
+      .replace(/(\d)\s*\/\s*(\d)/g, '$1 divided by $2') // 6/2 → divided by
+      .replace(/−/g, ' minus ')             // U+2212 minus sign
+      .replace(/(\d)\s*-\s*(\d)/g, '$1 minus $2') // hyphen used as minus between numbers
+      .replace(/(^|[\s])-(\d)/g, '$1minus $2')    // leading minus
+      .replace(/\s*=\s*/g, ' equals ')            // = → equals
+      .replace(/≈/g, ' approximately ')
+      .replace(/\s*<\s*/g, ' less than ')
+      .replace(/\s*>\s*/g, ' greater than ')
+      .replace(/\s*\+\s*/g, ' plus ');            // + → plus (was previously dropped)
+    s = s.replace(/\b\d[\d,]*\b/g, function (m) { var v = +m.replace(/,/g, ''); return isNaN(v) ? m : n2w(v); });
+    return s.replace(/\s+([.,!?])/g, '$1').replace(/\s+/g, ' ').trim();
   }
   function emit(text, voice, vkey) {
     if (text !== lastText) { lastText = text; if (IN_APP) { try { AB().coachText(text); } catch (e) {} } else setBar(text); }

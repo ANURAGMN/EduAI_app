@@ -275,7 +275,9 @@ function render(){
   try{
     var _tgtEl=c.querySelector('.result-cell[data-tgt="'+currentTarget+'"]');
     var _h=ch.hints&&ch.hints[currentTarget];
-    var _clean=(typeof _h==='string' && _h.length<=32 && !/No\b|Hmm|actually|Try:/.test(_h))?_h:null;
+    // Only surface a hint that is a SINGLE evaluable expression (digits + operators/brackets only).
+    // Rejects multi-option or prose hints like "5−3−2 or 2+3−5" and "3÷3? No...".
+    var _clean=(typeof _h==='string' && _h.length<=24 && /^[\s\d+\-−×x*/÷().]+$/.test(_h) && safeEval(_h)===currentTarget)?_h:null;
     if(foundCount===ch.targets.length){
       window.__eduRound={native:true,line:'All '+ch.targets.length+' targets found — brilliant!',voice:'All targets found.',key:'ch-done-'+ch.id};
     } else if(isMatch&&expr){
