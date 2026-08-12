@@ -113,9 +113,27 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  // --- V5 coach: find the constant step, add it to the last term ---
+  if(done){
+    window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||'Pulse lab complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx+'-'+(st.msg||'')};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else {
+    window.__eduRound={native:true,
+      hint:'The sequence is '+r.seq.map(fmt).join(', ')+', … What is the next term?',
+      hintVoice:'What is the next term?',
+      why:'Find the constant step between terms (a term minus the one before), keep its sign, then add it to the last term.',
+      detail:'Step 1 — Find the step: each term changes by '+(r.step>=0?'+':'')+fmt(r.step)+'.\nStep 2 — Add the step to the last term: '+fmt(r.seq[r.seq.length-1])+' '+(r.step>=0?'+ '+fmt(Math.abs(r.step)):'− '+fmt(Math.abs(r.step)))+'.\nStep 3 — The next term is '+fmt(r.next)+'.\nWhy it works — an arithmetic sequence adds the same amount each step; keep the decimal places aligned.\nTip — watch the sign: a decreasing sequence subtracts each time.',
+      line:'Next term: '+fmt(r.next)+'.',
+      voice:'The next term is '+fmt(r.next),
+      input:sim.querySelector('#ansIn'), inputHint:fmt(r.next),
+      submit:(st.ans!==''?sim.querySelector('#checkBtn'):null),
+      key:'r-'+st.idx};
+  }
 }
 setup();
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

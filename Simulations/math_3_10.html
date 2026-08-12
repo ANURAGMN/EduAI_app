@@ -159,8 +159,29 @@ function render(){
   const c = sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n = sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const s = sim.querySelector('#startBtn'); if(s) s.onclick=startGame;
+  // --- V5 coach: convert by the power-of-ten factor, moving the decimal point ---
+  var _ans=m.src*m.factor;
+  var _mult=m.factor>=1;
+  var _zeros=Math.round(Math.log10(_mult?m.factor:1/m.factor));
+  if(done){
+    window.__eduRound={native:true,line:(st.idx>=MISSIONS.length?(st.msg||'Precision tower completed!'):st.msg),voice:'Round over.',submit:sim.querySelector('#startBtn'),key:'done-'+st.idx+'-'+(st.msg||'')};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else {
+    window.__eduRound={native:true,
+      hint:'Convert '+m.src+' '+m.from+' to '+m.to+'. '+m.hint+'.',
+      hintVoice:'What is the converted value?',
+      why:'Between these units the factor is a power of ten, so converting just shifts the decimal point — multiply to a smaller unit, divide to a bigger one.',
+      detail:'Step 1 — '+m.hint+'.\nStep 2 — '+(_mult?'Multiply':'Divide')+' '+m.src+' by '+(_mult?fmt(m.factor):fmt(1/m.factor))+' — shift the decimal point '+_zeros+' place'+(_zeros===1?'':'s')+' '+(_mult?'right':'left')+'.\nStep 3 — '+m.src+' '+m.from+' = '+fmt(_ans)+' '+m.to+'.\nWhy it works — the metric system scales by tens, so a conversion is just a decimal-point shift.\nTip — count the zeros in the factor to know how many places to move.',
+      line:m.src+' '+m.from+' = '+fmt(_ans)+' '+m.to+'.',
+      voice:'The answer is '+fmt(_ans)+' '+m.to,
+      input:sim.querySelector('#ans'), inputHint:fmt(_ans),
+      submit:(st.answer!==''?sim.querySelector('#checkBtn'):null),
+      key:'m-'+st.idx};
+  }
 }
 startGame();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

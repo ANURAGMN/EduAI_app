@@ -131,6 +131,36 @@ const AR_QUIZ=[
   {q:"17 − 0.05 = ?",opts:["16.95","16.5","16.05","17.05"],ans:"16.95",ex:"17.00 − 0.05: 0−5 → borrow: 16.9.10, 10−5=5 h, 9 t, 16 → 16.95"}
 ];
 
+function pubCoach(){
+  try{
+    if(arMode==='quiz'){
+      var q=AR_QUIZ[arQIdx>=AR_QUIZ.length?0:arQIdx];
+      var _el=[].slice.call(ct.querySelectorAll('.qopt')).find(function(b){return b.dataset.v===q.ans;});
+      if(arQAns){
+        window.__eduRound={native:true,line:'Answer: '+q.ans+' — '+q.ex,voice:'The answer is '+q.ans,submit:ct.querySelector('#arnxt'),key:'arq-res-'+arQIdx};
+      } else {
+        window.__eduRound={native:true,
+          hint:q.q+' Line up the decimal points and compute.',
+          hintVoice:'What is the result?',
+          why:'Line up the decimal points (pad with zeros so both have the same places), then add or subtract column by column, carrying or borrowing as usual.',
+          detail:'Step 1 — Write the numbers with decimal points aligned, padding with zeros.\nStep 2 — '+q.ex+'\nStep 3 — So the answer is '+q.ans+' → tap it.\nWhy it works — aligning the points lines up tenths with tenths and hundredths with hundredths, so column arithmetic works like whole numbers.\nTip — 18 is 18.0; add the missing decimal places as zeros before you start.',
+          line:'Answer: '+q.ans+'.',
+          voice:'Choose '+q.ans,
+          glow:_el,key:'arq-'+arQIdx};
+      }
+    } else {
+      window.__eduRound={native:true,
+        hint:'How do you add or subtract decimals?',
+        hintVoice:'How do you add or subtract decimals?',
+        why:'Line up the decimal points first, pad with zeros so both numbers have the same places, then add or subtract column by column.',
+        detail:'Step 1 — Stack the numbers with their decimal points aligned.\nStep 2 — Pad shorter numbers with trailing zeros.\nStep 3 — Add or subtract each column, carrying or borrowing, and bring the point straight down.\nWhy it works — aligning the points keeps like places together (tenths under tenths).\nTip — a whole number like 18 is 18.00 when you need two decimal places.',
+        line:'Line up the decimal points, then add or subtract column by column.',
+        voice:'Line up the points, then compute.',
+        key:'ar-explore-'+pIdx};
+    }
+  }catch(e){}
+}
+
 function renderARQuiz(){
   if(arQIdx>=AR_QUIZ.length)arQIdx=0;
   const q=AR_QUIZ[arQIdx];
@@ -150,14 +180,17 @@ function renderARQuiz(){
     if(b.dataset.v===q.ans){b.style.borderColor='#16a34a';b.style.background='#dcfce7';b.style.color='#166534';arQScore++;ct.querySelector('#arfb').innerHTML=`<div style="background:#dcfce7;color:#166534;padding:12px;border-radius:10px"><b>Correct!</b> ${q.ex}</div>`}
     else{b.style.borderColor='#dc2626';b.style.background='#fef2f2';b.style.color='#991b1b';ct.querySelectorAll('.qopt').forEach(x=>{if(x.dataset.v===q.ans){x.style.borderColor='#16a34a';x.style.background='#dcfce7';x.style.color='#166534'}});ct.querySelector('#arfb').innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px"><b>Answer: ${q.ans}</b> &mdash; ${q.ex}</div>`}
     ct.querySelector('#arnxt').style.display='block';
+    pubCoach();
   });
   ct.querySelector('#arnxt').onclick=()=>{arQIdx++;renderARQuiz()};
+  pubCoach();
 }
 
 function pad(n,dp){return n.toFixed(dp)}
 
 function render(){
   if(arMode==='quiz'){renderARQuiz();return}
+  pubCoach();
   const p=PROBLEMS[pIdx];
   const dp=Math.max((p.a.toString().split('.')[1]||'').length,(p.b.toString().split('.')[1]||'').length,
     (p.result.toString().split('.')[1]||'').length);
@@ -208,5 +241,6 @@ function render(){
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

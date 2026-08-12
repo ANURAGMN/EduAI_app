@@ -121,8 +121,28 @@ function render(){
   const cbtn = sim.querySelector('#checkBtn'); if(cbtn) cbtn.onclick=check;
   const nbtn = sim.querySelector('#nextBtn'); if(nbtn) nbtn.onclick=next;
   const rbtn = sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  // --- V5 coach: read the decimal in the context's own units ---
+  var _ai=c.opts.indexOf(c.ans);
+  var _ansEl=sim.querySelector('.opt[data-i="'+_ai+'"]');
+  if(done){
+    window.__eduRound={native:true,line:(st.idx>=CASES.length?(st.msg||'Decoder run complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx+'-'+(st.msg||'')};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else {
+    window.__eduRound={native:true,
+      hint:'Read it carefully: '+c.q+' Which interpretation is right?',
+      hintVoice:'What does this decimal mean here?',
+      why:'A decimal means different things depending on its unit — half an hour is 30 minutes, but 0.5 of an over is 5 balls, and 0.20 equals 0.2. Read the decimal in the context'+"'"+'s own units.',
+      detail:'Step 1 — Read the quantity in context: '+c.q+'\nStep 2 — Convert the decimal into the context'+"'"+'s units (minutes, balls, paise, or place value).\nStep 3 — The correct meaning is "'+c.ans+'" → tap it.\nWhy it works — the same decimal digits mean different amounts depending on whether the unit splits into 10, 60, 100 or 6 parts.\nTip — trailing zeros don'+"'"+'t change value (0.20 = 0.2), but shifting a place does (0.2 = 10 × 0.02).',
+      line:'It means "'+c.ans+'".',
+      voice:'The answer is '+c.ans,
+      glow:_ansEl,
+      submit:st.pick!==null?sim.querySelector('#checkBtn'):null,
+      key:'c-'+st.idx};
+  }
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

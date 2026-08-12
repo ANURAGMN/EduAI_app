@@ -153,10 +153,29 @@ function render(){
   sim.querySelector("#divBtn").onclick=()=>apply("div");
   sim.querySelector("#retryBtn").onclick=()=>{setup();render();};
   sim.querySelector("#nextBtn").onclick=nextMission;
+  // --- V5 coach: ×10 shifts the point right, ÷10 shifts it left ---
+  var _tg=toMilli(m.target);
+  if(st.state==='win' || st.state==='lose'){
+    window.__eduRound={native:true,line:(st.state==='win'?'Mission clear — you reached '+m.target+'.':'Not reached. Target was '+fmt(_tg)+'.'),voice:(st.state==='win'?'Correct.':'Not reached.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx+'-'+st.state};
+  } else {
+    var _op=st.current<_tg?'mul':(st.current>_tg?'div':null);
+    var _opEl=_op?sim.querySelector(_op==='mul'?'#mulBtn':'#divBtn'):null;
+    var _need=st.current>0?Math.round(Math.abs(Math.log10(_tg/st.current))):0;
+    window.__eduRound={native:true,
+      hint:'Turn '+fmt(st.current)+' into '+m.target+' using ×10 and ÷10. Which shift moves you the right way?',
+      hintVoice:'Which way should the decimal point move?',
+      why:'×10 moves the decimal point one place right (bigger); ÷10 moves it one place left (smaller). Compare current to target to pick the direction.',
+      detail:'Step 1 — Compare '+fmt(st.current)+' with the target '+m.target+'.\nStep 2 — '+(_op==='mul'?fmt(st.current)+' is smaller, so ×10 to shift the point right.':_op==='div'?fmt(st.current)+' is bigger, so ÷10 to shift the point left.':'You are already at the target.')+'\nStep 3 — Repeat until you reach '+m.target+' (about '+_need+' more shift'+(_need===1?'':'s')+').\nWhy it works — each ×10 or ÷10 moves every digit one place, i.e. moves the decimal point one step.\nTip — '+m.hint,
+      line:(_op==='mul'?'Tap ×10 to grow toward '+m.target+'.':_op==='div'?'Tap ÷10 to shrink toward '+m.target+'.':'You are at the target.'),
+      voice:(_op==='mul'?'Multiply by ten.':_op==='div'?'Divide by ten.':'At the target.'),
+      glow:_opEl,
+      key:'m-'+st.idx+'-'+st.current};
+  }
 }
 
 setup();
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

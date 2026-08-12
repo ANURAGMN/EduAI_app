@@ -52,8 +52,8 @@ const sim = document.getElementById('sim');
 const POS = ['Hundreds','Tens','Ones','Tenths','Hundredths'];
 const ROUNDS = [
   {target:'705.34', digits:['7','0','5','3','4']},
-  {target:'70.53', digits:['7','0','5','3','0']},
-  {target:'7.05', digits:['7','0','0','0','5']},
+  {target:'705.30', digits:['7','0','5','3','0']},
+  {target:'700.05', digits:['7','0','0','0','5']},
   {target:'410.35', digits:['4','1','0','3','5']},
   {target:'926.08', digits:['9','2','6','0','8']},
   {target:'137.40', digits:['1','3','7','4','0']}
@@ -131,9 +131,33 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rr=sim.querySelector('#restartBtn'); if(rr) rr.onclick=restart;
+  // --- V5 coach: place each digit in its place value to build the target ---
+  var _td=r.target.replace('.','');
+  var _nextSlot=st.placed.findIndex(function(v){return v===null;});
+  var _needVal=_nextSlot>=0?_td[_nextSlot]:null;
+  var _glow=null;
+  if(_needVal!=null){ _glow=[].slice.call(sim.querySelectorAll('.digit')).find(function(b){var i=parseInt(b.dataset.i,10);return !st.used.has(i)&&r.digits[i]===_needVal;}); }
+  var _all=st.placed.every(function(v){return v!==null;});
+  if(done){
+    window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||'Builder bay complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx+'-'+(st.msg||'')};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not the target.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else {
+    window.__eduRound={native:true,
+      hint:'Build '+r.target+' by placing each digit in its correct place. Which digit goes in the next slot?',
+      hintVoice:'Which digit goes next?',
+      why:'Each slot is a place value — hundreds, tens, ones, then tenths and hundredths after the point. Put the target'+"'"+'s digit for that place.',
+      detail:'Step 1 — Read the target '+r.target+' place by place.\nStep 2 — The next empty slot is the '+(POS[_nextSlot]||'next')+' place, which needs a '+(_needVal||'-')+'.\nStep 3 — Tap that digit; repeat left to right, then Check.\nWhy it works — a decimal is built from place values; a digit'+"'"+'s position decides whether it means ones, tenths or hundredths.\nTip — a 0 still holds a place (in 705.30 the 0 sits in the tens place).',
+      line:(_needVal!=null?'Place a '+_needVal+' in the '+(POS[_nextSlot]||'next')+' slot.':'All placed — tap Check.'),
+      voice:(_needVal!=null?'Place a '+_needVal:'Tap Check.'),
+      glow:(_all?sim.querySelector('#checkBtn'):_glow),
+      submit:(_all?sim.querySelector('#checkBtn'):null),
+      key:'m-'+st.idx+'-'+st.placed.filter(function(v){return v!==null;}).length};
+  }
 }
 setup();
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -59,7 +59,7 @@ const sim = document.getElementById("sim");
 const PLACE_KEYS = ["Hundreds","Tens","Ones","Tenths","Hundredths"];
 const ROUNDS = [
   {digits:[3,5,8,1,4], target:"358.14"},
-  {digits:[0,7,2,9,6], target:"72.96"},
+  {digits:[0,7,2,9,6], target:"702.96"},
   {digits:[4,1,0,3,5], target:"410.35"},
   {digits:[9,2,6,0,8], target:"926.08"},
   {digits:[1,3,7,4,0], target:"137.40"},
@@ -214,9 +214,44 @@ function render(){
   const start = sim.querySelector("#startBtn"); if(start) start.onclick = startGame;
   const check = sim.querySelector("#checkBtn"); if(check) check.onclick = checkRound;
   const next = sim.querySelector("#nextBtn"); if(next) next.onclick = nextRound;
+  // --- V5 coach: select a digit, then lock it into its place-value slot ---
+  var _td=round.target.replace('.','');
+  if(!st.run){
+    window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||'All decimal gridlocks solved!'):'Tap Start Gridlock to begin.'),voice:(st.idx>=ROUNDS.length?'Complete.':'Tap start.'),glow:sim.querySelector('#startBtn'),key:'start-'+st.idx};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not the target.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else if(st.selected===null){
+    var _slot=st.placements.findIndex(function(v){return v===null;});
+    var _need=_slot>=0?_td[_slot]:null;
+    var _glow=_need!=null?[].slice.call(sim.querySelectorAll('.tool')).find(function(b){var i=parseInt(b.dataset.i,10);return !b.disabled&&String(round.digits[i])===_need;}):null;
+    window.__eduRound={native:true,
+      hint:'Build '+round.target+'. Each slot shows the digit its place needs — pick a digit tile to start.',
+      hintVoice:'Which digit does the next place need?',
+      why:'Every slot is a place value (hundreds, tens, ones, tenths, hundredths). Match each place to the target'+"'"+'s digit for that place.',
+      detail:'Step 1 — Look at the '+(PLACE_KEYS[_slot]||'next')+' place; the target needs a '+(_need||'-')+' there.\nStep 2 — Select the '+(_need||'-')+' tile.\nStep 3 — Then tap the '+(PLACE_KEYS[_slot]||'next')+' slot to lock it; repeat, then Check.\nWhy it works — a decimal is defined by which digit sits in which place; the same digit means different amounts in different places.\nTip — a 0 still holds its place.',
+      line:(_need!=null?'Select a '+_need+' for the '+(PLACE_KEYS[_slot]||'next')+' place.':'All placed — tap Check.'),
+      voice:(_need!=null?'Select a '+_need:'Tap Check.'),
+      glow:(_glow||(st.placements.every(function(v){return v!==null;})?sim.querySelector('#checkBtn'):null)),
+      submit:(st.placements.every(function(v){return v!==null;})?sim.querySelector('#checkBtn'):null),
+      key:'pick-'+st.idx+'-'+st.placements.filter(function(v){return v!==null;}).length};
+  } else {
+    var _selVal=String(round.digits[st.selected]);
+    var _slotPos=-1; for(var i=0;i<_td.length;i++){ if(st.placements[i]===null && _td[i]===_selVal){ _slotPos=i; break; } }
+    var _slotEl=_slotPos>=0?sim.querySelector('.slot[data-pos="'+_slotPos+'"]'):null;
+    window.__eduRound={native:true,
+      hint:'You picked a '+_selVal+'. Which place needs a '+_selVal+'?',
+      hintVoice:'Where does this digit go?',
+      why:'Place the selected digit in the slot whose place value matches the target digit for that place.',
+      detail:'Step 1 — You selected a '+_selVal+'.\nStep 2 — The '+(_slotPos>=0?PLACE_KEYS[_slotPos]:'matching')+' place needs a '+_selVal+'.\nStep 3 — Tap that slot to lock it.\nWhy it works — each place holds exactly one digit; matching digit to place builds the target decimal.\nTip — if it doesn'+"'"+'t fit any place, tap the tile again and pick a different digit.',
+      line:(_slotPos>=0?'Tap the '+PLACE_KEYS[_slotPos]+' slot to place your '+_selVal+'.':'That digit isn'+"'"+'t needed in an empty place — pick another.'),
+      voice:(_slotPos>=0?'Place it in the '+PLACE_KEYS[_slotPos]+' slot.':'Pick a different digit.'),
+      glow:_slotEl,
+      key:'place-'+st.idx+'-'+st.selected+'-'+st.placements.filter(function(v){return v!==null;}).length};
+  }
 }
 
 startGame();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

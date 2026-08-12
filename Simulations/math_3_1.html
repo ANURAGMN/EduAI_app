@@ -184,6 +184,7 @@ function renderExplore(){
   wireMode();
   ct.querySelector('#num-sl').oninput=function(){num=parseFloat(this.value);renderExplore()};
   ct.querySelectorAll('.preset-btn').forEach(b=>b.onclick=()=>{num=parseFloat(b.dataset.v);renderExplore()});
+  pubCoach();
 }
 
 function describeDecimal(n){
@@ -223,6 +224,7 @@ function renderSequence(){
   </div>`;
   wireMode();
   ct.querySelector('#seq-sl').oninput=function(){seqIdx=parseInt(this.value);renderSequence()};
+  pubCoach();
 }
 
 // ═══ QUIZ ═══
@@ -255,8 +257,26 @@ function renderQuiz(){
     if(b.dataset.v===q.ans){b.classList.add('correct');qScore++;ct.querySelector('#fb').innerHTML=`<div style="background:#dcfce7;color:#166534;padding:12px;border-radius:10px"><b>Correct!</b> ${q.ex}</div>`}
     else{b.classList.add('wrong');ct.querySelectorAll('.quiz-opt').forEach(x=>{if(x.dataset.v===q.ans)x.classList.add('correct')});ct.querySelector('#fb').innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px"><b>Answer: ${q.ans}</b> &mdash; ${q.ex}</div>`}
     ct.querySelector('#nxt').style.display='block';
+    pubCoach();
   });
   ct.querySelector('#nxt').onclick=()=>{qIdx++;renderQuiz()};
+  pubCoach();
+}
+
+function pubCoach(){
+ try{
+  if(mode==='quiz'){
+    var q=QUIZ[qIdx>=QUIZ.length?0:qIdx];
+    var _el=[].slice.call(ct.querySelectorAll('.quiz-opt')).find(function(b){return b.dataset.v===q.ans;});
+    if(qAns){ window.__eduRound={native:true,line:'Answer: '+q.ans+' — '+q.ex,voice:'The answer is '+q.ans,submit:ct.querySelector('#nxt'),key:'q-res-'+qIdx}; }
+    else { window.__eduRound={native:true,hint:q.q+' Which option is right?',hintVoice:'Which is right?',why:'Compare decimals place by place from the left, and remember trailing zeros do not change value.',detail:'Step 1 — Read: '+q.q+'\nStep 2 — '+q.ex+'\nStep 3 — So the answer is "'+q.ans+'" → tap it.\nWhy it works — a decimal is read and compared by place value: tenths, hundredths, thousandths.\nTip — more digits does not mean bigger (0.2 > 0.02).',line:'Answer: '+q.ans+'.',voice:'Choose '+q.ans,glow:_el,key:'q-'+qIdx}; }
+  } else if(mode==='sequence'){
+    var s=SEQS[seqIdx>=SEQS.length?0:seqIdx];
+    window.__eduRound={native:true,hint:'The step is '+(s.step>0?'+':'')+s.step+' each time. What are the next terms?',hintVoice:'What comes next in the sequence?',why:'Find the constant step (a term minus the one before) and add it repeatedly, keeping the sign.',detail:'Step 1 — The step is '+(s.step>0?'+':'')+s.step+' each time.\nStep 2 — Add it to the last term to get the next terms: '+s.next.map(function(n){return n.toFixed(2).replace(/\\.?0+$/,'');}).join(', ')+'.\nStep 3 — Keep adding the step for each following term.\nWhy it works — an arithmetic sequence changes by the same amount every step.\nTip — a negative step means the sequence decreases.',line:'Next terms: '+s.next.map(function(n){return n.toFixed(2).replace(/\\.?0+$/,'');}).join(', ')+'.',voice:'Add the step each time.',key:'seq-'+seqIdx};
+  } else {
+    window.__eduRound={native:true,hint:'Where does '+num+' sit, and what is each digit worth?',hintVoice:'What is this decimal worth?',why:'A decimal sits between two whole numbers; each place after the point is a tenth, hundredth or thousandth.',detail:'Step 1 — Read '+num+' = '+describeDecimal(num)+'.\nStep 2 — It lies between '+Math.floor(num)+' and '+(Math.floor(num)+1)+' on the number line.\nStep 3 — Each digit after the point is ten times smaller than the one before.\nWhy it works — decimals extend the number line between whole numbers using tenths, hundredths and thousandths.\nTip — the first digit after the point is tenths.',line:num+' = '+describeDecimal(num)+'.',voice:num+' is '+describeDecimal(num),key:'exp-'+num};
+  }
+ }catch(e){}
 }
 
 // ═══ TABS ═══
@@ -265,5 +285,6 @@ function wireMode(){ct.querySelectorAll('.mode-tab').forEach(b=>b.onclick=()=>{m
 
 renderExplore();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -219,6 +219,18 @@ Each scenario has four layers:
 
 ---
 
+## MATH — Chapter 3 (Decimals)
+
+Per-simulation coach text, explanations, glow behaviour and unit tests for all 15 Ch 3 English sims
+live in the dedicated spec — that file is the single source of truth for Ch 3, so entries are not
+duplicated here:
+
+- **`docs/COACH_SPEC_math_ch3.md`**
+
+(Chapter 2's full catalogue is likewise in `docs/COACH_SPEC_math_ch2.md`.)
+
+---
+
 ## Notes for review
 - Tell me which explanations to lengthen, shorten, or reword (tone, vocabulary level for class 7).
 - Any scenario missing above (e.g. specific ch2 sims like Operator Ladder, Sign Flip, Term Sort, Distributive Explorers) — I'll add its entry as I build that hook.

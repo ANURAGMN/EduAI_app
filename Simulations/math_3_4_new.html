@@ -107,8 +107,27 @@ function render(){
   const r = sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
   const n = sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const t = sim.querySelector('#tipBtn'); if(t) t.onclick=()=>{st.msg='Hint: convert by powers of 10 first.'; st.msgType='info'; render();};
+  // --- V5 coach: convert decimal units by powers of 10 ---
+  var _ansEl=sim.querySelector(m.ans==='a'?'#optA':'#optB');
+  var _ansText=m.ans==='a'?m.a:m.b;
+  if(!st.run){
+    window.__eduRound={native:true,line:(st.idx>=MISSIONS.length?(st.msg||'All dispatch missions completed!'):'Tap Start Dispatch Run to begin.'),voice:(st.idx>=MISSIONS.length?'Complete.':'Tap start.'),glow:sim.querySelector('#startBtn'),key:'start-'+st.idx};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else {
+    window.__eduRound={native:true,
+      hint:m.context+' Convert the units — which value is correct?',
+      hintVoice:'Which converted value is correct?',
+      why:'Convert between decimal units by powers of 10 — ×10, ×100 or ×1000 (or divide) depending on the units.',
+      detail:'Step 1 — Read it: '+m.context+'\nStep 2 — '+m.why+'\nStep 3 — So the correct value is "'+_ansText+'" → tap it.\nWhy it works — each step between units (mm→cm→m, g→kg, paise→rupees) is a factor of 10, 100 or 1000.\nTip — moving to a bigger unit divides; to a smaller unit multiplies.',
+      line:'Correct: '+_ansText+'.',
+      voice:'Choose '+_ansText,
+      glow:_ansEl,
+      key:'m-'+st.idx};
+  }
 }
 start();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

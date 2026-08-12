@@ -185,8 +185,30 @@ function render(){
   const rr = sim.querySelector('#retryBtn'); if(rr) rr.onclick=retryRound;
   const ch = sim.querySelector('#checkBtn'); if(ch) ch.onclick=check;
   const n = sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  // --- V5 coach: place smallest → largest, comparing decimals place by place ---
+  if(!st.run){
+    window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||'All rescue rounds cleared!'):'Tap Start Rescue Run to begin.'),voice:(st.idx>=ROUNDS.length?'Complete.':'Tap start.'),glow:sim.querySelector('#startBtn'),key:'start-'+st.idx};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct order.':'Not in order.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx+'-'+st.msgType};
+  } else {
+    var _rem=st.tray.map(function(t){return {t:t,v:Number(t)};});
+    var _min=_rem.length?_rem.reduce(function(a,b){return b.v<a.v?b:a;},_rem[0]):null;
+    var _glow=_min?sim.querySelector('.token[data-t="'+_min.t+'"]'):null;
+    var _all=st.placed.every(function(x){return x!==null;});
+    window.__eduRound={native:true,
+      hint:'Place the decimals in ascending order (smallest first). Which unplaced value is smallest?',
+      hintVoice:'Which decimal is smallest?',
+      why:'Compare decimals place by place from the left. Line up the points, pad with zeros, and the first place that differs decides which is smaller.',
+      detail:'Step 1 — Pad every number to the same decimal places so they line up.\nStep 2 — Compare from the left; the smallest unplaced value is '+(_min?_min.t:'—')+'.\nStep 3 — Tap it next, then repeat until the slots go smallest → largest, then Check.\nWhy it works — decimals order by their first differing place, not by how many digits they have (0.2 > 0.02).\nTip — 0.2 = 0.20 = 0.500…; trailing zeros never change the value.',
+      line:(_min?'Place '+_min.t+' next (smallest remaining).':'All placed — tap Check.'),
+      voice:(_min?'Place '+_min.t+' next.':'Tap Check.'),
+      glow:(_all?sim.querySelector('#checkBtn'):_glow),
+      submit:(_all?sim.querySelector('#checkBtn'):null),
+      key:'m-'+st.idx+'-'+st.placed.filter(Boolean).length};
+  }
 }
 start();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

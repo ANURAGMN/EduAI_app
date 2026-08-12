@@ -51,10 +51,10 @@ const sim = document.getElementById('sim');
 const ROUNDS = [
   {target:1.000, opts:[0.900,1.010,1.100,1.110], ans:1.010},
   {target:4.000, opts:[3.560,3.650,3.099,4.120], ans:4.120},
-  {target:0.500, opts:[0.490,0.509,0.450,0.600], ans:0.490},
+  {target:0.500, opts:[0.490,0.509,0.450,0.600], ans:0.509},
   {target:2.750, opts:[2.749,2.760,2.705,2.680], ans:2.749},
   {target:5.050, opts:[5.005,5.500,5.049,5.150], ans:5.049},
-  {target:9.900, opts:[9.890,9.909,9.999,9.800], ans:9.890}
+  {target:9.900, opts:[9.890,9.909,9.999,9.800], ans:9.909}
 ];
 
 let st={run:true,idx:0,score:0,lives:3,pick:null,resolved:false,msg:'',msgType:'info'};
@@ -106,9 +106,28 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rr=sim.querySelector('#restartBtn'); if(rr) rr.onclick=()=>{st={run:true,idx:0,score:0,lives:3,pick:null,resolved:false,msg:'',msgType:'info'}; setup(); render();};
+  // --- V5 coach: compare decimals place by place, pick the closest to the target ---
+  var _ansEl=[].slice.call(sim.querySelectorAll('.opt')).find(function(b){return Math.abs(Number(b.dataset.v)-r.ans)<1e-9;});
+  if(done){
+    window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||'Hunt complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx+'-'+(st.msg||'')};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not the closest.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else {
+    window.__eduRound={native:true,
+      hint:'Which option is closest to '+fmt(r.target)+'? Line up the decimal places and compare.',
+      hintVoice:'Which decimal is closest to the target?',
+      why:'Compare decimals place by place from the left — tenths, then hundredths, then thousandths. The option with the smallest gap to the target wins.',
+      detail:'Step 1 — Write each option to the same number of decimal places as '+fmt(r.target)+'.\nStep 2 — Compare place by place and find each option'+"'"+'s distance from '+fmt(r.target)+'.\nStep 3 — '+fmt(r.ans)+' has the smallest gap, so tap it.\nWhy it works — decimals are compared left to right; the first place that differs decides which is nearer.\nTip — pad with trailing zeros so every number has the same number of places.',
+      line:'Closest to '+fmt(r.target)+': '+fmt(r.ans)+'.',
+      voice:'Choose '+fmt(r.ans),
+      glow:_ansEl,
+      submit:st.pick!==null?sim.querySelector('#checkBtn'):null,
+      key:'r-'+st.idx};
+  }
 }
 setup();
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

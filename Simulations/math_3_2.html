@@ -121,6 +121,36 @@ const PV_QUIZ=[
   {q:"0.274 is read as?",opts:["Zero point two seven four","Zero point two hundred seventy four","Two hundred seventy four","Twenty-seven point four"],ans:"Zero point two seven four",ex:"Read each digit after the point separately: 2, 7, 4"}
 ];
 
+function pubCoach(){
+  try{
+    if(pvMode==='quiz'){
+      var q=PV_QUIZ[pvQIdx>=PV_QUIZ.length?0:pvQIdx];
+      var _el=[].slice.call(ct.querySelectorAll('.qopt')).find(function(b){return b.dataset.v===q.ans;});
+      if(pvQAns){
+        window.__eduRound={native:true,line:'Answer: '+q.ans+' — '+q.ex,voice:'The answer is '+q.ans,submit:ct.querySelector('#pvnxt'),key:'pvq-res-'+pvQIdx};
+      } else {
+        window.__eduRound={native:true,
+          hint:q.q+' Which option is right?',
+          hintVoice:'Which is right?',
+          why:'Each place after the decimal point is ten times smaller: tenths, then hundredths, then thousandths.',
+          detail:'Step 1 — Read the question: '+q.q+'\nStep 2 — '+q.ex+'\nStep 3 — So the answer is "'+q.ans+'" → tap it.\nWhy it works — a digit'+"'"+'s value is its face value times its place (1/10, 1/100, 1/1000 after the point).\nTip — a missing place counts as a zero (4 ones and 6 hundredths = 4.06, not 4.6).',
+          line:'Answer: '+q.ans+'.',
+          voice:'Choose '+q.ans,
+          glow:_el,key:'pvq-'+pvQIdx};
+      }
+    } else {
+      window.__eduRound={native:true,
+        hint:'What is each digit of '+num+' worth?',
+        hintVoice:'What is each digit worth?',
+        why:'A digit'+"'"+'s value is its face value times its place; after the point the places are tenths, hundredths and thousandths.',
+        detail:'Step 1 — Read the number '+num+'.\nStep 2 — Each place left of the point is ten times bigger; each place right is ten times smaller.\nStep 3 — Add the place values to rebuild the number.\nWhy it works — decimals extend place value past the ones place using tenths, hundredths and thousandths.\nTip — the first digit after the point is always tenths.',
+        line:'Read each digit by its place: tenths, hundredths, thousandths.',
+        voice:'Each digit value depends on its place.',
+        key:'pv-explore-'+num};
+    }
+  }catch(e){}
+}
+
 function renderPVQuiz(){
   if(pvQIdx>=PV_QUIZ.length)pvQIdx=0;
   const q=PV_QUIZ[pvQIdx];
@@ -140,12 +170,15 @@ function renderPVQuiz(){
     if(b.dataset.v===q.ans){b.style.borderColor='#16a34a';b.style.background='#dcfce7';b.style.color='#166534';pvQScore++;ct.querySelector('#pvfb').innerHTML=`<div style="background:#dcfce7;color:#166534;padding:12px;border-radius:10px"><b>Correct!</b> ${q.ex}</div>`}
     else{b.style.borderColor='#dc2626';b.style.background='#fef2f2';b.style.color='#991b1b';ct.querySelectorAll('.qopt').forEach(x=>{if(x.dataset.v===q.ans){x.style.borderColor='#16a34a';x.style.background='#dcfce7';x.style.color='#166534'}});ct.querySelector('#pvfb').innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px"><b>Answer: ${q.ans}</b> &mdash; ${q.ex}</div>`}
     ct.querySelector('#pvnxt').style.display='block';
+    pubCoach();
   });
   ct.querySelector('#pvnxt').onclick=()=>{pvQIdx++;renderPVQuiz()};
+  pubCoach();
 }
 
 function render(){
   if(pvMode==='quiz'){renderPVQuiz();return}
+  pubCoach();
   const s=num.toFixed(3);
   // Parse digits
   const parts=s.split('.');
@@ -221,5 +254,6 @@ function render(){
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

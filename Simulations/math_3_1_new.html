@@ -112,9 +112,27 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rr=sim.querySelector('#restartBtn'); if(rr) rr.onclick=restart;
+  // --- V5 coach: align decimal points, subtract with borrowing ---
+  if(done){
+    window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||'Bridge run complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx+'-'+(st.msg||'')};
+  } else if(st.resolved){
+    window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx};
+  } else {
+    window.__eduRound={native:true,
+      hint:'Subtract '+fmt(r.a)+' − '+fmt(r.b)+'. Line up the decimal points and borrow where needed.',
+      hintVoice:'What is the difference?',
+      why:'Write both numbers with the same number of decimal places, line up the points, then subtract column by column — borrowing 1 from the next place (worth 10) when the top digit is smaller.',
+      detail:'Step 1 — Write '+fmt(r.a)+' and '+fmt(r.b)+' with points aligned, padding with zeros.\nStep 2 — '+r.h+'\nStep 3 — Subtract column by column to get '+fmt(r.ans)+'.\nWhy it works — borrowing moves 1 unit from the next-higher place, which is worth 10 of the current place.\nTip — pad '+fmt(r.a)+' with zeros so it has as many decimals as '+fmt(r.b)+' before subtracting.',
+      line:fmt(r.a)+' − '+fmt(r.b)+' = '+fmt(r.ans)+'.',
+      voice:'The answer is '+fmt(r.ans),
+      input:sim.querySelector('#ansIn'), inputHint:fmt(r.ans),
+      submit:(st.ans!==''?sim.querySelector('#checkBtn'):null),
+      key:'r-'+st.idx};
+  }
 }
 setup();
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

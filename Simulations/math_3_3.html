@@ -128,6 +128,36 @@ const UC_QUIZ=[
   {q:"How many mm in 1 kilometer?",opts:["1,000,000","100,000","10,000","1,000"],ans:"1,000,000",ex:"1 km = 1000 m, 1 m = 1000 mm → 1,000 × 1,000 = 10,00,000 mm"}
 ];
 
+function pubCoach(){
+  try{
+    if(ucMode==='quiz'){
+      var q=UC_QUIZ[ucQIdx>=UC_QUIZ.length?0:ucQIdx];
+      var _el=[].slice.call(ct.querySelectorAll('.qopt')).find(function(b){return b.dataset.v===q.ans;});
+      if(ucQAns){
+        window.__eduRound={native:true,line:'Answer: '+q.ans+' — '+q.ex,voice:'The answer is '+q.ans,submit:ct.querySelector('#ucnxt'),key:'ucq-res-'+ucQIdx};
+      } else {
+        window.__eduRound={native:true,
+          hint:q.q+' Which conversion is right?',
+          hintVoice:'Which converted value is right?',
+          why:'Between metric units each step is a power of 10: 10 mm = 1 cm, 100 cm = 1 m, 1000 g = 1 kg, 100 paise = ₹1. Moving to a bigger unit divides.',
+          detail:'Step 1 — Read the conversion: '+q.q+'\nStep 2 — '+q.ex+'\nStep 3 — So the answer is "'+q.ans+'" → tap it.\nWhy it works — dividing by 10, 100 or 1000 shifts the decimal point 1, 2 or 3 places left.\nTip — count the zeros in the conversion factor to know how far the point moves.',
+          line:'Answer: '+q.ans+'.',
+          voice:'Choose '+q.ans,
+          glow:_el,key:'ucq-'+ucQIdx};
+      }
+    } else {
+      window.__eduRound={native:true,
+        hint:'How do you convert between these units?',
+        hintVoice:'How do you convert the units?',
+        why:'Each step between metric units is a factor of 10, 100 or 1000; a bigger unit means fewer of them, so you divide.',
+        detail:'Step 1 — Find the conversion factor (10 mm = 1 cm, 100 cm = 1 m, 1000 g = 1 kg, 100 paise = ₹1).\nStep 2 — Divide to go to a bigger unit, multiply to go to a smaller one.\nStep 3 — Dividing by 10 / 100 / 1000 shifts the decimal point 1 / 2 / 3 places left.\nWhy it works — the metric system is built on powers of ten, so conversions just move the decimal point.\nTip — count the zeros in the factor to know how many places to move.',
+        line:'Convert by powers of 10 — move the decimal point.',
+        voice:'Convert by powers of ten.',
+        key:'uc-explore-'+uIdx};
+    }
+  }catch(e){}
+}
+
 function renderUCQuiz(){
   if(ucQIdx>=UC_QUIZ.length)ucQIdx=0;
   const q=UC_QUIZ[ucQIdx];
@@ -147,12 +177,15 @@ function renderUCQuiz(){
     if(b.dataset.v===q.ans){b.style.borderColor='#16a34a';b.style.background='#dcfce7';b.style.color='#166534';ucQScore++;ct.querySelector('#ucfb').innerHTML=`<div style="background:#dcfce7;color:#166534;padding:12px;border-radius:10px"><b>Correct!</b> ${q.ex}</div>`}
     else{b.style.borderColor='#dc2626';b.style.background='#fef2f2';b.style.color='#991b1b';ct.querySelectorAll('.qopt').forEach(x=>{if(x.dataset.v===q.ans){x.style.borderColor='#16a34a';x.style.background='#dcfce7';x.style.color='#166534'}});ct.querySelector('#ucfb').innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px"><b>Answer: ${q.ans}</b> &mdash; ${q.ex}</div>`}
     ct.querySelector('#ucnxt').style.display='block';
+    pubCoach();
   });
   ct.querySelector('#ucnxt').onclick=()=>{ucQIdx++;renderUCQuiz()};
+  pubCoach();
 }
 
 function render(){
   if(ucMode==='quiz'){renderUCQuiz();return}
+  pubCoach();
   const u=UNITS[uIdx];
   const v=u.val;
   const converted=v/u.factor;
@@ -186,5 +219,6 @@ function render(){
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>
