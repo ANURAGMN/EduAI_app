@@ -65,7 +65,7 @@
   function publish() {
     var mi = document.querySelector('.mission, .problem, .question'); if (!mi) return null;
     var prompt = (mi.innerText || '').replace(/\s+/g, ' ').trim();
-    var els = [].slice.call(document.querySelectorAll('.opt,.choice,button[data-v]'));
+    var els = [].slice.call(document.querySelectorAll('.opt,.choice,.lane,button[data-v]'));
     if (/km\/day|daily speed/i.test(prompt)) {
       [].slice.call(document.querySelectorAll('button,[role=button],.card,.option')).forEach(function (b) {
         if (/^[\d,]+\s*km\s*\/\s*day$/i.test((b.innerText || '').trim()) && els.indexOf(b) < 0) els.push(b);
