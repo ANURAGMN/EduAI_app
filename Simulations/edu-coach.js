@@ -147,6 +147,21 @@
   function clearGlow() { G.forEach(function (e) { try { e.style.outline = ''; e.style.outlineOffset = ''; } catch (x) {} }); G = []; if (hi) { var o = hi.getAttribute('data-ph'); if (o !== null) { hi.setAttribute('placeholder', o); hi.removeAttribute('data-ph'); } hi = null; } }
   function glow(el, kind) { if (!el) return; el.style.outline = '3px solid ' + (kind === 'submit' ? '#2e9e6b' : kind === 'input' ? '#5b8bff' : kind === 'answer' ? '#e5484d' : '#ff9500'); el.style.outlineOffset = '2px'; el.style.borderRadius = '8px'; G.push(el); }
   function setBar(txt) { if (IN_APP) return; if (!bar) { bar = document.createElement('div'); bar.id = '__eduBar'; bar.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483647;max-height:40vh;overflow:auto;background:#0e1230;color:#fff;font:600 15px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;box-shadow:0 -6px 24px rgba(0,0,0,.45)'; document.body.appendChild(bar); } bar.style.display = txt ? 'block' : 'none'; bar.textContent = txt ? ('Coach: ' + txt) : ''; }
+  // Reserve page space so the fixed coach UI (bar + control row + Explain pill) never covers the sim's
+  // own controls. Measures how far up from the viewport bottom the coach stack reaches and pads
+  // document.body by that much. Runs every tick, so it tracks the bar's height as its text changes.
+  function reserveSpace() {
+    if (IN_APP || !document.body) return;
+    try {
+      var vh = window.innerHeight || document.documentElement.clientHeight || 0, used = 0;
+      [bar, ctrlBar, pill].forEach(function (el) {
+        if (!el || el.style.display === 'none') return;
+        var r = el.getBoundingClientRect();
+        if (r.height > 0 && r.bottom > 0) { var u = vh - r.top; if (u > used) used = u; }
+      });
+      document.body.style.paddingBottom = used > 0 ? (Math.ceil(used) + 12) + 'px' : '';
+    } catch (e) {}
+  }
   // Speak numbers as WORDS so TTS never reads "+10000" as "plus one oh oh oh".
   function n2w(n) {
     n = Math.round(Math.abs(n)); if (n === 0) return 'zero';
@@ -342,7 +357,7 @@
   }
   function renderNative(pub) { present(pub); }
 
-  function tick() {
+  function _tick() {
     var on = IN_APP ? !!window.__eduCoachV4Wanted : true;
     clearGlow();
     if (!on) { if (!IN_APP) setBar(''); hideKnowMore(); return; }
@@ -372,7 +387,10 @@
     present(o);
   }
 
+  function tick() { try { _tick(); } catch (e) {} reserveSpace(); }
+
   if (window.__eduV5Iv) clearInterval(window.__eduV5Iv);
   window.__eduV5Iv = setInterval(tick, 300); tick();
-  window.EduCoachV5 = { stop: function () { clearInterval(window.__eduV5Iv); clearGlow(); if (bar) bar.remove(); try { speechSynthesis.cancel(); } catch (e) {} }, tick: tick };
+  window.addEventListener('resize', reserveSpace);
+  window.EduCoachV5 = { stop: function () { clearInterval(window.__eduV5Iv); clearGlow(); if (bar) bar.remove(); if (document.body) document.body.style.paddingBottom = ''; try { speechSynthesis.cancel(); } catch (e) {} }, tick: tick };
 })();
