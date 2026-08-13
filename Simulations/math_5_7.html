@@ -105,8 +105,26 @@ function render(){
   const r=sim.querySelector("#resetBtn"); if(r) r.onclick=reset;
   const c=sim.querySelector("#checkBtn"); if(c) c.onclick=check;
   const n=sim.querySelector("#nextBtn"); if(n) n.onclick=next;
+  try{
+    var _t=TARGETS[Math.min(st.idx,TARGETS.length-1)];
+    var _rem=_t-(st.current||0);
+    var _pv=PV.find(function(v){return v<=_rem;});
+    var _btns=[].slice.call(sim.querySelectorAll('.btnpv'));
+    var _gb=(_pv!=null)?_btns.find(function(b){return parseInt(b.dataset.v,10)===_pv;}):null;
+    var _ck=sim.querySelector('#checkBtn');
+    if(!st.run){ window.__eduRound={native:true,line:((st.idx>=TARGETS.length)?(st.msg||'Race completed!'):'Tap Start.'),voice:'Tap start.',glow:sim.querySelector('#startBtn'),submit:sim.querySelector('#startBtn'),key:'start-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Built it.':'Not exact.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else if(_rem<=0){ window.__eduRound={native:true,line:'Built '+_t.toLocaleString('en-IN')+' - tap Check.',voice:'Tap check.',glow:_ck,submit:_ck,key:'r-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Build '+_t.toLocaleString('en-IN')+' in the fewest taps. Which button next?',hintVoice:'Which button next?',
+      why:'Add the biggest place value that still fits; the fewest taps equals the sum of the digits.',
+      detail:'Step 1 - Look at the biggest place still needed.\nStep 2 - Press that place-value button until that digit is filled.\nStep 3 - Move down a place; repeat to the ones. Minimum taps = '+digitSum(_t)+' (the digit sum).\nWhy it works - each digit needs exactly its own count of presses.\nTip - never overshoot; biggest-first is always the minimum.',
+      line:'Press +'+_pv.toLocaleString('en-IN')+' next ('+(_t-_rem).toLocaleString('en-IN')+' of '+_t.toLocaleString('en-IN')+').',voice:'Press plus '+_pv+'.',
+      glow:_gb,submit:null,key:'r-'+st.idx}; }
+  }catch(e){}
 }
 start();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

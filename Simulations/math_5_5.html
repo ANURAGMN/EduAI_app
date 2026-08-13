@@ -98,8 +98,23 @@ function render(){
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+    var _sl=sim.querySelector('#aSlider'),_ck=sim.querySelector('#checkBtn');
+    var _d=Math.round(_m.target-st.a);
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Proof grid complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Proved.':'Not yet.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Set the angle to '+_m.target+'° so the corresponding angles match.',hintVoice:'Set it to '+_m.target+' degrees.',
+      why:'If corresponding angles are equal, the lines must be parallel (the converse of the corresponding-angles rule).',
+      detail:'Step 1 - This mission tests the corresponding angles.\nStep 2 - Set the angle to '+_m.target+'° so the two corresponding angles are equal.\nStep 3 - Confirm within '+_m.tol+'°.\nWhy it works - equal corresponding angles force the lines parallel.\nTip - this is the reverse of 5_2, and it is always the corresponding pair.',
+      line:(Math.abs(_d)<=_m.tol?(_m.target+'° reached - tap Check.'):('Now '+st.a.toFixed(0)+'° - nudge '+(_d>0?'up':'down')+' about '+Math.abs(_d)+'°.')),
+      voice:'Set it to '+_m.target+' degrees.',
+      glow:(Math.abs(_d)<=_m.tol?_ck:_sl),submit:(Math.abs(_d)<=_m.tol?_ck:null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setup(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

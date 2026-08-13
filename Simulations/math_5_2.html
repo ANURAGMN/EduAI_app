@@ -126,8 +126,25 @@ function render(){
   const n=sim.querySelector('#nextBtn');if(n)n.onclick=next;
   const rb=sim.querySelector('#retryBtn');if(rb)rb.onclick=retry;
   const rs=sim.querySelector('#restartBtn');if(rs)rs.onclick=restart;
+  try{
+    var _m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+    var _sl=sim.querySelector('#xSlider'),_ck=sim.querySelector('#checkBtn');
+    var _got=value(),_d=Math.round(_m.target-_got);
+    var _rel=(_m.rel==='interior')?'co-interior':_m.rel;
+    var _why=(_m.rel==='interior')?'Co-interior (same-side interior) angles are supplementary - they add to 180°.':(((_m.rel==='corresponding')?'Corresponding':'Alternate')+' angles are equal across a transversal between parallel lines.');
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Tower complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Locked.':'Not yet.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Slide so the '+_rel+' angle reads '+_m.target+'°.',hintVoice:'Make the '+_rel+' angle '+_m.target+' degrees.',
+      why:_why,
+      detail:'Step 1 - The relation asked is '+_rel+'.\nStep 2 - '+((_m.rel==='interior')?'Co-interior adds to 180°, so set the same-side pair to sum 180.':'Equal angles - set the transversal angle to the target.')+'\nStep 3 - Fine-tune within '+_m.tol+'° of '+_m.target+'°.\nWhy it works - parallel lines fix these angle relations.\nTip - "interior, same side" is the only pair that sums to 180.',
+      line:(Math.abs(_d)<=_m.tol?(_m.target+'° reached - tap Check.'):('The '+_rel+' angle is '+_got.toFixed(0)+'° - go '+(_d>0?'up':'down')+' about '+Math.abs(_d)+'°.')),
+      voice:'Make it '+_m.target+' degrees.',
+      glow:(Math.abs(_d)<=_m.tol?_ck:_sl),submit:(Math.abs(_d)<=_m.tol?_ck:null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setup();render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

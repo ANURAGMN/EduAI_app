@@ -79,8 +79,23 @@ function render(){
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rt=sim.querySelector('#retryBtn'); if(rt) rt.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _m=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _sl=sim.querySelector('#slider'),_ck=sim.querySelector('#checkBtn');
+    var _d=Math.round(_m.t-st.a);
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Bridge complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Locked.':'Not yet.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Swing the red bridge to '+_m.t+'°.',hintVoice:'Set the angle to '+_m.t+' degrees.',
+      why:'Read the current angle, then nudge toward the target measure until you are within '+_m.tol+'°.',
+      detail:'Step 1 - Read the current angle on the beam.\nStep 2 - Use +/-5 to get close, then +/-1 to fine-tune.\nStep 3 - Stop within '+_m.tol+'° of '+_m.t+'°.\nWhy it works - a full turn is 360°, a straight angle 180°, a right angle 90°; here you match an exact measure.\nTip - the +/-1 buttons land you inside the '+_m.tol+'° window.',
+      line:(Math.abs(_d)<=_m.tol?(_m.t+'° reached - tap Check.'):('Now '+st.a.toFixed(0)+'° - nudge '+(_d>0?'up':'down')+' about '+Math.abs(_d)+'°.')),
+      voice:'Set it to '+_m.t+' degrees.',
+      glow:(Math.abs(_d)<=_m.tol?_ck:_sl),submit:(Math.abs(_d)<=_m.tol?_ck:null),key:'r-'+st.idx}; }
+  }catch(e){}
 }
 setup();render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

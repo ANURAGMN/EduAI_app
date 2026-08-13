@@ -204,10 +204,27 @@ function render(){
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rs=sim.querySelector('#resetBtn'); if(rs) rs.onclick=()=>{setupRound();render();};
   const rr=sim.querySelector('#restartBtn'); if(rr) rr.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _h=sim.querySelector('#dragA')||sim.querySelector('#dragB'),_ck=sim.querySelector('#checkBtn');
+    var _got=(typeof measuredAngle==='function')?measuredAngle():_r.target,_d=Math.round(_r.target-_got);
+    var _relN=(_r.type==='linear')?'linear-pair':((_r.type==='alternate')?'alternate interior':'corresponding');
+    var _why=(_r.type==='linear')?'A linear pair sits on a straight line, so the two angles add to 180°.':(((_r.type==='alternate')?'Alternate interior':'Corresponding')+' angles are equal between parallel lines.');
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Hunt complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Great.':'Off target.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:_r.label+'.',hintVoice:'Make the '+_relN+' angle '+_r.target+' degrees.',
+      why:_why,
+      detail:'Step 1 - The round asks for the '+_relN+' angle.\nStep 2 - '+((_r.type==='linear')?('A linear pair sums to 180°; drag this angle to '+_r.target+'° (its partner becomes '+(180-_r.target)+'°).'):('Equal angles - drag until this angle is '+_r.target+'°.'))+'\nStep 3 - Stop within 2°.\nWhy it works - parallel lines keep corresponding/alternate equal; a straight line splits into 180°.\nTip - for a linear pair the partner = 180 - target.',
+      line:(Math.abs(_d)<=2?(_r.target+'° reached - tap Check.'):('Now '+_got.toFixed(0)+'° - drag '+(_d>0?'up':'down')+' about '+Math.abs(_d)+'°.')),
+      voice:'Make it '+_r.target+' degrees.',
+      glow:(Math.abs(_d)<=2?_ck:_h),submit:(Math.abs(_d)<=2?_ck:null),key:'r-'+st.idx}; }
+  }catch(e){}
 }
 
 setupRound();
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

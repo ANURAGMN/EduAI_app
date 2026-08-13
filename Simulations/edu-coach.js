@@ -295,7 +295,7 @@
 
   function renderReveal(o, key) {
     if (o.submit) glow(pubEl(o.submit), 'submit');
-    if (o.glow) glow(pubEl(o.glow), o.glowKind === 'answer' ? 'answer' : 'hint');
+    if (o.glow) { var _gk = (o.glowKind === 'answer' ? 'answer' : 'hint'); var _gl = Array.isArray(o.glow) ? o.glow : [o.glow]; for (var _gi = 0; _gi < _gl.length; _gi++) { var _ge = pubEl(_gl[_gi]); if (_ge) glow(_ge, _gk); } }
     if (o.input) { var ie = pubEl(o.input); if (ie) { glow(ie, 'input'); if (o.inputHint != null && !ie.value) { if (ie.getAttribute('data-ph') === null) ie.setAttribute('data-ph', ie.getAttribute('placeholder') || ''); ie.setAttribute('placeholder', '' + o.inputHint); hi = ie; } } }
     var revealLine = (o.line || '') + (o.why ? '  ·  Why: ' + o.why : '');
     emit(revealLine, revealLine, 'R:' + key); // speak exactly what's shown on the coach

@@ -171,8 +171,29 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const r=sim.querySelector('#restartBtn'); if(r) r.onclick=restart;
+  try{
+    var _t=ROUNDS[Math.min(st.idx,ROUNDS.length-1)].target;
+    var _built=(typeof relation==='function')?relation():null;
+    var _ch=[].slice.call(sim.querySelectorAll('.choice')).find(function(b){return b.dataset.v===_t;});
+    var _ck=sim.querySelector('#checkBtn');
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Sort yard complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else if(_built!==_t){ window.__eduRound={native:true,
+      hint:'Drag the endpoints to make the two lines '+_t+'.',hintVoice:'Make the lines '+_t+'.',
+      why:'Parallel lines never meet; perpendicular lines meet at 90°; other intersecting lines meet at one slanted point.',
+      detail:'Step 1 - Drag the endpoints to build '+_t+' lines.\nStep 2 - Check where they meet: nowhere (parallel), at 90° (perpendicular), or at one slanted point (intersecting).\nStep 3 - Then tap the matching label.\nWhy it works - the directions of the lines decide the relation.\nTip - perpendicular is a special intersecting case at 90°.',
+      line:'Right now the lines look '+(_built||'unset')+' - adjust until they are '+_t+'.',voice:'Make them '+_t+'.',
+      key:'r-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'You built '+_t+' lines. Which label matches?',hintVoice:'Which relation is this?',
+      why:'Name what you built by how and where the lines meet: '+_t+'.',
+      detail:'Step 1 - The lines are now '+_t+'.\nStep 2 - Tap the '+_t+' label.\nStep 3 - Check.\nWhy it works - classify by how the lines meet.\nTip - perpendicular is intersecting at 90°.',
+      line:'They are '+_t+' - tap the '+_t+' label.',voice:'Choose '+_t+'.',
+      glow:_ch,submit:(st.pick?_ck:null),key:'r-'+st.idx}; }
+  }catch(e){}
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

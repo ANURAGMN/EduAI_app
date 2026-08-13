@@ -122,9 +122,25 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _chips=[].slice.call(sim.querySelectorAll('.chip'));
+    var _gA=_chips.find(function(b){return b.dataset.v===_r.pair[0];});
+    var _gB=_chips.find(function(b){return b.dataset.v===_r.pair[1];});
+    var _ck=sim.querySelector('#checkBtn');
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Match lab complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Tap the two angles that are '+_r.ask+'.',hintVoice:'Select the '+_r.ask+' pair.',
+      why:((_r.ask==='co-interior')?'Co-interior angles are on the same side, between the lines, and are supplementary.':(_r.ask+' angles sit in matching positions across the transversal.')),
+      detail:'Step 1 - Relation asked: '+_r.ask+'.\nStep 2 - Corresponding = same corner at each crossing; alternate interior = criss-cross between the lines; co-interior = same side between the lines.\nStep 3 - Select exactly those two angles.\nWhy it works - the transversal makes 8 angles in matched positions; the name is the position, not the size.\nTip - co-interior is the only same-side interior pair, and it is supplementary.',
+      line:_r.pair[0]+' and '+_r.pair[1]+' are '+_r.ask+'.',voice:'Choose '+_r.pair[0]+' and '+_r.pair[1]+'.',
+      glow:[_gA,_gB],submit:((st.picks.length===2)?_ck:null),key:'r-'+st.idx}; }
+  }catch(e){}
 }
 setup();
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>
