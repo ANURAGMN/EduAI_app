@@ -103,8 +103,29 @@ function render(){
   const rt=sim.querySelector('#retryBtn'); if(rt) rt.onclick=retry;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _arr=ROUNDS[Math.min(st.idx,ROUNDS.length-1)], _ck=sim.querySelector('#checkBtn'), _sel=st.sel, _obj;
+    if(!st.run){ _obj={native:true,line:(st.msg||'Circuit complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ _obj={native:true,line:st.msg,voice:(st.msgType==='good'?'Sorted.':'Wrong lane.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else if(_sel===null){
+      var _rem=null; for(var _i=0;_i<_arr.length;_i++){ if(st.left.indexOf(_i)<0&&st.right.indexOf(_i)<0){_rem=_i;break;} }
+      var _tk=(_rem!=null)?[].slice.call(sim.querySelectorAll('.tok')).find(function(b){return (+b.dataset.i)===_rem;}):null;
+      _obj={native:true,hint:'Pick a number first, then send it to Prime or Composite.',hintVoice:'Pick a number first.',
+        why:'A prime has exactly two factors (1 and itself); a composite has more.',
+        detail:'Step 1 - Tap a number to select it.\nStep 2 - Decide prime (only 1 and itself divide it) or composite.\nStep 3 - Route it to the matching lane.\nWhy it works - primes resist division by every smaller number.\nTip - even numbers above 2 are composite.',
+        line:'Tap a number to route it.',voice:'Pick a number.',glow:_tk,submit:null,key:'r-'+st.idx}; }
+    else {
+      var _n=_arr[_sel], _p=(typeof isPrime==='function')?isPrime(_n):null;
+      _obj={native:true,hint:'Route '+_n+' - is it prime or composite?',hintVoice:'Prime or composite?',
+        why:'A prime has exactly two factors; a composite has a factor besides 1 and itself.',
+        detail:'Step 1 - Test small factors of '+_n+' (2, 3, 5, ...).\nStep 2 - No factor found -> Prime; a factor found -> Composite.\nStep 3 - '+_n+' is '+(_p?'prime':'composite')+' - tap '+(_p?'Route Prime':'Route Composite')+'.\nWhy it works - a prime resists every such division.\nTip - even numbers above 2 are composite.',
+        line:_n+' is '+(_p?'prime':'composite')+'.',voice:_n+' is '+(_p?'prime':'composite')+'.',
+        glow:(_p?sim.querySelector('#primeBtn'):sim.querySelector('#compBtn')),submit:_ck,key:'sel-'+_sel}; }
+    window.__eduRound=_obj;
+  }catch(e){}
 }
 setupRound(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

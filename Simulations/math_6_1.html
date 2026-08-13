@@ -98,8 +98,23 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rr=sim.querySelector('#restartBtn'); if(rr) rr.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)], _n=_r.n;
+    var _ds=(''+_n).split('').reduce(function(a,d){return a+(+d);},0);
+    var _glow=_r.valid.map(function(rv){return sim.querySelector('[data-rule="'+rv+'"]');}).filter(Boolean);
+    var _ck=sim.querySelector('#checkBtn');
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Studio complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Which rules does '+_n+' pass - 2, 3, 5, or 9?',hintVoice:'Which divisibility rules pass?',
+      why:'Test each: ÷2 last digit even, ÷3 digit sum divisible by 3, ÷5 ends in 0 or 5, ÷9 digit sum divisible by 9.',
+      detail:'Step 1 - Last digit of '+_n+' is '+(_n%10)+' -> ÷2 '+(_n%2===0?'passes':'fails')+', ÷5 '+(_n%5===0?'passes':'fails')+'.\nStep 2 - Digit sum = '+_ds+' -> ÷3 '+(_ds%3===0?'passes':'fails')+', ÷9 '+(_ds%9===0?'passes':'fails')+'.\nStep 3 - Turn ON exactly {'+_r.valid.join(', ')+'}, leave the rest OFF, then Check.\nWhy it works - each rule is a shortcut for the real division.\nTip - ÷9 passing means ÷3 passes too, but not the reverse.',
+      line:'Turn ON: '+_r.valid.join(', ')+' (leave the others off).',voice:'Turn on '+_r.valid.join(', ')+'.',
+      glow:_glow,submit:_ck,key:'r-'+st.idx}; }
+  }catch(e){}
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

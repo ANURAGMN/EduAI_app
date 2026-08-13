@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0891b2">
-<title>LCM HCF Sync Lab</title>
+<title>HCF & LCM Word Lab</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#0891b2,#0e7490);min-height:100vh}
@@ -15,71 +15,95 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:l
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
 .stat{background:#ecfeff;border-radius:10px;padding:8px;text-align:center}
 .k{font-size:10px;color:#0f766e;font-weight:700;text-transform:uppercase}.v{font-size:17px;font-weight:800;color:#0f172a}
-.mission{background:#ecfeff;border:2px solid #99f6e4;border-radius:12px;padding:10px;margin-bottom:10px;font-size:12px;color:#134e4a}
-.pairs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.box{background:#f8fafc;border:2px solid #cbd5e1;border-radius:10px;padding:8px}
-.box h4{font-size:12px;color:#334155}
-.nums{font-size:22px;font-family:'Courier New',monospace;font-weight:900;color:#0f172a;margin-top:4px}
-.inp{width:100%;margin-top:8px;padding:8px;border:2px solid #cbd5e1;border-radius:8px;font-weight:800}
+.mission{background:#ecfeff;border:2px solid #99f6e4;border-radius:12px;padding:12px;margin-bottom:10px;font-size:14px;color:#134e4a;line-height:1.5}
+.tag{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;color:#0f766e;background:#ccfbf1;border-radius:8px;padding:2px 8px;margin-bottom:6px}
+.ansrow{display:flex;gap:8px;align-items:center}
+.inp{flex:1;padding:10px;border:2px solid #cbd5e1;border-radius:8px;font-weight:800;font-size:16px}
 .actions{display:flex;gap:8px;margin-top:10px}
 .btn{flex:1;padding:11px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
 .check{background:#0f766e;color:#fff}.next{background:#0284c7;color:#fff}.retry{background:#334155;color:#fff}
 .msg{margin-top:10px;padding:10px;border-radius:10px;font-size:12px;line-height:1.4}
 .good{background:#dcfce7;color:#166534}.bad{background:#fef2f2;color:#991b1b}.info{background:#eff6ff;color:#1e3a8a}
+.insight{margin-top:12px;background:#ecfeff;border-left:4px solid #0891b2;border-radius:12px;padding:12px;font-size:12px;color:#134e4a;line-height:1.5}
 </style>
 </head>
 <body>
 <div id="app">
   <div class="header">
-    <h1>LCM HCF Sync Lab</h1>
-    <p>Sync two numbers by finding both HCF and LCM</p>
+    <h1>HCF & LCM Word Lab</h1>
+    <p>Decide whether each story needs the HCF or the LCM, then solve it</p>
   </div>
   <div class="card" id="sim"></div>
+  <div class="insight"><b>Cue words:</b> "together again / at the same time" &rarr; <b>LCM</b> (smallest common multiple). "largest equal groups / greatest length / no leftovers" &rarr; <b>HCF</b> (highest common factor).</div>
 </div>
 <script>
 const sim=document.getElementById('sim');
-const ROUNDS=[[12,18],[16,24],[14,21],[18,30],[20,32],[27,36]];
-let st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info'};
 function gcd(a,b){ while(b){ [a,b]=[b,a%b]; } return a; }
 function lcm(a,b){ return (a*b)/gcd(a,b); }
+
+const ROUNDS=[
+  {a:12,b:18,type:'lcm',q:'Two lighthouses flash every 12 s and 18 s. After how many seconds do they flash together?'},
+  {a:16,b:24,type:'hcf',q:'A baker packs 16 muffins and 24 cookies into identical boxes with none left over. What is the largest number of boxes?'},
+  {a:14,b:21,type:'lcm',q:'Two buses leave the depot every 14 min and 21 min. After how many minutes do they leave together again?'},
+  {a:18,b:30,type:'hcf',q:'Ribbons 18 cm and 30 cm long are cut into equal pieces with none left over. What is the greatest length of each piece (cm)?'},
+  {a:20,b:32,type:'lcm',q:'Two runners finish a lap in 20 s and 32 s. After how many seconds are they together at the start again?'},
+  {a:27,b:36,type:'hcf',q:'A floor 27 dm by 36 dm is tiled with equal square tiles and no cutting. What is the largest tile side (dm)?'}
+];
+ROUNDS.forEach(r=>{ r.ans = r.type==='lcm' ? lcm(r.a,r.b) : gcd(r.a,r.b); });
+
+let st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info'};
+
 function check(){
   if(!st.run||st.resolved) return;
-  const [a,b]=ROUNDS[st.idx];
-  const g=parseInt(sim.querySelector('#hcf').value,10);
-  const l=parseInt(sim.querySelector('#lcm').value,10);
+  const r=ROUNDS[st.idx];
+  const v=parseInt((sim.querySelector('#ans').value||'').trim(),10);
   st.resolved=true;
-  if(g===gcd(a,b)&&l===lcm(a,b)){ st.score+=12; st.msg='Perfect sync: HCF and LCM both correct.'; st.msgType='good'; }
-  else{ st.lives--; st.msg=`Need HCF=${gcd(a,b)}, LCM=${lcm(a,b)}.`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
+  const kind = r.type==='lcm'?'LCM':'HCF';
+  if(v===r.ans){ st.score+=12; st.msg=`Correct! This was ${kind}(${r.a}, ${r.b}) = ${r.ans}.`; st.msgType='good'; }
+  else{ st.lives--; st.msg=`Not quite — this is an ${kind} problem, and ${kind}(${r.a}, ${r.b}) = ${r.ans}.`; st.msgType='bad'; if(st.lives<=0) st.run=false; }
   render();
 }
-function next(){ if(!st.resolved) return; st.idx++; if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Sync lab complete!'; st.msgType='good'; render(); return; } st.resolved=false; st.msg=''; st.msgType='info'; render(); }
+function next(){ if(!st.resolved) return; st.idx++; if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Word lab complete!'; st.msgType='good'; render(); return; } st.resolved=false; st.msg=''; st.msgType='info'; render(); }
 function retry(){ if(st.run&&st.resolved){ st.resolved=false; st.msg=''; st.msgType='info'; render(); } }
 function restart(){ st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info'}; render(); }
+
 function render(){
-  const done=!st.run, [a,b]=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  const done=!st.run, r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
   sim.innerHTML=`
     <div class="stats">
       <div class="stat"><div class="k">Round</div><div class="v">${Math.min(st.idx+1,ROUNDS.length)}/${ROUNDS.length}</div></div>
       <div class="stat"><div class="k">Score</div><div class="v">${st.score}</div></div>
       <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
-      <div class="stat"><div class="k">Mode</div><div class="v">Sync</div></div>
+      <div class="stat"><div class="k">Mode</div><div class="v">Word</div></div>
     </div>
-    <div class="mission">Mission: For numbers <b>${a}</b> and <b>${b}</b>, enter both HCF and LCM.</div>
-    <div class="pairs">
-      <div class="box"><h4>HCF</h4><div class="nums">?</div><input id="hcf" class="inp" type="number" step="1" ${done||st.resolved?'disabled':''}></div>
-      <div class="box"><h4>LCM</h4><div class="nums">?</div><input id="lcm" class="inp" type="number" step="1" ${done||st.resolved?'disabled':''}></div>
-    </div>
+    <div class="mission"><span class="tag">Story problem</span><br>${r.q}</div>
+    ${done?'':`<div class="ansrow"><input id="ans" class="inp" type="number" step="1" placeholder="your answer" ${st.resolved?'disabled':''}></div>`}
     <div class="actions">
-      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Check Pair</button>`}
+      ${done?`<button class="btn next" id="restartBtn">Restart</button>`:st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">${st.idx===ROUNDS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Check Answer</button>`}
     </div>
-    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Use factors and multiples logic before locking.</div>`}
+    ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">First decide: HCF or LCM? Then compute it.</div>`}
   `;
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
-  const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
+  const rt=sim.querySelector('#retryBtn'); if(rt) rt.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _in=sim.querySelector('#ans'), _ck=sim.querySelector('#checkBtn');
+    var _kind=_r.type==='lcm'?'LCM':'HCF';
+    var _why=_r.type==='lcm'?'"Happen together again / at the same time" means the smallest common multiple - the LCM.':'"Largest equal groups / greatest length / no leftovers" means the highest common factor - the HCF.';
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Word lab complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:_r.q+' Is this an HCF or an LCM problem?',hintVoice:'Is this HCF or LCM?',
+      why:_why,
+      detail:'Step 1 - Spot the cue: '+(_r.type==='lcm'?'"together again / same time" -> LCM (smallest common multiple).':'"largest equal share / no leftovers" -> HCF (highest common factor).')+'\nStep 2 - '+_kind+'('+_r.a+', '+_r.b+') = '+_r.ans+'.\nStep 3 - Type '+_r.ans+', then Check.\nWhy it works - '+(_r.type==='lcm'?'events line up at common multiples of their periods.':'sharing equally with nothing left needs a common factor, and the biggest is the HCF.')+'\nTip - HCF x LCM = '+_r.a+' x '+_r.b+'.',
+      line:'This is an '+_kind+' problem - answer '+_r.ans+'.',voice:'It is an '+_kind+' problem.',
+      input:_in,inputHint:'answer',submit:_ck,key:'r-'+st.idx}; }
+  }catch(e){}
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

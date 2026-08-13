@@ -78,8 +78,22 @@ function render(){
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)], _a=_r[0], _b=_r[1];
+    var _gg=gcd(_a,_b), _ll=lcm(_a,_b);
+    var _hi=sim.querySelector('#hcf'), _li=sim.querySelector('#lcm'), _ck=sim.querySelector('#checkBtn');
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Sync complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'For '+_a+' and '+_b+', find the HCF and the LCM.',hintVoice:'Find the HCF and LCM of '+_a+' and '+_b+'.',
+      why:'HCF = shared prime factors multiplied; LCM = every prime at its highest power. Also HCF x LCM = '+_a+' x '+_b+'.',
+      detail:'Step 1 - Factor both '+_a+' and '+_b+'.\nStep 2 - HCF = common factors multiplied = '+_gg+'; LCM = every prime at highest power = '+_ll+'.\nStep 3 - Type HCF and LCM, then Check. Cross-check: '+_gg+' x '+_ll+' = '+(_gg*_ll)+' = '+_a+' x '+_b+'.\nWhy it works - shared primes give HCF, all primes give LCM.\nTip - once you have HCF, LCM = '+_a+' x '+_b+' / HCF.',
+      line:'HCF = '+_gg+', LCM = '+_ll+'.',voice:'HCF '+_gg+', LCM '+_ll+'.',
+      glow:[_hi,_li],input:_hi,inputHint:'HCF',submit:_ck,key:'r-'+st.idx}; }
+  }catch(e){}
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

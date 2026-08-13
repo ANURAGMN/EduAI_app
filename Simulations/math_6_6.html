@@ -109,8 +109,22 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _g=[].slice.call(sim.querySelectorAll('.sw')).find(function(b){return b.dataset.v===_r.ans;});
+    var _ck=sim.querySelector('#checkBtn');
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Switchboard complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Is '+_r.expr+' odd or even?',hintVoice:'Odd or even?',
+      why:'Same-parity sum/difference is even, mixed is odd; a product is even if any factor is even.',
+      detail:'Step 1 - Note each number parity in '+_r.expr+'.\nStep 2 - Sum/difference: same parity -> even, different -> odd. Product: any even factor -> even.\nStep 3 - So '+_r.expr+' is '+_r.ans+' - tap it.\nWhy it works - parity depends only on the last bit, not the full value.\nTip - you do not need the actual total.',
+      line:_r.expr+' is '+_r.ans+'.',voice:'It is '+_r.ans+'.',
+      glow:_g,submit:(st.pick?_ck:null),key:'r-'+st.idx}; }
+  }catch(e){}
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

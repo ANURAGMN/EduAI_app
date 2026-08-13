@@ -87,8 +87,22 @@ function render(){
   const nbtn=sim.querySelector('#nextBtn'); if(nbtn) nbtn.onclick=next;
   const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _cur=st.cur, _next=1;
+    for(var _v=2;_v<_cur;_v++){ if(_cur%_v===0){_next=_v;break;} }
+    var _g=[].slice.call(sim.querySelectorAll('.chip')).find(function(b){return (+b.dataset.v)===_next && !b.disabled;});
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Chain complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Current number is '+_cur+'. Replace it with one of its proper divisors.',hintVoice:'Pick a proper divisor of '+_cur+'.',
+      why:'A proper divisor divides '+_cur+' exactly and is smaller than it; stepping down by divisors always reaches 1.',
+      detail:'Step 1 - Find a divisor of '+_cur+' smaller than '+_cur+'.\nStep 2 - '+_cur+' becomes that number; repeat.\nStep 3 - '+(_next===1?('Since '+_cur+' is prime, its only proper divisor is 1 - pick 1 to finish.'):('A clean move is '+_next+', the smallest prime factor of '+_cur+'.'))+'\nWhy it works - every number has a descending chain of divisors to 1.\nTip - smallest prime factor each step gives the neatest chain.',
+      line:(_next===1?(_cur+' is prime - pick 1 to reach the end.'):('Pick '+_next+' ('+_cur+' / '+_next+' = '+(_cur/_next)+').')),
+      voice:'Pick '+_next+'.',glow:_g,submit:null,key:'r-'+st.idx}; }
+  }catch(e){}
 }
 setup(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

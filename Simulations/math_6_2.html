@@ -97,8 +97,26 @@ function render(){
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rt=sim.querySelector('#retryBtn'); if(rt) rt.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _n=ROUNDS[Math.min(st.idx,ROUNDS.length-1)].n;
+    var _need=divisors(_n);
+    var _missing=_need.filter(function(d){return st.picked.indexOf(d)<0;});
+    var _chips=[].slice.call(sim.querySelectorAll('.chip'));
+    var _glow=_missing.map(function(d){return _chips.find(function(b){return (+b.dataset.v)===d;});}).filter(Boolean);
+    var _ck=sim.querySelector('#checkBtn');
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Ladder complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Tap every number that divides '+_n+' exactly.',hintVoice:'Tap all divisors of '+_n+'.',
+      why:'A divisor leaves no remainder; divisors pair up to multiply to '+_n+'. Tap order does not matter.',
+      detail:'Step 1 - Test each chip: does it divide '+_n+' with no remainder?\nStep 2 - Turn on all that do (any order); the ladder sorts itself.\nStep 3 - Leave decoys off (only 2 wrong taps allowed), then Check.\nWhy it works - divisors come in pairs that multiply to '+_n+'.\nTip - skip anything that leaves a remainder.',
+      line:(_missing.length?('Still missing: '+_missing.join(', ')+'.'):('All divisors of '+_n+': '+_need.join(', ')+' - tap Check.')),
+      voice:(_missing.length?('Find '+_missing.length+' more.'):'Tap check.'),
+      glow:(_missing.length?_glow:_ck),submit:_ck,key:'r-'+st.idx}; }
+  }catch(e){}
 }
 setup(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>
