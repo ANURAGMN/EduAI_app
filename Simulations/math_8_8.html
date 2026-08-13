@@ -100,8 +100,26 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  try{
+    var _g=function(a,b){return b?_g(b,a%b):a;};
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _qp=_r.q.split('/'), _qa=parseInt(_qp[0],10), _qb=parseInt(_qp[1],10), _h=_g(_qa,_qb);
+    var _ai=_r.opts.indexOf(_r.ans);
+    var _opts=Array.prototype.slice.call(sim.querySelectorAll('.opt'));
+    var _ansEl=_opts[_ai];
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Relay complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Write '+_r.q+' in its lowest form. Which option is right?',hintVoice:'Simplify '+_r.q+'.',
+      why:'Simplify by dividing top and bottom by their HCF; lowest form has HCF 1.',
+      detail:'Step 1 - Find the HCF of top and bottom: HCF('+_qa+', '+_qb+') = '+_h+'.\nStep 2 - Divide both: '+_qa+' / '+_h+' = '+(_qa/_h)+', '+_qb+' / '+_h+' = '+(_qb/_h)+'.\nStep 3 - Tap '+_r.ans+'.\nWhy it works - dividing both by the same factor keeps the value but shrinks the numbers.\nTip - a decoy can be equal but not fully reduced.',
+      line:_r.q+' = '+_r.ans+' (divide by '+_h+').',
+      voice:'The lowest form is '+_r.ans+'.',
+      glow:(st.pick!==null?sim.querySelector('#checkBtn'):_ansEl),submit:(st.pick!==null?sim.querySelector('#checkBtn'):null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -71,7 +71,7 @@ const EPS=0.03;
 let dragging=false;
 
 function target(){ const r=ROUNDS[st.idx]; return r.num/r.den; }
-function setup(){ st.pos=0.5; st.resolved=false; st.msg=''; st.msgType='info'; }
+function setup(){ st.pos=0.08; st.resolved=false; st.msg=''; st.msgType='info'; }
 function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
 function quantStep(){ const r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)]; return 1/(r.den*10); }
 function nudgePos(step){
@@ -99,7 +99,7 @@ function next(){
   if(st.idx>=ROUNDS.length){ st.run=false; st.msg='Mapper complete!'; st.msgType='good'; render(); return; }
   setup(); render();
 }
-function restart(){ st={run:true,idx:0,score:0,lives:3,pos:0.5,resolved:false,msg:'',msgType:'info'}; render(); }
+function restart(){ st={run:true,idx:0,score:0,lives:3,pos:0.08,resolved:false,msg:'',msgType:'info'}; render(); }
 
 function bindDrag(){
   const line=sim.querySelector('#line');
@@ -169,9 +169,24 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _t=_r.num/_r.den, _ok=Math.abs(st.pos-_t)<=EPS;
+    var _mk=sim.querySelector('#marker'), _ck=sim.querySelector('#checkBtn');
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Mapper complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Place the marker at '+_r.num+'/'+_r.den+' on the 0 to 1 line.',hintVoice:'Where does '+_r.num+'/'+_r.den+' sit?',
+      why:'A fraction is a point at num divided by den of the way from 0 to 1.',
+      detail:'Step 1 - The line runs 0 to 1; '+_r.num+'/'+_r.den+' sits '+_r.num+' of '+_r.den+' parts along.\nStep 2 - As a decimal, '+_r.num+' / '+_r.den+' = '+_t.toFixed(3)+'.\nStep 3 - Drag until the marker reads about '+_t.toFixed(2)+'.\nWhy it works - the denominator splits [0,1] into equal parts; the numerator counts them.\nTip - compare to 1/2 = 0.5 as a landmark.',
+      line:(_ok?('You are at '+st.pos.toFixed(2)+' - tap Check.'):('You are at '+st.pos.toFixed(2)+' - slide toward '+_t.toFixed(2)+' ('+_r.num+'/'+_r.den+').')),
+      voice:'Slide to '+_r.num+' over '+_r.den+'.',
+      glow:(_ok?_ck:_mk),submit:(_ok?_ck:null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setup();
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -103,9 +103,27 @@ function render(){
   wire('gt',()=>choose('A>B')); wire('lt',()=>choose('A<B')); wire('eq',()=>choose('A=B'));
   wire('resetBtn',()=>{if(!done&&!st.resolved){setup(); render();}});
   wire('checkBtn',check); wire('nextBtn',next); wire('restartBtn',restart);
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _va=val(_r.a),_vb=val(_r.b);
+    var _rel=_va>_vb?'A>B':(_va<_vb?'A<B':'A=B');
+    var _relBtn=sim.querySelector(_rel==='A>B'?'#gt':(_rel==='A<B'?'#lt':'#eq'));
+    var _aStr=_r.a[0]+'/'+_r.a[1],_bStr=_r.b[0]+'/'+_r.b[1];
+    var _sym=_rel==='A>B'?'>':(_rel==='A<B'?'<':'=');
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Race complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Is '+_aStr+' less than, equal to, or greater than '+_bStr+'?',hintVoice:'Compare the two fractions.',
+      why:'Compare with a common denominator (or cross-multiply); the larger equivalent numerator wins.',
+      detail:'Step 1 - Give both a common denominator, or cross-multiply.\nStep 2 - Compare the numerators.\nStep 3 - Tap the matching relation, then Check.\nWhy it works - same denominator means equal-size pieces, so the count decides.\nTip - cross-multiply: a/b vs c/d compares a*d with b*c.',
+      line:_aStr+' '+_sym+' '+_bStr+'.',
+      voice:'Choose '+_aStr+' '+_sym+' '+_bStr+'.',
+      glow:(st.pick?sim.querySelector('#checkBtn'):_relBtn),submit:(st.pick?sim.querySelector('#checkBtn'):null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 function calc(v){return v*3.68;}
 setup(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

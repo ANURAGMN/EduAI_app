@@ -75,7 +75,7 @@ function render(){
     </div>
     <div class="mission">Mission: Select <b>${m.frac[0]}/${m.frac[1]}</b> of <b>${m.total}</b> emergency kits.</div>
     <div class="tray">${Array.from({length:m.total},(_,i)=>`<button class="cell ${st.pick[i]?'on':''}" data-i="${i}"></button>`).join('')}</div>
-    <div class="legend">Target count = ${need()}</div>
+    <div class="legend">Fill the right number of cells.</div>
     <div class="actions">
       ${done?`<button class="btn next" id="restartBtn">Restart</button>`:st.resolved?`<button class="btn retry" id="retryBtn">Retry</button><button class="btn next" id="nextBtn">${st.idx===MISSIONS.length-1?'Finish':'Next'}</button>`:`<button class="btn check" id="checkBtn">Check Rescue</button>`}
     </div>
@@ -86,8 +86,24 @@ function render(){
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+    var _need=(_m.frac[0]*_m.total)/_m.frac[1];
+    var _chosen=st.pick.filter(Boolean).length;
+    var _grp=_m.total/_m.frac[1];
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'All rescues complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Rescue '+_m.frac[0]+'/'+_m.frac[1]+' of the '+_m.total+' kits. How many cells?',hintVoice:'How many cells?',
+      why:'A fraction of a quantity = (numerator / denominator) times the total.',
+      detail:'Step 1 - Split the total into '+_m.frac[1]+' equal groups: '+_m.total+' / '+_m.frac[1]+' = '+_grp+' per group.\nStep 2 - Take '+_m.frac[0]+' group(s): '+_m.frac[0]+' * '+_grp+' = '+_need+'.\nStep 3 - Turn on '+_need+' cells (any), then Check.\nWhy it works - the denominator makes the groups, the numerator counts them.\nTip - "of" means multiply.',
+      line:(_chosen===_need?(_chosen+' cells on - tap Check.'):('Turn on '+_need+' cells (you have '+_chosen+').')),
+      voice:'Turn on '+_need+' cells.',
+      glow:(_chosen===_need?sim.querySelector('#checkBtn'):null),submit:(_chosen===_need?sim.querySelector('#checkBtn'):null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setup(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

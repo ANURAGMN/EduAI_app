@@ -101,8 +101,24 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _ai=_r.opts.indexOf(_r.ans);
+    var _opts=Array.prototype.slice.call(sim.querySelectorAll('.opt'));
+    var _ansEl=_opts[_ai];
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Duel complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'What is '+_r.q+'?',hintVoice:'Solve the expression.',
+      why:'Add/subtract over a common denominator; multiply across; divide by inverting the second fraction.',
+      detail:'Step 1 - Pick the rule for the sign: common denominator for + or -, across for *, invert-and-multiply for /.\nStep 2 - Apply it to '+_r.q+'.\nStep 3 - Simplify if needed, then tap '+_r.ans+'.\nWhy it works - you can only add same-size pieces, so match denominators first.\nTip - dividing by a fraction = multiplying by its reciprocal.',
+      line:_r.q+' = '+_r.ans+'.',
+      voice:'The answer is '+_r.ans+'.',
+      glow:(st.pick!==null?sim.querySelector('#checkBtn'):_ansEl),submit:(st.pick!==null?sim.querySelector('#checkBtn'):null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

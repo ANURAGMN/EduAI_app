@@ -129,8 +129,25 @@ function render(){
   const rt=sim.querySelector('#retryBtn'); if(rt) rt.onclick=retry;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _factor=_r.targetDen/_r.base[1];
+    var _req=_factor*_r.base[0];
+    var _eqNow=Math.abs(_r.base[0]/_r.base[1]-st.n/st.d)<1e-9;
+    var _nGlow=[sim.querySelector('#nSlider'),sim.querySelector('#nInput')].filter(Boolean);
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Lab sessions complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Make '+_r.base[0]+'/'+_r.base[1]+' into '+_r.targetDen+'ths. What numerator over '+_r.targetDen+'?',hintVoice:'What numerator over '+_r.targetDen+'?',
+      why:'To rewrite with a bigger denominator, multiply top and bottom by the same factor.',
+      detail:'Step 1 - How many times bigger is the target denominator? '+_r.targetDen+' / '+_r.base[1]+' = '+_factor+'.\nStep 2 - Multiply the numerator by the same factor: '+_r.base[0]+' * '+_factor+' = '+_req+'.\nStep 3 - Set the numerator to '+_req+', then Check.\nWhy it works - scaling both parts equally keeps the value.\nTip - the denominator factor and numerator factor must match.',
+      line:(_eqNow?(st.n+'/'+st.d+' equals '+_r.base[0]+'/'+_r.base[1]+' - tap Check.'):('Numerator is '+st.n+' - set it to '+_req+'.')),
+      voice:'Set the numerator to '+_req+'.',
+      glow:(_eqNow?sim.querySelector('#checkBtn'):_nGlow),submit:(_eqNow?sim.querySelector('#checkBtn'):null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setupRound(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

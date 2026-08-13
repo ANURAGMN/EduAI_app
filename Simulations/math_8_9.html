@@ -48,7 +48,7 @@ const ROUNDS=[
 ];
 let st={run:true,idx:0,score:0,lives:3,resolved:false,msg:'',msgType:'info',n:1,d:2};
 function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
-function setup(){ const r=ROUNDS[st.idx]; st.n=r.whole*r.den+r.num; st.d=r.den; st.resolved=false; st.msg=''; st.msgType='info'; }
+function setup(){ const r=ROUNDS[st.idx]; st.n=1; st.d=(r.den===2?3:2); st.resolved=false; st.msg=''; st.msgType='info'; }
 function nudgeN(d){ if(!st.run||st.resolved) return; st.n=clamp(st.n+d,1,80); render(); }
 function nudgeD(d){ if(!st.run||st.resolved) return; st.d=clamp(st.d+d,2,20); render(); }
 function check(){
@@ -99,8 +99,27 @@ function render(){
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const retryBtn=sim.querySelector('#retryBtn'); if(retryBtn) retryBtn.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _needN=_r.whole*_r.den+_r.num;
+    var _nOk=st.n===_needN, _dOk=st.d===_r.den, _ok=_nOk&&_dOk;
+    var _gl, _steer;
+    if(!_dOk){ _gl=sim.querySelector(st.d<_r.den?'#dPlus':'#dMinus'); _steer='Denominator should be '+_r.den+', currently '+st.d+'.'; }
+    else if(!_nOk){ _gl=sim.querySelector(st.n<_needN?'#nPlus':'#nMinus'); _steer='Numerator should be '+_needN+', currently '+st.n+'.'; }
+    else { _gl=sim.querySelector('#checkBtn'); _steer=_needN+'/'+_r.den+' - tap Check.'; }
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Track complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Convert '+_r.whole+' '+_r.num+'/'+_r.den+' to an improper fraction. What is the numerator over '+_r.den+'?',hintVoice:'What is the improper numerator?',
+      why:'Mixed to improper: whole * denominator + numerator, over the same denominator.',
+      detail:'Step 1 - Keep the denominator ('+_r.den+').\nStep 2 - Numerator = whole * den + num = '+_r.whole+' * '+_r.den+' + '+_r.num+' = '+_needN+'.\nStep 3 - Set it to '+_needN+'/'+_r.den+', then Check.\nWhy it works - each whole is '+_r.den+' more '+_r.den+'ths, plus the leftover.\nTip - reverse to check: '+_needN+'/'+_r.den+' = '+_r.whole+' remainder '+_r.num+'.',
+      line:_steer,
+      voice:'Numerator '+_needN+' over '+_r.den+'.',
+      glow:_gl,submit:(_ok?sim.querySelector('#checkBtn'):null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setup(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

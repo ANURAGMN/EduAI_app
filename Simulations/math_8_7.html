@@ -98,8 +98,23 @@ function render(){
   const n=sim.querySelector('#nextBtn');if(n)n.onclick=next;
   const r=sim.querySelector('#retryBtn');if(r)r.onclick=retry;
   const rs=sim.querySelector('#restartBtn');if(rs)rs.onclick=restart;
+  try{
+    var _m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+    var _t=_m.num/_m.den, _ok=Math.abs(st.p-_t)<=0.02;
+    var _sl=sim.querySelector('#pSlider'), _ck=sim.querySelector('#checkBtn');
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Planner complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Set the route to '+_m.num+'/'+_m.den+' of the way.',hintVoice:'Where is '+_m.num+'/'+_m.den+'?',
+      why:'Every fraction is a point between 0 and 1 at its decimal value num / den.',
+      detail:'Step 1 - Convert to a decimal: '+_m.num+' / '+_m.den+' = '+_t.toFixed(3)+'.\nStep 2 - Slide toward '+_t.toFixed(2)+'.\nStep 3 - Stop within 0.02.\nWhy it works - the slider is the numberline; the fraction decimal is its position.\nTip - landmarks: 1/2 = 0.5, 3/4 = 0.75.',
+      line:(_ok?('At '+st.p.toFixed(2)+' - tap Check.'):('At '+st.p.toFixed(2)+' - nudge toward '+_t.toFixed(2)+' ('+_m.num+'/'+_m.den+').')),
+      voice:'Set it to '+_m.num+' over '+_m.den+'.',
+      glow:(_ok?_ck:_sl),submit:(_ok?_ck:null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setup();render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

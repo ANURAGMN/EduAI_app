@@ -87,8 +87,25 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _good=_r.tiles.map(function(t){return eq(t[0],t[1],_r.base[0],_r.base[1]);});
+    var _eqStr=_r.tiles.filter(function(t,i){return _good[i];}).map(function(t){return t[0]+'/'+t[1];}).join(', ');
+    var _tiles=Array.prototype.slice.call(sim.querySelectorAll('.tile'));
+    var _glowTiles=_tiles.filter(function(b,i){return _good[i];});
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Tile flip complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),glow:_glowTiles,glowKind:'answer',submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Which tiles equal '+_r.base[0]+'/'+_r.base[1]+'? Tap all of them.',hintVoice:'Which tiles are equivalent?',
+      why:'Equivalent fractions have the same value: multiply or divide top and bottom by the same number.',
+      detail:'Step 1 - Simplify each tile, or cross-multiply against '+_r.base[0]+'/'+_r.base[1]+'.\nStep 2 - Keep the ones equal to the base, skip the rest.\nStep 3 - Select exactly those, then Check.\nWhy it works - scaling top and bottom by the same factor keeps the value.\nTip - a/b = c/d when a*d = b*c.',
+      line:_eqStr+' all equal '+_r.base[0]+'/'+_r.base[1]+'.',
+      voice:'Pick every equivalent tile.',
+      glow:_glowTiles,glowKind:'answer',submit:sim.querySelector('#checkBtn'),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setup(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>
