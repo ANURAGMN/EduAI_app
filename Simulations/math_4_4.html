@@ -100,6 +100,33 @@ document.getElementById('helpOverlay').onclick=e=>{if(e.target===e.currentTarget
 const ct=document.getElementById("sim");
 let mode="match",step=6;
 
+function pubCoach(){
+ try{
+  if(mode==='quiz'){
+    var q=QUIZ[qIdx>=QUIZ.length?0:qIdx];
+    var _qt=(''+q.q).replace(/<[^>]+>/g,'');
+    var _el=[].slice.call(ct.querySelectorAll('.quiz-opt')).find(function(b){return b.dataset.v===q.ans;});
+    if(qAns){ window.__eduRound={native:true,line:'Answer: '+q.ans+' - '+q.ex,voice:'The answer.',submit:ct.querySelector('#nxt'),key:'q-res-'+qIdx}; }
+    else { window.__eduRound={native:true,
+      hint:_qt+' Find the rule, then evaluate.',hintVoice:'What is the answer?',
+      why:'Find how the pattern grows per step (the rule), write the formula, then substitute.',
+      detail:'Step 1 - See how the count changes each step (the rule).\nStep 2 - '+q.ex+'\nStep 3 - So the answer is '+q.ans+', tap it.\nWhy it works - a constant increase gives a linear rule; substitute to get the value.\nTip - check the rule on two known steps first.',
+      line:'Answer: '+q.ans+'.',voice:'Choose '+q.ans,glow:_el,key:'q-'+qIdx}; }
+  } else if(mode==='calendar'){
+    window.__eduRound={native:true,
+      hint:'In a 2 by 2 calendar block with top-left a, what do the diagonals sum to?',hintVoice:'What do the diagonals sum to?',
+      why:'The cells are a, a+1, a+7, a+8; each diagonal adds opposite corners.',
+      detail:'Step 1 - Name the cells: a, a+1, a+7, a+8.\nStep 2 - Diagonals: a+(a+8) and (a+1)+(a+7).\nStep 3 - Both equal 2a+8.\nWhy it works - the week fixes the offsets, so it is 2a+8 for any a.\nTip - the same for every starting a.',
+      line:'Both diagonals sum to 2a+8.',voice:'Two a plus eight.',key:'cal'};
+  } else {
+    window.__eduRound={native:true,
+      hint:'How many matchsticks for n shapes? Find the per-shape increase.',hintVoice:'What is the matchstick rule?',
+      why:'Count the first shape and how many sticks each extra shape adds; that builds the formula.',
+      detail:'Step 1 - Count sticks in shape 1 and the increase per shape.\nStep 2 - Write base + increase x (n - 1), then simplify.\nStep 3 - That is the general formula.\nWhy it works - a constant increase makes the coefficient of n.\nTip - verify on shape 2.',
+      line:'Base sticks plus a fixed increase per shape gives the rule.',voice:'Find the per-shape increase.',key:'match-'+step};
+  }
+ }catch(e){}
+}
 function renderMatch(){
   let rows='';for(let i=1;i<=Math.min(step,8);i++){rows+=`<tr><td>${i}</td><td>${2*i+1}</td><td class="formula">3 + 2×${i-1} = ${3+2*(i-1)}</td></tr>`}
   ct.innerHTML=`
@@ -163,14 +190,15 @@ function renderQuiz(){
   ct.querySelector('#qo').addEventListener('click',e=>{const b=e.target.closest('.quiz-opt');if(!b||qAns)return;qAns=true;qTotal++;
     if(b.dataset.v===q.ans){b.classList.add('correct');qScore++;ct.querySelector('#fb').innerHTML=`<div style="background:#dcfce7;color:#166534;padding:12px;border-radius:10px"><b>Correct!</b> ${q.ex}</div>`}
     else{b.classList.add('wrong');ct.querySelectorAll('.quiz-opt').forEach(x=>{if(x.dataset.v===q.ans)x.classList.add('correct')});ct.querySelector('#fb').innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px"><b>${q.ans}</b> — ${q.ex}</div>`}
-    ct.querySelector('#nxt').style.display='block';});
+    ct.querySelector('#nxt').style.display='block';pubCoach();});
   ct.querySelector('#nxt').onclick=()=>{qIdx++;renderQuiz()};
 }
 
 function tabs(a){return['match','calendar','quiz'].map(m=>`<button class="mode-tab${m===a?' active':''}" data-m="${m}">${{match:'Matchsticks',calendar:'Calendar',quiz:'Quiz'}[m]}</button>`).join('')}
-function wireMode(){ct.querySelectorAll('.mode-tab').forEach(b=>b.onclick=()=>{mode=b.dataset.m;if(mode==='match')renderMatch();else if(mode==='calendar')renderCalendar();else{qIdx=0;qScore=0;qTotal=0;renderQuiz()}})}
+function wireMode(){ct.querySelectorAll('.mode-tab').forEach(b=>b.onclick=()=>{mode=b.dataset.m;if(mode==='match')renderMatch();else if(mode==='calendar')renderCalendar();else{qIdx=0;qScore=0;qTotal=0;renderQuiz()}});pubCoach();}
 
 renderMatch();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

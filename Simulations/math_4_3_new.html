@@ -116,8 +116,20 @@ function render(){
   const cbtn=sim.querySelector('#checkBtn'); if(cbtn) cbtn.onclick=check;
   const nbtn=sim.querySelector('#nextBtn'); if(nbtn) nbtn.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  var _c=CASES[Math.min(st.idx,CASES.length-1)];
+  var _ansEl=[].slice.call(sim.querySelectorAll('.choice')).find(function(b){return b.dataset.k===_c.ans;});
+  if(!st.run){ window.__eduRound={native:true,line:(st.idx>=CASES.length?(st.msg||'Hunt complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx+'-'+(st.msg||'')}; }
+  else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+  else { window.__eduRound={native:true,
+    hint:'Is '+_c.L+' the same as '+_c.R+' for every value? Try a test x.',hintVoice:'Are they equal for every value?',
+    why:'Substitute a value into both sides. If they ever differ they are not always equal; if they match for every x they are always equal.',
+    detail:'Step 1 - Put your test x into both '+_c.L+' and '+_c.R+'.\nStep 2 - Compare the two results (and try another x).\nStep 3 - '+(_c.ans==='always'?'They match for every x, so tap Always equal.':'They differ for some x, so tap Not always equal.')+'\nWhy it works - equivalence must hold for all values; one counterexample breaks it.\nTip - distribute correctly: 2(x+4) = 2x+8 always, but 10(y-3) is not 10y-3.',
+    line:(_c.ans==='always'?_c.L+' and '+_c.R+' are always equal.':_c.L+' and '+_c.R+' are NOT always equal.'),
+    voice:(_c.ans==='always'?'Always equal.':'Not always equal.'),
+    glow:_ansEl,submit:(st.pick?sim.querySelector('#checkBtn'):null),key:'c-'+st.idx}; }
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

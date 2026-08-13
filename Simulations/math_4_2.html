@@ -104,6 +104,16 @@ const PAIRS=[
 const ct=document.getElementById("sim");
 let pIdx=0;
 
+function pubCoach(){
+ try{
+   var p=PAIRS[pIdx>=PAIRS.length?0:pIdx];
+   window.__eduRound={native:true,
+     hint:'Are '+p.nameA+' and '+p.nameB+' equal? Check the table - do they match for every test value?',hintVoice:'Do these match for every value?',
+     why:'Two expressions are equal only if they give the same result for every input; one mismatch means not equal.',
+     detail:'Step 1 - Read each row: the value of both expressions at that input.\nStep 2 - If any row differs, they are not equal.\nStep 3 - If every row matches, they are equal for all inputs.\nWhy it works - equivalence must hold for all values, not just one.\nTip - distribute and combine like terms to see why they match or not.',
+     line:'Equal only if they match for every value in the table.',voice:'Check every row.',key:'pair-'+pIdx};
+ }catch(e){}
+}
 function render(){
   const p=PAIRS[pIdx];
   let rows=p.testVals.map(v=>{
@@ -130,8 +140,10 @@ function render(){
   <div class="presets">${presets}</div>`;
 
   ct.querySelectorAll('.preset-btn').forEach(b=>b.onclick=()=>{pIdx=parseInt(b.dataset.i);render()});
+  pubCoach();
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

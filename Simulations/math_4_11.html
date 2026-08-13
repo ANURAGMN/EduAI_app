@@ -122,10 +122,21 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rr=sim.querySelector('#restartBtn'); if(rr) rr.onclick=()=>{st={run:true,idx:0,score:0,lives:3,pick:null,resolved:false,msg:'',msgType:'info'}; setupRound(); render();};
+  var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  var _ansEl=[].slice.call(sim.querySelectorAll('.choice')).find(function(b){return Number(b.dataset.v)===_r.ans;});
+  if(!st.run){ window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||'Sprint complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx+'-'+(st.msg||'')}; }
+  else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+  else { window.__eduRound={native:true,
+    hint:'Substitute x = '+_r.x+' into '+_r.expr+'. What is the value?',hintVoice:'What is the value?',
+    why:'Replace x with its value, then do the multiplication or division before the addition or subtraction.',
+    detail:'Step 1 - Replace x with '+_r.x+' in '+_r.expr+'.\nStep 2 - Do the multiply or divide first.\nStep 3 - Then the plus or minus to get '+_r.ans+'.\nWhy it works - order of operations still applies after you substitute.\nTip - x/2 means half of x.',
+    line:_r.expr+' at x = '+_r.x+' = '+_r.ans+'.',voice:'The value is '+_r.ans,
+    glow:_ansEl,submit:(st.pick!=null?sim.querySelector('#checkBtn'):null),key:'r-'+st.idx}; }
 }
 
 setupRound();
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

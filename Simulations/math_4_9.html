@@ -103,8 +103,20 @@ function render(){
   const cbtn=sim.querySelector('#checkBtn'); if(cbtn) cbtn.onclick=check;
   const nbtn=sim.querySelector('#nextBtn'); if(nbtn) nbtn.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  var _c=CASES[Math.min(st.idx,CASES.length-1)];
+  var _ai=_c.opts.indexOf(_c.ans);
+  var _ansEl=sim.querySelector('.opt[data-i="'+_ai+'"]');
+  if(!st.run){ window.__eduRound={native:true,line:(st.idx>=CASES.length?(st.msg||'Complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx+'-'+(st.msg||'')}; }
+  else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+  else { window.__eduRound={native:true,
+    hint:'Write an expression for: '+_c.text+'. Which option is right?',hintVoice:'Which expression fits the scenario?',
+    why:'Turn each quantity into a term - a rate or "each/per" becomes a coefficient, "more/older/joined" adds - then combine.',
+    detail:'Step 1 - Read the scenario: '+_c.text+'.\nStep 2 - Build each part (price x quantity, or + and - for more or less).\nStep 3 - Combine to get '+_c.ans+', then tap it.\nWhy it works - the expression mirrors the words: per means multiply, and means add, and unlike terms stay separate.\nTip - do not merge unlike terms (35c and 60j stay apart).',
+    line:'Expression: '+_c.ans+'.',voice:'The answer is '+_c.ans,
+    glow:_ansEl,submit:(st.pick!=null?sim.querySelector('#checkBtn'):null),key:'c-'+st.idx}; }
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

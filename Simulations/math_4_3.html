@@ -113,6 +113,27 @@ const QUIZ=[
 const ct=document.getElementById("sim");
 let mode="learn",pIdx=0,qIdx=0,qScore=0,qTotal=0,qAns=false;
 
+function pubCoach(){
+ try{
+  if(mode==='quiz'){
+    var q=QUIZ[qIdx>=QUIZ.length?0:qIdx];
+    var _qt=(''+q.q).replace(/<[^>]+>/g,'');
+    var _el=[].slice.call(ct.querySelectorAll('.quiz-opt')).find(function(b){return b.dataset.v===q.ans;});
+    if(qAns){ window.__eduRound={native:true,line:'Answer: '+q.ans+' - '+q.ex,voice:'The answer.',submit:ct.querySelector('#nxt'),key:'q-res-'+qIdx}; }
+    else { window.__eduRound={native:true,
+      hint:_qt+' What is the simplest form?',hintVoice:'What is the simplest form?',
+      why:'Open brackets (a minus flips inside signs), then combine like terms only.',
+      detail:'Step 1 - Distribute or open any brackets.\nStep 2 - '+q.ex+'\nStep 3 - So the simplest form is '+q.ans+', tap it.\nWhy it works - only like terms add; unlike terms such as 3a and 2b stay separate.\nTip - 6(p+2) = 6p+12, not 6p+8.',
+      line:'Simplest form: '+q.ans+'.',voice:'Choose '+q.ans,glow:_el,key:'q-'+qIdx}; }
+  } else {
+    window.__eduRound={native:true,
+      hint:'How do you simplify this expression?',hintVoice:'How do you simplify it?',
+      why:'Distribute over brackets, then add only like terms; a minus in front flips every inside sign.',
+      detail:'Step 1 - Open brackets (flip signs after a minus).\nStep 2 - Group like terms (same letters).\nStep 3 - Combine them; leave unlike terms as they are.\nWhy it works - like terms count the same thing, so their coefficients add.\nTip - 3a + 2b cannot be merged.',
+      line:'Open brackets, then combine like terms.',voice:'Distribute, then combine like terms.',key:'learn-'+pIdx};
+  }
+ }catch(e){}
+}
 function renderLearn(){
   const p=PROBS[pIdx];
   let stepsHtml=p.steps.map((s,i)=>`<div class="step-card"><b>Step ${i+1}:</b> ${s}</div>`).join('');
@@ -125,6 +146,7 @@ function renderLearn(){
   <div class="presets">${presets}</div>`;
   ct.querySelectorAll('.preset-btn').forEach(b=>b.onclick=()=>{pIdx=parseInt(b.dataset.i);renderLearn()});
   ct.querySelectorAll('.mode-tab').forEach(b=>b.onclick=()=>{if(b.dataset.m==='quiz'){mode='quiz';qIdx=0;qScore=0;qTotal=0;renderQuiz()}});
+  pubCoach();
 }
 
 function renderQuiz(){
@@ -141,12 +163,14 @@ function renderQuiz(){
   ct.querySelector('#qo').addEventListener('click',e=>{const b=e.target.closest('.quiz-opt');if(!b||qAns)return;qAns=true;qTotal++;
     if(b.dataset.v===q.ans){b.classList.add('correct');qScore++;ct.querySelector('#fb').innerHTML=`<div style="background:#dcfce7;color:#166534;padding:12px;border-radius:10px"><b>Correct!</b> ${q.ex}</div>`}
     else{b.classList.add('wrong');ct.querySelectorAll('.quiz-opt').forEach(x=>{if(x.dataset.v===q.ans)x.classList.add('correct')});ct.querySelector('#fb').innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px"><b>${q.ans}</b> — ${q.ex}</div>`}
-    ct.querySelector('#nxt').style.display='block';});
+    ct.querySelector('#nxt').style.display='block';pubCoach();});
   ct.querySelector('#nxt').onclick=()=>{qIdx++;renderQuiz()};
   ct.querySelectorAll('.mode-tab').forEach(b=>b.onclick=()=>{if(b.dataset.m==='learn'){mode='learn';renderLearn()}});
+  pubCoach();
 }
 
 renderLearn();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

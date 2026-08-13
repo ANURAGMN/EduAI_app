@@ -211,9 +211,24 @@ function render(){
   const n = sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const s = sim.querySelector('#startBtn'); if(s) s.onclick=start;
   const r = sim.querySelector('#resetBtn'); if(r) r.onclick=resetGuess;
+  try{
+    var _m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+    var _ok=(st.m===_m.m&&st.b===_m.b);
+    if(!st.run){ window.__eduRound={native:true,line:(st.idx>=MISSIONS.length?(st.msg||'All locks opened!'):'Tap Start to begin.'),voice:(st.idx>=MISSIONS.length?'Complete.':'Tap start.'),glow:sim.querySelector('#startBtn'),submit:sim.querySelector('#startBtn'),key:'start-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not matched.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Sequence '+_m.seq.join(', ')+'. Find the step m and offset b for a(n) = m n + b.',hintVoice:'What are m and b?',
+      why:'The common difference between terms is m; then b makes term 1 correct: b = first - m.',
+      detail:'Step 1 - Common difference: '+_m.seq[1]+' - '+_m.seq[0]+' = '+_m.m+', so m = '+_m.m+'.\nStep 2 - Term 1 is '+_m.seq[0]+' at n=1, so b = '+_m.seq[0]+' - '+_m.m+' = '+_m.b+'.\nStep 3 - Rule a(n) = '+_m.m+'n'+(_m.b>=0?'+':'')+_m.b+'. Set m='+_m.m+', b='+_m.b+', then Test Rule.\nWhy it works - a constant step is the coefficient of n; b shifts the whole line.\nTip - check term 2: '+_m.m+'x2'+(_m.b>=0?'+':'')+_m.b+' = '+(_m.m*2+_m.b)+'.',
+      line:(_ok?'m and b are set right - tap Test Rule.':'Set m = '+_m.m+' and b = '+_m.b+'.'),
+      voice:(_ok?'Test the rule.':'Set m and b.'),
+      glow:(_ok?sim.querySelector('#checkBtn'):sim.querySelector(st.m!==_m.m?'#mIn':'#bIn')),
+      submit:(_ok?sim.querySelector('#checkBtn'):null),key:'r-'+st.idx}; }
+  }catch(e){}
 }
 
 start();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

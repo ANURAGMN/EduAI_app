@@ -120,7 +120,7 @@ const EXPRS=[
 const QUIZ=[
   {q:"If a = −4, is 10 − a = 6?",opts:["Yes, 6 is correct","No, should be 14","No, should be −14"],ans:"No, should be 14",ex:"10 − (−4) = 10 + 4 = 14. Subtracting a negative = adding!"},
   {q:"If d = 6, is 3d = 36?",opts:["Yes, 36 is correct","No, should be 18","No, should be 9"],ans:"No, should be 18",ex:"3d = 3 × 6 = 18. It's NOT 3 followed by 6!"},
-  {q:"If s = 7, is 3s − 2 = 15?",opts:["No, should be 19","Yes, 15 is correct","No, should be 23"],ans:"Yes, 15 is correct",ex:"3×7 − 2 = 21 − 2 = 19... wait, actually no! 3×7=21, 21−2=19. So 15 is WRONG. It should be 19!"},
+  {q:"If s = 7, is 3s − 2 = 15?",opts:["No, should be 19","Yes, 15 is correct","No, should be 23"],ans:"No, should be 19",ex:"3s − 2 = 3×7 − 2 = 21 − 2 = 19 (not 15)."},
   {q:"If r = 8, is 2r + 1 = 29?",opts:["No, should be 17","No, should be 21","Yes, 29 is correct"],ans:"No, should be 17",ex:"2r + 1 = 2×8 + 1 = 16 + 1 = 17 (not 29!)"},
   {q:"If m = −6, is 3(m+1) = 19?",opts:["No, should be −15","Yes, 19 is correct","No, should be −21"],ans:"No, should be −15",ex:"m+1 = −6+1 = −5. Then 3×(−5) = −15"},
   {q:"If f=3, g=1, is 2f − 2g = 2?",opts:["No, should be 4","Yes, 2 is correct","No, should be 8"],ans:"No, should be 4",ex:"2×3 − 2×1 = 6 − 2 = 4"},
@@ -133,6 +133,28 @@ const QUIZ=[
 let eIdx=0,qIdx=0,qScore=0,qTotal=0,qAns=false;
 let vals={a:5,n:4,c:3,j:2,q:7,m:2,y:5,x:3,z:6};
 
+function pubCoach(){
+ try{
+  if(mode==='quiz'){
+    var q=QUIZ[qIdx>=QUIZ.length?0:qIdx];
+    var _qt=(''+q.q).replace(/<[^>]+>/g,'');
+    var _el=[].slice.call(ct.querySelectorAll('.quiz-opt')).find(function(b){return b.dataset.v===q.ans;});
+    if(qAns){ window.__eduRound={native:true,line:'Answer: '+q.ans+' - '+q.ex,voice:'The answer.',submit:ct.querySelector('#nxt'),key:'q-res-'+qIdx}; }
+    else { window.__eduRound={native:true,
+      hint:_qt+' Work it out.',hintVoice:'Is the claim right?',
+      why:'Substitute the value, then do multiply/divide before add/subtract, watching the signs.',
+      detail:'Step 1 - Substitute the given value.\nStep 2 - '+q.ex+'\nStep 3 - So the correct choice is: '+q.ans+', tap it.\nWhy it works - a coefficient means multiply (3d = 3 x d), and subtracting a negative adds.\nTip - evaluate, do not just read the digits.',
+      line:'Answer: '+q.ans+'.',voice:'Choose the right one.',glow:_el,key:'q-'+qIdx}; }
+  } else {
+    var _e=EXPRS[eIdx>=EXPRS.length?0:eIdx];
+    window.__eduRound={native:true,
+      hint:'Substitute the slider values into '+_e.expr+' and evaluate. What do you get?',hintVoice:'What is the value?',
+      why:'Put each value in place of its letter, then follow order of operations (multiply and divide first).',
+      detail:'Step 1 - Replace each letter with its slider value.\nStep 2 - Do the multiply and divide, then the add and subtract.\nStep 3 - That gives the value shown.\nWhy it works - a letter is a placeholder; substituting turns the expression into a number.\nTip - 3d is 3 times d, not "3 then d".',
+      line:'Substitute the values into '+_e.expr+', then evaluate (times before plus).',voice:'Substitute and evaluate.',key:'exp-'+eIdx+'-'+_e.expr};
+  }
+ }catch(e){}
+}
 function renderExplore(){
   const e=EXPRS[eIdx];
   const result=e.eval(vals);
@@ -163,6 +185,7 @@ function renderExplore(){
   ct.querySelectorAll('input[type="range"]').forEach(sl=>{sl.oninput=function(){vals[this.dataset.k]=parseInt(this.value);renderExplore()}});
   ct.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{eIdx=parseInt(b.dataset.i);renderExplore()});
   ct.querySelectorAll('.mode-tab').forEach(b=>b.onclick=()=>{if(b.dataset.m==='quiz'){mode='quiz';qIdx=0;qScore=0;qTotal=0;renderQuiz()}});
+  pubCoach();
 }
 
 function renderQuiz(){
@@ -183,13 +206,15 @@ function renderQuiz(){
     const b=e.target.closest('.quiz-opt');if(!b||qAns)return;qAns=true;qTotal++;
     if(b.dataset.v===q.ans){b.classList.add('correct');qScore++;ct.querySelector('#fb').innerHTML=`<div style="background:#dcfce7;color:#166534;padding:12px;border-radius:10px"><b>Correct!</b> ${q.ex}</div>`}
     else{b.classList.add('wrong');ct.querySelectorAll('.quiz-opt').forEach(x=>{if(x.dataset.v===q.ans)x.classList.add('correct')});ct.querySelector('#fb').innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px"><b>Answer: ${q.ans}</b> &mdash; ${q.ex}</div>`}
-    ct.querySelector('#nxt').style.display='block';
+    ct.querySelector('#nxt').style.display='block';pubCoach();
   });
   ct.querySelector('#nxt').onclick=()=>{qIdx++;renderQuiz()};
   ct.querySelectorAll('.mode-tab').forEach(b=>b.onclick=()=>{if(b.dataset.m==='explore'){mode='explore';renderExplore()}});
+  pubCoach();
 }
 
 renderExplore();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -127,8 +127,23 @@ function render(){
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const s=sim.querySelector('#startBtn'); if(s) s.onclick=start;
   const rs=sim.querySelector('#resetBtn'); if(rs) rs.onclick=resetGuess;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _ok=(st.a===4&&st.b===0);
+    if(!st.run){ window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||'Raid complete!'):'Tap Start to begin.'),voice:(st.idx>=ROUNDS.length?'Complete.':'Tap start.'),glow:sim.querySelector('#startBtn'),submit:sim.querySelector('#startBtn'),key:'start-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Locked.':'Not exact.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'A 4-column grid: value at row '+_r.r+', column '+_r.c+' is '+_r.val+'. Find V = a(r-1)+c + b.',hintVoice:'What is the formula?',
+      why:'Each new row adds 4 (one per column), so a = 4; the column adds c; no extra shift, so b = 0.',
+      detail:'Step 1 - Rows jump by 4 (4 columns), so a = 4.\nStep 2 - Add the column c; no leftover shift, so b = 0.\nStep 3 - V = 4(r-1)+c. Check: 4('+_r.r+'-1)+'+_r.c+' = '+_r.val+'. Set a=4, b=0, then Lock Formula.\nWhy it works - counting in rows of 4 makes 4 the row coefficient.\nTip - test another cell to be sure.',
+      line:(_ok?'a and b are right - tap Lock Formula.':'Set a = 4 and b = 0.'),
+      voice:(_ok?'Lock the formula.':'Set a and b.'),
+      glow:(_ok?sim.querySelector('#checkBtn'):sim.querySelector(st.a!==4?'#aIn':'#bIn')),
+      submit:(_ok?sim.querySelector('#checkBtn'):null),key:'r-'+st.idx}; }
+  }catch(e){}
 }
 start();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-ma<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -124,8 +124,27 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const rt=sim.querySelector('#retryBtn'); if(rt) rt.onclick=retry;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  try{
+    var _m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+    var _filled=st.slots.filter(Boolean).length;
+    var _built=st.slots.filter(Boolean).join('');
+    var _needTok=_m.tokens[_filled];
+    var _tokEl=(_needTok!=null)?[].slice.call(sim.querySelectorAll('.tok')).find(function(b){return b.dataset.t===_needTok;}):null;
+    var _complete=(_built===_m.answer);
+    if(!st.run){ window.__eduRound={native:true,line:(st.idx>=MISSIONS.length?(st.msg||'All assembled!'):'Tap Start to begin.'),voice:(st.idx>=MISSIONS.length?'Complete.':'Tap start.'),glow:sim.querySelector('#startBtn'),submit:sim.querySelector('#startBtn'),key:'start-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not yet.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Clue: '+_m.clue+'. Build "'+_m.answer+'" by tapping tokens in order.',hintVoice:'Build the expression.',
+      why:'Translate words to symbols in order: a rate is a coefficient (times), and "less than" reverses so the variable term comes first.',
+      detail:'Step 1 - Read the clue: '+_m.clue+'.\nStep 2 - Order matters: "less than" flips it (13 less than 2d is 2d-13, not 13-2d).\nStep 3 - Tap tokens to build '+_m.answer+', then Check Formula.\nWhy it works - the expression mirrors the sentence once order and signs are right.\nTip - a per-item cost like Rs30 for x is 30x.',
+      line:(_complete?'Looks right ("'+_built+'") - tap Check Formula.':'Next tap: '+(_needTok!=null?'"'+_needTok+'"':'check your order')+'. Target: '+_m.answer),
+      voice:(_complete?'Check the formula.':'Tap '+(_needTok!=null?_needTok:'check')),
+      glow:(_complete?sim.querySelector('#checkBtn'):_tokEl),
+      submit:(_complete?sim.querySelector('#checkBtn'):null),key:'r-'+st.idx+'-'+_filled}; }
+  }catch(e){}
 }
 start();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

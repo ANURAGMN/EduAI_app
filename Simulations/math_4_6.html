@@ -116,9 +116,20 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  var _ansEl=[].slice.call(sim.querySelectorAll('.opt')).find(function(b){return b.dataset.v==='2y+1';});
+  if(!st.run){ window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||'Forge complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx+'-'+(st.msg||'')}; }
+  else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+  else { window.__eduRound={native:true,
+    hint:'A connected-triangle chain with y = '+_r.y+' triangles uses '+_r.sticks+' sticks. Which formula gives the sticks for any y?',hintVoice:'Which formula fits the pattern?',
+    why:'Find how many sticks each extra triangle adds (the step) plus the starting count, to build the rule.',
+    detail:'Step 1 - The first triangle uses 3 sticks; each new triangle adds 2 (they share a side).\nStep 2 - So sticks = 3 + 2 x (y - 1) = 2y + 1.\nStep 3 - Check y = '+_r.y+': 2 x '+_r.y+' + 1 = '+_r.sticks+', so tap 2y+1.\nWhy it works - a constant increase of 2 per triangle makes the coefficient of y equal to 2.\nTip - test the formula on a second value of y.',
+    line:'Formula: 2y+1 (y = '+_r.y+' gives '+_r.sticks+').',voice:'Two y plus one.',
+    glow:_ansEl,submit:(st.pick?sim.querySelector('#checkBtn'):null),key:'r-'+st.idx}; }
 }
 setup();
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -55,8 +55,8 @@ const sim = document.getElementById('sim');
 
 const DUELS = [
   {left:(x)=>5*x, right:(x)=>x+20, L:'5x', R:'x+20', range:[0,20]},
-  {left:(x)=>10*x-3, right:(x)=>10*(x-3), L:'10x-3', R:'10(x-3)', range:[0,20]},
-  {left:(x)=>2*x+1, right:(x)=>2*(x+1), L:'2x+1', R:'2(x+1)', range:[0,20]},
+  {left:(x)=>6*x-4, right:(x)=>2*x+12, L:'6x-4', R:'2x+12', range:[0,20]},
+  {left:(x)=>2*x+9, right:(x)=>5*x, L:'2x+9', R:'5x', range:[0,20]},
   {left:(x)=>3*x-6, right:(x)=>x+8, L:'3x-6', R:'x+8', range:[0,20]},
   {left:(x)=>4*x+5, right:(x)=>2*x+19, L:'4x+5', R:'2x+19', range:[0,20]},
   {left:(x)=>7*x-14, right:(x)=>5*x+2, L:'7x-14', R:'5x+2', range:[0,20]}
@@ -159,9 +159,25 @@ function render(){
   const s = sim.querySelector('#startBtn'); if(s) s.onclick=start;
   const c = sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n = sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  try{
+    var _d=DUELS[Math.min(st.idx,DUELS.length-1)];
+    var _tx=null; for(var _i=_d.range[0];_i<=_d.range[1];_i++){ if(_d.left(_i)-_d.right(_i)===0){_tx=_i;break;} }
+    var _lv=_d.left(st.x),_rv=_d.right(st.x),_diff=_lv-_rv;
+    if(!st.run){ window.__eduRound={native:true,line:(st.idx>=DUELS.length?(st.msg||'Series complete!'):'Tap Start Duel to begin.'),voice:(st.idx>=DUELS.length?'Complete.':'Tap start.'),glow:sim.querySelector('#startBtn'),submit:sim.querySelector('#startBtn'),key:'start-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Balanced.':'Out of checks.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:(_diff===0?'Balanced! Tap Check Balance to lock it in.':'Difference is '+_diff+'. Drag x '+(_diff>0?'left (smaller)':'right (larger)')+' to shrink it toward 0.'),
+      hintVoice:(_diff===0?'Balanced, check it.':'Adjust x to balance.'),
+      why:'Set the two expressions equal and solve for x; the slider makes left minus right zero.',
+      detail:'Step 1 - Set '+_d.L+' = '+_d.R+'.\nStep 2 - Solve: gather x on one side, numbers on the other.\nStep 3 - x = '+(_tx!=null?_tx:'the balancing value')+', where left = right.\nWhy it works - equal expressions meet at one x; that is the solution.\nTip - if left-right is positive, x is too big; slide it down.',
+      line:(_diff===0?'Balanced at x = '+st.x+'.':'Drag x until difference is 0 (x = '+(_tx!=null?_tx:'?')+').'),
+      voice:(_diff===0?'Balanced.':'Keep adjusting x.'),
+      glow:sim.querySelector('#x'),submit:(_diff===0?sim.querySelector('#checkBtn'):null),key:'r-'+st.idx}; }
+  }catch(e){}
 }
 
 start();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -171,9 +171,21 @@ function render(){
   const s = sim.querySelector('#startBtn'); if(s) s.onclick = startArena;
   const cbtn = sim.querySelector('#checkBtn'); if(cbtn) cbtn.onclick = checkCase;
   const n = sim.querySelector('#nextBtn'); if(n) n.onclick = nextCase;
+  var _c=CASES[Math.min(st.idx,CASES.length-1)];
+  var _ansEl=[].slice.call(sim.querySelectorAll('.choice')).find(function(b){return b.dataset.v===_c.answer;});
+  if(!st.run){ window.__eduRound={native:true,line:(st.idx>=CASES.length?(st.msg||'Arena complete!'):'Tap Start Arena to begin.'),voice:(st.idx>=CASES.length?'Complete.':'Tap start.'),glow:sim.querySelector('#startBtn'),key:'start-'+st.idx}; }
+  else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+  else { window.__eduRound={native:true,
+    hint:'Are '+_c.L+' and '+_c.R+' always, sometimes, or never equal?',hintVoice:'Always, sometimes, or never equal?',
+    why:'Equal for every x is "always"; equal only at certain x is "sometimes"; never equal is "never".',
+    detail:'Step 1 - Simplify each side, or probe two different x values.\nStep 2 - '+_c.note+'\nStep 3 - So they are '+_c.answer+' equal, tap it.\nWhy it works - equivalence must hold for all x; one matching x only proves "sometimes".\nTip - like terms combine, but a dropped factor or a spare +1 breaks equality.',
+    line:'They are '+_c.answer+' equal. '+_c.note,
+    voice:'They are '+_c.answer+' equal.',
+    glow:_ansEl,submit:(st.pick?sim.querySelector('#checkBtn'):null),key:'c-'+st.idx}; }
 }
 
 startArena();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -92,6 +92,19 @@ let qIdx=0,qScore=0,qTotal=0,qAns=false;
 // Shuffle
 for(let i=QUIZ.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[QUIZ[i],QUIZ[j]]=[QUIZ[j],QUIZ[i]]}
 
+function pubCoach(){
+  try{
+    var q=QUIZ[qIdx>=QUIZ.length?0:qIdx];
+    var _qt=(''+q.q).replace(/<[^>]+>/g,'');
+    var _el=[].slice.call(ct.querySelectorAll('.quiz-opt')).find(function(b){return b.dataset.v===q.ans;});
+    if(qAns){ window.__eduRound={native:true,line:'Answer: '+q.ans+' - '+q.ex,voice:'The answer is '+q.ans,submit:ct.querySelector('#nxt'),key:'q-res-'+qIdx}; }
+    else { window.__eduRound={native:true,
+      hint:_qt+' Which expression is right?',hintVoice:'Which expression fits?',
+      why:'Translate words to symbols: "each/per" is a coefficient (times), "more/joined" adds, a fixed part is a constant.',
+      detail:'Step 1 - Read it: '+_qt+'\nStep 2 - '+q.ex+'\nStep 3 - So the answer is '+q.ans+', tap it.\nWhy it works - an expression mirrors the words; a rate becomes a coefficient on the variable.\nTip - keep unlike terms separate and mind order ("less than" reverses).',
+      line:'Answer: '+q.ans+'.',voice:'Choose '+q.ans,glow:_el,key:'q-'+qIdx}; }
+  }catch(e){}
+}
 function render(){
   if(qIdx>=QUIZ.length)qIdx=0;const q=QUIZ[qIdx];
   ct.innerHTML=`
@@ -104,10 +117,12 @@ function render(){
   ct.querySelector('#qo').addEventListener('click',e=>{const b=e.target.closest('.quiz-opt');if(!b||qAns)return;qAns=true;qTotal++;
     if(b.dataset.v===q.ans){b.classList.add('correct');qScore++;ct.querySelector('#fb').innerHTML=`<div style="background:#dcfce7;color:#166534;padding:12px;border-radius:10px"><b>Correct!</b> ${q.ex}</div>`}
     else{b.classList.add('wrong');ct.querySelectorAll('.quiz-opt').forEach(x=>{if(x.dataset.v===q.ans)x.classList.add('correct')});ct.querySelector('#fb').innerHTML=`<div style="background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px"><b>${q.ans}</b> — ${q.ex}</div>`}
-    ct.querySelector('#nxt').style.display='block';});
+    ct.querySelector('#nxt').style.display='block';pubCoach();});
   ct.querySelector('#nxt').onclick=()=>{qIdx++;render()};
+  pubCoach();
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -106,8 +106,19 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const r=sim.querySelector('#restartBtn'); if(r) r.onclick=restart;
+  var _m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+  var _ansEl=[].slice.call(sim.querySelectorAll('.opt')).find(function(b){return b.dataset.v===_m.ans;});
+  if(!st.run){ window.__eduRound={native:true,line:(st.idx>=MISSIONS.length?(st.msg||'Complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx+'-'+(st.msg||'')}; }
+  else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+  else { window.__eduRound={native:true,
+    hint:'Which expression matches: '+_m.text+'?',hintVoice:'Which expression matches the phrase?',
+    why:'Translate the phrase to symbols: "times" is a coefficient, "less than / older than" can change the order and sign.',
+    detail:'Step 1 - Read: '+_m.text+'.\nStep 2 - Turn each part into symbols (times becomes a coefficient; "less than" subtracts from the first quantity).\nStep 3 - That gives '+_m.ans+', so tap it.\nWhy it works - the expression is the phrase in symbols, and word order can reverse (3 less than 10y is 10y - 3).\nTip - "10 times y" is 10y, not 10 + y.',
+    line:'Expression: '+_m.ans+'.',voice:'The answer is '+_m.ans,
+    glow:_ansEl,submit:(st.pick?sim.querySelector('#checkBtn'):null),key:'m-'+st.idx}; }
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

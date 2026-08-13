@@ -114,9 +114,20 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rr=sim.querySelector('#restartBtn'); if(rr) rr.onclick=restart;
+  var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+  var _ansEl=[].slice.call(sim.querySelectorAll('.opt')).find(function(b){return b.dataset.v===_r.ans;});
+  if(!st.run){ window.__eduRound={native:true,line:(st.idx>=ROUNDS.length?(st.msg||'Complete!'):st.msg),voice:'Round over.',submit:sim.querySelector('#restartBtn'),key:'done-'+st.idx+'-'+(st.msg||'')}; }
+  else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+  else { window.__eduRound={native:true,
+    hint:'Top-left is a = '+_r.a+' and the block is '+_r.cells.join(', ')+'. Which single expression equals each diagonal sum?',hintVoice:'What expression equals each diagonal sum?',
+    why:'In a 2 by 2 calendar block the cells are a, a+1, a+7, a+8; each diagonal adds a corner to its opposite corner.',
+    detail:'Step 1 - Name the cells: a, a+1, a+7, a+8.\nStep 2 - One diagonal: a + (a+8) = 2a+8; the other: (a+1) + (a+7) = 2a+8.\nStep 3 - Both diagonals equal 2a+8, so tap it.\nWhy it works - the week fixes the offsets (+1, +7, +8), so it is 2a+8 for any a.\nTip - the same 2a+8 works for every starting value.',
+    line:'Each diagonal sum = 2a+8.',voice:'Two a plus eight.',
+    glow:_ansEl,submit:(st.pick?sim.querySelector('#checkBtn'):null),key:'r-'+st.idx}; }
 }
 setup();
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

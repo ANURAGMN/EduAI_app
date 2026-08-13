@@ -108,8 +108,20 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
+  try{
+    var _m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+    if(!st.run){ window.__eduRound={native:true,line:(st.idx>=MISSIONS.length?(st.msg||'Round complete!'):'Tap Start to begin.'),voice:(st.idx>=MISSIONS.length?'Complete.':'Tap start.'),glow:sim.querySelector('#startBtn'),submit:sim.querySelector('#startBtn'),key:'start-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not correct.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Simplify '+_m.q+'. '+_m.tip,hintVoice:'Simplify the expression.',
+      why:'Open brackets (a minus flips inside signs), then combine like terms only.',
+      detail:'Step 1 - Open any brackets; a minus in front flips every inside sign.\nStep 2 - Group like terms (same letters), add coefficients; keep constants together.\nStep 3 - Type the simplified form: '+_m.a+'.\nWhy it works - only like terms count the same thing, so their coefficients add.\nTip - '+_m.tip,
+      line:'Simplified form: '+_m.a+'.',voice:'The simplified form.',
+      input:sim.querySelector('#ans'),inputHint:_m.a,submit:sim.querySelector('#checkBtn'),key:'r-'+st.idx}; }
+  }catch(e){}
 }
 start();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>
