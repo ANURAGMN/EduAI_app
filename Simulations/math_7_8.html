@@ -102,8 +102,23 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)], _idx=RULES.indexOf(_r.ok);
+    var _g=[].slice.call(sim.querySelectorAll('.opt')).find(function(b){return (+b.dataset.i)===_idx;});
+    var _ck=sim.querySelector('#checkBtn');
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Detector complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Which rule proves these triangles congruent - or are they not congruent?',hintVoice:'Which congruence rule applies?',
+      why:(_r.ok==='Not Congruent')?'Equal angles alone (AAA) fix the shape but not the size, so the triangles are only similar, not congruent.':(_r.ok+' fixes the triangle exactly, so the two are congruent.'),
+      detail:'Step 1 - Read which parts are marked equal (sides S, angles A, a right angle R with hypotenuse H).\nStep 2 - Match to a rule: SSS, SAS, ASA, or RHS.\nStep 3 - If only angles match (AAA), choose Not Congruent.\nWhy it works - three sides, or two sides and the included angle, pin the triangle; three angles do not fix size.\nTip - the equal parts must be in the right positions (the included side or angle).',
+      line:_r.ok+' - '+((_r.ok==='Not Congruent')?'equal angles do not fix the size.':'this fixes the triangle exactly.'),
+      voice:'The answer is '+_r.ok+'.',
+      glow:_g,submit:(st.pick!==null?_ck:null),key:'r-'+st.idx}; }
+  }catch(e){}
 }
 setup(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

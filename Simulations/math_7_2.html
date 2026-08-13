@@ -251,6 +251,19 @@ function render(){
   const nx = sim.querySelector('#nextBtn'); if(nx) nx.onclick = next;
   const rs = sim.querySelector('#resetBtn'); if(rs) rs.onclick = resetDrag;
   const rr = sim.querySelector('#restartBtn'); if(rr) rr.onclick = restart;
+  try{
+    var _r=current(), _goal=_r.goal, _d=_goal-st.x;
+    var _sl=sim.querySelector('#xRange'), _ck=sim.querySelector('#checkBtn'), _ok=(st.x===_goal);
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Puzzle complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:_r.fixedA+'° + '+_r.fixedB+'° + x = '+_r.target+'°. What is x?',hintVoice:'What is x?',
+      why:'Angles on a straight line sum to 180°; angles around a point sum to 360°. Subtract the known angles.',
+      detail:'Step 1 - The total is '+_r.target+'° ('+(_r.type==='line'?'straight line':'around a point')+').\nStep 2 - x = '+_r.target+' - '+_r.fixedA+' - '+_r.fixedB+' = '+_goal+'.\nStep 3 - Set x to exactly '+_goal+'°, then Check.\nWhy it works - the known angles plus x fill the whole '+(_r.type==='line'?'line':'turn')+'.\nTip - this needs the exact integer, so use +/-1 to land on it.',
+      line:(_ok?('x = '+_goal+'° - tap Check.'):('x = '+st.x+'°, need '+_goal+'° - '+(_d>0?'add ':'subtract ')+Math.abs(_d)+'.')),
+      voice:'x is '+_goal+' degrees.',
+      glow:(_ok?_ck:_sl),submit:(_ok?_ck:null),key:'r-'+st.idx}; }
+  }catch(e){}
   const xM5 = sim.querySelector('#xMinus5'); if(xM5) xM5.onclick=()=>nudgeX(-5);
   const xM1 = sim.querySelector('#xMinus1'); if(xM1) xM1.onclick=()=>nudgeX(-1);
   const xP1 = sim.querySelector('#xPlus1'); if(xP1) xP1.onclick=()=>nudgeX(1);
@@ -272,5 +285,6 @@ function sectorPath(startDeg, endDeg, r){
 setupRound();
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -162,8 +162,22 @@ function render(){
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+    var _g=currentGeometry(), _ang=_g.ang, _err=_g.err, _sl=sim.querySelector('#tSlider'), _ck=sim.querySelector('#checkBtn'), _ok=_err<=_m.tol;
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Constructor complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Slide the foot until the drop is perpendicular (90°).',hintVoice:'Make the drop perpendicular.',
+      why:'The perpendicular from a point to a line meets it at 90°, at the foot - the closest point on the line.',
+      detail:'Step 1 - The drop is perpendicular when the angle to the line is exactly 90°.\nStep 2 - Slide the foot; the angle passes through 90° at the closest point.\nStep 3 - Stop when the error is about 0 (within '+_m.tol+'°).\nWhy it works - the shortest distance from a point to a line is along the perpendicular.\nTip - the foot sits directly across from the point.',
+      line:(_ok?('Angle is '+_ang.toFixed(0)+'° - perpendicular. Tap Check.'):('Angle is '+_ang.toFixed(0)+'° - slide the foot to reduce the error toward 90°.')),
+      voice:(_ok?'Perpendicular, tap check.':'Reduce the error toward ninety degrees.'),
+      glow:(_ok?_ck:_sl),submit:(_ok?_ck:null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setupRound(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

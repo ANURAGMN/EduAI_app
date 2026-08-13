@@ -125,8 +125,22 @@ function render(){
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+    var _g=geom(), _ext=_g.extA, _d=_m.target-_ext, _ck=sim.querySelector('#checkBtn'), _ok=Math.abs(_d)<=_m.tol;
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Workshop complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Shape the triangle so the exterior angle at A is '+_m.target+'°.',hintVoice:'Make the exterior angle '+_m.target+' degrees.',
+      why:'An exterior angle of a triangle equals the sum of the two remote interior angles.',
+      detail:'Step 1 - The exterior angle at A equals the interior angles at B and C added.\nStep 2 - Drag C (or nudge) to grow or shrink those interior angles.\nStep 3 - Stop when the exterior angle reads '+_m.target+'° (within '+_m.tol+'°).\nWhy it works - exterior + adjacent interior = 180°, and the interior angles sum to 180°.\nTip - moving C changes both B and C; watch the readout.',
+      line:(_ok?('Exterior angle is '+_ext.toFixed(0)+'° - tap Check.'):('Exterior angle is '+_ext.toFixed(0)+'° - '+(_d>0?'open it wider':'close it')+' toward '+_m.target+'°.')),
+      voice:(_ok?'Tap check.':'Adjust the triangle.'),
+      glow:(_ok?_ck:null),submit:(_ok?_ck:null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setup(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

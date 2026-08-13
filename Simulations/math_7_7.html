@@ -145,8 +145,23 @@ function render(){
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+    var _c=geo().c, _d=_m.targetC-_c;
+    var _xs=sim.querySelector('#xSlider'), _ys=sim.querySelector('#ySlider'), _ck=sim.querySelector('#checkBtn'), _ok=Math.abs(_d)<=_m.tol;
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Builder complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Move C so angle C is '+_m.targetC+'°.',hintVoice:'Make angle C '+_m.targetC+' degrees.',
+      why:'The three angles of a triangle always sum to 180°; moving C changes angle C.',
+      detail:'Step 1 - Angle A + angle B + angle C = 180°, always.\nStep 2 - Slide C (x and y) to open or close angle C.\nStep 3 - Stop when angle C hits '+_m.targetC+'° (within '+_m.tol+'°).\nWhy it works - the angle sum is fixed, so changing one shifts the others.\nTip - nudge C in small steps and watch angle C.',
+      line:(_ok?('Angle C is '+_c.toFixed(0)+'° - tap Check.'):('Angle C is '+_c.toFixed(0)+'° - adjust C toward '+_m.targetC+'°.')),
+      voice:'Make angle C '+_m.targetC+' degrees.',
+      glow:(_ok?_ck:[_xs,_ys]),submit:(_ok?_ck:null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setupRound(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

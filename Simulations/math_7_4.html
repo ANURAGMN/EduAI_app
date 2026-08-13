@@ -204,10 +204,24 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  try{
+    var _m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+    var _a=angs().a, _d=_m.targetA-_a, _sl=sim.querySelector('#armSlider'), _ck=sim.querySelector('#checkBtn'), _ok=Math.abs(_d)<=_m.tol;
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Forge complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Rotate the arm so angle a is '+_m.targetA+'°.',hintVoice:'Make angle a '+_m.targetA+' degrees.',
+      why:'Two intersecting lines make equal vertical angles and supplementary linear pairs; setting one fixes all four.',
+      detail:'Step 1 - The four angles at the crossing are two vertical pairs.\nStep 2 - Rotate the arm to grow angle a toward '+_m.targetA+'°.\nStep 3 - Stop within '+_m.tol+'°.\nWhy it works - vertical angles are equal, adjacent ones supplementary.\nTip - at 90° all four are right angles.',
+      line:(_ok?('Angle a is '+_a.toFixed(0)+'° - tap Check.'):('Angle a is '+_a.toFixed(0)+'° - turn toward '+_m.targetA+'°.')),
+      voice:'Make angle a '+_m.targetA+' degrees.',
+      glow:(_ok?_ck:_sl),submit:(_ok?_ck:null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 
 setupRound();
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -128,8 +128,23 @@ function render(){
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const retryBtn=sim.querySelector('#retryBtn'); if(retryBtn) retryBtn.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _m=MISSIONS[Math.min(st.idx,MISSIONS.length-1)];
+    var _v=values(), _got=pairVal(_m.mode,_v), _set=(_m.mode==='vertical')?_m.target:(180-_m.target);
+    var _sl=sim.querySelector('#aSlider'), _ck=sim.querySelector('#checkBtn'), _ok=Math.abs(_got-_m.target)<=_m.tol;
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Dock complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Set the angle so the '+_m.label.toLowerCase()+' angle is '+_m.target+'°.',hintVoice:'Make the '+_m.label.toLowerCase()+' angle '+_m.target+' degrees.',
+      why:(_m.mode==='vertical')?'Vertically opposite angles are equal, so the pair equals the angle you set.':'A linear pair sums to 180°, so the partner is 180 minus the angle you set.',
+      detail:'Step 1 - This is a '+_m.label.toLowerCase()+'.\nStep 2 - '+((_m.mode==='vertical')?('Equal angles: set the angle to '+_m.target+'°.'):('Supplementary: set the angle to '+(180-_m.target)+'° so the partner is '+_m.target+'°.'))+'\nStep 3 - Fine-tune within '+_m.tol+'°.\nWhy it works - crossing lines make equal vertical angles and supplementary linear pairs.\nTip - a straight line splits into two angles that add to 180°.',
+      line:(_ok?(_m.label+' angle is '+_got.toFixed(0)+'° - tap Check.'):('The '+_m.label.toLowerCase()+' angle is '+_got.toFixed(0)+'° - set the slider to '+_set+'° (target '+_m.target+'°).')),
+      voice:'Set it to '+_set+' degrees.',
+      glow:(_ok?_ck:_sl),submit:(_ok?_ck:null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setup(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

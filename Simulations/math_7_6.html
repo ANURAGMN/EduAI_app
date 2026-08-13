@@ -116,8 +116,22 @@ function render(){
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rt=sim.querySelector('#retryBtn'); if(rt) rt.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _t=MISSIONS[Math.min(st.idx,MISSIONS.length-1)], _p=180-_t;
+    var _sl=sim.querySelector('#slider'), _ck=sim.querySelector('#checkBtn'), _ok=Math.abs(st.a-_t)<=2;
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Station complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Slide angle a so a and its partner add to 180°. What is a?',hintVoice:'What is angle a?',
+      why:'Supplementary angles sum to 180°; set the first and the partner is 180 minus it.',
+      detail:'Step 1 - Supplementary means the two add to 180°.\nStep 2 - Set a to '+_t+'°; the partner becomes '+_p+'°.\nStep 3 - Confirm within 2°.\nWhy it works - a straight angle is 180°, split into the pair.\nTip - '+_t+'° + '+_p+'° = 180°.',
+      line:(_ok?(st.a.toFixed(0)+'° + '+(180-st.a).toFixed(0)+'° = 180° - tap Check.'):('a is '+st.a.toFixed(0)+'° - set it to '+_t+'°.')),
+      voice:'Set it to '+_t+' degrees.',
+      glow:(_ok?_ck:_sl),submit:(_ok?_ck:null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setup(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>
