@@ -5,6 +5,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap" rel="stylesheet">
 <meta charset="UTF-8">
+<meta name="color-scheme" content="light">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#1a237e">
 <title>ವಿದ್ಯುತ್ ಬಳಕೆಗಳು – ಸಂವಾದಾತ್ಮಕ ವರ್ಗೀಕರಣ</title>
@@ -277,7 +278,7 @@ const categoriesData = [
 
 const appliances = [
   { name: 'ವಿದ್ಯುತ್ ಕೆಟಲ್', icon: '🫖', category: 'cooking' },
-  { name: 'ಮೈಕ್ರೋವೇವ್', icon: '📦', category: 'cooking' },
+  { name: 'ಮೈಕ್ರೋವೇವ್', icon: '🍲', category: 'cooking' },
   { name: 'ಬಲ್ಬ್', icon: '💡', category: 'lighting' },
   { name: 'ಟ್ಯೂಬ್ ಲೈಟ್', icon: '🔦', category: 'lighting' },
   { name: 'ಫ್ಯಾನ್', icon: '🌀', category: 'cooling' },
@@ -335,11 +336,12 @@ function selectCategory(id) {
   document.querySelectorAll('.category').forEach(el => {
     el.classList.toggle('selected', el.dataset.id === id);
   });
+  updateCoach();
 }
 
 function sortAppliance(el, app) {
   if (!selectedCategory || el.classList.contains('sorted')) return;
-  
+
   if (app.category === selectedCategory) {
     el.classList.add('correct', 'sorted');
     const cat = categoriesData.find(c => c.id === selectedCategory);
@@ -347,10 +349,45 @@ function sortAppliance(el, app) {
     document.getElementById(`count-${selectedCategory}`).textContent = `${cat.items.length} ವಸ್ತುಗಳು`;
     sortedCount++;
     updateScore();
+    updateCoach();
   } else {
     el.classList.add('wrong');
     setTimeout(() => el.classList.remove('wrong'), 300);
+    const right = categoriesData.find(c => c.id === app.category);
+    window.__eduRound = {
+      native: true,
+      line: `${app.name} ಇಲ್ಲಿ ಅಲ್ಲ — ಅದು "${right ? right.name : app.category}" ಗೆ ಸೇರುತ್ತದೆ.`,
+      voice: `${app.name} ${right ? right.name : app.category} ಗೆ ಸೇರುತ್ತದೆ.`,
+      key: `wrong-${app.name}-${Date.now()}`
+    };
   }
+}
+
+// ಒಂದೇ-ಗಡಿಯಾರದ ಕೋಚ್: ಆಯ್ದ ವರ್ಗಕ್ಕೆ ಸೇರುವ ಉಪಕರಣಗಳನ್ನು ಹೊಳೆಸಿ ಮಾರ್ಗದರ್ಶನ ನೀಡುತ್ತದೆ.
+function updateCoach() {
+  try {
+    if (sortedCount >= appliances.length) {
+      window.__eduRound = { native: true, line: 'ಎಲ್ಲಾ 12 ಉಪಕರಣಗಳನ್ನು ವರ್ಗೀಕರಿಸಲಾಗಿದೆ — ಚೆನ್ನಾಗಿದೆ!', voice: 'ಮುಗಿಯಿತು.', key: 'done' };
+      return;
+    }
+    const cat = categoriesData.find(c => c.id === selectedCategory);
+    const remaining = [...document.querySelectorAll('.appliance')]
+      .filter(a => a.dataset.category === selectedCategory && !a.classList.contains('sorted'));
+    window.__eduRound = {
+      native: true,
+      hint: 'ವರ್ಗವನ್ನು ಆರಿಸಿ, ನಂತರ ಅದಕ್ಕೆ ಸೇರುವ ಉಪಕರಣಗಳನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ.',
+      hintVoice: 'ಇಲ್ಲಿ ಯಾವ ಉಪಕರಣಗಳು ಸೇರುತ್ತವೆ?',
+      why: 'ಪ್ರತಿ ಉಪಕರಣವನ್ನು ಅದರ ಮುಖ್ಯ ಉದ್ದೇಶದ ಪ್ರಕಾರ ಗುಂಪು ಮಾಡಿ.',
+      detail: 'ಹಂತ 1 - ಒಂದು ವರ್ಗ ಆಯ್ಕೆಯಾಗಿದೆ (ಹೈಲೈಟ್).\nಹಂತ 2 - ಆ ಕೆಲಸಕ್ಕೆ ಹೊಂದುವ ಎಲ್ಲಾ ಉಪಕರಣಗಳನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ.\nಹಂತ 3 - ಎಲ್ಲಾ ಆರು ವರ್ಗಗಳಿಗೆ ಪುನರಾವರ್ತಿಸಿ.\nಏಕೆ - ಉಪಕರಣಗಳನ್ನು ಉದ್ದೇಶದ ಪ್ರಕಾರ ಗುಂಪು ಮಾಡಲಾಗುತ್ತದೆ.\nಸಲಹೆ - ಕೆಟಲ್ ಮತ್ತು ಮೈಕ್ರೋವೇವ್ ಎರಡೂ ಅಡುಗೆ; ಫ್ಯಾನ್ ಮತ್ತು ಎಸಿ ಎರಡೂ ತಂಪು.',
+      line: (remaining.length > 0
+        ? `${cat ? cat.name : 'ಈ ವರ್ಗ'} ಗೆ ಸೇರುವ ${remaining.length} ಉಪಕರಣವನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ.`
+        : `${cat ? cat.name : ''} ನಲ್ಲಿ ಬಾಕಿ ಇಲ್ಲ — ಬೇರೆ ವರ್ಗ ಆರಿಸಿ.`),
+      voice: (remaining.length > 0 ? `${cat ? cat.name : ''} ಉಪಕರಣಗಳನ್ನು ಹುಡುಕಿ.` : 'ಬೇರೆ ವರ್ಗ ಆರಿಸಿ.'),
+      glow: remaining,
+      submit: null,
+      key: `cat-${selectedCategory}`
+    };
+  } catch (e) {}
 }
 
 function updateScore() {
@@ -382,5 +419,6 @@ function showSources() {
 // Auto-select ಮೊದಲ category
 selectCategory('cooking');
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

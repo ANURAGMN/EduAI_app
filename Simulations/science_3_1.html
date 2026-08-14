@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="color-scheme" content="light">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#1a237e">
 <title>Uses of Electricity – Interactive Classification</title>
@@ -274,7 +275,7 @@ const categoriesData = [
 
 const appliances = [
   { name: 'Electric Kettle', icon: '🫖', category: 'cooking' },
-  { name: 'Microwave', icon: '📦', category: 'cooking' },
+  { name: 'Microwave', icon: '🍲', category: 'cooking' },
   { name: 'Bulb', icon: '💡', category: 'lighting' },
   { name: 'Tube Light', icon: '🔦', category: 'lighting' },
   { name: 'Fan', icon: '🌀', category: 'cooling' },
@@ -332,11 +333,12 @@ function selectCategory(id) {
   document.querySelectorAll('.category').forEach(el => {
     el.classList.toggle('selected', el.dataset.id === id);
   });
+  updateCoach();
 }
 
 function sortAppliance(el, app) {
   if (!selectedCategory || el.classList.contains('sorted')) return;
-  
+
   if (app.category === selectedCategory) {
     el.classList.add('correct', 'sorted');
     const cat = categoriesData.find(c => c.id === selectedCategory);
@@ -344,10 +346,48 @@ function sortAppliance(el, app) {
     document.getElementById(`count-${selectedCategory}`).textContent = `${cat.items.length} items`;
     sortedCount++;
     updateScore();
+    updateCoach();
   } else {
     el.classList.add('wrong');
     setTimeout(() => el.classList.remove('wrong'), 300);
+    // Attribution: tell the learner where it actually belongs (the missing feedback).
+    const right = categoriesData.find(c => c.id === app.category);
+    window.__eduRound = {
+      native: true,
+      line: `${app.name} isn't here — it belongs to "${right ? right.name : app.category}".`,
+      voice: `${app.name} belongs to ${right ? right.name : app.category}.`,
+      key: `wrong-${app.name}-${Date.now()}`
+    };
   }
+}
+
+// Drive the one-clock coach: guide the classification and glow the appliances that belong to the
+// currently selected category. (This sim has no .mission/.problem markup, so the generic scraper
+// can't read it — the native round is what makes the coach react at all.)
+function updateCoach() {
+  try {
+    if (sortedCount >= appliances.length) {
+      window.__eduRound = { native: true, line: 'All 12 appliances classified — nicely grouped by purpose!', voice: 'All done.', key: 'done' };
+      return;
+    }
+    const cat = categoriesData.find(c => c.id === selectedCategory);
+    const remaining = [...document.querySelectorAll('.appliance')]
+      .filter(a => a.dataset.category === selectedCategory && !a.classList.contains('sorted'));
+    window.__eduRound = {
+      native: true,
+      hint: 'Pick a category, then tap the appliances that belong to it.',
+      hintVoice: 'Which appliances belong here?',
+      why: 'Group each appliance by its main purpose — what it mainly uses electricity to do.',
+      detail: 'Step 1 - A category is selected (highlighted).\nStep 2 - Tap every appliance whose main job matches it.\nStep 3 - Repeat for all six categories.\nWhy it works - appliances are grouped by purpose: cooking, lighting, cooling, communication, entertainment, transport.\nTip - a kettle and microwave both cook; a fan and AC both cool.',
+      line: (remaining.length > 0
+        ? `Tap the ${remaining.length} appliance${remaining.length > 1 ? 's' : ''} that belong to ${cat ? cat.name : 'this category'}.`
+        : `No ${cat ? cat.name : 'items'} left here — pick another category.`),
+      voice: (remaining.length > 0 ? `Find the ${cat ? cat.name : ''} appliances.` : 'Pick another category.'),
+      glow: remaining,
+      submit: null,
+      key: `cat-${selectedCategory}`
+    };
+  } catch (e) {}
 }
 
 function updateScore() {
