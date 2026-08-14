@@ -136,8 +136,37 @@ function render(){
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const r=sim.querySelector('#retryBtn'); if(r) r.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _src=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _sorted=_src.slice().sort(function(a,b){return a-b;});
+    var _mean=_src.reduce(function(a,b){return a+b;},0)/_src.length;
+    var _med=_sorted[Math.floor(_src.length/2)];
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Arena complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else if(st.pick.length>0){
+      var _minV=Math.min.apply(null,st.pick), _minIdx=st.pick.indexOf(_minV);
+      var _chips=Array.prototype.slice.call(sim.querySelectorAll('.chip')), _chipEl=null;
+      for(var _k=0;_k<_chips.length;_k++){ if(parseInt(_chips[_k].dataset.i,10)===_minIdx){_chipEl=_chips[_k];break;} }
+      window.__eduRound={native:true,
+        hint:'Sort the data smallest to largest first.',hintVoice:'Sort smallest first.',
+        why:'The median needs the data in order; the mean does not.',
+        detail:'Step 1 - Move the values into ascending order (smallest first).\nStep 2 - The median is the middle value once sorted.\nStep 3 - The mean is the sum divided by how many values.\nWhy it works - sorting exposes the middle; the mean balances all values.\nTip - always move the smallest remaining value next.',
+        line:'Tap the smallest remaining ('+_minV+'), then Move.',
+        voice:'Move '+_minV+' next.',
+        glow:_chipEl, key:'sort-'+st.idx}; }
+    else{
+      window.__eduRound={native:true,
+        hint:'Now find the mean and the median.',hintVoice:'Enter the mean and median.',
+        why:'Mean = sum divided by count; median = the middle value of the sorted data.',
+        detail:'Step 1 - Mean = add all values ÷ '+_src.length+' = '+_mean.toFixed(2)+'.\nStep 2 - Median = the middle value = '+_med+'.\nStep 3 - Enter both, then Check.\nWhy it works - mean balances the data; median marks the middle.\nTip - with an odd count the median is the exact middle value.',
+        line:'Mean = '+_mean.toFixed(2)+', median = '+_med+' - enter them and tap Check.',
+        voice:'Enter mean '+_mean.toFixed(2)+' and median '+_med+'.',
+        glow:[sim.querySelector('#meanIn'),sim.querySelector('#medIn')].filter(Boolean),
+        submit:sim.querySelector('#checkBtn'), key:'inp-'+st.idx}; }
+  }catch(e){}
 }
 setupRound(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -133,9 +133,26 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _wrong=-1;
+    for(var _i=0;_i<_r.target.length;_i++){ if(st.bars[_i]!==_r.target[_i]){ _wrong=_i; break; } }
+    var _all=(_wrong===-1);
+    var _inps=Array.prototype.slice.call(sim.querySelectorAll('[data-set]'));
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Constructor bay complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Build each bar to match its target frequency.',hintVoice:'Match each bar to its target.',
+      why:'In a bar graph the height of a bar equals the frequency of that category.',
+      detail:'Step 1 - Read each category target frequency from the brief.\nStep 2 - Raise that bar to the same height (the number under it).\nStep 3 - Match all four, then Check.\nWhy it works - bar height is a direct picture of the count.\nTip - the number under each bar should equal its target.',
+      line:(_all?'All bars match - tap Check.':('Bar '+_r.cats[_wrong]+' should be '+_r.target[_wrong]+' (it is '+st.bars[_wrong]+').')),
+      voice:(_all?'Tap Check.':('Set '+_r.cats[_wrong]+' to '+_r.target[_wrong]+'.')),
+      glow:(_all?sim.querySelector('#checkBtn'):(_inps[_wrong]||null)),submit:(_all?sim.querySelector('#checkBtn'):null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setup();
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

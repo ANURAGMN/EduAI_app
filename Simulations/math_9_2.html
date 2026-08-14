@@ -59,11 +59,12 @@ const ROUNDS = [
   {raw:[6,6,6,5,5,4,4,4], bins:['4','5','6'], freq:{'4':3,'5':2,'6':3}}
 ];
 
-let st={run:true,idx:0,score:0,lives:3,placed:{},used:new Set(),resolved:false,msg:'',msgType:'info'};
+let st={run:true,idx:0,score:0,lives:3,placed:{},used:new Set(),sel:-1,resolved:false,msg:'',msgType:'info'};
 
 function setup(){
   st.placed={};
   st.used=new Set();
+  st.sel=-1;
   st.resolved=false;
   st.msg='';
   st.msgType='info';
@@ -74,6 +75,7 @@ function addVal(i, bin){
   if(!st.placed[bin]) st.placed[bin]=[];
   st.placed[bin].push(i);
   st.used.add(i);
+  st.sel=-1;
   render();
 }
 
@@ -86,8 +88,8 @@ function check(){
   st.resolved=true;
   let ok=true;
   for(const b of r.bins){
-    const got=(st.placed[b]||[]).map(i=>r.raw[i]).length;
-    if(got!==r.freq[b]) ok=false;
+    const vals=(st.placed[b]||[]).map(i=>r.raw[i]);
+    if(vals.length!==r.freq[b] || !vals.every(v=>String(v)===b)) ok=false;
   }
   if(ok){ st.score+=12; st.msg='Correct frequency organization!'; st.msgType='good'; }
   else { st.lives--; st.msg='Frequency mismatch in one or more bins.'; st.msgType='bad'; if(st.lives<=0) st.run=false; }
@@ -117,12 +119,12 @@ function render(){
       <p>Sort each observation into the correct category bin, then verify frequencies.</p>
     </div>
     <div class="tokens">
-      ${r.raw.map((v,i)=>`<button class="tok ${st.used.has(i)?'used':''}" data-i="${i}" ${st.used.has(i)||st.resolved||done?'disabled':''}>${v}</button>`).join('')}
+      ${r.raw.map((v,i)=>`<button class="tok ${st.used.has(i)?'used':''}" data-i="${i}" style="${st.sel===i?'border-color:#0284c7;background:#e0f2fe;color:#0c4a6e':''}" ${st.used.has(i)||st.resolved||done?'disabled':''}>${v}</button>`).join('')}
     </div>
     <div class="bins">
       ${r.bins.map(b=>`
         <div class="bin">
-          <h4>Bin ${b} (target freq ${r.freq[b]})</h4>
+          <h4>Bin ${b}</h4>
           <div class="chips">${(st.placed[b]||[]).map(i=>`<span class="chip">${r.raw[i]}</span>`).join('')||'<span class="chip">empty</span>'}</div>
           ${!done&&!st.resolved?`<div class="actions" style="margin-top:8px"><button class="btn check" data-bin="${b}">Add Selected</button></div>`:''}
         </div>
@@ -133,16 +135,33 @@ function render(){
     </div>
     ${st.msg?`<div class="msg ${st.msgType}">${st.msg}</div>`:`<div class="msg info">Tap a value then tap its bin button.</div>`}
   `;
-  let selected=-1;
-  sim.querySelectorAll('.tok').forEach(b=>b.onclick=()=>{selected=parseInt(b.dataset.i,10);});
-  sim.querySelectorAll('[data-bin]').forEach(b=>b.onclick=()=>{ if(selected!==-1) addVal(selected,b.dataset.bin); });
+  sim.querySelectorAll('.tok').forEach(b=>b.onclick=()=>{ st.sel=parseInt(b.dataset.i,10); render(); });
+  sim.querySelectorAll('[data-bin]').forEach(b=>b.onclick=()=>{ if(st.sel!==-1) addVal(st.sel,b.dataset.bin); });
   const rs=sim.querySelector('#resetBtn'); if(rs) rs.onclick=resetRound;
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _placed=st.used.size, _tot=_r.raw.length;
+    var _bins=Array.prototype.slice.call(sim.querySelectorAll('[data-bin]'));
+    var _binEl=function(b){ for(var k=0;k<_bins.length;k++){ if(_bins[k].dataset.bin===b) return _bins[k]; } return null; };
+    var _selVal=(st.sel!==-1?_r.raw[st.sel]:null);
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Command run complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Sort each value into the bin with the same label.',hintVoice:'Sort each value into its bin.',
+      why:'A frequency table groups equal values together; the count in each bin is that value frequency.',
+      detail:'Step 1 - Tap a value.\nStep 2 - Tap the bin whose label matches that value.\nStep 3 - Place all '+_tot+' values, then Check.\nWhy it works - grouping equal values and counting them builds the frequency table.\nTip - the bin counts must add up to '+_tot+'.',
+      line:(_placed>=_tot?('All '+_tot+' placed - tap Check.'):(st.sel!==-1?('Put '+_selVal+' in bin '+_selVal+'.'):('Placed '+_placed+' of '+_tot+' - tap a value, then its bin.'))),
+      voice:(_placed>=_tot?'Tap Check.':(st.sel!==-1?('Bin '+_selVal+'.'):'Pick a value.')),
+      glow:(_placed>=_tot?sim.querySelector('#checkBtn'):(st.sel!==-1?_binEl(String(_selVal)):null)),
+      submit:(_placed>=_tot?sim.querySelector('#checkBtn'):null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setup();
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

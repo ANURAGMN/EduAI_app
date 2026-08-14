@@ -92,7 +92,7 @@ function render(){
     <div class="ctrls">
       ${r.cats.map((c,i)=>`
         <div class="ctrl">
-          <div class="t">${c} target ${t[i]}</div>
+          <div class="t">${c}</div>
           <div class="n">${st.b[i]}</div>
           ${!done&&!st.resolved?`<div class="row"><button class="mini" data-i="${i}" data-d="-2">--</button><button class="mini" data-i="${i}" data-d="-1">-</button><button class="mini" data-i="${i}" data-d="1">+</button><button class="mini" data-i="${i}" data-d="2">++</button></div>`:''}
         </div>
@@ -107,8 +107,25 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _t=_r.base.map(function(v,i){return v+_r.diff[i];});
+    var _wrong=-1; for(var _i=0;_i<_t.length;_i++){ if(st.b[_i]!==_t[_i]){_wrong=_i;break;} }
+    var _all=(_wrong===-1);
+    var _gl=_all?sim.querySelector('#checkBtn'):(sim.querySelector('.mini[data-i="'+_wrong+'"][data-d="1"]')||sim.querySelector('.mini[data-i="'+_wrong+'"]'));
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Lab complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Set each green bar using the blue value and its difference.',hintVoice:'Build each green bar.',
+      why:'A double bar graph compares two series; here green = blue + the difference.',
+      detail:'Step 1 - Read the blue bar value for the category.\nStep 2 - Add the difference (it can be negative).\nStep 3 - Set the green bar, all three, then Check.\nWhy it works - pairing bars lets you compare two data sets per category.\nTip - a negative difference makes the green bar shorter than blue.',
+      line:(_all?'All green bars match - tap Check.':('Category '+_r.cats[_wrong]+': green = '+_r.base[_wrong]+' + ('+_r.diff[_wrong]+') = '+_t[_wrong]+' (it is '+st.b[_wrong]+').')),
+      voice:(_all?'Tap Check.':('Set '+_r.cats[_wrong]+' green to '+_t[_wrong]+'.')),
+      glow:_gl,submit:(_all?sim.querySelector('#checkBtn'):null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setup(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

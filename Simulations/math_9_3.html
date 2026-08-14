@@ -104,8 +104,31 @@ function render(){
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rb=sim.querySelector('#retryBtn'); if(rb) rb.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _a=_r.data.slice().sort(function(x,y){return x-y;});
+    var _mn=_a[0], _mx=_a[_a.length-1], _rng=_mx-_mn;
+    var _minOk=parseFloat(st.minIn)===_mn, _maxOk=parseFloat(st.maxIn)===_mx;
+    var _outEl=null; if(_r.out!==null){ var _cs=sim.querySelectorAll('.chip'); for(var _k=0;_k<_cs.length;_k++){ if(parseFloat(_cs[_k].dataset.v)===_r.out){_outEl=_cs[_k];break;} } }
+    var _outOk=(_r.out===null?st.sel===null:st.sel===_r.out);
+    var _fields=[sim.querySelector('#minIn'),sim.querySelector('#maxIn')].filter(Boolean);
+    var _ready=_minOk&&_maxOk&&_outOk;
+    var _gl,_line;
+    if(!(_minOk&&_maxOk)){ _gl=_fields; _line='Smallest is '+_mn+', largest is '+_mx+' (range '+_rng+'). Enter them.'; }
+    else if(_r.out!==null && st.sel!==_r.out){ _gl=_outEl; _line=_r.out+' is far from the rest - tap it as the outlier.'; }
+    else { _gl=sim.querySelector('#checkBtn'); _line=(_r.out===null?'No value stands out - no outlier. Tap Check.':(_r.out+' is the outlier - tap Check.')); }
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Patrol complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Find the smallest and largest, and spot any outlier.',hintVoice:'Find min, max, and any outlier.',
+      why:'Range = max - min; an outlier is a value far from all the others.',
+      detail:'Step 1 - The smallest value is the min, the largest is the max.\nStep 2 - Range = max - min.\nStep 3 - An outlier sits far from the pack - pick it, or none.\nWhy it works - range measures spread; an outlier stretches it.\nTip - no-outlier rounds: leave every value unpicked.',
+      line:_line, voice:_line,
+      glow:_gl, submit:(_ready?sim.querySelector('#checkBtn'):null), key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setup(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

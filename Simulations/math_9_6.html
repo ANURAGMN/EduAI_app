@@ -40,7 +40,7 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:l
 <script>
 const sim=document.getElementById('sim');
 const ROUNDS=[
-  {cls:['0-10','10-20','20-30','30-40'], f:[3,7,8,2], ans:2},
+  {cls:['0-10','10-20','20-30','30-40'], f:[3,7,8,2], ans:1},
   {cls:['5-15','15-25','25-35','35-45'], f:[4,5,6,5], ans:2},
   {cls:['0-5','5-10','10-15','15-20'], f:[2,6,7,5], ans:2},
   {cls:['10-20','20-30','30-40','40-50'], f:[5,9,4,2], ans:1},
@@ -71,7 +71,7 @@ function render(){
       <div class="stat"><div class="k">Lives</div><div class="v">${st.lives}</div></div>
       <div class="stat"><div class="k">N/2</div><div class="v">${n2}</div></div>
     </div>
-    <div class="mission">Find the class where cumulative frequency first reaches/exceeds <b>N/2</b>. Use arrows to pick class index.</div>
+    <div class="mission">Find the class that holds the <b>middle value</b>: the first class whose cumulative frequency reaches <b>N/2</b>. Use arrows to pick the class.</div>
     <div class="table">
       <div class="r"><div class="h">Class interval</div><div class="h">f / c.f.</div></div>
       ${r.cls.map((c,i)=>`<div class="r" style="${i===st.pick?'background:#e0f2fe;border-radius:6px':''}"><div class="n">${c}</div><div class="n">${r.f[i]} / ${cfs[i]}</div></div>`).join('')}
@@ -94,8 +94,25 @@ function render(){
   const nx=sim.querySelector('#nextBtn'); if(nx) nx.onclick=next;
   const rt=sim.querySelector('#retryBtn'); if(rt) rt.onclick=retry;
   const rs=sim.querySelector('#restartBtn'); if(rs) rs.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _cf=0,_cfs=_r.f.map(function(v){_cf+=v;return _cf;});
+    var _N=_cf,_half=_N/2;
+    var _pickOk=st.pick===_r.ans;
+    var _gl=_pickOk?sim.querySelector('#checkBtn'):(st.pick<_r.ans?sim.querySelector('#p1'):sim.querySelector('#m1'));
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Mission complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:(sim.querySelector('#nextBtn')||sim.querySelector('#retryBtn')),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'Which class holds the middle value?',hintVoice:'Which class holds the middle value?',
+      why:'The middle value falls in the first class whose cumulative frequency reaches half the data (N/2).',
+      detail:'Step 1 - Add the frequencies: N = '+_N+', so half is '+_half+'.\nStep 2 - Read down the cumulative (c.f.) column.\nStep 3 - The middle class is the first whose c.f. reaches '+_half+'.\nWhy it works - half the data sits at or below that class.\nTip - the c.f. column is shown beside each class.',
+      line:(_pickOk?'That class holds the middle value - tap Check.':('N = '+_N+', half = '+_half+'; move to the first class whose running total reaches '+_half+'.')),
+      voice:(_pickOk?'Tap Check.':'Move to the class that reaches half.'),
+      glow:_gl,submit:(_pickOk?sim.querySelector('#checkBtn'):null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 setup(); render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

@@ -109,8 +109,23 @@ function render(){
   const c=sim.querySelector('#checkBtn'); if(c) c.onclick=check;
   const n=sim.querySelector('#nextBtn'); if(n) n.onclick=next;
   const rbtn=sim.querySelector('#restartBtn'); if(rbtn) rbtn.onclick=restart;
+  try{
+    var _r=ROUNDS[Math.min(st.idx,ROUNDS.length-1)];
+    var _opts=Array.prototype.slice.call(sim.querySelectorAll('.opt'));
+    var _ansEl=null; for(var _k=0;_k<_opts.length;_k++){ if(Number(_opts[_k].dataset.v)===_r.ans){_ansEl=_opts[_k];break;} }
+    if(!st.run){ window.__eduRound={native:true,line:(st.msg||'Rescue complete!'),voice:(st.msgType==='good'?'Done.':'Try again.'),glow:sim.querySelector('#restartBtn'),submit:sim.querySelector('#restartBtn'),key:'over-'+st.idx}; }
+    else if(st.resolved){ window.__eduRound={native:true,line:st.msg,voice:(st.msgType==='good'?'Correct.':'Not quite.'),submit:sim.querySelector('#nextBtn'),key:'res-'+st.idx}; }
+    else { window.__eduRound={native:true,
+      hint:'How many times does '+_r.cat+' appear in the data?',hintVoice:'How many times does it appear?',
+      why:'Frequency is how many times a value occurs in the data.',
+      detail:'Step 1 - Scan the data for every '+_r.cat+'.\nStep 2 - Tally each one you find.\nStep 3 - Tap that count.\nWhy it works - that tally is the frequency of '+_r.cat+'.\nTip - cross off each as you count so you do not double-count.',
+      line:_r.cat+' appears '+_r.ans+' times.',
+      voice:'It appears '+_r.ans+' times.',
+      glow:(st.pick!==null?sim.querySelector('#checkBtn'):_ansEl),submit:(st.pick!==null?sim.querySelector('#checkBtn'):null),key:'m-'+st.idx}; }
+  }catch(e){}
 }
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>
