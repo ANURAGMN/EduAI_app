@@ -390,6 +390,33 @@ function updateSteps(activeIndex) {
   });
 }
 
+// ---- native one-clock coach (guide, not grader) ----
+function coachStep(){
+  try{
+    if(state === 'normal'){
+      window.__eduRound = {native:true,
+        hint:'ಇರುವೆ ಕಡಿತ ಫಾರ್ಮಿಕ್ ಆಮ್ಲವನ್ನು ಚುಚ್ಚುತ್ತದೆ.',hintVoice:'ಕಡಿತವನ್ನು ಅನುಕರಿಸಿ.',
+        why:'ಇರುವೆಯ ವಿಷ ಫಾರ್ಮಿಕ್ ಆಮ್ಲ - ಒಂದು ಆಮ್ಲ - ಆದ್ದರಿಂದ ಕಡಿತ ಉರಿಯುತ್ತದೆ.',
+        detail:'ಹಂತ 1 - ಇರುವೆ ಕಡಿತವನ್ನು ಅನುಕರಿಸಿ.\nಹಂತ 2 - ಚರ್ಮ ಆಮ್ಲೀಯವಾಗುವುದನ್ನು ನೋಡಿ.\nಹಂತ 3 - ಕ್ಷಾರದಿಂದ ತಟಸ್ಥೀಕರಿಸಿ.',
+        line:'ಇರುವೆ ಕಡಿತ ಫಾರ್ಮಿಕ್ ಆಮ್ಲವನ್ನು ಚುಚ್ಚುತ್ತದೆ. "ಕಡಿತ ಅನುಕರಿಸಿ" ಒತ್ತಿ.',
+        voice:'ಕಡಿತವನ್ನು ಅನುಕರಿಸಿ.', glow:biteBtn, submit:biteBtn, key:'s-normal'};
+    } else if(state === 'bitten'){
+      window.__eduRound = {native:true,
+        hint:'ಈಗ ಚರ್ಮ ಆಮ್ಲೀಯ. ಕ್ಷಾರವನ್ನು ಹಚ್ಚಿ.',hintVoice:'ಚಿಕಿತ್ಸೆ ಹಚ್ಚಿ.',
+        why:'ಕ್ಷಾರವು ಫಾರ್ಮಿಕ್ ಆಮ್ಲವನ್ನು ತಟಸ್ಥೀಕರಿಸಿ ನೋವನ್ನು ಕಡಿಮೆ ಮಾಡುತ್ತದೆ.',
+        detail:'ಕಡಿತವು ಚರ್ಮವನ್ನು ಆಮ್ಲೀಯ ಮಾಡಿತು (ಸುಮಾರು pH 4).\nಬೇಕಿಂಗ್ ಸೋಡಾ ಒಂದು ಕ್ಷಾರ.\nಆಮ್ಲವನ್ನು ತಟಸ್ಥೀಕರಿಸಲು ಅದನ್ನು ಹಚ್ಚಿ.',
+        line:'ಚರ್ಮ ಆಮ್ಲೀಯ (~pH 4). ತಟಸ್ಥೀಕರಿಸಲು ಬೇಕಿಂಗ್ ಸೋಡಾ - ಒಂದು ಕ್ಷಾರ - ಹಚ್ಚಿ.',
+        voice:'ಬೇಕಿಂಗ್ ಸೋಡಾ ಹಚ್ಚಿ.', glow:treatBtn, submit:treatBtn, key:'s-bitten-'+Date.now()};
+    } else {
+      window.__eduRound = {native:true,
+        why:'ಆಮ್ಲ + ಕ್ಷಾರ = ಉಪ್ಪು + ನೀರು. ಆಮ್ಲ ತಟಸ್ಥವಾದಂತೆ ನೋವು ಹೋಗುತ್ತದೆ.',
+        detail:'ಕ್ಷಾರವು ಫಾರ್ಮಿಕ್ ಆಮ್ಲವನ್ನು ತಟಸ್ಥೀಕರಿಸಿತು.\nಚರ್ಮ ಮತ್ತೆ ಸುಮಾರು pH 7 ಆಗಿದೆ.\nಇದು ದೈನಂದಿನ ಜೀವನದಲ್ಲಿ ತಟಸ್ಥೀಕರಣ.',
+        line:'ಕ್ಷಾರವು ಆಮ್ಲವನ್ನು ತಟಸ್ಥೀಕರಿಸಿತು - ಮತ್ತೆ pH 7, ನೋವು ಹೋಯಿತು. ದೈನಂದಿನ ಜೀವನದಲ್ಲಿ ತಟಸ್ಥೀಕರಣ.',
+        voice:'ತಟಸ್ಥವಾಯಿತು - ನೋವು ಹೋಯಿತು.', key:'s-treated-'+Date.now()};
+    }
+  }catch(e){}
+}
+
 biteBtn.onclick = function() {
   if (state !== 'normal') return;
   state = 'bitten';
@@ -424,6 +451,7 @@ biteBtn.onclick = function() {
   
   takeawayText.textContent = 'ಇರುವೆ ನಿಮ್ಮ ಚರ್ಮದೊಳಗೆ ಫಾರ್ಮಿಕ್ ಆಮ್ಲ ಚುಚ್ಚಿದೆ — ನೋವು ಮತ್ತು ಉರಿಯೂತ. ಕ್ಷಾರದಿಂದ ತಟಸ್ಥೀಕರಿಸಬೇಕು!';
   takeaway.classList.add('show');
+  coachStep();
 };
 
 treatBtn.onclick = function() {
@@ -462,6 +490,7 @@ treatBtn.onclick = function() {
     treatBtn.disabled = true;
     
     takeawayText.textContent = 'ಬೇಕಿಂಗ್ ಸೋಡಾ (ಕ್ಷಾರ) ಫಾರ್ಮಿಕ್ ಆಮ್ಲವನ್ನು ತಟಸ್ಥೀಕರಿಸಿ ಹಾನಿಕರವಲ್ಲದ ಉಪ್ಪು ಮತ್ತು ನೀರಾಗಿ ಬದಲಾಯಿಸಿತು. ನೋವು ಹೋಯಿತು! ಇದು ತಟಸ್ಥೀಕರಣ ಕ್ರಿಯೆ!';
+    coachStep();
   }, 1000);
 };
 
@@ -492,7 +521,11 @@ resetBtn.onclick = function() {
   biteBtn.disabled = false;
   treatBtn.disabled = true;
   takeaway.classList.remove('show');
+  coachStep();
 };
+
+coachStep();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

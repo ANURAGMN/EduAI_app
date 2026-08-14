@@ -414,6 +414,7 @@ function updateDisplay() {
   const sol = SOLUTIONS[state.solution];
   dropperIcon.textContent = sol.icon;
   solutionName.textContent = sol.name;
+  coachGuide();
 }
 
 function animateDrop(callback) {
@@ -486,7 +487,8 @@ function runTest() {
     resultBox.style.transition = 'opacity 0.3s';
     resultBox.setAttribute('opacity', '1');
     takeaway.classList.add('show');
-    
+    coachResult(sol);
+
     // Move dropper back
     setTimeout(() => {
       dropper.setAttribute('transform', 'translate(200, 15)');
@@ -508,6 +510,65 @@ function resetTest() {
   conclusion.textContent = '?';
   conclusion.className = 'metric-value';
   resultBox.setAttribute('opacity', '0');
+}
+
+// ---- native one-clock coach (guide, not grader) ----
+const testedTypes = new Set();
+let softDone = false;
+function findSolBtn(type){
+  var btns = Array.prototype.slice.call(container.querySelectorAll('.solution-btn'));
+  for (var i=0;i<btns.length;i++){ var s=SOLUTIONS[btns[i].dataset.solution]; if(s&&s.type===type) return btns[i]; }
+  return null;
+}
+function coachGuide(){
+  try{
+    if(state.animating) return;
+    var sol = SOLUTIONS[state.solution];
+    var haveA = testedTypes.has('acidic'), haveB = testedTypes.has('basic');
+    if(haveA && !haveB && sol.type!=='basic'){
+      window.__eduRound = {native:true,
+        hint:'Try a base next to see the opposite colour.',hintVoice:'Now try a base.',
+        why:'Testing an acid and a base shows both colour changes of the natural indicator.',
+        detail:'You have tested an acid (rose extract went red).\nNow pick a base - soap or lime water - and add it.\nWatch the extract turn green.',
+        line:'Good - now try a base like soap or lime water to see it turn green.',
+        voice:'Now try a base.', glow:findSolBtn('basic'), key:'nudge-base'};
+      return;
+    }
+    if(haveB && !haveA && sol.type!=='acidic'){
+      window.__eduRound = {native:true,
+        hint:'Try an acid next to see the opposite colour.',hintVoice:'Now try an acid.',
+        why:'Testing an acid and a base shows both colour changes of the natural indicator.',
+        detail:'You have tested a base (rose extract went green).\nNow pick an acid - lemon or vinegar - and add it.\nWatch the extract turn red.',
+        line:'Good - now try an acid like lemon or vinegar to see it turn red.',
+        voice:'Now try an acid.', glow:findSolBtn('acidic'), key:'nudge-acid'};
+      return;
+    }
+    window.__eduRound = {native:true,
+      hint:'Add '+sol.name+' to the rose extract.',hintVoice:'Add the solution.',
+      why:'Rose petal extract is a natural indicator: red with acids, green with bases, pink if neutral.',
+      detail:'Step 1 - You picked '+sol.name+'.\nStep 2 - Tap Add Solution.\nStep 3 - Read the colour of the rose extract.\nWhy it works - natural pigments shift colour with acids and bases, like litmus.',
+      line:'You picked '+sol.name+'. Add it to the rose extract and read the colour.',
+      voice:'Add the solution.', glow:testBtn, submit:testBtn, key:'dip-'+state.solution};
+  }catch(e){}
+}
+function coachResult(sol){
+  try{
+    testedTypes.add(sol.type);
+    var line, voice;
+    if(sol.type==='acidic'){ line='The rose extract turned red - '+sol.name+' is an acid.'; voice=sol.name+' is an acid.'; }
+    else if(sol.type==='basic'){ line='The rose extract turned green - '+sol.name+' is a base.'; voice=sol.name+' is a base.'; }
+    else { line='The rose extract stayed pink - '+sol.name+' is neutral.'; voice=sol.name+' is neutral.'; }
+    window.__eduRound = {native:true,
+      why:'A natural indicator changes colour by type: red for acid, green for base, pink for neutral.',
+      detail:'Red means acid.\nGreen means base.\nPink (no change) means neutral.',
+      line:line, voice:voice, key:'res-'+state.solution+'-'+Date.now()};
+    if(!softDone && testedTypes.has('acidic') && testedTypes.has('basic')){
+      softDone = true;
+      setTimeout(function(){ try{ window.__eduRound = {native:true,
+        line:'You have tested an acid and a base and seen both colours. That is the core idea.',
+        voice:'Nice - you have seen both.', key:'done'}; }catch(e){} }, 3500);
+    }
+  }catch(e){}
 }
 
 testBtn.onclick = runTest;

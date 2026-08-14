@@ -471,12 +471,46 @@ const substanceInfo = {
   }
 };
 
+// ---- native one-clock coach (guide, not grader) ----
+function coachIdle(){
+  try{
+    var nextTab = document.querySelector('.tab:not(.active)');
+    window.__eduRound = {native:true,
+      hint:'Open each tab, then tap substances to classify them.',hintVoice:'Explore each substance.',
+      why:'Acids turn blue litmus red; bases turn red litmus blue; neutrals change neither.',
+      detail:'Open the tabs to read the properties.\nTap a substance to see if it is acid, base, or neutral.\nWatch for tricky ones that taste bitter but are not bases.',
+      line:'Open each tab, then tap substances to sort them acid, base, or neutral.',
+      voice:'Explore each substance.',
+      glow:(nextTab || document.querySelector('.substance-btn')), key:'explore'};
+  }catch(e){}
+}
+function coachSubstance(info, btn){
+  try{
+    var t=(info&&info.type)||'', line, voice, key;
+    if(t==='Neither'){
+      line='Bitter, but not a base - taste alone does not decide. Only the litmus or pH test does.';
+      voice='Bitter is not the same as basic.'; key='myth-'+Date.now();
+    } else if(t==='Acidic'){
+      line="That's an acid - it turns blue litmus red."; voice='That is an acid.'; key='sub-'+btn.dataset.substance+'-'+Date.now();
+    } else if(t==='Basic'){
+      line="That's a base - it turns red litmus blue and feels slippery."; voice='That is a base.'; key='sub-'+btn.dataset.substance+'-'+Date.now();
+    } else {
+      line="That's neutral - neither litmus paper changes."; voice='That is neutral.'; key='sub-'+btn.dataset.substance+'-'+Date.now();
+    }
+    window.__eduRound = {native:true,
+      why:'A substance is acid, base, or neutral by how it changes litmus - not by taste.',
+      detail:'Acid: blue litmus to red.\nBase: red litmus to blue, feels slippery.\nNeutral: no change.\nBitterness alone does not make something a base.',
+      line:line, voice:voice, key:key};
+  }catch(e){}
+}
+
 tabs.forEach(tab => {
   tab.onclick = () => {
     tabs.forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     panels.forEach(p => p.classList.remove('active'));
     document.getElementById(`${tab.dataset.panel}-panel`).classList.add('active');
+    coachIdle();
   };
 });
 
@@ -492,8 +526,11 @@ substanceBtns.forEach(btn => {
       <h4>${info.emoji} ${info.title}</h4>
       <p>${info.desc}</p>
     `;
+    coachSubstance(info, btn);
   };
 });
+
+coachIdle();
 </script>
   <script src="edu-coach.js"></script>
 </body>

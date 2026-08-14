@@ -224,7 +224,7 @@ svg { width: 100%; height: 100%; display: block; }
 
 .soil-btn:active { transform: scale(0.95); }
 .soil-btn.acidic.active { border-color: #ff9800; background: #fff3e0; }
-.soil-btn.ಮೂಲ.active { border-color: #2196f3; background: #e3f2fd; }
+.soil-btn.basic.active { border-color: #2196f3; background: #e3f2fd; }
 .soil-btn .icon { font-size: 18px; display: block; margin-bottom: 4px; }
 .soil-btn .ph-info { font-size: 9px; color: #888; margin-top: 2px; }
 
@@ -430,7 +430,7 @@ container.innerHTML = `
       ಆಮ್ಲೀಯ ಮಣ್ಣು
       <div class="ph-info">pH 4-5 (ಅಧಿಕ ಆಮ್ಲ)</div>
     </button>
-    <button class="soil-btn ಮೂಲ" data-type="ಮೂಲ">
+    <button class="soil-btn basic" data-type="basic">
       <span class="icon">🔵</span>
       ಕ್ಷಾರೀಯ ಮಣ್ಣು
       <div class="ph-info">pH 9-10 (ಅಧಿಕ ಕ್ಷಾರ)</div>
@@ -458,6 +458,43 @@ const learningText = document.getElementById('learning-text');
 const reactionDisplay = document.getElementById('reaction-display');
 const reactionEquation = document.getElementById('reaction-equation');
 const reactionResult = document.getElementById('reaction-result');
+
+// ---- native one-clock coach (guide, not grader) ----
+function coachSoil(){
+  try{
+    if(isTreated){
+      window.__eduRound = {native:true,
+        why:'ಮಣ್ಣನ್ನು ತಟಸ್ಥೀಕರಿಸಿದರೆ pH 7 ಆಗಿ ಬೆಳೆಗಳು ಪೋಷಕಾಂಶ ಹೀರಿಕೊಳ್ಳಬಹುದು.',
+        detail:'ಆಮ್ಲೀಯ ಮಣ್ಣನ್ನು ಸುಣ್ಣ (ಕ್ಷಾರ)ದಿಂದ ಸರಿಪಡಿಸಲಾಗುತ್ತದೆ.\nಕ್ಷಾರೀಯ ಮಣ್ಣನ್ನು ಕಾಂಪೋಸ್ಟ್ (ಆಮ್ಲ)ದಿಂದ ಸರಿಪಡಿಸಲಾಗುತ್ತದೆ.\nಎರಡೂ ಸಂದರ್ಭದಲ್ಲಿ ಆಮ್ಲ + ಕ್ಷಾರ = ಉಪ್ಪು + ನೀರು.',
+        line:'pH 7ಗೆ ತಟಸ್ಥೀಕರಿಸಲಾಯಿತು - ಸಸ್ಯ ಆರೋಗ್ಯಕರ. ಕೃಷಿಯಲ್ಲಿ ತಟಸ್ಥೀಕರಣ.',
+        voice:'ತಟಸ್ಥವಾಯಿತು - ಮಣ್ಣು ಆರೋಗ್ಯಕರ.', key:'soil-done'};
+      return;
+    }
+    if(selectedSoil==='acidic'){
+      window.__eduRound = {native:true,
+        hint:'ಆಮ್ಲೀಯ ಮಣ್ಣಿಗೆ ಕ್ಷಾರ ಬೇಕು. ಸುಣ್ಣ ಸೇರಿಸಿ.',hintVoice:'ತಟಸ್ಥೀಕರಿಸಲು ಸುಣ್ಣ ಸೇರಿಸಿ.',
+        why:'ಸುಣ್ಣ ಒಂದು ಕ್ಷಾರ; ಹೆಚ್ಚುವರಿ ಆಮ್ಲವನ್ನು ತಟಸ್ಥೀಕರಿಸಿ pH ಅನ್ನು 7ರ ಕಡೆಗೆ ಏರಿಸುತ್ತದೆ.',
+        detail:'ಮಣ್ಣು ಆಮ್ಲೀಯ (pH 4-5).\nಸುಣ್ಣ ಒಂದು ಕ್ಷಾರ.\npH ಅನ್ನು ತಟಸ್ಥಕ್ಕೆ ಏರಿಸಲು ಸೇರಿಸಿ.',
+        line:'ಈ ಮಣ್ಣು ಆಮ್ಲೀಯ. pH ಏರಿಸಲು ಸುಣ್ಣ (ಕ್ಷಾರ) ಸೇರಿಸಿ.',
+        voice:'ತಟಸ್ಥೀಕರಿಸಲು ಸುಣ್ಣ ಸೇರಿಸಿ.', glow:treatBtn, submit:treatBtn, key:'soil-acidic'};
+    } else if(selectedSoil==='basic'){
+      window.__eduRound = {native:true,
+        hint:'ಕ್ಷಾರೀಯ ಮಣ್ಣಿಗೆ ಆಮ್ಲ ಬೇಕು. ಕಾಂಪೋಸ್ಟ್ ಸೇರಿಸಿ.',hintVoice:'ತಟಸ್ಥೀಕರಿಸಲು ಕಾಂಪೋಸ್ಟ್ ಸೇರಿಸಿ.',
+        why:'ಕಾಂಪೋಸ್ಟ್ ಆಮ್ಲಗಳನ್ನು ಬಿಡುಗಡೆ ಮಾಡುತ್ತದೆ; ಹೆಚ್ಚುವರಿ ಕ್ಷಾರವನ್ನು ತಟಸ್ಥೀಕರಿಸಿ pH ಅನ್ನು 7ರ ಕಡೆಗೆ ಇಳಿಸುತ್ತದೆ.',
+        detail:'ಮಣ್ಣು ಕ್ಷಾರೀಯ (pH 9-10).\nಕಾಂಪೋಸ್ಟ್ ಆಮ್ಲ ಬಿಡುಗಡೆ ಮಾಡುತ್ತದೆ.\npH ಅನ್ನು ತಟಸ್ಥಕ್ಕೆ ಇಳಿಸಲು ಸೇರಿಸಿ.',
+        line:'ಈ ಮಣ್ಣು ಕ್ಷಾರೀಯ. pH ಇಳಿಸಲು ಕಾಂಪೋಸ್ಟ್ (ಆಮ್ಲ) ಸೇರಿಸಿ.',
+        voice:'ತಟಸ್ಥೀಕರಿಸಲು ಕಾಂಪೋಸ್ಟ್ ಸೇರಿಸಿ.', glow:treatBtn, submit:treatBtn, key:'soil-basic'};
+    } else {
+      var aB=container.querySelector('.soil-btn.acidic'), bB=container.querySelector('.soil-btn.basic');
+      window.__eduRound = {native:true,
+        hint:'ಸಮಸ್ಯೆಯ ಮಣ್ಣನ್ನು ಆರಿಸಿ - ಆಮ್ಲೀಯ ಅಥವಾ ಕ್ಷಾರೀಯ.',hintVoice:'ಮಣ್ಣಿನ ಪ್ರಕಾರ ಆರಿಸಿ.',
+        why:'ಮಣ್ಣನ್ನು ವಿರುದ್ಧದಿಂದ ತಟಸ್ಥೀಕರಿಸುತ್ತೀರಿ - ಆಮ್ಲಕ್ಕೆ ಕ್ಷಾರ, ಕ್ಷಾರಕ್ಕೆ ಆಮ್ಲ.',
+        detail:'ಮಣ್ಣು ತುಂಬಾ ಆಮ್ಲೀಯವೇ ಅಥವಾ ಕ್ಷಾರೀಯವೇ?\nಸಮಸ್ಯೆ ನೋಡಲು ಒಂದನ್ನು ಆರಿಸಿ.\nನಂತರ ವಿರುದ್ಧವನ್ನು ಸೇರಿಸಿ ತಟಸ್ಥೀಕರಿಸಿ.',
+        line:'ಮಣ್ಣು ತುಂಬಾ ಆಮ್ಲೀಯವೇ ಅಥವಾ ಕ್ಷಾರೀಯವೇ? ಒಂದನ್ನು ಆರಿಸಿ.',
+        voice:'ಮಣ್ಣಿನ ಪ್ರಕಾರ ಆರಿಸಿ.', glow:[aB,bB].filter(Boolean), key:'soil-pick'};
+    }
+  }catch(e){}
+}
 
 container.querySelectorAll('.soil-btn').forEach(btn => {
   btn.onclick = () => {
@@ -511,6 +548,7 @@ container.querySelectorAll('.soil-btn').forEach(btn => {
     
     treatBtn.disabled = false;
     takeaway.classList.remove('show');
+    coachSoil();
   };
 });
 
@@ -563,11 +601,15 @@ treatBtn.onclick = function() {
     
     reactionDisplay.classList.add('show');
     takeaway.classList.add('show');
-    
+    coachSoil();
+
     treatBtn.textContent = '✅ ತಟಸ್ಥೀಕರಣ ಯಶಸ್ವಿ!';
     treatBtn.style.background = 'linear-gradient(135deg, #4caf50 0%, #2e7d32 100%)';
   }, 800);
 };
+
+coachSoil();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

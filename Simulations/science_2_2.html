@@ -380,6 +380,7 @@ function updateDisplay() {
   if (sol.type === 'acidic') liquid.setAttribute('fill', '#ffcdd2');
   else if (sol.type === 'basic') liquid.setAttribute('fill', '#bbdefb');
   else liquid.setAttribute('fill', '#b3e5fc');
+  coachGuide();
 }
 
 function animatePaper(paper, startX, startY, endX, endY, duration) {
@@ -468,6 +469,7 @@ async function runTest() {
 
   resultBox.setAttribute('opacity', '1');
   takeaway.classList.add('show');
+  coachResult(sol);
   state.animating = false;
 }
 
@@ -491,6 +493,65 @@ function resetTest() {
   conclusion.textContent = '?';
   conclusion.className = 'metric-value';
   resultBox.setAttribute('opacity', '0');
+}
+
+// ---- native one-clock coach (guide, not grader) ----
+const testedTypes = new Set();
+let softDone = false;
+function findSolBtn(type){
+  var btns = Array.prototype.slice.call(container.querySelectorAll('.solution-btn'));
+  for (var i=0;i<btns.length;i++){ var s=SOLUTIONS[btns[i].dataset.solution]; if(s&&s.type===type) return btns[i]; }
+  return null;
+}
+function coachGuide(){
+  try{
+    if(state.animating) return;
+    var sol = SOLUTIONS[state.solution];
+    var haveA = testedTypes.has('acidic'), haveB = testedTypes.has('basic');
+    if(haveA && !haveB && sol.type!=='basic'){
+      window.__eduRound = {native:true,
+        hint:'Try a base next to see the opposite change.',hintVoice:'Now try a base.',
+        why:'Testing both an acid and a base shows both litmus changes.',
+        detail:'You have tested an acid.\nNow pick a base - soap or lime water - and dip again.\nWatch the red litmus turn blue.',
+        line:'Good - now try a base like soap or lime water to see the opposite.',
+        voice:'Now try a base.', glow:findSolBtn('basic'), key:'nudge-base'};
+      return;
+    }
+    if(haveB && !haveA && sol.type!=='acidic'){
+      window.__eduRound = {native:true,
+        hint:'Try an acid next to see the opposite change.',hintVoice:'Now try an acid.',
+        why:'Testing both an acid and a base shows both litmus changes.',
+        detail:'You have tested a base.\nNow pick an acid - lemon or vinegar - and dip again.\nWatch the blue litmus turn red.',
+        line:'Good - now try an acid like lemon or vinegar to see the opposite.',
+        voice:'Now try an acid.', glow:findSolBtn('acidic'), key:'nudge-acid'};
+      return;
+    }
+    window.__eduRound = {native:true,
+      hint:'Dip the papers to test '+sol.name+'.',hintVoice:'Dip the papers.',
+      why:'Blue litmus turns red in acid; red litmus turns blue in base; neither changes if neutral.',
+      detail:'Step 1 - You picked '+sol.name+'.\nStep 2 - Tap Dip Papers.\nStep 3 - Watch which litmus changes colour.\nWhy it works - acids release H+ (blue to red); bases release OH- (red to blue).',
+      line:'You picked '+sol.name+'. Dip the papers to see which litmus changes.',
+      voice:'Dip the papers.', glow:testBtn, submit:testBtn, key:'dip-'+state.solution};
+  }catch(e){}
+}
+function coachResult(sol){
+  try{
+    testedTypes.add(sol.type);
+    var line, voice;
+    if(sol.type==='acidic'){ line='Blue litmus turned red - '+sol.name+' is an acid.'; voice=sol.name+' is an acid.'; }
+    else if(sol.type==='basic'){ line='Red litmus turned blue - '+sol.name+' is a base.'; voice=sol.name+' is a base.'; }
+    else { line='Neither paper changed - '+sol.name+' is neutral.'; voice=sol.name+' is neutral.'; }
+    window.__eduRound = {native:true,
+      why:'The litmus colour change tells you the type: acid, base, or neutral.',
+      detail:'Blue litmus to red means acid.\nRed litmus to blue means base.\nNo change means neutral.',
+      line:line, voice:voice, key:'res-'+state.solution+'-'+Date.now()};
+    if(!softDone && testedTypes.has('acidic') && testedTypes.has('basic')){
+      softDone = true;
+      setTimeout(function(){ try{ window.__eduRound = {native:true,
+        line:'You have tested an acid and a base and seen both litmus changes. That is the core idea.',
+        voice:'Nice - you have seen both.', key:'done'}; }catch(e){} }, 3500);
+    }
+  }catch(e){}
 }
 
 testBtn.onclick = runTest;

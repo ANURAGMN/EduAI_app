@@ -386,6 +386,33 @@ function updateSteps(activeIndex) {
   });
 }
 
+// ---- native one-clock coach (guide, not grader) ----
+function coachStep(){
+  try{
+    if(state === 'normal'){
+      window.__eduRound = {native:true,
+        hint:'An ant bite injects formic acid.',hintVoice:'Simulate the bite.',
+        why:'Ant venom is formic acid - an acid - which is why the bite stings.',
+        detail:'Step 1 - Simulate the ant bite.\nStep 2 - See the skin turn acidic.\nStep 3 - Neutralise it with a base.',
+        line:'An ant bite injects formic acid. Tap Simulate Bite.',
+        voice:'Simulate the bite.', glow:biteBtn, submit:biteBtn, key:'s-normal'};
+    } else if(state === 'bitten'){
+      window.__eduRound = {native:true,
+        hint:'The skin is acidic now. Apply a base.',hintVoice:'Apply the treatment.',
+        why:'A base neutralises the formic acid, easing the pain.',
+        detail:'The bite made the skin acidic (about pH 4).\nBaking soda is a base.\nApply it to neutralise the acid.',
+        line:'Skin is acidic (~pH 4). Apply baking soda - a base - to neutralise it.',
+        voice:'Apply the baking soda.', glow:treatBtn, submit:treatBtn, key:'s-bitten-'+Date.now()};
+    } else {
+      window.__eduRound = {native:true,
+        why:'Acid + base makes salt + water. The pain goes as the acid is neutralised.',
+        detail:'The base neutralised the formic acid.\nThe skin is back to about pH 7.\nThat is neutralisation in daily life.',
+        line:'The base neutralised the acid - back to pH 7, pain gone. Neutralisation in daily life.',
+        voice:'Neutralised - the pain is gone.', key:'s-treated-'+Date.now()};
+    }
+  }catch(e){}
+}
+
 biteBtn.onclick = function() {
   if (state !== 'normal') return;
   state = 'bitten';
@@ -420,6 +447,7 @@ biteBtn.onclick = function() {
   
   takeawayText.textContent = 'The ant has injected formic acid into your skin, causing pain and inflammation. We need to neutralise it with a base!';
   takeaway.classList.add('show');
+  coachStep();
 };
 
 treatBtn.onclick = function() {
@@ -458,6 +486,7 @@ treatBtn.onclick = function() {
     treatBtn.disabled = true;
     
     takeawayText.textContent = 'The baking soda (base) neutralised the formic acid, converting it to harmless salt and water. The pain is gone! This is neutralisation in action!';
+    coachStep();
   }, 1000);
 };
 
@@ -488,7 +517,10 @@ resetBtn.onclick = function() {
   biteBtn.disabled = false;
   treatBtn.disabled = true;
   takeaway.classList.remove('show');
+  coachStep();
 };
+
+coachStep();
 </script>
   <script src="edu-coach.js"></script>
 </body>

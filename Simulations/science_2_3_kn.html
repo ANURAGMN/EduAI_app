@@ -448,7 +448,7 @@ const substanceInfo = {
     desc: 'ಸಿಟ್ರಿಕ್ ಆಮ್ಲ ಹೊಂದಿದೆ, ಹುಳಿ ರುಚಿ ನೀಡುತ್ತದೆ. ನೀಲಿ ಲಿಟ್ಮಸ್ ಕೆಂಪು ಮಾಡುತ್ತದೆ. pH ಸುಮಾರು 2–3.'
   },
   'soap': {
-    type: 'ಮೂಲ',
+    type: 'Basic',
     emoji: '🧼',
     title: 'ಸಾಬೂನು - ಕ್ಷಾರೀಯ',
     desc: 'ಜಾರುವ ಸ್ಪರ್ಶ ಮತ್ತು ಕಹಿ ರುಚಿ. ಕೆಂಪು ಲಿಟ್ಮಸ್ ನೀಲಿ ಮಾಡುತ್ತದೆ. ಎಣ್ಣೆಗಳನ್ನು ಒಡೆದು ಶುದ್ಧೀಕರಣಕ್ಕೆ ಸಹಾಯ ಮಾಡುತ್ತದೆ.'
@@ -460,7 +460,7 @@ const substanceInfo = {
     desc: 'ಕಹಿ ಇದ್ದರೂ ಕ್ಷಾರವಲ್ಲ! ಕಹಿ ಮಾತ್ರವೇ ಕ್ಷಾರ ಎಂದರ್ಥವಲ್ಲ. ಸಾಮಾನ್ಯ ತಪ್ಪು ಕಲ್ಪನೆ!'
   },
   'baking-soda': {
-    type: 'ಮೂಲ',
+    type: 'Basic',
     emoji: '🥄',
     title: 'ಬೇಕಿಂಗ್ ಸೋಡಾ - ಕ್ಷಾರೀಯ',
     desc: 'ಸೋಡಿಯಂ ಬೈಕಾರ್ಬನೇಟ್ ಸೌಮ್ಯ ಕ್ಷಾರ. ಜಾರುವ ಸ್ಪರ್ಶ, ಕಹಿ ರುಚಿ, ಕೆಂಪು ಲಿಟ್ಮಸ್ ನೀಲಿ ಮಾಡುತ್ತದೆ.'
@@ -479,12 +479,46 @@ const substanceInfo = {
   }
 };
 
+// ---- native one-clock coach (guide, not grader) ----
+function coachIdle(){
+  try{
+    var nextTab = document.querySelector('.tab:not(.active)');
+    window.__eduRound = {native:true,
+      hint:'ಪ್ರತಿ ಟ್ಯಾಬ್ ತೆರೆದು, ನಂತರ ಪದಾರ್ಥಗಳನ್ನು ಒತ್ತಿ ವರ್ಗೀಕರಿಸಿ.',hintVoice:'ಪ್ರತಿ ಪದಾರ್ಥವನ್ನು ಅನ್ವೇಷಿಸಿ.',
+      why:'ಆಮ್ಲಗಳು ನೀಲಿ ಲಿಟ್ಮಸ್ ಕೆಂಪಾಗಿಸುತ್ತವೆ; ಕ್ಷಾರಗಳು ಕೆಂಪು ಲಿಟ್ಮಸ್ ನೀಲಿಯಾಗಿಸುತ್ತವೆ; ತಟಸ್ಥ ಯಾವುದನ್ನೂ ಬದಲಿಸುವುದಿಲ್ಲ.',
+      detail:'ಗುಣಗಳನ್ನು ಓದಲು ಟ್ಯಾಬ್‌ಗಳನ್ನು ತೆರೆಯಿರಿ.\nಪದಾರ್ಥ ಆಮ್ಲ, ಕ್ಷಾರ ಅಥವಾ ತಟಸ್ಥವೇ ಎಂದು ನೋಡಲು ಒತ್ತಿ.\nಕಹಿಯಾದರೂ ಕ್ಷಾರವಲ್ಲದ ಟ್ರಿಕ್ಕಿ ಪದಾರ್ಥಗಳ ಬಗ್ಗೆ ಎಚ್ಚರವಿರಲಿ.',
+      line:'ಪ್ರತಿ ಟ್ಯಾಬ್ ತೆರೆದು, ನಂತರ ಪದಾರ್ಥಗಳನ್ನು ಆಮ್ಲ, ಕ್ಷಾರ ಅಥವಾ ತಟಸ್ಥ ಎಂದು ವರ್ಗೀಕರಿಸಿ.',
+      voice:'ಪ್ರತಿ ಪದಾರ್ಥವನ್ನು ಅನ್ವೇಷಿಸಿ.',
+      glow:(nextTab || document.querySelector('.substance-btn')), key:'explore'};
+  }catch(e){}
+}
+function coachSubstance(info, btn){
+  try{
+    var t=(info&&info.type)||'', line, voice, key;
+    if(t==='Neither'){
+      line='ಕಹಿ, ಆದರೆ ಕ್ಷಾರ ಅಲ್ಲ - ರುಚಿ ಮಾತ್ರ ನಿರ್ಧರಿಸುವುದಿಲ್ಲ. ಲಿಟ್ಮಸ್ ಅಥವಾ pH ಪರೀಕ್ಷೆ ಮಾತ್ರ ಹೇಳುತ್ತದೆ.';
+      voice='ಕಹಿ ಎಂದರೆ ಕ್ಷಾರ ಅಲ್ಲ.'; key='myth-'+Date.now();
+    } else if(t==='Acidic'){
+      line='ಅದು ಒಂದು ಆಮ್ಲ - ನೀಲಿ ಲಿಟ್ಮಸ್ ಕೆಂಪಾಗಿಸುತ್ತದೆ.'; voice='ಅದು ಆಮ್ಲ.'; key='sub-'+btn.dataset.substance+'-'+Date.now();
+    } else if(t==='Basic'){
+      line='ಅದು ಒಂದು ಕ್ಷಾರ - ಕೆಂಪು ಲಿಟ್ಮಸ್ ನೀಲಿಯಾಗಿಸುತ್ತದೆ ಮತ್ತು ಜಾರುತ್ತದೆ.'; voice='ಅದು ಕ್ಷಾರ.'; key='sub-'+btn.dataset.substance+'-'+Date.now();
+    } else {
+      line='ಅದು ತಟಸ್ಥ - ಯಾವ ಲಿಟ್ಮಸ್ ಕಾಗದವೂ ಬದಲಾಗುವುದಿಲ್ಲ.'; voice='ಅದು ತಟಸ್ಥ.'; key='sub-'+btn.dataset.substance+'-'+Date.now();
+    }
+    window.__eduRound = {native:true,
+      why:'ಪದಾರ್ಥ ಆಮ್ಲ, ಕ್ಷಾರ ಅಥವಾ ತಟಸ್ಥವಾಗಿರುವುದು ಲಿಟ್ಮಸ್ ಹೇಗೆ ಬದಲಾಗುತ್ತದೆ ಎಂಬುದರಿಂದ - ರುಚಿಯಿಂದಲ್ಲ.',
+      detail:'ಆಮ್ಲ: ನೀಲಿ ಲಿಟ್ಮಸ್ ಕೆಂಪಾಗುತ್ತದೆ.\nಕ್ಷಾರ: ಕೆಂಪು ಲಿಟ್ಮಸ್ ನೀಲಿಯಾಗುತ್ತದೆ, ಜಾರುತ್ತದೆ.\nತಟಸ್ಥ: ಬದಲಾವಣೆ ಇಲ್ಲ.\nಕಹಿ ಇರುವುದು ಮಾತ್ರ ಕ್ಷಾರ ಎಂದಾಗುವುದಿಲ್ಲ.',
+      line:line, voice:voice, key:key};
+  }catch(e){}
+}
+
 tabs.forEach(tab => {
   tab.onclick = () => {
     tabs.forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     panels.forEach(p => p.classList.remove('active'));
     document.getElementById(`${tab.dataset.panel}-panel`).classList.add('active');
+    coachIdle();
   };
 });
 
@@ -500,8 +534,12 @@ substanceBtns.forEach(btn => {
       <h4>${info.emoji} ${info.title}</h4>
       <p>${info.desc}</p>
     `;
+    coachSubstance(info, btn);
   };
 });
+
+coachIdle();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

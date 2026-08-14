@@ -425,6 +425,7 @@ function updateDisplay() {
   const sol = SOLUTIONS[state.solution];
   dropperIcon.textContent = sol.icon;
   solutionName.textContent = sol.name;
+  coachGuide();
 }
 
 function animateDrop(callback) {
@@ -490,6 +491,7 @@ function runTest() {
 
     state.currentPaper = (state.currentPaper % 3) + 1;
     takeaway.classList.add('show');
+    coachResult(sol);
     state.animating = false;
   });
 }
@@ -511,6 +513,67 @@ function resetTest() {
   detectedDisplay.textContent = '?';
   detectedDisplay.className = 'metric-value';
   resultArrow.setAttribute('opacity', '0');
+}
+
+// ---- native one-clock coach (guide, not grader) ----
+const testedTypes = new Set();
+let softDone = false;
+function findSolBtn(type){
+  var btns = Array.prototype.slice.call(container.querySelectorAll('.solution-btn'));
+  for (var i=0;i<btns.length;i++){ var s=SOLUTIONS[btns[i].dataset.solution]; if(s&&s.type===type) return btns[i]; }
+  return null;
+}
+function coachGuide(){
+  try{
+    if(state.animating) return;
+    var sol = SOLUTIONS[state.solution];
+    var seenBase = testedTypes.has('basic');
+    var seenYellow = testedTypes.has('acidic') || testedTypes.has('neutral');
+    if(seenYellow && !seenBase && sol.type!=='basic'){
+      window.__eduRound = {native:true,
+        hint:'Try a base to make turmeric turn red.',hintVoice:'Now try a base.',
+        why:'Only a base turns turmeric red; acids and neutrals leave it yellow.',
+        detail:'So far turmeric stayed yellow.\nNow pick a base - soap or lime water - and drop it.\nWatch turmeric turn red.',
+        line:'Turmeric stayed yellow. Now try a base like soap to make it turn red.',
+        voice:'Now try a base.', glow:findSolBtn('basic'), key:'nudge-base'};
+      return;
+    }
+    if(seenBase && !seenYellow && sol.type==='basic'){
+      window.__eduRound = {native:true,
+        hint:'Try an acid or neutral - turmeric stays yellow.',hintVoice:'Now try an acid.',
+        why:'Turmeric only detects bases; it stays yellow for acids and neutrals alike.',
+        detail:'You saw turmeric turn red for a base.\nNow pick an acid - lemon or vinegar - or a neutral.\nIt stays yellow - turmeric cannot tell acid from neutral.',
+        line:'Now try an acid like lemon - turmeric stays yellow (it cannot tell acid from neutral).',
+        voice:'Now try an acid.', glow:findSolBtn('acidic'), key:'nudge-acid'};
+      return;
+    }
+    window.__eduRound = {native:true,
+      hint:'Drop '+sol.name+' on the turmeric paper.',hintVoice:'Drop the solution.',
+      why:'Turmeric is a natural indicator: it turns red only with a base; it stays yellow for acids and neutrals.',
+      detail:'Step 1 - You picked '+sol.name+'.\nStep 2 - Tap Drop.\nStep 3 - Red means a base; yellow means acidic or neutral.\nWhy it works - turmeric pigment reacts only to bases, so yellow cannot separate acid from neutral.',
+      line:'You picked '+sol.name+'. Drop it on the turmeric and read the colour.',
+      voice:'Drop the solution.', glow:testBtn, submit:testBtn, key:'dip-'+state.solution};
+  }catch(e){}
+}
+function coachResult(sol){
+  try{
+    testedTypes.add(sol.type);
+    var line, voice;
+    if(sol.type==='basic'){ line='Turmeric turned red - '+sol.name+' is a base. Only a base reddens turmeric.'; voice=sol.name+' is a base.'; }
+    else { line='Turmeric stayed yellow - '+sol.name+' is not a base. Yellow means acidic or neutral; turmeric cannot tell them apart.'; voice=sol.name+' is not a base.'; }
+    window.__eduRound = {native:true,
+      why:'Turmeric only detects bases: red = base; yellow = acidic OR neutral.',
+      detail:'Red means a base.\nYellow means acidic or neutral - turmeric cannot separate the two.\nThat is why litmus is still needed to spot an acid.',
+      line:line, voice:voice, key:'res-'+state.solution+'-'+Date.now()};
+    var seenBase = testedTypes.has('basic');
+    var seenYellow = testedTypes.has('acidic') || testedTypes.has('neutral');
+    if(!softDone && seenBase && seenYellow){
+      softDone = true;
+      setTimeout(function(){ try{ window.__eduRound = {native:true,
+        line:'You have seen turmeric turn red for a base and stay yellow otherwise. That is the core idea.',
+        voice:'Nice - you have seen both.', key:'done'}; }catch(e){} }, 3500);
+    }
+  }catch(e){}
 }
 
 testBtn.onclick = runTest;

@@ -495,7 +495,33 @@ baseSlider.oninput = function() {
   // Update base liquid height (max 60px)
   baseLiquid.setAttribute('height', 60 * baseAmount / 100);
   acidLiquid.setAttribute('height', 60 * (100 - baseAmount) / 100);
+  coachMix();
 };
+
+// ---- native one-clock coach (guide, not grader) ----
+function coachMix(){
+  try{
+    if(!isMixed){
+      var near = (baseAmount>=40 && baseAmount<=60);
+      window.__eduRound = {native:true,
+        hint:'Balance the acid and base, then Mix.',hintVoice:'Set the base near half, then mix.',
+        why:'Neutralisation needs the acid and base to balance so the pH reaches 7.',
+        detail:'Slide the base amount.\nAim for about half base, half acid.\nTap Mix to react them.',
+        line:(near?('Base is about balanced ('+baseAmount+'%). Tap Mix to neutralise.'):('Set the base near 50% to balance the acid ('+baseAmount+'% now), then Mix.')),
+        voice:'Set the base near half, then mix.',
+        glow:mixBtn, submit:mixBtn, key:'mix-start'};
+    } else {
+      var line, voice;
+      if(baseAmount<40){ line='Too little base - still acidic. Reset, add more base, and mix again.'; voice='Too little base - still acidic.'; }
+      else if(baseAmount>60){ line='Too much base - now basic. Reset, use less base, and mix again.'; voice='Too much base - now basic.'; }
+      else { line='Balanced! Acid + base makes salt + water at pH 7. That is neutralisation.'; voice='Neutral - salt and water at pH 7.'; }
+      window.__eduRound = {native:true,
+        why:'Acid + base makes salt + water; at balance the pH is 7 (neutral).',
+        detail:'Less base than acid stays acidic.\nMore base than acid turns basic.\nEqual amounts neutralise to pH 7.',
+        line:line, voice:voice, key:'mix-res-'+baseAmount+'-'+Date.now()};
+    }
+  }catch(e){}
+}
 
 mixBtn.onclick = function() {
   if (isMixed) {
@@ -515,6 +541,7 @@ mixBtn.onclick = function() {
     prodWater.classList.remove('active');
     prodHeat.classList.remove('active');
     mixBtn.textContent = '🧪 Mix';
+    coachMix();
     return;
   }
   
@@ -578,14 +605,17 @@ mixBtn.onclick = function() {
     prodSalt.classList.add('active');
     prodWater.classList.add('active');
     prodHeat.classList.add('active');
-    
+
     takeaway.classList.add('show');
+    coachMix();
     
     setTimeout(() => {
       heatIndicator.style.opacity = '0.3';
     }, 2000);
   }, 500);
 };
+
+coachMix();
 </script>
   <script src="edu-coach.js"></script>
 </body>

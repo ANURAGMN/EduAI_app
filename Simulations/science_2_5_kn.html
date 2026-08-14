@@ -103,7 +103,7 @@ svg { width: 100%; height: 100%; display: block; }
 .metric-item { display: flex; justify-content: space-between; }
 .metric-label { color: #666; }
 .metric-value { font-weight: 600; color: #007AFF; }
-.metric-value.ಮೂಲ { color: #d32f2f; }
+.metric-value.basic { color: #d32f2f; }
 .metric-value.acidic-neutral { color: #f9a825; }
 
 .control-panel {
@@ -329,9 +329,9 @@ const SOLUTIONS = {
   'lemon': { name: 'ನಿಂಬೆ ರಸ', icon: '🍋', type: 'acidic', resultColor: '#fdd835', colorName: 'ಹಳದಿ (ಬದಲಾವಣೆ ಇಲ್ಲ)', ಬದಲಾಗುತ್ತದೆ: false },
   'vinegar': { name: 'ವಿನಿಗರ್', icon: '🍶', type: 'acidic', resultColor: '#f9a825', colorName: 'ಹಳದಿ (ಬದಲಾವಣೆ ಇಲ್ಲ)', ಬದಲಾಗುತ್ತದೆ: false },
   'amla': { name: 'ನೆಲ್ಲಿ ರಸ', icon: '🫒', type: 'acidic', resultColor: '#fbc02d', colorName: 'ಹಳದಿ (ಬದಲಾವಣೆ ಇಲ್ಲ)', ಬದಲಾಗುತ್ತದೆ: false },
-  'soap': { name: 'ಸಾಬೂನು ದ್ರಾವಣ', icon: '🧼', type: 'ಮೂಲ', resultColor: '#c62828', colorName: 'ಕೆಂಪು/ಕಂದು', ಬದಲಾಗುತ್ತದೆ: true },
-  'baking': { name: 'ಬೇಕಿಂಗ್ ಸೋಡಾ', icon: '🥄', type: 'ಮೂಲ', resultColor: '#d32f2f', colorName: 'ಕೆಂಪು', ಬದಲಾಗುತ್ತದೆ: true },
-  'lime': { name: 'ಸುಣ್ಣದ ನೀರು', icon: '💧', type: 'ಮೂಲ', resultColor: '#b71c1c', colorName: 'ಗಾಢ ಕೆಂಪು', ಬದಲಾಗುತ್ತದೆ: true },
+  'soap': { name: 'ಸಾಬೂನು ದ್ರಾವಣ', icon: '🧼', type: 'basic', resultColor: '#c62828', colorName: 'ಕೆಂಪು/ಕಂದು', ಬದಲಾಗುತ್ತದೆ: true },
+  'baking': { name: 'ಬೇಕಿಂಗ್ ಸೋಡಾ', icon: '🥄', type: 'basic', resultColor: '#d32f2f', colorName: 'ಕೆಂಪು', ಬದಲಾಗುತ್ತದೆ: true },
+  'lime': { name: 'ಸುಣ್ಣದ ನೀರು', icon: '💧', type: 'basic', resultColor: '#b71c1c', colorName: 'ಗಾಢ ಕೆಂಪು', ಬದಲಾಗುತ್ತದೆ: true },
   'ನೀರು': { name: 'ನಳ ನೀರು', icon: '🚰', type: 'neutral', resultColor: '#fdd835', colorName: 'ಹಳದಿ (ಬದಲಾವಣೆ ಇಲ್ಲ)', ಬದಲಾಗುತ್ತದೆ: false },
   'sugar': { name: 'ಸಕ್ಕರೆ ದ್ರಾವಣ', icon: '🍬', type: 'neutral', resultColor: '#ffeb3b', colorName: 'ಹಳದಿ (ಬದಲಾವಣೆ ಇಲ್ಲ)', ಬದಲಾಗುತ್ತದೆ: false },
   'salt': { name: 'ಉಪ್ಪು ದ್ರಾವಣ', icon: '🧂', type: 'neutral', resultColor: '#fdd835', colorName: 'ಹಳದಿ (ಬದಲಾವಣೆ ಇಲ್ಲ)', ಬದಲಾಗುತ್ತದೆ: false }
@@ -428,6 +428,7 @@ function updateDisplay() {
   const sol = SOLUTIONS[state.solution];
   dropperIcon.textContent = sol.icon;
   solutionName.textContent = sol.name;
+  coachGuide();
 }
 
 function animateDrop(callback) {
@@ -470,14 +471,14 @@ function runTest() {
     currentLabel.textContent = sol.name;
 
     colorStatus.textContent = sol.colorName;
-    colorStatus.className = `metric-value ${sol.ಬದಲಾಗುತ್ತದೆ ? 'ಮೂಲ' : 'acidic-neutral'}`;
+    colorStatus.className = `metric-value ${sol.ಬದಲಾಗುತ್ತದೆ ? 'basic' : 'acidic-neutral'}`;
     
     ಬದಲಾಗುತ್ತದೆDisplay.textContent = sol.ಬದಲಾಗುತ್ತದೆ ? 'ಹೌದು ✓' : 'ಇಲ್ಲ';
-    ಬದಲಾಗುತ್ತದೆDisplay.className = `metric-value ${sol.ಬದಲಾಗುತ್ತದೆ ? 'ಮೂಲ' : ''}`;
+    ಬದಲಾಗುತ್ತದೆDisplay.className = `metric-value ${sol.ಬದಲಾಗುತ್ತದೆ ? 'basic' : ''}`;
     
     if (sol.ಬದಲಾಗುತ್ತದೆ) {
       detectedDisplay.textContent = 'ಕ್ಷಾರೀಯ ✓';
-      detectedDisplay.className = 'metric-value ಮೂಲ';
+      detectedDisplay.className = 'metric-value basic';
       takeawayText.textContent = `${sol.name} ಹಲ್ದಿಯನ್ನು ಕೆಂಪಾಗಿಸಿತು — ಕ್ಷಾರವೆಂದು ದೃಢೀಕರಣ! ಹಲ್ದಿ ಅದನ್ನು ಗುರುತಿಸಿತು.`;
     } else {
       detectedDisplay.textContent = 'ಆಮ್ಲೀಯ ಅಥವಾ ತಟಸ್ಥ';
@@ -493,6 +494,7 @@ function runTest() {
 
     state.currentPaper = (state.currentPaper % 3) + 1;
     takeaway.classList.add('show');
+    coachResult(sol);
     state.animating = false;
   });
 }
@@ -516,6 +518,67 @@ function resetTest() {
   resultArrow.setAttribute('opacity', '0');
 }
 
+// ---- native one-clock coach (guide, not grader) ----
+const testedTypes = new Set();
+let softDone = false;
+function findSolBtn(type){
+  var btns = Array.prototype.slice.call(container.querySelectorAll('.solution-btn'));
+  for (var i=0;i<btns.length;i++){ var s=SOLUTIONS[btns[i].dataset.solution]; if(s&&s.type===type) return btns[i]; }
+  return null;
+}
+function coachGuide(){
+  try{
+    if(state.animating) return;
+    var sol = SOLUTIONS[state.solution];
+    var seenBase = testedTypes.has('basic');
+    var seenYellow = testedTypes.has('acidic') || testedTypes.has('neutral');
+    if(seenYellow && !seenBase && sol.type!=='basic'){
+      window.__eduRound = {native:true,
+        hint:'ಅರಿಶಿನ ಕೆಂಪಾಗಲು ಒಂದು ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',hintVoice:'ಈಗ ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',
+        why:'ಕ್ಷಾರ ಮಾತ್ರ ಅರಿಶಿನವನ್ನು ಕೆಂಪಾಗಿಸುತ್ತದೆ; ಆಮ್ಲ ಮತ್ತು ತಟಸ್ಥ ಹಳದಿಯಾಗಿ ಬಿಡುತ್ತವೆ.',
+        detail:'ಇಲ್ಲಿಯವರೆಗೆ ಅರಿಶಿನ ಹಳದಿಯಾಗಿ ಉಳಿಯಿತು.\nಈಗ ಸಾಬೂನು ಅಥವಾ ಸುಣ್ಣದ ನೀರಿನಂತಹ ಕ್ಷಾರವನ್ನು ಆರಿಸಿ ಹಾಕಿ.\nಅರಿಶಿನ ಕೆಂಪಾಗುವುದನ್ನು ನೋಡಿ.',
+        line:'ಅರಿಶಿನ ಹಳದಿಯಾಗಿ ಉಳಿಯಿತು. ಈಗ ಸಾಬೂನಿನಂತಹ ಕ್ಷಾರ ಪ್ರಯತ್ನಿಸಿ - ಅದು ಕೆಂಪಾಗುತ್ತದೆ.',
+        voice:'ಈಗ ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.', glow:findSolBtn('basic'), key:'nudge-base'};
+      return;
+    }
+    if(seenBase && !seenYellow && sol.type==='basic'){
+      window.__eduRound = {native:true,
+        hint:'ಆಮ್ಲ ಅಥವಾ ತಟಸ್ಥ ಪ್ರಯತ್ನಿಸಿ - ಅರಿಶಿನ ಹಳದಿಯಾಗಿ ಉಳಿಯುತ್ತದೆ.',hintVoice:'ಈಗ ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',
+        why:'ಅರಿಶಿನ ಕ್ಷಾರವನ್ನು ಮಾತ್ರ ಗುರುತಿಸುತ್ತದೆ; ಆಮ್ಲ ಮತ್ತು ತಟಸ್ಥ ಎರಡಕ್ಕೂ ಹಳದಿಯಾಗಿ ಉಳಿಯುತ್ತದೆ.',
+        detail:'ಕ್ಷಾರಕ್ಕೆ ಅರಿಶಿನ ಕೆಂಪಾಗುವುದನ್ನು ನೋಡಿದ್ದೀರಿ.\nಈಗ ನಿಂಬೆ ಅಥವಾ ವಿನಿಗರ್‌ನಂತಹ ಆಮ್ಲವನ್ನು ಆರಿಸಿ.\nಹಳದಿಯಾಗಿ ಉಳಿಯುತ್ತದೆ - ಅರಿಶಿನ ಆಮ್ಲ ಮತ್ತು ತಟಸ್ಥದ ನಡುವೆ ವ್ಯತ್ಯಾಸ ಹೇಳಲಾರದು.',
+        line:'ಈಗ ನಿಂಬೆಯಂತಹ ಆಮ್ಲ ಪ್ರಯತ್ನಿಸಿ - ಅರಿಶಿನ ಹಳದಿಯಾಗಿ ಉಳಿಯುತ್ತದೆ.',
+        voice:'ಈಗ ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ.', glow:findSolBtn('acidic'), key:'nudge-acid'};
+      return;
+    }
+    window.__eduRound = {native:true,
+      hint:sol.name+' ಅನ್ನು ಅರಿಶಿನ ಕಾಗದದ ಮೇಲೆ ಹಾಕಿ.',hintVoice:'ದ್ರಾವಣವನ್ನು ಹಾಕಿ.',
+      why:'ಅರಿಶಿನ ಒಂದು ನೈಸರ್ಗಿಕ ಸೂಚಕ: ಕ್ಷಾರದೊಂದಿಗೆ ಮಾತ್ರ ಕೆಂಪಾಗುತ್ತದೆ; ಆಮ್ಲ ಮತ್ತು ತಟಸ್ಥಕ್ಕೆ ಹಳದಿಯಾಗಿ ಉಳಿಯುತ್ತದೆ.',
+      detail:'ಹಂತ 1 - ನೀವು '+sol.name+' ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.\nಹಂತ 2 - "ಹಾಕಿ" ಒತ್ತಿ.\nಹಂತ 3 - ಕೆಂಪು ಎಂದರೆ ಕ್ಷಾರ; ಹಳದಿ ಎಂದರೆ ಆಮ್ಲ ಅಥವಾ ತಟಸ್ಥ.\nಏಕೆ - ಅರಿಶಿನ ಕ್ಷಾರಕ್ಕೆ ಮಾತ್ರ ಪ್ರತಿಕ್ರಿಯಿಸುತ್ತದೆ, ಆದ್ದರಿಂದ ಹಳದಿ ಆಮ್ಲ ಮತ್ತು ತಟಸ್ಥವನ್ನು ಬೇರ್ಪಡಿಸಲಾರದು.',
+      line:'ನೀವು '+sol.name+' ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ. ಅರಿಶಿನದ ಮೇಲೆ ಹಾಕಿ ಬಣ್ಣ ಓದಿ.',
+      voice:'ದ್ರಾವಣವನ್ನು ಹಾಕಿ.', glow:testBtn, submit:testBtn, key:'dip-'+state.solution};
+  }catch(e){}
+}
+function coachResult(sol){
+  try{
+    testedTypes.add(sol.type);
+    var line, voice;
+    if(sol.type==='basic'){ line='ಅರಿಶಿನ ಕೆಂಪಾಯಿತು - '+sol.name+' ಒಂದು ಕ್ಷಾರ. ಕ್ಷಾರ ಮಾತ್ರ ಅರಿಶಿನವನ್ನು ಕೆಂಪಾಗಿಸುತ್ತದೆ.'; voice=sol.name+' ಒಂದು ಕ್ಷಾರ.'; }
+    else { line='ಅರಿಶಿನ ಹಳದಿಯಾಗಿ ಉಳಿಯಿತು - '+sol.name+' ಕ್ಷಾರ ಅಲ್ಲ. ಹಳದಿ ಎಂದರೆ ಆಮ್ಲ ಅಥವಾ ತಟಸ್ಥ; ಅರಿಶಿನ ವ್ಯತ್ಯಾಸ ಹೇಳಲಾರದು.'; voice=sol.name+' ಕ್ಷಾರ ಅಲ್ಲ.'; }
+    window.__eduRound = {native:true,
+      why:'ಅರಿಶಿನ ಕ್ಷಾರವನ್ನು ಮಾತ್ರ ಗುರುತಿಸುತ್ತದೆ: ಕೆಂಪು = ಕ್ಷಾರ; ಹಳದಿ = ಆಮ್ಲ ಅಥವಾ ತಟಸ್ಥ.',
+      detail:'ಕೆಂಪು ಎಂದರೆ ಕ್ಷಾರ.\nಹಳದಿ ಎಂದರೆ ಆಮ್ಲ ಅಥವಾ ತಟಸ್ಥ - ಅರಿಶಿನ ಇವೆರಡನ್ನೂ ಬೇರ್ಪಡಿಸಲಾರದು.\nಆದ್ದರಿಂದ ಆಮ್ಲ ಗುರುತಿಸಲು ಲಿಟ್ಮಸ್ ಇನ್ನೂ ಬೇಕು.',
+      line:line, voice:voice, key:'res-'+state.solution+'-'+Date.now()};
+    var seenBase = testedTypes.has('basic');
+    var seenYellow = testedTypes.has('acidic') || testedTypes.has('neutral');
+    if(!softDone && seenBase && seenYellow){
+      softDone = true;
+      setTimeout(function(){ try{ window.__eduRound = {native:true,
+        line:'ಕ್ಷಾರಕ್ಕೆ ಅರಿಶಿನ ಕೆಂಪಾಗುವುದನ್ನು ಮತ್ತು ಇಲ್ಲದಿದ್ದರೆ ಹಳದಿಯಾಗಿ ಉಳಿಯುವುದನ್ನು ನೋಡಿದ್ದೀರಿ. ಅದೇ ಮುಖ್ಯ ಕಲ್ಪನೆ.',
+        voice:'ಚೆನ್ನಾಗಿದೆ - ಎರಡೂ ನೋಡಿದ್ದೀರಿ.', key:'done'}; }catch(e){} }, 3500);
+    }
+  }catch(e){}
+}
+
 testBtn.onclick = runTest;
 
 container.querySelectorAll('.solution-btn').forEach(btn => {
@@ -531,5 +594,6 @@ container.querySelectorAll('.solution-btn').forEach(btn => {
 
 updateDisplay();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

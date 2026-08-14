@@ -456,6 +456,43 @@ const reactionDisplay = document.getElementById('reaction-display');
 const reactionEquation = document.getElementById('reaction-equation');
 const reactionResult = document.getElementById('reaction-result');
 
+// ---- native one-clock coach (guide, not grader) ----
+function coachSoil(){
+  try{
+    if(isTreated){
+      window.__eduRound = {native:true,
+        why:'Neutralising the soil brings it to pH 7 so crops can take up nutrients.',
+        detail:'Acidic soil is fixed with lime (a base).\nBasic soil is fixed with compost (acids).\nEither way the reaction is acid + base to salt + water.',
+        line:'Neutralised to pH 7 - the plant is healthy. Neutralisation in agriculture.',
+        voice:'Neutralised - the soil is healthy.', key:'soil-done'};
+      return;
+    }
+    if(selectedSoil==='acidic'){
+      window.__eduRound = {native:true,
+        hint:'Acidic soil needs a base. Add lime.',hintVoice:'Add lime to neutralise.',
+        why:'Lime is a base; it neutralises the excess acid and raises the pH toward 7.',
+        detail:'The soil is acidic (pH 4-5).\nLime is a base.\nAdd it to raise the pH to neutral.',
+        line:'This soil is acidic. Add lime (a base) to raise the pH.',
+        voice:'Add lime to neutralise.', glow:treatBtn, submit:treatBtn, key:'soil-acidic'};
+    } else if(selectedSoil==='basic'){
+      window.__eduRound = {native:true,
+        hint:'Basic soil needs acid. Add compost.',hintVoice:'Add compost to neutralise.',
+        why:'Compost releases acids; they neutralise the excess base and lower the pH toward 7.',
+        detail:'The soil is basic (pH 9-10).\nCompost releases acids.\nAdd it to lower the pH to neutral.',
+        line:'This soil is basic. Add compost (acidic) to lower the pH.',
+        voice:'Add compost to neutralise.', glow:treatBtn, submit:treatBtn, key:'soil-basic'};
+    } else {
+      var aB=container.querySelector('.soil-btn.acidic'), bB=container.querySelector('.soil-btn.basic');
+      window.__eduRound = {native:true,
+        hint:'Pick the problem soil - acidic or basic.',hintVoice:'Pick the soil type.',
+        why:'You neutralise a soil with the opposite - a base for acid, an acid for base.',
+        detail:'Is the soil too acidic or too basic?\nPick one to see its problem.\nThen add the opposite to neutralise.',
+        line:'Is the soil too acidic or too basic? Pick one.',
+        voice:'Pick the soil type.', glow:[aB,bB].filter(Boolean), key:'soil-pick'};
+    }
+  }catch(e){}
+}
+
 container.querySelectorAll('.soil-btn').forEach(btn => {
   btn.onclick = () => {
     if (isTreated) return;
@@ -508,6 +545,7 @@ container.querySelectorAll('.soil-btn').forEach(btn => {
     
     treatBtn.disabled = false;
     takeaway.classList.remove('show');
+    coachSoil();
   };
 });
 
@@ -560,11 +598,14 @@ treatBtn.onclick = function() {
     
     reactionDisplay.classList.add('show');
     takeaway.classList.add('show');
-    
+    coachSoil();
+
     treatBtn.textContent = '✅ Neutralisation Successful!';
     treatBtn.style.background = 'linear-gradient(135deg, #4caf50 0%, #2e7d32 100%)';
   }, 800);
 };
+
+coachSoil();
 </script>
   <script src="edu-coach.js"></script>
 </body>

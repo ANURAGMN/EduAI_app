@@ -400,6 +400,27 @@ function createSprayParticles() {
   }
 }
 
+// ---- native one-clock coach (guide, not grader) ----
+function coachSpray(){
+  try{
+    if(sprayCount >= maxSprays){
+      window.__eduRound = {native:true,
+        why:'ಫೀನಾಫ್ಥಲೀನ್ ಒಂದು ಸೂಚಕ, ಕ್ಷಾರದ ಮೇಲೆ ಗುಲಾಬಿಯಾಗುತ್ತದೆ. ಗುಪ್ತ ಶಾಯಿ ಒಂದು ಕ್ಷಾರೀಯ ದ್ರಾವಣವಾಗಿತ್ತು.',
+        detail:'ಸಂದೇಶವನ್ನು ಕ್ಷಾರೀಯ (ಅದೃಶ್ಯ) ದ್ರಾವಣದಿಂದ ಬರೆಯಲಾಗಿತ್ತು.\nಸಿಂಪಡಣೆ ಕ್ಷಾರದ ಮೇಲೆ ಗುಲಾಬಿಯಾಗುವ ಸೂಚಕ.\nಆದ್ದರಿಂದ ಬರಹ ಗುಲಾಬಿಯಾಗಿ ಕಾಣಿಸುತ್ತದೆ.',
+        line:'ಬಹಿರಂಗವಾಯಿತು! ಫೀನಾಫ್ಥಲೀನ್ ಕ್ಷಾರದ ಮೇಲೆ ಗುಲಾಬಿಯಾಗುತ್ತದೆ - ಗುಪ್ತ ಶಾಯಿ ಕ್ಷಾರೀಯ ದ್ರಾವಣ.',
+        voice:'ಫೀನಾಫ್ಥಲೀನ್ ಕ್ಷಾರದ ಮೇಲೆ ಗುಲಾಬಿಯಾಗುತ್ತದೆ.', key:'spray-done'};
+    } else {
+      window.__eduRound = {native:true,
+        hint:'ಸೂಚಕವನ್ನು ಕಾಗದದ ಮೇಲೆ ಸಿಂಪಡಿಸಿ.',hintVoice:'ಸಿಂಪಡಿಸುತ್ತಿರಿ.',
+        why:'ಗುಪ್ತ ಕ್ಷಾರೀಯ ಶಾಯಿಯನ್ನು ಭೇಟಿಯಾದಾಗ ಸೂಚಕ ಬಣ್ಣ ಬದಲಿಸುತ್ತದೆ.',
+        detail:'ಸಿಂಪಡಣೆಯನ್ನು ಕೆಲವು ಬಾರಿ ಒತ್ತಿ.\nಸೂಚಕ ಕ್ಷಾರೀಯ ಶಾಯಿಯೊಂದಿಗೆ ಪ್ರತಿಕ್ರಿಯಿಸುತ್ತದೆ.\nಗುಪ್ತ ಸಂದೇಶ ಕಾಣಿಸುತ್ತದೆ.',
+        line:(sprayCount===0?'ಖಾಲಿ ಕಾಗದದ ಮೇಲೆ ಸೂಚಕ ಸಿಂಪಡಿಸಿ - 3 ಬಾರಿ ಒತ್ತಿ.':('ಸಿಂಪಡಿಸುತ್ತಿರಿ - ಹೆಚ್ಚು ಸೂಚಕ ಬಿದ್ದಂತೆ ಸಂದೇಶ ಕಾಣಿಸುತ್ತದೆ. '+sprayCount+' / '+maxSprays+'.')),
+        voice:(sprayCount===0?'ಕಾಗದವನ್ನು ಮೂರು ಬಾರಿ ಸಿಂಪಡಿಸಿ.':'ಸಿಂಪಡಿಸುತ್ತಿರಿ.'),
+        glow:sprayBtn, submit:sprayBtn, key:'spray-start'};
+    }
+  }catch(e){}
+}
+
 sprayBtn.onclick = function() {
   if (sprayCount >= maxSprays) return;
   
@@ -432,7 +453,11 @@ sprayBtn.onclick = function() {
     sprayBtn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%)';
     takeaway.classList.add('show');
   }
+  coachSpray();
 };
+
+coachSpray();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

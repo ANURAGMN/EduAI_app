@@ -397,6 +397,27 @@ function createSprayParticles() {
   }
 }
 
+// ---- native one-clock coach (guide, not grader) ----
+function coachSpray(){
+  try{
+    if(sprayCount >= maxSprays){
+      window.__eduRound = {native:true,
+        why:'Phenolphthalein is an indicator that turns pink on a base. The hidden ink was a basic solution.',
+        detail:'The message was written with a basic (invisible) solution.\nThe spray is an indicator that turns pink on a base.\nSo the writing shows up pink.',
+        line:'Revealed! Phenolphthalein turns pink on a base - the invisible ink was a basic solution.',
+        voice:'Phenolphthalein turns pink on a base.', key:'spray-done'};
+    } else {
+      window.__eduRound = {native:true,
+        hint:'Spray the indicator on the paper.',hintVoice:'Keep spraying.',
+        why:'An indicator changes colour when it meets the hidden basic ink.',
+        detail:'Tap Spray a few times.\nThe indicator reacts with the basic ink.\nThe hidden message appears.',
+        line:(sprayCount===0?'Spray the indicator on the blank paper - tap 3 times.':('Keep spraying - the message appears as more indicator lands. '+sprayCount+' of '+maxSprays+'.')),
+        voice:(sprayCount===0?'Spray the paper three times.':'Keep spraying.'),
+        glow:sprayBtn, submit:sprayBtn, key:'spray-start'};
+    }
+  }catch(e){}
+}
+
 sprayBtn.onclick = function() {
   if (sprayCount >= maxSprays) return;
   
@@ -429,7 +450,10 @@ sprayBtn.onclick = function() {
     sprayBtn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%)';
     takeaway.classList.add('show');
   }
+  coachSpray();
 };
+
+coachSpray();
 </script>
   <script src="edu-coach.js"></script>
 </body>

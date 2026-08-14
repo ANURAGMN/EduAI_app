@@ -372,6 +372,33 @@ const resetBtn = document.getElementById('reset-btn');
 const takeaway = document.getElementById('takeaway');
 const takeawayText = document.getElementById('takeaway-text');
 
+// ---- native one-clock coach (guide, not grader) ----
+function coachStep(){
+  try{
+    if(state === 'initial'){
+      window.__eduRound = {native:true,
+        hint:'ಕಾರ್ಖಾನೆಗಳು ಆಮ್ಲೀಯ ತ್ಯಾಜ್ಯ ಬಿಡುಗಡೆ ಮಾಡುತ್ತವೆ.',hintVoice:'ತ್ಯಾಜ್ಯ ಬಿಡುಗಡೆ ಮಾಡಿ.',
+        why:'ಚಿಕಿತ್ಸೆ ಮಾಡದ ಕಾರ್ಖಾನೆ ತ್ಯಾಜ್ಯ ಸಾಮಾನ್ಯವಾಗಿ ಆಮ್ಲೀಯ, ನದಿ ಮತ್ತು ಜಲಚರಗಳಿಗೆ ಹಾನಿಕರ.',
+        detail:'ಹಂತ 1 - ಚಿಕಿತ್ಸೆ ಮಾಡದ ತ್ಯಾಜ್ಯ ಬಿಡುಗಡೆ ಮಾಡಿ.\nಹಂತ 2 - ನೀರು ಆಮ್ಲೀಯವಾಗುವುದನ್ನು ನೋಡಿ.\nಹಂತ 3 - ನದಿ ತಲುಪುವ ಮೊದಲು ತಟಸ್ಥೀಕರಿಸಿ.',
+        line:'ಕಾರ್ಖಾನೆಗಳು ಆಮ್ಲೀಯ ತ್ಯಾಜ್ಯ ಬಿಡುಗಡೆ ಮಾಡುತ್ತವೆ. ಪರಿಣಾಮ ನೋಡಲು "ಚಿಕಿತ್ಸೆ ಇಲ್ಲದೆ ಬಿಡುಗಡೆ" ಒತ್ತಿ.',
+        voice:'ತ್ಯಾಜ್ಯ ಬಿಡುಗಡೆ ಮಾಡಿ.', glow:releaseBtn, submit:releaseBtn, key:'s-initial'};
+    } else if(state === 'polluted'){
+      window.__eduRound = {native:true,
+        hint:'ಆಮ್ಲವನ್ನು ಕ್ಷಾರದಿಂದ ತಟಸ್ಥೀಕರಿಸಿ.',hintVoice:'ತ್ಯಾಜ್ಯ ತಟಸ್ಥೀಕರಿಸಿ.',
+        why:'ಕ್ಷಾರ ಸೇರಿಸಿದರೆ ಆಮ್ಲೀಯ ತ್ಯಾಜ್ಯ ತಟಸ್ಥೀಕರಣಗೊಂಡು pH 7ರ ಕಡೆಗೆ ಏರುತ್ತದೆ.',
+        detail:'ನೀರು ಈಗ ಆಮ್ಲೀಯ.\nತಟಸ್ಥೀಕರಿಸಲು ಕ್ಷಾರ ಸೇರಿಸಿ.\nಆಗ ಮಾತ್ರ ನದಿಗೆ ಸುರಕ್ಷಿತ.',
+        line:'ನದಿ ತಲುಪುವ ಮೊದಲು ಆಮ್ಲವನ್ನು ಕ್ಷಾರದಿಂದ ತಟಸ್ಥೀಕರಿಸಿ.',
+        voice:'ತ್ಯಾಜ್ಯ ತಟಸ್ಥೀಕರಿಸಿ.', glow:treatBtn, submit:treatBtn, key:'s-polluted-'+Date.now()};
+    } else {
+      window.__eduRound = {native:true,
+        why:'ಆಮ್ಲ + ಕ್ಷಾರ = ಉಪ್ಪು + ನೀರು; ಚಿಕಿತ್ಸೆ ಮಾಡಿದ ನೀರು pH 7 ತಲುಪಿ ಸುರಕ್ಷಿತ.',
+        detail:'ಕ್ಷಾರ ಆಮ್ಲೀಯ ತ್ಯಾಜ್ಯವನ್ನು ತಟಸ್ಥೀಕರಿಸಿತು.\nನೀರು ಮತ್ತೆ ಸುಮಾರು pH 7.\nತಟಸ್ಥೀಕರಣ ನಮ್ಮ ನೀರನ್ನು ರಕ್ಷಿಸುತ್ತದೆ.',
+        line:'~pH 7ಗೆ ಚಿಕಿತ್ಸೆ - ಜಲಚರ ಜೀವನಕ್ಕೆ ಸುರಕ್ಷಿತ. ತಟಸ್ಥೀಕರಣ ನಮ್ಮ ನೀರನ್ನು ರಕ್ಷಿಸುತ್ತದೆ.',
+        voice:'ತಟಸ್ಥವಾಯಿತು - ನೀರು ಸುರಕ್ಷಿತ.', key:'s-treated-'+Date.now()};
+    }
+  }catch(e){}
+}
+
 releaseBtn.onclick = function() {
   if (state !== 'initial') return;
   state = 'polluted';
@@ -414,6 +441,7 @@ releaseBtn.onclick = function() {
     
     takeawayText.textContent = 'ಅನಾಹುತ! ಚಿಕಿತ್ಸೆ ಇಲ್ಲದ ಆಮ್ಲೀಯ ತ್ಯಾಜ್ಯ (pH 3) ಮೀನುಗಳನ್ನು ಸಾಯಿಸಿತು! ಆಮ್ಲ ಅವುಗಳ ಕಿವಿರುಗಳನ್ನು ನಾಶಪಡಿಸಿತು. ಅದಕ್ಕೇ ಕಾರ್ಖಾನೆಗಳು ಬಿಡುಗಡೆ ಮೊದಲು ತ್ಯಾಜ್ಯ ತಟಸ್ಥೀಕರಿಸಲೇ ಬೇಕು!';
     takeaway.classList.add('show');
+    coachStep();
   }, 500);
 };
 
@@ -453,6 +481,7 @@ treatBtn.onclick = function() {
     treatBtn.disabled = true;
     
     takeawayText.textContent = 'ಯಶಸ್ಸು! ಆಮ್ಲೀಯ ತ್ಯಾಜ್ಯ ತಟಸ್ಥೀಕರಿಸಲು ಕ್ಷಾರ ಸೇರಿಸಿ ತಟಸ್ಥೀಕರಣ ಪ್ರತಿಕ್ರಿಯೆ ನಡೆಸಿದೆ. ಚಿಕಿತ್ಸೆ ಮಾಡಿದ ನೀರು (pH 7) ಈಗ ಜಲಚರ ಜೀವನಕ್ಕೆ ಸುರಕ್ಷಿತ!';
+    coachStep();
   }, 800);
 };
 
@@ -486,7 +515,11 @@ resetBtn.onclick = function() {
   releaseBtn.disabled = false;
   treatBtn.disabled = true;
   takeaway.classList.remove('show');
+  coachStep();
 };
+
+coachStep();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

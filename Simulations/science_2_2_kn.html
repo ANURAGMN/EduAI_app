@@ -104,7 +104,7 @@ svg { width: 100%; height: 100%; display: block; }
 .metric-label { color: #666; }
 .metric-value { font-weight: 600; color: #007AFF; }
 .metric-value.acidic { color: #d32f2f; }
-.metric-value.ಮೂಲ { color: #1565c0; }
+.metric-value.basic { color: #1565c0; }
 .metric-value.neutral { color: #2e7d32; }
 
 .control-panel {
@@ -278,9 +278,9 @@ const SOLUTIONS = {
   'lemon': { name: 'ನಿಂಬೆ ರಸ', icon: '🍋', type: 'acidic', blueResult: '#f44336', redResult: '#f44336' },
   'vinegar': { name: 'ವಿನಿಗರ್', icon: '🍶', type: 'acidic', blueResult: '#ef5350', redResult: '#ef5350' },
   'curd': { name: 'ಮೊಸರು', icon: '🥛', type: 'acidic', blueResult: '#e57373', redResult: '#e57373' },
-  'soap': { name: 'ಸಾಬೂನು ದ್ರಾವಣ', icon: '🧼', type: 'ಮೂಲ', blueResult: '#2196f3', redResult: '#2196f3' },
-  'baking': { name: 'ಬೇಕಿಂಗ್ ಸೋಡಾ', icon: '🥄', type: 'ಮೂಲ', blueResult: '#1976d2', redResult: '#1976d2' },
-  'lime': { name: 'ಸುಣ್ಣದ ನೀರು', icon: '💧', type: 'ಮೂಲ', blueResult: '#1565c0', redResult: '#1565c0' },
+  'soap': { name: 'ಸಾಬೂನು ದ್ರಾವಣ', icon: '🧼', type: 'basic', blueResult: '#2196f3', redResult: '#2196f3' },
+  'baking': { name: 'ಬೇಕಿಂಗ್ ಸೋಡಾ', icon: '🥄', type: 'basic', blueResult: '#1976d2', redResult: '#1976d2' },
+  'lime': { name: 'ಸುಣ್ಣದ ನೀರು', icon: '💧', type: 'basic', blueResult: '#1565c0', redResult: '#1565c0' },
   'ನೀರು': { name: 'ನಳ ನೀರು', icon: '🚰', type: 'neutral', blueResult: '#2196f3', redResult: '#f44336' },
   'sugar': { name: 'ಸಕ್ಕರೆ ದ್ರಾವಣ', icon: '🍬', type: 'neutral', blueResult: '#2196f3', redResult: '#f44336' },
   'salt': { name: 'ಉಪ್ಪು ದ್ರಾವಣ', icon: '🧂', type: 'neutral', blueResult: '#2196f3', redResult: '#f44336' }
@@ -381,8 +381,9 @@ function updateDisplay() {
   solutionName.textContent = sol.name;
   
   if (sol.type === 'acidic') ದ್ರವ.setAttribute('fill', '#ffcdd2');
-  else if (sol.type === 'ಮೂಲ') ದ್ರವ.setAttribute('fill', '#bbdefb');
+  else if (sol.type === 'basic') ದ್ರವ.setAttribute('fill', '#bbdefb');
   else ದ್ರವ.setAttribute('fill', '#b3e5fc');
+  coachGuide();
 }
 
 function animatePaper(paper, startX, startY, endX, endY, duration) {
@@ -441,15 +442,15 @@ async function runTest() {
     resultText.setAttribute('fill', '#d32f2f');
     resultBox.querySelector('rect').setAttribute('stroke', '#d32f2f');
     takeawayText.textContent = `${sol.name} ಆಮ್ಲೀಯ! ಆಮ್ಲಗಳು H⁺ ಅಯಾನುಗಳನ್ನು ಬಿಡುಗಡೆ ಮಾಡುವುದರಿಂದ ನೀಲಿ ಲಿಟ್ಮಸ್ ಕೆಂಪಾಗುತ್ತದೆ.`;
-  } else if (sol.type === 'ಮೂಲ') {
+  } else if (sol.type === 'basic') {
     blueStatus.textContent = 'ಬದಲಾವಣೆ ಇಲ್ಲ';
     redStatus.textContent = '→ ನೀಲಿ!';
     blueResult.textContent = 'ನೀಲಿ';
     blueResult.className = 'metric-value';
     redResult.textContent = 'ನೀಲಿ ⚠️';
-    redResult.className = 'metric-value ಮೂಲ';
+    redResult.className = 'metric-value basic';
     conclusion.textContent = 'ಕ್ಷಾರೀಯ';
-    conclusion.className = 'metric-value ಮೂಲ';
+    conclusion.className = 'metric-value basic';
     resultText.textContent = '🔵 ಕ್ಷಾರೀಯ';
     resultText.setAttribute('fill', '#1565c0');
     resultBox.querySelector('rect').setAttribute('stroke', '#1565c0');
@@ -471,6 +472,7 @@ async function runTest() {
 
   resultBox.setAttribute('opacity', '1');
   takeaway.classList.add('show');
+  coachResult(sol);
   state.animating = false;
 }
 
@@ -496,6 +498,65 @@ function resetTest() {
   resultBox.setAttribute('opacity', '0');
 }
 
+// ---- native one-clock coach (guide, not grader) ----
+const testedTypes = new Set();
+let softDone = false;
+function findSolBtn(type){
+  var btns = Array.prototype.slice.call(container.querySelectorAll('.solution-btn'));
+  for (var i=0;i<btns.length;i++){ var s=SOLUTIONS[btns[i].dataset.solution]; if(s&&s.type===type) return btns[i]; }
+  return null;
+}
+function coachGuide(){
+  try{
+    if(state.animating) return;
+    var sol = SOLUTIONS[state.solution];
+    var haveA = testedTypes.has('acidic'), haveB = testedTypes.has('basic');
+    if(haveA && !haveB && sol.type!=='basic'){
+      window.__eduRound = {native:true,
+        hint:'ವಿರುದ್ಧ ಬದಲಾವಣೆ ನೋಡಲು ಈಗ ಒಂದು ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',hintVoice:'ಈಗ ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',
+        why:'ಒಂದು ಆಮ್ಲ ಮತ್ತು ಒಂದು ಕ್ಷಾರ ಎರಡನ್ನೂ ಪರೀಕ್ಷಿಸಿದರೆ ಎರಡೂ ಲಿಟ್ಮಸ್ ಬದಲಾವಣೆಗಳು ಕಾಣುತ್ತವೆ.',
+        detail:'ನೀವು ಒಂದು ಆಮ್ಲವನ್ನು ಪರೀಕ್ಷಿಸಿದ್ದೀರಿ.\nಈಗ ಸಾಬೂನು ಅಥವಾ ಸುಣ್ಣದ ನೀರಿನಂತಹ ಕ್ಷಾರವನ್ನು ಆರಿಸಿ ಮತ್ತೆ ಅದ್ದಿ.\nಕೆಂಪು ಲಿಟ್ಮಸ್ ನೀಲಿಯಾಗುವುದನ್ನು ಗಮನಿಸಿ.',
+        line:'ಚೆನ್ನಾಗಿದೆ - ಈಗ ಸಾಬೂನು ಅಥವಾ ಸುಣ್ಣದ ನೀರಿನಂತಹ ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',
+        voice:'ಈಗ ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.', glow:findSolBtn('basic'), key:'nudge-base'};
+      return;
+    }
+    if(haveB && !haveA && sol.type!=='acidic'){
+      window.__eduRound = {native:true,
+        hint:'ವಿರುದ್ಧ ಬದಲಾವಣೆ ನೋಡಲು ಈಗ ಒಂದು ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',hintVoice:'ಈಗ ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',
+        why:'ಒಂದು ಆಮ್ಲ ಮತ್ತು ಒಂದು ಕ್ಷಾರ ಎರಡನ್ನೂ ಪರೀಕ್ಷಿಸಿದರೆ ಎರಡೂ ಲಿಟ್ಮಸ್ ಬದಲಾವಣೆಗಳು ಕಾಣುತ್ತವೆ.',
+        detail:'ನೀವು ಒಂದು ಕ್ಷಾರವನ್ನು ಪರೀಕ್ಷಿಸಿದ್ದೀರಿ.\nಈಗ ನಿಂಬೆ ಅಥವಾ ವಿನಿಗರ್‌ನಂತಹ ಆಮ್ಲವನ್ನು ಆರಿಸಿ ಮತ್ತೆ ಅದ್ದಿ.\nನೀಲಿ ಲಿಟ್ಮಸ್ ಕೆಂಪಾಗುವುದನ್ನು ಗಮನಿಸಿ.',
+        line:'ಚೆನ್ನಾಗಿದೆ - ಈಗ ನಿಂಬೆ ಅಥವಾ ವಿನಿಗರ್‌ನಂತಹ ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',
+        voice:'ಈಗ ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ.', glow:findSolBtn('acidic'), key:'nudge-acid'};
+      return;
+    }
+    window.__eduRound = {native:true,
+      hint:sol.name+' ಪರೀಕ್ಷಿಸಲು ಕಾಗದಗಳನ್ನು ಅದ್ದಿ.',hintVoice:'ಕಾಗದಗಳನ್ನು ಅದ್ದಿ.',
+      why:'ಆಮ್ಲದಲ್ಲಿ ನೀಲಿ ಲಿಟ್ಮಸ್ ಕೆಂಪಾಗುತ್ತದೆ; ಕ್ಷಾರದಲ್ಲಿ ಕೆಂಪು ಲಿಟ್ಮಸ್ ನೀಲಿಯಾಗುತ್ತದೆ; ತಟಸ್ಥವಾದರೆ ಯಾವುದೂ ಬದಲಾಗುವುದಿಲ್ಲ.',
+      detail:'ಹಂತ 1 - ನೀವು '+sol.name+' ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.\nಹಂತ 2 - ಕಾಗದಗಳನ್ನು ಅದ್ದಿ ಒತ್ತಿ.\nಹಂತ 3 - ಯಾವ ಲಿಟ್ಮಸ್ ಬಣ್ಣ ಬದಲಾಯಿಸುತ್ತದೆ ಎಂದು ನೋಡಿ.\nಏಕೆ - ಆಮ್ಲಗಳು H+ ಬಿಡುಗಡೆ ಮಾಡುತ್ತವೆ (ನೀಲಿಯಿಂದ ಕೆಂಪು); ಕ್ಷಾರಗಳು OH- ಬಿಡುಗಡೆ ಮಾಡುತ್ತವೆ (ಕೆಂಪಿನಿಂದ ನೀಲಿ).',
+      line:'ನೀವು '+sol.name+' ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ. ಯಾವ ಲಿಟ್ಮಸ್ ಬದಲಾಗುತ್ತದೆ ಎಂದು ನೋಡಲು ಕಾಗದಗಳನ್ನು ಅದ್ದಿ.',
+      voice:'ಕಾಗದಗಳನ್ನು ಅದ್ದಿ.', glow:testBtn, submit:testBtn, key:'dip-'+state.solution};
+  }catch(e){}
+}
+function coachResult(sol){
+  try{
+    testedTypes.add(sol.type);
+    var line, voice;
+    if(sol.type==='acidic'){ line='ನೀಲಿ ಲಿಟ್ಮಸ್ ಕೆಂಪಾಯಿತು - '+sol.name+' ಒಂದು ಆಮ್ಲ.'; voice=sol.name+' ಒಂದು ಆಮ್ಲ.'; }
+    else if(sol.type==='basic'){ line='ಕೆಂಪು ಲಿಟ್ಮಸ್ ನೀಲಿಯಾಯಿತು - '+sol.name+' ಒಂದು ಕ್ಷಾರ.'; voice=sol.name+' ಒಂದು ಕ್ಷಾರ.'; }
+    else { line='ಯಾವ ಕಾಗದವೂ ಬದಲಾಗಲಿಲ್ಲ - '+sol.name+' ತಟಸ್ಥ.'; voice=sol.name+' ತಟಸ್ಥ.'; }
+    window.__eduRound = {native:true,
+      why:'ಲಿಟ್ಮಸ್ ಬಣ್ಣ ಬದಲಾವಣೆಯು ಪ್ರಕಾರವನ್ನು ಹೇಳುತ್ತದೆ: ಆಮ್ಲ, ಕ್ಷಾರ ಅಥವಾ ತಟಸ್ಥ.',
+      detail:'ನೀಲಿ ಲಿಟ್ಮಸ್ ಕೆಂಪಾದರೆ ಆಮ್ಲ.\nಕೆಂಪು ಲಿಟ್ಮಸ್ ನೀಲಿಯಾದರೆ ಕ್ಷಾರ.\nಬದಲಾವಣೆ ಇಲ್ಲದಿದ್ದರೆ ತಟಸ್ಥ.',
+      line:line, voice:voice, key:'res-'+state.solution+'-'+Date.now()};
+    if(!softDone && testedTypes.has('acidic') && testedTypes.has('basic')){
+      softDone = true;
+      setTimeout(function(){ try{ window.__eduRound = {native:true,
+        line:'ನೀವು ಒಂದು ಆಮ್ಲ ಮತ್ತು ಒಂದು ಕ್ಷಾರವನ್ನು ಪರೀಕ್ಷಿಸಿ ಎರಡೂ ಲಿಟ್ಮಸ್ ಬದಲಾವಣೆಗಳನ್ನು ನೋಡಿದ್ದೀರಿ. ಅದೇ ಮುಖ್ಯ ಕಲ್ಪನೆ.',
+        voice:'ಚೆನ್ನಾಗಿದೆ - ಎರಡೂ ನೋಡಿದ್ದೀರಿ.', key:'done'}; }catch(e){} }, 3500);
+    }
+  }catch(e){}
+}
+
 testBtn.onclick = runTest;
 
 container.querySelectorAll('.solution-btn').forEach(btn => {
@@ -511,5 +572,6 @@ container.querySelectorAll('.solution-btn').forEach(btn => {
 
 updateDisplay();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

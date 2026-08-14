@@ -116,7 +116,7 @@ svg { width: 100%; height: 100%; display: block; }
 .metric-label { color: #666; }
 .metric-value { font-weight: 600; color: #007AFF; }
 .metric-value.acidic { color: #d32f2f; }
-.metric-value.ಮೂಲ { color: #1565c0; }
+.metric-value.basic { color: #1565c0; }
 .metric-value.neutral { color: #2e7d32; }
 
 .control-panel {
@@ -498,7 +498,33 @@ baseSlider.oninput = function() {
   // Update base ದ್ರವ height (max 60px)
   baseLiquid.setAttribute('height', 60 * baseAmount / 100);
   acidLiquid.setAttribute('height', 60 * (100 - baseAmount) / 100);
+  coachMix();
 };
+
+// ---- native one-clock coach (guide, not grader) ----
+function coachMix(){
+  try{
+    if(!isMixed){
+      var near = (baseAmount>=40 && baseAmount<=60);
+      window.__eduRound = {native:true,
+        hint:'ಆಮ್ಲ ಮತ್ತು ಕ್ಷಾರವನ್ನು ಸಮತೋಲನಗೊಳಿಸಿ, ನಂತರ ಮಿಶ್ರಣ ಮಾಡಿ.',hintVoice:'ಕ್ಷಾರವನ್ನು ಅರ್ಧದಷ್ಟು ಇಟ್ಟು ಮಿಶ್ರಣ ಮಾಡಿ.',
+        why:'ತಟಸ್ಥೀಕರಣಕ್ಕೆ ಆಮ್ಲ ಮತ್ತು ಕ್ಷಾರ ಸಮತೋಲನಗೊಂಡು pH 7 ತಲುಪಬೇಕು.',
+        detail:'ಕ್ಷಾರದ ಪ್ರಮಾಣವನ್ನು ಸರಿಸಿ.\nಅರ್ಧ ಕ್ಷಾರ, ಅರ್ಧ ಆಮ್ಲ ಗುರಿ ಇಟ್ಟುಕೊಳ್ಳಿ.\n"ಮಿಶ್ರಣ ಮಾಡಿ" ಒತ್ತಿ.',
+        line:(near?('ಕ್ಷಾರ ಸುಮಾರು ಸಮತೋಲನದಲ್ಲಿದೆ ('+baseAmount+'%). ತಟಸ್ಥೀಕರಿಸಲು ಮಿಶ್ರಣ ಮಾಡಿ.'):('ಆಮ್ಲವನ್ನು ಸಮತೋಲಿಸಲು ಕ್ಷಾರವನ್ನು 50% ಹತ್ತಿರ ಇಡಿ (ಈಗ '+baseAmount+'%), ನಂತರ ಮಿಶ್ರಣ ಮಾಡಿ.')),
+        voice:'ಕ್ಷಾರವನ್ನು ಅರ್ಧದಷ್ಟು ಇಟ್ಟು ಮಿಶ್ರಣ ಮಾಡಿ.',
+        glow:mixBtn, submit:mixBtn, key:'mix-start'};
+    } else {
+      var line, voice;
+      if(baseAmount<40){ line='ಕ್ಷಾರ ತುಂಬಾ ಕಡಿಮೆ - ಇನ್ನೂ ಆಮ್ಲೀಯ. ಮರುಹೊಂದಿಸಿ, ಹೆಚ್ಚು ಕ್ಷಾರ ಸೇರಿಸಿ, ಮತ್ತೆ ಮಿಶ್ರಣ ಮಾಡಿ.'; voice='ಕ್ಷಾರ ತುಂಬಾ ಕಡಿಮೆ - ಇನ್ನೂ ಆಮ್ಲೀಯ.'; }
+      else if(baseAmount>60){ line='ಕ್ಷಾರ ತುಂಬಾ ಹೆಚ್ಚು - ಈಗ ಕ್ಷಾರೀಯ. ಮರುಹೊಂದಿಸಿ, ಕಡಿಮೆ ಕ್ಷಾರ ಬಳಸಿ, ಮತ್ತೆ ಮಿಶ್ರಣ ಮಾಡಿ.'; voice='ಕ್ಷಾರ ತುಂಬಾ ಹೆಚ್ಚು - ಈಗ ಕ್ಷಾರೀಯ.'; }
+      else { line='ಸಮತೋಲನ! ಆಮ್ಲ + ಕ್ಷಾರ = ಉಪ್ಪು + ನೀರು, pH 7. ಅದೇ ತಟಸ್ಥೀಕರಣ.'; voice='ತಟಸ್ಥ - pH 7ರಲ್ಲಿ ಉಪ್ಪು ಮತ್ತು ನೀರು.'; }
+      window.__eduRound = {native:true,
+        why:'ಆಮ್ಲ + ಕ್ಷಾರ = ಉಪ್ಪು + ನೀರು; ಸಮತೋಲನದಲ್ಲಿ pH 7 (ತಟಸ್ಥ).',
+        detail:'ಆಮ್ಲಕ್ಕಿಂತ ಕಡಿಮೆ ಕ್ಷಾರ ಆಮ್ಲೀಯವಾಗಿ ಉಳಿಯುತ್ತದೆ.\nಆಮ್ಲಕ್ಕಿಂತ ಹೆಚ್ಚು ಕ್ಷಾರ ಕ್ಷಾರೀಯವಾಗುತ್ತದೆ.\nಸಮ ಪ್ರಮಾಣ pH 7ಗೆ ತಟಸ್ಥೀಕರಿಸುತ್ತದೆ.',
+        line:line, voice:voice, key:'mix-res-'+baseAmount+'-'+Date.now()};
+    }
+  }catch(e){}
+}
 
 mixBtn.onclick = function() {
   if (isMixed) {
@@ -518,6 +544,7 @@ mixBtn.onclick = function() {
     prodWater.classList.remove('active');
     prodHeat.classList.remove('active');
     mixBtn.textContent = '🧪 ಮಿಶ್ರಣ ಮಾಡಿ';
+    coachMix();
     return;
   }
   
@@ -550,7 +577,7 @@ mixBtn.onclick = function() {
       icon = '🔵';
       typeText = '(ಕ್ಷಾರೀಯ)';
       classification = 'ಇನ್ನೂ ಕ್ಷಾರೀಯ';
-      classificationDisplay.className = 'metric-value ಮೂಲ';
+      classificationDisplay.className = 'metric-value basic';
       takeawayText.textContent = 'ಕ್ಷಾರ ಹೆಚ್ಚು! ದ್ರಾವಣ ಇನ್ನೂ ಕ್ಷಾರೀಯ. ಪೂರ್ಣ ತಟಸ್ಥೀಕರಣಕ್ಕೆ ಕಡಿಮೆ ಕ್ಷಾರ ಬಳಸಿ.';
     } else {
       // Neutral
@@ -581,14 +608,18 @@ mixBtn.onclick = function() {
     prodSalt.classList.add('active');
     prodWater.classList.add('active');
     prodHeat.classList.add('active');
-    
+
     takeaway.classList.add('show');
-    
+    coachMix();
+
     setTimeout(() => {
       heatIndicator.style.opacity = '0.3';
     }, 2000);
   }, 500);
 };
+
+coachMix();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

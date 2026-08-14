@@ -369,6 +369,33 @@ const resetBtn = document.getElementById('reset-btn');
 const takeaway = document.getElementById('takeaway');
 const takeawayText = document.getElementById('takeaway-text');
 
+// ---- native one-clock coach (guide, not grader) ----
+function coachStep(){
+  try{
+    if(state === 'initial'){
+      window.__eduRound = {native:true,
+        hint:'Factories release acidic waste.',hintVoice:'Release the waste.',
+        why:'Untreated factory effluent is often acidic and harms rivers and aquatic life.',
+        detail:'Step 1 - Release the untreated waste.\nStep 2 - See the water turn acidic.\nStep 3 - Neutralise it before it reaches the river.',
+        line:'Factories release acidic waste. Tap Release Untreated to see the effect.',
+        voice:'Release the waste.', glow:releaseBtn, submit:releaseBtn, key:'s-initial'};
+    } else if(state === 'polluted'){
+      window.__eduRound = {native:true,
+        hint:'Neutralise the acid with a base.',hintVoice:'Neutralise the waste.',
+        why:'Adding a base neutralises the acidic effluent, raising it toward pH 7 before discharge.',
+        detail:'The water is acidic now.\nAdd a base to neutralise it.\nOnly then is it safe for the river.',
+        line:'Neutralise the acid with a base before it reaches the river.',
+        voice:'Neutralise the waste.', glow:treatBtn, submit:treatBtn, key:'s-polluted-'+Date.now()};
+    } else {
+      window.__eduRound = {native:true,
+        why:'Acid + base makes salt + water; the treated water reaches pH 7 and is safe.',
+        detail:'The base neutralised the acidic waste.\nThe water is back to about pH 7.\nNeutralisation protects our waters.',
+        line:'Treated to ~pH 7 - safe for aquatic life. Neutralisation protects our waters.',
+        voice:'Neutralised - the water is safe.', key:'s-treated-'+Date.now()};
+    }
+  }catch(e){}
+}
+
 releaseBtn.onclick = function() {
   if (state !== 'initial') return;
   state = 'polluted';
@@ -411,6 +438,7 @@ releaseBtn.onclick = function() {
     
     takeawayText.textContent = 'DISASTER! Untreated acidic waste (pH 3) has killed the fish! The acid destroyed their gills. This is why factories MUST neutralise waste before release!';
     takeaway.classList.add('show');
+    coachStep();
   }, 500);
 };
 
@@ -448,8 +476,9 @@ treatBtn.onclick = function() {
     phValue.className = 'ph-value neutral';
     
     treatBtn.disabled = true;
-    
+
     takeawayText.textContent = 'SUCCESS! By adding a base to neutralise the acidic waste, we performed a neutralisation reaction. The treated water (pH 7) is now safe for aquatic life!';
+    coachStep();
   }, 800);
 };
 
@@ -483,7 +512,10 @@ resetBtn.onclick = function() {
   releaseBtn.disabled = false;
   treatBtn.disabled = true;
   takeaway.classList.remove('show');
+  coachStep();
 };
+
+coachStep();
 </script>
   <script src="edu-coach.js"></script>
 </body>

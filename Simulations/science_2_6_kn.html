@@ -104,7 +104,7 @@ svg { width: 100%; height: 100%; display: block; }
 .metric-label { color: #666; }
 .metric-value { font-weight: 600; color: #007AFF; }
 .metric-value.acidic { color: #e65100; }
-.metric-value.ಮೂಲ { color: #7b1fa2; }
+.metric-value.basic { color: #7b1fa2; }
 
 .control-panel {
   background: #ede7f6;
@@ -329,9 +329,9 @@ const container = document.getElementById('sim');
 
 const SOLUTIONS = {
   'tamarind': { name: 'ಹುಣಿಸೆ ನೀರು', icon: '🫙', type: 'acidic', smellRemains: true },
-  'baking': { name: 'ಬೇಕಿಂಗ್ ಸೋಡಾ', icon: '🥄', type: 'ಮೂಲ', smellRemains: false },
+  'baking': { name: 'ಬೇಕಿಂಗ್ ಸೋಡಾ', icon: '🥄', type: 'basic', smellRemains: false },
   'vinegar': { name: 'ವಿನಿಗರ್', icon: '🍶', type: 'acidic', smellRemains: true },
-  'soap': { name: 'ಸಾಬೂನು ದ್ರಾವಣ', icon: '🧼', type: 'ಮೂಲ', smellRemains: false }
+  'soap': { name: 'ಸಾಬೂನು ದ್ರಾವಣ', icon: '🧼', type: 'basic', smellRemains: false }
 };
 
 container.innerHTML = `
@@ -437,6 +437,7 @@ function updateDisplay() {
   displaySolution.textContent = sol.name;
   displayType.textContent = sol.type === 'acidic' ? 'ಆಮ್ಲೀಯ' : 'ಕ್ಷಾರೀಯ';
   displayType.className = `metric-value ${sol.type}`;
+  coachGuide();
 }
 
 function resetTest() {
@@ -450,6 +451,65 @@ function resetTest() {
   smellStrong.classList.remove('active');
   smellNone.classList.remove('active');
   mixBtn.textContent = '🧅 ಒಟ್ಟಿಗೆ ಮಿಶ್ರಣ ಮಾಡಿ';
+  coachGuide();
+}
+
+// ---- native one-clock coach (guide, not grader) ----
+const testedTypes = new Set();
+let softDone = false;
+function findSolBtn(type){
+  var btns = Array.prototype.slice.call(container.querySelectorAll('.solution-btn'));
+  for (var i=0;i<btns.length;i++){ var s=SOLUTIONS[btns[i].dataset.solution]; if(s&&s.type===type) return btns[i]; }
+  return null;
+}
+function coachGuide(){
+  try{
+    if(state.tested) return;
+    var sol = SOLUTIONS[state.solution];
+    var haveA = testedTypes.has('acidic'), haveB = testedTypes.has('basic');
+    if(haveA && !haveB && sol.type!=='basic'){
+      window.__eduRound = {native:true,
+        hint:'ಒಂದು ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ - ಈರುಳ್ಳಿ ವಾಸನೆ ಮಾಯವಾಗುತ್ತದೆ.',hintVoice:'ಈಗ ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',
+        why:'ಕ್ಷಾರಗಳು ಈರುಳ್ಳಿ ವಾಸನೆಯನ್ನು ನಾಶಮಾಡುತ್ತವೆ; ಆಮ್ಲಗಳು ಅದನ್ನು ಉಳಿಸುತ್ತವೆ.',
+        detail:'ಆಮ್ಲದೊಂದಿಗೆ ವಾಸನೆ ಉಳಿಯುವುದನ್ನು ನೋಡಿದ್ದೀರಿ.\nಈಗ ಬೇಕಿಂಗ್ ಸೋಡಾ ಅಥವಾ ಸಾಬೂನಿನಂತಹ ಕ್ಷಾರವನ್ನು ಆರಿಸಿ ಮಿಶ್ರಣ ಮಾಡಿ.\nವಾಸನೆ ಮಾಯವಾಗುತ್ತದೆ.',
+        line:'ಈಗ ಬೇಕಿಂಗ್ ಸೋಡಾದಂತಹ ಕ್ಷಾರ ಪ್ರಯತ್ನಿಸಿ - ಈರುಳ್ಳಿ ವಾಸನೆ ಮಾಯವಾಗುತ್ತದೆ.',
+        voice:'ಈಗ ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.', glow:findSolBtn('basic'), key:'nudge-base'};
+      return;
+    }
+    if(haveB && !haveA && sol.type!=='acidic'){
+      window.__eduRound = {native:true,
+        hint:'ಒಂದು ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ - ಈರುಳ್ಳಿ ವಾಸನೆ ಉಳಿಯುತ್ತದೆ.',hintVoice:'ಈಗ ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',
+        why:'ಆಮ್ಲಗಳು ಈರುಳ್ಳಿ ವಾಸನೆಯನ್ನು ಉಳಿಸುತ್ತವೆ; ಕ್ಷಾರಗಳು ಅದನ್ನು ನಾಶಮಾಡುತ್ತವೆ.',
+        detail:'ಕ್ಷಾರದೊಂದಿಗೆ ವಾಸನೆ ಮಾಯವಾಗುವುದನ್ನು ನೋಡಿದ್ದೀರಿ.\nಈಗ ಹುಣಿಸೆ ಅಥವಾ ವಿನಿಗರ್‌ನಂತಹ ಆಮ್ಲವನ್ನು ಆರಿಸಿ ಮಿಶ್ರಣ ಮಾಡಿ.\nವಾಸನೆ ಉಳಿಯುತ್ತದೆ.',
+        line:'ಈಗ ಹುಣಿಸೆಯಂತಹ ಆಮ್ಲ ಪ್ರಯತ್ನಿಸಿ - ಈರುಳ್ಳಿ ವಾಸನೆ ಉಳಿಯುತ್ತದೆ.',
+        voice:'ಈಗ ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ.', glow:findSolBtn('acidic'), key:'nudge-acid'};
+      return;
+    }
+    window.__eduRound = {native:true,
+      hint:sol.name+' ಜೊತೆ ಈರುಳ್ಳಿ ಮಿಶ್ರಣ ಮಾಡಿ ವಾಸನೆ ಪರಿಶೀಲಿಸಿ.',hintVoice:'ಮಿಶ್ರಣ ಮಾಡಿ ವಾಸನೆ ಪರಿಶೀಲಿಸಿ.',
+      why:'ಈರುಳ್ಳಿ ಒಂದು ವಾಸನೆ ಸೂಚಕ: ಆಮ್ಲದೊಂದಿಗೆ ವಾಸನೆ ಉಳಿಯುತ್ತದೆ, ಕ್ಷಾರದೊಂದಿಗೆ ಮಾಯವಾಗುತ್ತದೆ.',
+      detail:'ಹಂತ 1 - ನೀವು '+sol.name+' ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.\nಹಂತ 2 - "ಒಟ್ಟಿಗೆ ಮಿಶ್ರಣ ಮಾಡಿ" ಒತ್ತಿ.\nಹಂತ 3 - ವಾಸನೆ ಉಳಿದರೆ ಆಮ್ಲ; ವಾಸನೆ ಹೋದರೆ ಕ್ಷಾರ.\nಏಕೆ - ಕ್ಷಾರಗಳು ಈರುಳ್ಳಿಯ ಗಂಧಕ ಸಂಯುಕ್ತಗಳನ್ನು ಒಡೆಯುತ್ತವೆ, ಆಮ್ಲಗಳು ಇಲ್ಲ.',
+      line:'ನೀವು '+sol.name+' ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ. ಈರುಳ್ಳಿ ಮಿಶ್ರಣ ಮಾಡಿ ವಾಸನೆ ಉಳಿಯುತ್ತದೆಯೇ ನೋಡಿ.',
+      voice:'ಮಿಶ್ರಣ ಮಾಡಿ ವಾಸನೆ ಪರಿಶೀಲಿಸಿ.', glow:mixBtn, submit:mixBtn, key:'mix-'+state.solution};
+  }catch(e){}
+}
+function coachResult(sol){
+  try{
+    testedTypes.add(sol.type);
+    var line, voice;
+    if(sol.type==='acidic'){ line='ಈರುಳ್ಳಿ ವಾಸನೆ ಇನ್ನೂ ಇದೆ - '+sol.name+' ಒಂದು ಆಮ್ಲ. ಆಮ್ಲಗಳು ವಾಸನೆಯನ್ನು ಉಳಿಸುತ್ತವೆ.'; voice=sol.name+' ಒಂದು ಆಮ್ಲ.'; }
+    else { line='ಈರುಳ್ಳಿ ವಾಸನೆ ಹೋಯಿತು - '+sol.name+' ಒಂದು ಕ್ಷಾರ. ಕ್ಷಾರಗಳು ವಾಸನೆಯನ್ನು ನಾಶಮಾಡುತ್ತವೆ.'; voice=sol.name+' ಒಂದು ಕ್ಷಾರ.'; }
+    window.__eduRound = {native:true,
+      why:'ವಾಸನೆ ಸೂಚಕ ಬಣ್ಣವಿಲ್ಲದೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ: ವಾಸನೆ ಉಳಿದರೆ ಆಮ್ಲ, ವಾಸನೆ ಹೋದರೆ ಕ್ಷಾರ.',
+      detail:'ವಾಸನೆ ಇನ್ನೂ ಇದ್ದರೆ ಆಮ್ಲ.\nವಾಸನೆ ಹೋದರೆ ಕ್ಷಾರ.\nಕೆಲವು ಸೂಚಕಗಳು ಬಣ್ಣದಿಂದಲ್ಲ, ವಾಸನೆಯಿಂದ ಗುರುತಿಸುತ್ತವೆ.',
+      line:line, voice:voice, key:'res-'+state.solution+'-'+Date.now()};
+    if(!softDone && testedTypes.has('acidic') && testedTypes.has('basic')){
+      softDone = true;
+      setTimeout(function(){ try{ window.__eduRound = {native:true,
+        line:'ಆಮ್ಲಕ್ಕೆ ಈರುಳ್ಳಿ ವಾಸನೆ ಉಳಿಯುವುದನ್ನು ಮತ್ತು ಕ್ಷಾರಕ್ಕೆ ಮಾಯವಾಗುವುದನ್ನು ನೋಡಿದ್ದೀರಿ. ಅದೇ ಮುಖ್ಯ ಕಲ್ಪನೆ.',
+        voice:'ಚೆನ್ನಾಗಿದೆ - ಎರಡೂ ನೋಡಿದ್ದೀರಿ.', key:'done'}; }catch(e){} }, 3500);
+    }
+  }catch(e){}
 }
 
 mixBtn.onclick = function() {
@@ -486,7 +546,7 @@ mixBtn.onclick = function() {
       noSmell.style.opacity = '1';
       displaySmell.textContent = 'ಅದೃಶ್ಯವಾಯಿತು! 😊';
       displayConclusion.textContent = 'ಕ್ಷಾರೀಯ';
-      displayConclusion.className = 'metric-value ಮೂಲ';
+      displayConclusion.className = 'metric-value basic';
       resultText.textContent = '😊 ವಾಸನೆ ಇಲ್ಲ → ಕ್ಷಾರ';
       resultText.style.fill = '#7b1fa2';
       resultBox.querySelector('rect').setAttribute('stroke', '#7b1fa2');
@@ -498,6 +558,7 @@ mixBtn.onclick = function() {
     resultBox.style.transition = 'opacity 0.3s';
     resultBox.style.opacity = '1';
     takeaway.classList.add('show');
+    coachResult(sol);
   }, 500);
 };
 
@@ -513,5 +574,6 @@ container.querySelectorAll('.solution-btn').forEach(btn => {
 
 updateDisplay();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>
