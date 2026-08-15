@@ -408,6 +408,40 @@ const materialNames = {
   'glass': 'Glass'
 };
 
+// ---- native one-clock coach (guide, not grader) ----
+var coachDone = false;
+function untestedBtns(){ return Array.prototype.slice.call(document.querySelectorAll('.material-btn:not(.tested)')); }
+function coachIdle(){
+  try{
+    window.__eduRound = {native:true,
+      hint:'Metals let current pass; plastic, rubber, wood, and glass do not.',hintVoice:'Test each material.',
+      why:'Conductors have free electrons that carry current; insulators hold their electrons tightly, so no current flows.',
+      detail:'Step 1 - Tap a material to place it in the circuit gap.\nStep 2 - Bulb lights means conductor; stays dark means insulator.\nStep 3 - Try both metals and non-metals.\nWhy it works - metals share free electrons that move as current; insulators do not.\nTip - that is why wires are metal inside and plastic (an insulator) outside, for safety.',
+      line:'Drop each material into the circuit - if the bulb lights, it is a conductor.',
+      voice:'Test each material.', glow:untestedBtns(), key:'materials'};
+  }catch(e){}
+}
+function coachResult(id, isConductor){
+  try{
+    var name = (materialNames[id] || 'This material');
+    var line, voice;
+    if(isConductor){ line='Bulb glows - '+name+' is a conductor; metals carry current.'; voice=name+' is a conductor.'; }
+    else { line='Stays dark - '+name+' is an insulator; it blocks the current.'; voice=name+' is an insulator.'; }
+    window.__eduRound = {native:true,
+      why:'Conductors have free electrons that carry current; insulators hold theirs tightly, so the circuit stays broken.',
+      detail:'Bulb lights means conductor; stays dark means insulator.\nMetals (spoon, key, coin, foil) conduct; plastic, rubber, wood, and glass insulate.\nTry at least one of each to see both.',
+      line:line+' Try another material.', voice:voice, glow:untestedBtns(), key:'mat-'+id+'-'+Date.now()};
+    if(!coachDone && conductors.length>0 && insulators.length>0){
+      coachDone = true;
+      setTimeout(function(){ try{ window.__eduRound = {native:true,
+        why:'A material conducts if it has free electrons to carry current; otherwise it insulates.',
+        detail:'Conductors (metals) let current through and light the bulb.\nInsulators (plastic, rubber, wood, glass) block it.\nThat is why cables are metal inside and plastic outside.',
+        line:'You have seen a conductor light the bulb and an insulator block it - that is the core idea.',
+        voice:'Conductors carry, insulators block.', key:'done'}; }catch(e){} }, 3200);
+    }
+  }catch(e){}
+}
+
 function testMaterial(id, icon, isConductor, btn) {
   if (btn.classList.contains('tested')) return;
   
@@ -467,9 +501,11 @@ function testMaterial(id, icon, isConductor, btn) {
     document.getElementById('insulator-count').textContent = insulators.length;
     document.getElementById('conductor-items').textContent = conductors.length ? conductors.join(', ') : '-';
     document.getElementById('insulator-items').textContent = insulators.length ? insulators.join(', ') : '-';
-    
+    coachResult(id, isConductor);
   }, 500);
 }
+
+coachIdle();
 </script>
   <script src="edu-coach.js"></script>
 </body>

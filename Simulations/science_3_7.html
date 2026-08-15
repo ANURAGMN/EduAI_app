@@ -392,6 +392,48 @@ const testBtn = document.getElementById('test-btn');
 const learningText = document.getElementById('learning-text');
 const takeaway = document.getElementById('takeaway');
 
+// ---- native one-clock coach (guide, not grader) ----
+function coachBuild(){
+  try{
+    var remaining = Object.entries(components).filter(function(e){return !e[1];}).map(function(e){return e[0];});
+    if(remaining.length === 0){
+      window.__eduRound = {native:true,
+        hint:'Current needs one unbroken path from + back to −.',hintVoice:'Test the circuit.',
+        why:'A bulb only lights inside a complete loop: source to path and back to the source.',
+        detail:'All four parts are in place.\nTap Test to close the switch and complete the loop.\nCurrent will flow from the cell + through the bulb back to −.',
+        line:'All four placed - tap Test to close the loop and light the bulb.',
+        voice:'Test the circuit.', glow:testBtn, submit:testBtn, key:'build-ready'};
+      return;
+    }
+    var nameMap = {cell:'cell', bulb:'bulb', switch:'switch', wire:'wires'};
+    var next = remaining[0];
+    window.__eduRound = {native:true,
+      hint:'Current needs one unbroken path from the cell + terminal back to −.',hintVoice:'Add the '+nameMap[next]+'.',
+      why:'A bulb only lights inside a complete loop: source to path and back to the source.',
+      detail:'Step 1 - Place the cell (the energy source, + and −).\nStep 2 - Add the bulb (it glows when current flows).\nStep 3 - Add the switch (opens/closes the loop) and wires (the path).\nWhy it works - a break anywhere stops the current everywhere.\nTip - build all four, then test.',
+      line:'Add the '+nameMap[next]+' next - a circuit needs a cell, a bulb, a switch, and wires. Still need: '+remaining.map(function(r){return nameMap[r];}).join(', ')+'.',
+      voice:'Add the '+nameMap[next]+'.',
+      glow:document.getElementById('btn-'+next), submit:document.getElementById('btn-'+next), key:'build-'+remaining.join('-')};
+  }catch(e){}
+}
+function coachTest(){
+  try{
+    if(switchOn){
+      window.__eduRound = {native:true,
+        why:'Closing the switch completes the loop, so current flows and lights the bulb.',
+        detail:'The switch is now closed.\nCurrent flows: cell + to wire to bulb to switch to wire to cell −.\nThe filament glows as current passes through it.',
+        line:'Complete loop - current flows from + through the bulb and switch back to −, so it glows.',
+        voice:'Closed loop - it glows.', key:'build-on-'+Date.now()};
+    } else {
+      window.__eduRound = {native:true,
+        why:'An open switch leaves a gap, so no current can flow anywhere in the loop.',
+        detail:'The switch is now open.\nThe path is broken, so current cannot flow.\nClose it again to complete the loop and light the bulb.',
+        line:'Loop broken at the switch - no path, so the bulb goes dark. Turn it on again to close it.',
+        voice:'Open switch - it is dark.', glow:testBtn, submit:testBtn, key:'build-off-'+Date.now()};
+    }
+  }catch(e){}
+}
+
 function placeComponent(type) {
   if (components[type]) return;
   
@@ -419,6 +461,7 @@ function placeComponent(type) {
   
   checkCircuit();
   updateLearning(type);
+  coachBuild();
 }
 
 function checkCircuit() {
@@ -512,6 +555,7 @@ function testCircuit() {
       Tap "Turn ON" to close the switch and complete the circuit again.
     `;
   }
+  coachTest();
 }
 
 function resetCircuit() {
@@ -569,7 +613,10 @@ function resetCircuit() {
   `;
   
   takeaway.classList.remove('show');
+  coachBuild();
 }
+
+coachBuild();
 </script>
   <script src="edu-coach.js"></script>
 </body>
