@@ -473,7 +473,28 @@ function checkAnswer(btn, isCorrect) {
     feedback.className = 'quiz-feedback show wrong';
     feedback.textContent = '❌ Not quite. The metal cap (bump) is the POSITIVE terminal. The flat disc is negative.';
   }
+  coachAnswer(isCorrect);
 }
+
+// ---- native one-clock coach (quiz) ----
+function quizBtns(){ return Array.prototype.slice.call(document.querySelectorAll('.quiz-btn')); }
+function coachAnswer(isCorrect){
+  try{
+    window.__eduRound = {native:true,
+      why:'A cell drives current out of its + terminal and back into its - terminal.',
+      detail:'The raised metal cap is the positive (+) terminal.\nThe flat disc is the negative (-) terminal.\nCurrent leaves +, travels the circuit, and returns to -.',
+      line:(isCorrect?'Correct - the raised metal cap is the + terminal; the flat disc is -.':'Not quite - the flat disc is negative. The raised metal cap is the + terminal.'),
+      voice:(isCorrect?'Right - the cap is positive.':'The cap is the positive end.'),
+      key:'cell-a-'+Date.now()};
+  }catch(e){}
+}
+// idle
+window.__eduRound = {native:true,
+  hint:'The metal cap (bump) is the + terminal; the flat disc is -.',hintVoice:'Which terminal has the cap?',
+  why:'A cell drives current out of its + terminal and back into its - terminal.',
+  detail:'Step 1 - Look at the two ends of the cell.\nStep 2 - The raised metal cap is the positive (+) terminal.\nStep 3 - The flat disc is the negative (-) terminal.\nWhy it matters - current leaves +, travels the circuit, and returns to -.\nTip - LEDs only work if + and - are the right way round.',
+  line:'Quick check: which terminal has the metal cap (bump) - positive or negative?',
+  voice:'Which terminal has the cap?', glow:quizBtns(), key:'cell-q'};
 </script>
   <script src="edu-coach.js"></script>
 </body>

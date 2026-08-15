@@ -598,6 +598,7 @@ function showSymbol(type, element) {
   document.getElementById('detail-title').textContent = data.title;
   document.getElementById('detail-symbol').innerHTML = data.svg;
   document.getElementById('detail-text').innerHTML = data.text;
+  coachSymbol(type);
 }
 
 function checkQuiz(btn, isCorrect) {
@@ -617,7 +618,54 @@ function checkQuiz(btn, isCorrect) {
     feedback.className = 'quiz-feedback show wrong';
     feedback.innerHTML = '❌ Not quite. When the switch closes, it completes the circuit, allowing current to flow and the bulb to glow.';
   }
+  coachQuizAns(isCorrect);
 }
+
+// ---- native one-clock coach (walk every symbol, then quiz) ----
+var seenSyms = new Set();
+var SYM_ORDER = ['cell','battery','bulb','led','switch-open','switch-closed','wire','wire-cross'];
+var SYM_NAME = {cell:'cell (long line = +)', battery:'battery (stacked cells)', bulb:'bulb (circle with a cross)', led:'LED', 'switch-open':'open switch (a gap = no current)', 'switch-closed':'closed switch (a line = current flows)', wire:'wire (a straight line)', 'wire-cross':'crossing wires (not connected)'};
+function symCards(){ return Array.prototype.slice.call(document.querySelectorAll('.symbol-card')); }
+function symCardByType(t){ var i=SYM_ORDER.indexOf(t); return symCards()[i]||null; }
+function nextUnseenSym(){ for(var i=0;i<SYM_ORDER.length;i++){ if(!seenSyms.has(SYM_ORDER[i])) return SYM_ORDER[i]; } return null; }
+function symQuizBtns(){ return Array.prototype.slice.call(document.querySelectorAll('.quiz-btn')); }
+function symDetail(){ return 'Step 1 - Tap a symbol to see what it represents.\nStep 2 - Note cell (long line = +), bulb (circle with a cross), switch (gap = open, line = closed).\nStep 3 - Use them to read the quiz circuit.\nWhy it works - standard symbols make diagrams universal.\nTip - an open switch = gap = no current; closed = line = current.'; }
+function coachSymbol(type){
+  try{
+    seenSyms.add(type);
+    var nm = SYM_NAME[type]||type;
+    var next = nextUnseenSym();
+    var line, glow;
+    if(next){
+      line = 'This is the '+nm+'. ('+seenSyms.size+' of 8 seen) Next symbol: '+(SYM_NAME[next]||next)+'.';
+      glow = symCardByType(next);
+    } else {
+      line = 'This is the '+nm+'. You have seen all 8 symbols - now answer the question below.';
+      glow = symQuizBtns();
+    }
+    window.__eduRound = {native:true,
+      hint:'In a cell symbol the long line is +, the short line is -.',hintVoice:'Explore the symbols.',
+      why:'Engineers use the same symbols worldwide so any circuit diagram reads the same everywhere.',
+      detail:symDetail(), line:line, voice:'Explore the symbols.', glow:glow, submit:(next?symCardByType(next):undefined), key:'sym-'+type};
+  }catch(e){}
+}
+function coachQuizAns(isCorrect){
+  try{
+    window.__eduRound = {native:true,
+      why:'Closing the switch completes the loop, so current flows and the bulb glows.',
+      detail:'A closed switch bridges the gap.\nCurrent then flows around the loop.\nThe bulb glows - nothing breaks or melts.',
+      line:(isCorrect?'Right - closing the switch completes the loop, so the bulb glows.':'Closing the switch completes the loop - so the bulb glows (nothing breaks or melts).'),
+      voice:(isCorrect?'Correct - it glows.':'It completes the loop - it glows.'),
+      key:'sym-a-'+Date.now()};
+  }catch(e){}
+}
+// idle
+window.__eduRound = {native:true,
+  hint:'Tap each symbol to learn how circuits are drawn.',hintVoice:'Explore the symbols.',
+  why:'Engineers use the same symbols worldwide so any circuit diagram reads the same everywhere.',
+  detail:symDetail(),
+  line:'Tap each symbol to learn how circuits are drawn, then answer the question. (0 of 8 seen)',
+  voice:'Explore the symbols.', glow:symCards(), key:'symbols'};
 </script>
   <script src="edu-coach.js"></script>
 </body>

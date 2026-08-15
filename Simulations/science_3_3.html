@@ -421,6 +421,7 @@ function toggleSwitch() {
     lampBulb.classList.remove('lamp-glow');
     statusText.textContent = 'Switch OFF - Circuit broken - No light';
   }
+  coachTorch();
 }
 
 function showComponent(type, element) {
@@ -438,6 +439,32 @@ function showComponent(type, element) {
     setMode('exploded');
   }
 }
+
+// ---- native one-clock coach ----
+function coachTorch(){
+  try{
+    if(isOn){
+      window.__eduRound = {native:true,
+        why:'Closing the switch completes the loop, so current flows from the cells and heats the lamp filament.',
+        detail:'The switch closes the loop.\nCurrent flows from the cells through the lamp.\nThe lamp glows.',
+        line:'Loop closed - current flows from the cells through the lamp, and it glows.',
+        voice:'Closed loop - it glows.', key:'torch-on-'+Date.now()};
+    } else {
+      window.__eduRound = {native:true,
+        why:'The switch decides whether the loop between the cells and the lamp is closed.',
+        detail:'The switch is open - the loop is broken.\nNo current flows, so the lamp is dark.\nTap the switch to close the loop.',
+        line:'Switch open - the loop is broken, so the lamp is dark. Tap to close it.',
+        voice:'Open - it is dark.', glow:switchToggle, submit:switchToggle, key:'torch-off-'+Date.now()};
+    }
+  }catch(e){}
+}
+// idle
+window.__eduRound = {native:true,
+  hint:'A torch is a tiny circuit: cells, lamp, switch. Tap the switch.',hintVoice:'Tap the switch.',
+  why:'The cells push current through a closed loop; the switch decides if the loop is closed.',
+  detail:'Step 1 - Cells provide the energy (+ and - terminals).\nStep 2 - The lamp produces light when current flows.\nStep 3 - The switch closes or breaks the loop.\nWhy it works - current needs an unbroken path from + back to -.\nTip - open the exploded view to see how the parts line up.',
+  line:'A torch is a tiny circuit: cells, lamp, switch. Tap the switch to complete the loop.',
+  voice:'Tap the switch.', glow:switchToggle, submit:switchToggle, key:'torch-idle'};
 </script>
   <script src="edu-coach.js"></script>
 </body>

@@ -424,6 +424,36 @@ function setCells(num) {
       Each cell's <span style="color:#e65100;font-weight:600">(+)</span> connects to next cell's <span style="color:#1565c0;font-weight:600">(−)</span>. More voltage = brightest bulb! 💡💡💡
     `;
   }
+  coachCells(num);
+}
+
+// ---- native one-clock coach (walks each cell count, allow finish) ----
+var seenCounts = new Set();
+function cellBtn(n){ return document.getElementById('btn-'+n+'cell'+(n>1?'s':'')); }
+function nextUntriedCellBtn(){ for(var n=1;n<=3;n++){ if(!seenCounts.has(n)) return cellBtn(n); } return null; }
+function coachCells(num){
+  try{
+    seenCounts.add(num);
+    var voltage = (num*1.5).toFixed(1);
+    var base = num+' cell'+(num>1?'s':'')+' in series = '+voltage+'V'+(num>1?' - the pushes add up, so the bulb is brighter.':' - a single cell.');
+    var untried = nextUntriedCellBtn();
+    var line, voice, glow, key;
+    if(untried){
+      var un = parseInt(untried.id.replace(/\D/g,''),10);
+      line = base+' Now try '+un+' cell'+(un>1?'s':'')+'.';
+      voice = num+' cells, '+voltage+' volts.';
+      glow = untried; key = 'cells-'+num;
+    } else {
+      line = base+' You have seen 1, 2 and 3 cells - more cells means more voltage and a brighter bulb.';
+      voice = 'More cells, more voltage.';
+      glow = null; key = 'done';
+    }
+    window.__eduRound = {native:true,
+      hint:'Add cells and watch the voltage add up.',hintVoice:'Add cells and watch.',
+      why:'Cells in series add: two 1.5V cells give 3V, so more current flows and the bulb is brighter.',
+      detail:'Step 1 - One cell is about 1.5V.\nStep 2 - Connect + of one to - of the next (series).\nStep 3 - Voltages add: 2 cells = 3V, 3 cells = 4.5V.\nWhy it works - each cell adds its push, so more current flows.\nTip - a torch with 2-3 cells is brighter than one.',
+      line:line, voice:voice, glow:glow, submit:untried||undefined, key:key};
+  }catch(e){}
 }
 
 // Initialize with 1 cell

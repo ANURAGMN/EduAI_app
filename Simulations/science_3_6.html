@@ -415,6 +415,7 @@ function selectLamp(type) {
       LEDs have two legs: the <strong>longer leg is positive (+)</strong> and the <strong>shorter leg is negative (−)</strong>. They only work when connected with correct polarity!
     `;
   }
+  coachLampSelect();
 }
 
 function toggleSwitch() {
@@ -448,7 +449,62 @@ function toggleSwitch() {
     ledDome.classList.remove('bulb-on');
     ledStatus.textContent = 'OFF';
   }
+  coachLampToggle();
 }
+
+// ---- native one-clock coach (compare both lamps, allow finish) ----
+var lampsSeen = new Set();
+function lampBox(t){ return document.getElementById(t==='incandescent'?'incandescent-box':'led-box'); }
+function switchToggleEl(){ return document.getElementById('switch-toggle'); }
+function lampDetail(){
+  return 'Step 1 - Choose incandescent or LED to read how it works.\nStep 2 - Tap the switch to power the circuit.\nStep 3 - Compare heat and efficiency.\nWhy it works - a filament must reach ~2500C to glow; an LED emits light directly with little heat.\nFact - an incandescent works either way round; an LED only lights with correct polarity.';
+}
+function coachLampSelect(){
+  try{
+    lampsSeen.add(selectedLamp);
+    var other = selectedLamp==='incandescent'?'led':'incandescent';
+    var sel = selectedLamp==='incandescent'
+      ? 'Incandescent selected - a filament glows white-hot (~2500C) to make light.'
+      : 'LED selected - no filament, just a chip. Efficient, but only lights with correct polarity.';
+    var glow, line;
+    if(!lampsSeen.has(other)){
+      glow = lampBox(other);
+      line = sel+' Also check the '+(other==='led'?'LED.':'incandescent bulb.');
+    } else {
+      glow = switchToggleEl();
+      line = sel+' Now tap the switch to power them and compare.';
+    }
+    window.__eduRound = {native:true,
+      hint:'Pick a lamp, then tap the switch to compare.',hintVoice:'Pick a lamp and test it.',
+      why:'Incandescent bulbs make light by heating a filament (lots of wasted heat); LEDs make light electronically and are efficient.',
+      detail:lampDetail(), line:line, voice:'Tap the switch to compare.', glow:glow, submit:glow, key:'lamp-'+selectedLamp};
+  }catch(e){}
+}
+function coachLampToggle(){
+  try{
+    if(isOn){
+      window.__eduRound = {native:true,
+        why:'The filament converts most energy to heat; the LED converts far more to light, so it lasts longer and saves power.',
+        detail:'Both light when powered.\nThe incandescent filament runs white-hot and wastes energy as heat.\nThe LED stays cool and efficient, and lasts longer.\nAn LED also needs correct polarity (+ to +, - to -).',
+        line:'Both light - but the filament runs white-hot and wastes energy, while the LED stays cool and efficient.',
+        voice:'The LED runs cool and efficient.', key:'lamp-on-'+Date.now()};
+    } else {
+      window.__eduRound = {native:true,
+        hint:'Pick a lamp, then tap the switch to compare.',hintVoice:'Pick a lamp and test it.',
+        why:'Incandescent bulbs heat a filament; LEDs make light electronically and are efficient.',
+        detail:lampDetail(),
+        line:'Switch off. Pick a lamp and tap the switch to compare how each makes light.',
+        voice:'Pick a lamp and test it.', glow:[lampBox('incandescent'),lampBox('led')], key:'lamp'};
+    }
+  }catch(e){}
+}
+// idle
+window.__eduRound = {native:true,
+  hint:'Pick a lamp, then tap the switch to compare.',hintVoice:'Pick a lamp and test it.',
+  why:'Incandescent bulbs heat a filament (wasting heat); LEDs make light electronically and are efficient.',
+  detail:lampDetail(),
+  line:'Pick a lamp, then tap the switch - compare how each makes light.',
+  voice:'Pick a lamp and test it.', glow:[lampBox('incandescent'),lampBox('led')], key:'lamp'};
 </script>
   <script src="edu-coach.js"></script>
 </body>

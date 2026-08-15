@@ -444,6 +444,7 @@ function toggleSwitch() {
       <em>Tap the switch again to close it and complete the circuit.</em>
     `;
   }
+  coachSwitch();
 }
 
 function setSwitchType(type, btn) {
@@ -490,6 +491,33 @@ function updateSwitchElements() {
   window.leverKnob = document.getElementById('lever-knob');
   window.switchLabel = document.getElementById('switch-label');
 }
+
+// ---- native one-clock coach ----
+function switchGroupEl(){ return document.getElementById('switch-group'); }
+function coachSwitch(){
+  try{
+    if(isOn){
+      window.__eduRound = {native:true,
+        why:'Closing the switch completes the loop, so current flows and lights the bulb.',
+        detail:'The switch is closed - the gap is bridged.\nCurrent flows: cell + to wire to switch to bulb to wire to cell -.\nThe bulb glows because the loop is unbroken.',
+        line:'Closed - the gap is bridged, current flows, the bulb lights.',
+        voice:'Closed - it glows.', key:'sw-on-'+Date.now()};
+    } else {
+      window.__eduRound = {native:true,
+        why:'An open switch leaves a gap, so no current can flow anywhere in the loop.',
+        detail:'The switch is open - there is a gap.\nCurrent cannot jump the gap, so it stops.\nClose the switch again to light the bulb.',
+        line:'Open - the gap breaks the loop, so the bulb is dark. Tap to close it.',
+        voice:'Open - it is dark.', glow:switchGroupEl(), submit:switchGroupEl(), key:'sw-off-'+Date.now()};
+    }
+  }catch(e){}
+}
+// idle
+window.__eduRound = {native:true,
+  hint:'Tap the switch to close the gap - current only flows in a closed loop.',hintVoice:'Close the switch.',
+  why:'A switch is a controllable gap in the circuit: closed = current flows, open = it stops.',
+  detail:'Step 1 - OFF: the switch leaves a gap, breaking the loop.\nStep 2 - ON: it bridges the gap, closing the loop.\nStep 3 - The bulb follows the loop.\nWhy it works - current needs an unbroken path; the switch controls that one spot.\nTip - lever, push and toggle switches all do the same job in different shapes.',
+  line:'Tap the switch to close the gap and light the bulb.',
+  voice:'Close the switch.', glow:switchGroupEl(), submit:switchGroupEl(), key:'sw-idle'};
 </script>
   <script src="edu-coach.js"></script>
 </body>

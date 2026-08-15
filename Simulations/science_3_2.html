@@ -439,7 +439,49 @@ function showSource(type) {
   // Animate power flow
   powerLineGlow.style.opacity = '1';
   houseWindow.style.fill = '#ffeb3b';
+  coachSource(type);
 }
+
+// ---- native one-clock coach (walks every source, allow finish) ----
+var seenSources = new Set();
+function srcBtns(){ return Array.prototype.slice.call(document.querySelectorAll('.source-btn')); }
+function nextUnseenSrcBtn(){ var b=srcBtns(); for(var i=0;i<b.length;i++){ if(!seenSources.has(b[i].dataset.source)) return b[i]; } return null; }
+function srcDetail(){
+  return 'Step 1 - Tap a source.\nStep 2 - Read how it turns energy into electricity.\nStep 3 - Note renewable (sun, wind, water) vs non-renewable (coal, gas).\nWhy it works - a spinning generator makes current; solar cells skip the spinning and use light directly.\nTip - India uses coal for most power, but hydro (Bhakra Nangal) and solar are growing.';
+}
+function coachSource(type){
+  try{
+    seenSources.add(type);
+    var all = srcBtns().length;
+    var info = {
+      hydro:{l:'Hydro: falling dam water spins a turbine, then a generator - renewable (the water cycle refills it).',v:'Falling water spins a turbine.'},
+      solar:{l:'Solar: panels convert sunlight straight into electricity - no turbine, no moving parts. Renewable.',v:'Panels convert light directly.'},
+      wind:{l:'Wind: moving air spins the blades, which turn a generator - renewable.',v:'Wind spins the blades.'},
+      thermal:{l:'Thermal: burning coal heats water to steam, which spins the turbine - non-renewable and polluting.',v:'Burning coal makes steam.'}
+    };
+    var d = info[type] || {l:'Electricity is generated from this source.',v:'A source of electricity.'};
+    var untested = nextUnseenSrcBtn();
+    var line, voice, glow, key;
+    if(untested){
+      line = d.l+' ('+seenSources.size+' of '+all+' seen) Next: '+untested.dataset.source+'.';
+      voice = d.v; glow = untested; key = 'src-'+type;
+    } else {
+      line = d.l+' You have seen all '+all+' - hydro, solar and wind are renewable; thermal (coal) is not.';
+      voice = 'You have seen every source.'; glow = null; key = 'done';
+    }
+    window.__eduRound = {native:true,
+      hint:'Tap each source to see how it makes electricity.',hintVoice:'Explore each source.',
+      why:'Electricity comes from spinning a generator - except solar, which converts sunlight directly to current.',
+      detail:srcDetail(), line:line, voice:voice, glow:glow, submit:untested||undefined, key:key};
+  }catch(e){}
+}
+// idle
+window.__eduRound = {native:true,
+  hint:'Tap each source to see how it makes electricity - and which are renewable.',hintVoice:'Explore each source.',
+  why:'Electricity comes from spinning a generator - except solar, which converts sunlight directly to current.',
+  detail:srcDetail(),
+  line:'Tap each source to see how it makes electricity - and which are renewable. (0 of '+srcBtns().length+' seen)',
+  voice:'Explore each source.', glow:srcBtns(), key:'sources'};
 </script>
   <script src="edu-coach.js"></script>
 </body>
