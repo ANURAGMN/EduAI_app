@@ -515,63 +515,74 @@ function resetTest() {
   resultBox.setAttribute('opacity', '0');
 }
 
-// ---- native one-clock coach (guide, not grader) ----
+// ---- native one-clock coach (walks every option, allow finish) ----
+const testedSol = new Set();
 const testedTypes = new Set();
-let softDone = false;
+let coreNoted = false;
 function solName(sol){ return sol.nameKn || sol.name; }
-function findSolBtn(type){
-  var btns = Array.prototype.slice.call(container.querySelectorAll('.solution-btn'));
-  for (var i=0;i<btns.length;i++){ var s=SOLUTIONS[btns[i].dataset.solution]; if(s&&s.type===type) return btns[i]; }
-  return null;
-}
+function solBtns(){ return Array.prototype.slice.call(container.querySelectorAll('.solution-btn')); }
+function nextUntestedBtn(){ var b=solBtns(); for(var i=0;i<b.length;i++){ if(!testedSol.has(b[i].dataset.solution)) return b[i]; } return null; }
 function coachGuide(){
   try{
     if(state.animating) return;
     var sol = SOLUTIONS[state.solution];
-    var haveA = testedTypes.has('acidic'), haveB = testedTypes.has('basic');
-    if(haveA && !haveB && sol.type!=='basic'){
+    var all = solBtns().length;
+    var untested = nextUntestedBtn();
+    if(!untested){
       window.__eduRound = {native:true,
-        hint:'ವಿರುದ್ಧ ಬಣ್ಣ ನೋಡಲು ಈಗ ಒಂದು ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',hintVoice:'ಈಗ ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',
-        why:'ಒಂದು ಆಮ್ಲ ಮತ್ತು ಒಂದು ಕ್ಷಾರ ಪರೀಕ್ಷಿಸಿದರೆ ನೈಸರ್ಗಿಕ ಸೂಚಕದ ಎರಡೂ ಬಣ್ಣ ಬದಲಾವಣೆಗಳು ಕಾಣುತ್ತವೆ.',
-        detail:'ನೀವು ಒಂದು ಆಮ್ಲವನ್ನು ಪರೀಕ್ಷಿಸಿದ್ದೀರಿ (ಗುಲಾಬಿ ಸಾರ ಕೆಂಪಾಯಿತು).\nಈಗ ಸಾಬೂನು ಅಥವಾ ಸುಣ್ಣದ ನೀರಿನಂತಹ ಕ್ಷಾರವನ್ನು ಆರಿಸಿ ಸೇರಿಸಿ.\nಸಾರ ಹಸಿರಾಗುವುದನ್ನು ನೋಡಿ.',
-        line:'ಚೆನ್ನಾಗಿದೆ - ಈಗ ಸಾಬೂನಿನಂತಹ ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ, ಸಾರ ಹಸಿರಾಗುತ್ತದೆ.',
-        voice:'ಈಗ ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.', glow:findSolBtn('basic'), key:'nudge-base'};
+        why:'ಪ್ರತಿ ದ್ರಾವಣ ಪರೀಕ್ಷಿಸಿದರೆ ಪೂರ್ಣ ಶ್ರೇಣಿ ಕಾಣುತ್ತದೆ: ಆಮ್ಲ, ಕ್ಷಾರ ಮತ್ತು ತಟಸ್ಥ.',
+        detail:'ಆಮ್ಲಗಳು ಗುಲಾಬಿ ಸಾರವನ್ನು ಕೆಂಪಾಗಿಸಿದವು.\nಕ್ಷಾರಗಳು ಹಸಿರಾಗಿಸಿದವು.\nತಟಸ್ಥ ಗುಲಾಬಿಯಾಗಿ ಬಿಟ್ಟವು.\nಈಗ ಮೂರನ್ನೂ ನೋಡಿದ್ದೀರಿ.',
+        line:'ನೀವು ಎಲ್ಲಾ '+all+' ದ್ರಾವಣಗಳನ್ನು ಪರೀಕ್ಷಿಸಿದ್ದೀರಿ - ಆಮ್ಲ, ಕ್ಷಾರ ಮತ್ತು ತಟಸ್ಥ. ಚೆನ್ನಾಗಿ ಅನ್ವೇಷಿಸಿದಿರಿ!',
+        voice:'ನೀವು ಎಲ್ಲವನ್ನೂ ಪರೀಕ್ಷಿಸಿದ್ದೀರಿ.', key:'done'};
       return;
     }
-    if(haveB && !haveA && sol.type!=='acidic'){
+    if(!testedSol.has(state.solution)){
       window.__eduRound = {native:true,
-        hint:'ವಿರುದ್ಧ ಬಣ್ಣ ನೋಡಲು ಈಗ ಒಂದು ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',hintVoice:'ಈಗ ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',
-        why:'ಒಂದು ಆಮ್ಲ ಮತ್ತು ಒಂದು ಕ್ಷಾರ ಪರೀಕ್ಷಿಸಿದರೆ ನೈಸರ್ಗಿಕ ಸೂಚಕದ ಎರಡೂ ಬಣ್ಣ ಬದಲಾವಣೆಗಳು ಕಾಣುತ್ತವೆ.',
-        detail:'ನೀವು ಒಂದು ಕ್ಷಾರವನ್ನು ಪರೀಕ್ಷಿಸಿದ್ದೀರಿ (ಗುಲಾಬಿ ಸಾರ ಹಸಿರಾಯಿತು).\nಈಗ ನಿಂಬೆ ಅಥವಾ ವಿನಿಗರ್‌ನಂತಹ ಆಮ್ಲವನ್ನು ಆರಿಸಿ ಸೇರಿಸಿ.\nಸಾರ ಕೆಂಪಾಗುವುದನ್ನು ನೋಡಿ.',
-        line:'ಚೆನ್ನಾಗಿದೆ - ಈಗ ನಿಂಬೆಯಂತಹ ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ, ಸಾರ ಕೆಂಪಾಗುತ್ತದೆ.',
-        voice:'ಈಗ ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ.', glow:findSolBtn('acidic'), key:'nudge-acid'};
-      return;
+        hint:solName(sol)+' ಅನ್ನು ಗುಲಾಬಿ ಸಾರಕ್ಕೆ ಸೇರಿಸಿ.',hintVoice:'ದ್ರಾವಣವನ್ನು ಸೇರಿಸಿ.',
+        why:'ಗುಲಾಬಿ ದಳದ ಸಾರ ಒಂದು ನೈಸರ್ಗಿಕ ಸೂಚಕ: ಆಮ್ಲದಲ್ಲಿ ಕೆಂಪು, ಕ್ಷಾರದಲ್ಲಿ ಹಸಿರು, ತಟಸ್ಥವಾದರೆ ಗುಲಾಬಿ.',
+        detail:'ಹಂತ 1 - ನೀವು '+solName(sol)+' ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.\nಹಂತ 2 - "ದ್ರಾವಣ ಸೇರಿಸಿ" ಒತ್ತಿ.\nಹಂತ 3 - ಬಣ್ಣ ಓದಿ.\nಏಕೆ - ನೈಸರ್ಗಿಕ ವರ್ಣದ್ರವ್ಯಗಳು ಆಮ್ಲ ಮತ್ತು ಕ್ಷಾರದೊಂದಿಗೆ ಬಣ್ಣ ಬದಲಿಸುತ್ತವೆ, ಲಿಟ್ಮಸ್‌ನಂತೆ.',
+        line:solName(sol)+' ಅನ್ನು ಗುಲಾಬಿ ಸಾರಕ್ಕೆ ಸೇರಿಸಿ ಬಣ್ಣ ಓದಿ. ('+all+' ರಲ್ಲಿ '+testedSol.size+' ಪರೀಕ್ಷಿಸಲಾಗಿದೆ)',
+        voice:'ದ್ರಾವಣವನ್ನು ಸೇರಿಸಿ.', glow:testBtn, submit:testBtn, key:'dip-'+state.solution};
+    } else {
+      var nb = SOLUTIONS[untested.dataset.solution];
+      window.__eduRound = {native:true,
+        hint:'ಮುಂದಿನ ಪರೀಕ್ಷಿಸದ ದ್ರಾವಣ ಆರಿಸಿ: '+solName(nb)+'.',hintVoice:solName(nb)+' ಪ್ರಯತ್ನಿಸಿ.',
+        why:'ಪ್ರತಿ ದ್ರಾವಣ ಪರೀಕ್ಷಿಸಿದರೆ ಯಾವುದು ಆಮ್ಲ, ಕ್ಷಾರ, ತಟಸ್ಥ ಎಂದು ತಿಳಿಯುತ್ತದೆ.',
+        detail:'ನೀವು ಈಗಾಗಲೇ '+solName(sol)+' ಪರೀಕ್ಷಿಸಿದ್ದೀರಿ.\nಈಗ '+solName(nb)+' ಆರಿಸಿ ಸೇರಿಸಿ.\n'+all+' ರಲ್ಲಿ '+testedSol.size+' ಮುಗಿದಿದೆ - ಮುಂದುವರಿಯಿರಿ ಅಥವಾ ಯಾವಾಗ ಬೇಕಾದರೂ ನಿಲ್ಲಿಸಿ.',
+        line:'ಈಗಾಗಲೇ '+solName(sol)+' ಪರೀಕ್ಷಿಸಿದ್ದೀರಿ. ಈಗ '+solName(nb)+' ಪ್ರಯತ್ನಿಸಿ. ('+all+' ರಲ್ಲಿ '+testedSol.size+' ಪರೀಕ್ಷಿಸಲಾಗಿದೆ)',
+        voice:solName(nb)+' ಪ್ರಯತ್ನಿಸಿ.', glow:untested, submit:untested, key:'next-'+untested.dataset.solution};
     }
-    window.__eduRound = {native:true,
-      hint:solName(sol)+' ಅನ್ನು ಗುಲಾಬಿ ಸಾರಕ್ಕೆ ಸೇರಿಸಿ.',hintVoice:'ದ್ರಾವಣವನ್ನು ಸೇರಿಸಿ.',
-      why:'ಗುಲಾಬಿ ದಳದ ಸಾರ ಒಂದು ನೈಸರ್ಗಿಕ ಸೂಚಕ: ಆಮ್ಲದಲ್ಲಿ ಕೆಂಪು, ಕ್ಷಾರದಲ್ಲಿ ಹಸಿರು, ತಟಸ್ಥವಾದರೆ ಗುಲಾಬಿ.',
-      detail:'ಹಂತ 1 - ನೀವು '+solName(sol)+' ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.\nಹಂತ 2 - "ದ್ರಾವಣ ಸೇರಿಸಿ" ಒತ್ತಿ.\nಹಂತ 3 - ಗುಲಾಬಿ ಸಾರದ ಬಣ್ಣ ಓದಿ.\nಏಕೆ - ನೈಸರ್ಗಿಕ ವರ್ಣದ್ರವ್ಯಗಳು ಆಮ್ಲ ಮತ್ತು ಕ್ಷಾರದೊಂದಿಗೆ ಬಣ್ಣ ಬದಲಿಸುತ್ತವೆ, ಲಿಟ್ಮಸ್‌ನಂತೆ.',
-      line:'ನೀವು '+solName(sol)+' ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ. ಗುಲಾಬಿ ಸಾರಕ್ಕೆ ಸೇರಿಸಿ ಬಣ್ಣ ಓದಿ.',
-      voice:'ದ್ರಾವಣವನ್ನು ಸೇರಿಸಿ.', glow:testBtn, submit:testBtn, key:'dip-'+state.solution};
   }catch(e){}
 }
 function coachResult(sol){
   try{
-    testedTypes.add(sol.type);
-    var line, voice;
-    if(sol.type==='acidic'){ line='ಗುಲಾಬಿ ಸಾರ ಕೆಂಪಾಯಿತು - '+solName(sol)+' ಒಂದು ಆಮ್ಲ.'; voice=solName(sol)+' ಒಂದು ಆಮ್ಲ.'; }
-    else if(sol.type==='basic'){ line='ಗುಲಾಬಿ ಸಾರ ಹಸಿರಾಯಿತು - '+solName(sol)+' ಒಂದು ಕ್ಷಾರ.'; voice=solName(sol)+' ಒಂದು ಕ್ಷಾರ.'; }
-    else { line='ಗುಲಾಬಿ ಸಾರ ಗುಲಾಬಿಯಾಗಿ ಉಳಿಯಿತು - '+solName(sol)+' ತಟಸ್ಥ.'; voice=solName(sol)+' ತಟಸ್ಥ.'; }
+    testedSol.add(state.solution); testedTypes.add(sol.type);
+    var all = solBtns().length;
+    var base;
+    if(sol.type==='acidic'){ base='ಗುಲಾಬಿ ಸಾರ ಕೆಂಪಾಯಿತು - '+solName(sol)+' ಒಂದು ಆಮ್ಲ.'; }
+    else if(sol.type==='basic'){ base='ಗುಲಾಬಿ ಸಾರ ಹಸಿರಾಯಿತು - '+solName(sol)+' ಒಂದು ಕ್ಷಾರ.'; }
+    else { base='ಗುಲಾಬಿ ಸಾರ ಗುಲಾಬಿಯಾಗಿ ಉಳಿಯಿತು - '+solName(sol)+' ತಟಸ್ಥ.'; }
+    var typeWord = (sol.type==='acidic'?'ಒಂದು ಆಮ್ಲ':sol.type==='basic'?'ಒಂದು ಕ್ಷಾರ':'ತಟಸ್ಥ');
+    var untested = nextUntestedBtn();
+    var line, voice, glow, key;
+    if(untested){
+      var nb = SOLUTIONS[untested.dataset.solution];
+      line = base+' ('+all+' ರಲ್ಲಿ '+testedSol.size+' ಪರೀಕ್ಷಿಸಲಾಗಿದೆ) ಮುಂದೆ: '+solName(nb)+'.';
+      if(!coreNoted && testedTypes.has('acidic') && testedTypes.has('basic')){
+        coreNoted = true;
+        line = base+' ಈಗ ನೀವು ಒಂದು ಆಮ್ಲ ಮತ್ತು ಒಂದು ಕ್ಷಾರವನ್ನು ನೋಡಿದ್ದೀರಿ - ಮುಖ್ಯ ಕಲ್ಪನೆ. ಉಳಿದವನ್ನು ಅನ್ವೇಷಿಸಿ ಅಥವಾ ಮುಂದುವರಿಯಿರಿ. ಮುಂದೆ: '+solName(nb)+'.';
+      }
+      voice = solName(sol)+' '+typeWord+'. '+solName(nb)+' ಪ್ರಯತ್ನಿಸಿ.';
+      glow = untested; key = 'res-'+state.solution+'-'+Date.now();
+    } else {
+      line = base+' ಅಷ್ಟೇ - ಎಲ್ಲಾ '+all+' ದ್ರಾವಣಗಳು: ಆಮ್ಲ, ಕ್ಷಾರ ಮತ್ತು ತಟಸ್ಥ. ಚೆನ್ನಾಗಿ ಅನ್ವೇಷಿಸಿದಿರಿ!';
+      voice = solName(sol)+' - ನೀವು ಎಲ್ಲವನ್ನೂ ಪರೀಕ್ಷಿಸಿದ್ದೀರಿ.';
+      glow = null; key = 'done';
+    }
     window.__eduRound = {native:true,
       why:'ನೈಸರ್ಗಿಕ ಸೂಚಕವು ಪ್ರಕಾರದಿಂದ ಬಣ್ಣ ಬದಲಿಸುತ್ತದೆ: ಆಮ್ಲಕ್ಕೆ ಕೆಂಪು, ಕ್ಷಾರಕ್ಕೆ ಹಸಿರು, ತಟಸ್ಥಕ್ಕೆ ಗುಲಾಬಿ.',
-      detail:'ಕೆಂಪು ಎಂದರೆ ಆಮ್ಲ.\nಹಸಿರು ಎಂದರೆ ಕ್ಷಾರ.\nಗುಲಾಬಿ (ಬದಲಾವಣೆ ಇಲ್ಲ) ಎಂದರೆ ತಟಸ್ಥ.',
-      line:line, voice:voice, key:'res-'+state.solution+'-'+Date.now()};
-    if(!softDone && testedTypes.has('acidic') && testedTypes.has('basic')){
-      softDone = true;
-      setTimeout(function(){ try{ window.__eduRound = {native:true,
-        line:'ನೀವು ಒಂದು ಆಮ್ಲ ಮತ್ತು ಒಂದು ಕ್ಷಾರವನ್ನು ಪರೀಕ್ಷಿಸಿ ಎರಡೂ ಬಣ್ಣಗಳನ್ನು ನೋಡಿದ್ದೀರಿ. ಅದೇ ಮುಖ್ಯ ಕಲ್ಪನೆ.',
-        voice:'ಚೆನ್ನಾಗಿದೆ - ಎರಡೂ ನೋಡಿದ್ದೀರಿ.', key:'done'}; }catch(e){} }, 3500);
-    }
+      detail:'ಕೆಂಪು ಎಂದರೆ ಆಮ್ಲ.\nಹಸಿರು ಎಂದರೆ ಕ್ಷಾರ.\nಗುಲಾಬಿ (ಬದಲಾವಣೆ ಇಲ್ಲ) ಎಂದರೆ ತಟಸ್ಥ.\nಪೂರ್ಣ ಗುಂಪನ್ನು ನೋಡಲು ಪ್ರತಿ ದ್ರಾವಣ ಪರೀಕ್ಷಿಸಿ.',
+      line:line, voice:voice, glow:glow, submit:untested||undefined, key:key};
   }catch(e){}
 }
 

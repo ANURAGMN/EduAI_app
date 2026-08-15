@@ -451,61 +451,71 @@ function resetTest() {
   coachGuide();
 }
 
-// ---- native one-clock coach (guide, not grader) ----
+// ---- native one-clock coach (guide, not grader; walks every option, allow finish) ----
+const testedSol = new Set();
 const testedTypes = new Set();
-let softDone = false;
-function findSolBtn(type){
-  var btns = Array.prototype.slice.call(container.querySelectorAll('.solution-btn'));
-  for (var i=0;i<btns.length;i++){ var s=SOLUTIONS[btns[i].dataset.solution]; if(s&&s.type===type) return btns[i]; }
-  return null;
-}
+let coreNoted = false;
+function solBtns(){ return Array.prototype.slice.call(container.querySelectorAll('.solution-btn')); }
+function nextUntestedBtn(){ var b=solBtns(); for(var i=0;i<b.length;i++){ if(!testedSol.has(b[i].dataset.solution)) return b[i]; } return null; }
 function coachGuide(){
   try{
     if(state.tested) return;
     var sol = SOLUTIONS[state.solution];
-    var haveA = testedTypes.has('acidic'), haveB = testedTypes.has('basic');
-    if(haveA && !haveB && sol.type!=='basic'){
+    var all = solBtns().length;
+    var untested = nextUntestedBtn();
+    if(!untested){
       window.__eduRound = {native:true,
-        hint:'Try a base - the onion smell will vanish.',hintVoice:'Now try a base.',
-        why:'Bases destroy the onion smell; acids keep it.',
-        detail:'You saw the smell stay with an acid.\nNow pick a base - baking soda or soap - and mix.\nThe smell disappears.',
-        line:'Now try a base like baking soda - the onion smell disappears.',
-        voice:'Now try a base.', glow:findSolBtn('basic'), key:'nudge-base'};
+        why:'Onion is a smell indicator: the smell stays with acids and disappears with bases.',
+        detail:'Acids kept the onion smell.\nBases destroyed it.\nYou have now seen both.',
+        line:'You have tested all '+all+' solutions - the smell stayed for acids and vanished for bases. Great exploring!',
+        voice:'You have tested them all.', key:'done'};
       return;
     }
-    if(haveB && !haveA && sol.type!=='acidic'){
+    if(!testedSol.has(state.solution)){
       window.__eduRound = {native:true,
-        hint:'Try an acid - the onion smell stays.',hintVoice:'Now try an acid.',
-        why:'Acids keep the onion smell; bases destroy it.',
-        detail:'You saw the smell vanish with a base.\nNow pick an acid - tamarind or vinegar - and mix.\nThe smell stays.',
-        line:'Now try an acid like tamarind - the onion smell stays.',
-        voice:'Now try an acid.', glow:findSolBtn('acidic'), key:'nudge-acid'};
-      return;
+        hint:'Mix the onion with '+sol.name+' and check the smell.',hintVoice:'Mix and check the smell.',
+        why:'Onion is a smell indicator: the smell stays with acids and disappears with bases.',
+        detail:'Step 1 - You picked '+sol.name+'.\nStep 2 - Tap Mix Together.\nStep 3 - Smell stays means acid; smell gone means base.\nWhy it works - bases break down the onion sulfur compounds, acids do not.',
+        line:'Mix the onion with '+sol.name+' and check the smell. ('+testedSol.size+' of '+all+' tested)',
+        voice:'Mix and check the smell.', glow:mixBtn, submit:mixBtn, key:'mix-'+state.solution};
+    } else {
+      var nb = SOLUTIONS[untested.dataset.solution];
+      window.__eduRound = {native:true,
+        hint:'Pick the next untested solution: '+nb.name+'.',hintVoice:'Try '+nb.name+' next.',
+        why:'Test every solution to see which keep the smell (acids) and which destroy it (bases).',
+        detail:'You already tested '+sol.name+'.\nPick '+nb.name+' next and mix.\n'+testedSol.size+' of '+all+' done - keep going, or stop whenever you like.',
+        line:'Already tested '+sol.name+'. Now try '+nb.name+'. ('+testedSol.size+' of '+all+' tested)',
+        voice:'Try '+nb.name+' next.', glow:untested, submit:untested, key:'next-'+untested.dataset.solution};
     }
-    window.__eduRound = {native:true,
-      hint:'Mix the onion with '+sol.name+' and check the smell.',hintVoice:'Mix and check the smell.',
-      why:'Onion is a smell indicator: the smell stays with acids and disappears with bases.',
-      detail:'Step 1 - You picked '+sol.name+'.\nStep 2 - Tap Mix Together.\nStep 3 - Smell stays means acid; smell gone means base.\nWhy it works - bases break down the onion sulfur compounds, acids do not.',
-      line:'You picked '+sol.name+'. Mix the onion and check whether the smell stays.',
-      voice:'Mix and check the smell.', glow:mixBtn, submit:mixBtn, key:'mix-'+state.solution};
   }catch(e){}
 }
 function coachResult(sol){
   try{
-    testedTypes.add(sol.type);
-    var line, voice;
-    if(sol.type==='acidic'){ line='The onion smell is still there - '+sol.name+' is an acid. Acids keep the smell.'; voice=sol.name+' is an acid.'; }
-    else { line='The onion smell is gone - '+sol.name+' is a base. Bases destroy the smell.'; voice=sol.name+' is a base.'; }
+    testedSol.add(state.solution); testedTypes.add(sol.type);
+    var all = solBtns().length;
+    var base;
+    if(sol.type==='acidic'){ base='The onion smell is still there - '+sol.name+' is an acid. Acids keep the smell.'; }
+    else { base='The onion smell is gone - '+sol.name+' is a base. Bases destroy the smell.'; }
+    var untested = nextUntestedBtn();
+    var line, voice, glow, key;
+    if(untested){
+      var nb = SOLUTIONS[untested.dataset.solution];
+      line = base+' ('+testedSol.size+' of '+all+' tested) Next: '+nb.name+'.';
+      if(!coreNoted && testedTypes.has('acidic') && testedTypes.has('basic')){
+        coreNoted = true;
+        line = base+' You have seen the smell stay for an acid and vanish for a base - the core idea. Keep exploring, or move on. Next: '+nb.name+'.';
+      }
+      voice = sol.name+' is '+(sol.type==='acidic'?'an acid':'a base')+'. Try '+nb.name+'.';
+      glow = untested; key = 'res-'+state.solution+'-'+Date.now();
+    } else {
+      line = base+' That is all '+all+' - smell stayed for acids, vanished for bases. Great exploring!';
+      voice = sol.name+' - you have tested them all.';
+      glow = null; key = 'done';
+    }
     window.__eduRound = {native:true,
       why:'A smell indicator works without colour: smell remains means acid, smell gone means base.',
       detail:'Smell still there means acid.\nSmell gone means base.\nSome indicators are detected by smell, not colour.',
-      line:line, voice:voice, key:'res-'+state.solution+'-'+Date.now()};
-    if(!softDone && testedTypes.has('acidic') && testedTypes.has('basic')){
-      softDone = true;
-      setTimeout(function(){ try{ window.__eduRound = {native:true,
-        line:'You have seen the onion smell stay for an acid and vanish for a base. That is the core idea.',
-        voice:'Nice - you have seen both.', key:'done'}; }catch(e){} }, 3500);
-    }
+      line:line, voice:voice, glow:glow, submit:untested||undefined, key:key};
   }catch(e){}
 }
 

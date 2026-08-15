@@ -454,61 +454,71 @@ function resetTest() {
   coachGuide();
 }
 
-// ---- native one-clock coach (guide, not grader) ----
+// ---- native one-clock coach (walks every option, allow finish) ----
+const testedSol = new Set();
 const testedTypes = new Set();
-let softDone = false;
-function findSolBtn(type){
-  var btns = Array.prototype.slice.call(container.querySelectorAll('.solution-btn'));
-  for (var i=0;i<btns.length;i++){ var s=SOLUTIONS[btns[i].dataset.solution]; if(s&&s.type===type) return btns[i]; }
-  return null;
-}
+let coreNoted = false;
+function solBtns(){ return Array.prototype.slice.call(container.querySelectorAll('.solution-btn')); }
+function nextUntestedBtn(){ var b=solBtns(); for(var i=0;i<b.length;i++){ if(!testedSol.has(b[i].dataset.solution)) return b[i]; } return null; }
 function coachGuide(){
   try{
     if(state.tested) return;
     var sol = SOLUTIONS[state.solution];
-    var haveA = testedTypes.has('acidic'), haveB = testedTypes.has('basic');
-    if(haveA && !haveB && sol.type!=='basic'){
+    var all = solBtns().length;
+    var untested = nextUntestedBtn();
+    if(!untested){
       window.__eduRound = {native:true,
-        hint:'ಒಂದು ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ - ಈರುಳ್ಳಿ ವಾಸನೆ ಮಾಯವಾಗುತ್ತದೆ.',hintVoice:'ಈಗ ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',
-        why:'ಕ್ಷಾರಗಳು ಈರುಳ್ಳಿ ವಾಸನೆಯನ್ನು ನಾಶಮಾಡುತ್ತವೆ; ಆಮ್ಲಗಳು ಅದನ್ನು ಉಳಿಸುತ್ತವೆ.',
-        detail:'ಆಮ್ಲದೊಂದಿಗೆ ವಾಸನೆ ಉಳಿಯುವುದನ್ನು ನೋಡಿದ್ದೀರಿ.\nಈಗ ಬೇಕಿಂಗ್ ಸೋಡಾ ಅಥವಾ ಸಾಬೂನಿನಂತಹ ಕ್ಷಾರವನ್ನು ಆರಿಸಿ ಮಿಶ್ರಣ ಮಾಡಿ.\nವಾಸನೆ ಮಾಯವಾಗುತ್ತದೆ.',
-        line:'ಈಗ ಬೇಕಿಂಗ್ ಸೋಡಾದಂತಹ ಕ್ಷಾರ ಪ್ರಯತ್ನಿಸಿ - ಈರುಳ್ಳಿ ವಾಸನೆ ಮಾಯವಾಗುತ್ತದೆ.',
-        voice:'ಈಗ ಕ್ಷಾರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.', glow:findSolBtn('basic'), key:'nudge-base'};
+        why:'ಈರುಳ್ಳಿ ಒಂದು ವಾಸನೆ ಸೂಚಕ: ಆಮ್ಲದೊಂದಿಗೆ ವಾಸನೆ ಉಳಿಯುತ್ತದೆ, ಕ್ಷಾರದೊಂದಿಗೆ ಮಾಯವಾಗುತ್ತದೆ.',
+        detail:'ಆಮ್ಲಗಳು ಈರುಳ್ಳಿ ವಾಸನೆಯನ್ನು ಉಳಿಸಿದವು.\nಕ್ಷಾರಗಳು ಅದನ್ನು ನಾಶಮಾಡಿದವು.\nಈಗ ಎರಡನ್ನೂ ನೋಡಿದ್ದೀರಿ.',
+        line:'ನೀವು ಎಲ್ಲಾ '+all+' ದ್ರಾವಣಗಳನ್ನು ಪರೀಕ್ಷಿಸಿದ್ದೀರಿ - ವಾಸನೆ ಆಮ್ಲಗಳಿಗೆ ಉಳಿಯಿತು, ಕ್ಷಾರಗಳಿಗೆ ಮಾಯವಾಯಿತು. ಚೆನ್ನಾಗಿ ಅನ್ವೇಷಿಸಿದಿರಿ!',
+        voice:'ನೀವು ಎಲ್ಲವನ್ನೂ ಪರೀಕ್ಷಿಸಿದ್ದೀರಿ.', key:'done'};
       return;
     }
-    if(haveB && !haveA && sol.type!=='acidic'){
+    if(!testedSol.has(state.solution)){
       window.__eduRound = {native:true,
-        hint:'ಒಂದು ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ - ಈರುಳ್ಳಿ ವಾಸನೆ ಉಳಿಯುತ್ತದೆ.',hintVoice:'ಈಗ ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',
-        why:'ಆಮ್ಲಗಳು ಈರುಳ್ಳಿ ವಾಸನೆಯನ್ನು ಉಳಿಸುತ್ತವೆ; ಕ್ಷಾರಗಳು ಅದನ್ನು ನಾಶಮಾಡುತ್ತವೆ.',
-        detail:'ಕ್ಷಾರದೊಂದಿಗೆ ವಾಸನೆ ಮಾಯವಾಗುವುದನ್ನು ನೋಡಿದ್ದೀರಿ.\nಈಗ ಹುಣಿಸೆ ಅಥವಾ ವಿನಿಗರ್‌ನಂತಹ ಆಮ್ಲವನ್ನು ಆರಿಸಿ ಮಿಶ್ರಣ ಮಾಡಿ.\nವಾಸನೆ ಉಳಿಯುತ್ತದೆ.',
-        line:'ಈಗ ಹುಣಿಸೆಯಂತಹ ಆಮ್ಲ ಪ್ರಯತ್ನಿಸಿ - ಈರುಳ್ಳಿ ವಾಸನೆ ಉಳಿಯುತ್ತದೆ.',
-        voice:'ಈಗ ಆಮ್ಲವನ್ನು ಪ್ರಯತ್ನಿಸಿ.', glow:findSolBtn('acidic'), key:'nudge-acid'};
-      return;
+        hint:sol.name+' ಜೊತೆ ಈರುಳ್ಳಿ ಮಿಶ್ರಣ ಮಾಡಿ ವಾಸನೆ ಪರಿಶೀಲಿಸಿ.',hintVoice:'ಮಿಶ್ರಣ ಮಾಡಿ ವಾಸನೆ ಪರಿಶೀಲಿಸಿ.',
+        why:'ಈರುಳ್ಳಿ ಒಂದು ವಾಸನೆ ಸೂಚಕ: ಆಮ್ಲದೊಂದಿಗೆ ವಾಸನೆ ಉಳಿಯುತ್ತದೆ, ಕ್ಷಾರದೊಂದಿಗೆ ಮಾಯವಾಗುತ್ತದೆ.',
+        detail:'ಹಂತ 1 - ನೀವು '+sol.name+' ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.\nಹಂತ 2 - "ಒಟ್ಟಿಗೆ ಮಿಶ್ರಣ ಮಾಡಿ" ಒತ್ತಿ.\nಹಂತ 3 - ವಾಸನೆ ಉಳಿದರೆ ಆಮ್ಲ; ವಾಸನೆ ಹೋದರೆ ಕ್ಷಾರ.\nಏಕೆ - ಕ್ಷಾರಗಳು ಈರುಳ್ಳಿಯ ಗಂಧಕ ಸಂಯುಕ್ತಗಳನ್ನು ಒಡೆಯುತ್ತವೆ, ಆಮ್ಲಗಳು ಇಲ್ಲ.',
+        line:sol.name+' ಜೊತೆ ಈರುಳ್ಳಿ ಮಿಶ್ರಣ ಮಾಡಿ ವಾಸನೆ ಪರಿಶೀಲಿಸಿ. ('+all+' ರಲ್ಲಿ '+testedSol.size+' ಪರೀಕ್ಷಿಸಲಾಗಿದೆ)',
+        voice:'ಮಿಶ್ರಣ ಮಾಡಿ ವಾಸನೆ ಪರಿಶೀಲಿಸಿ.', glow:mixBtn, submit:mixBtn, key:'mix-'+state.solution};
+    } else {
+      var nb = SOLUTIONS[untested.dataset.solution];
+      window.__eduRound = {native:true,
+        hint:'ಮುಂದಿನ ಪರೀಕ್ಷಿಸದ ದ್ರಾವಣ ಆರಿಸಿ: '+nb.name+'.',hintVoice:nb.name+' ಪ್ರಯತ್ನಿಸಿ.',
+        why:'ಪ್ರತಿ ದ್ರಾವಣ ಪರೀಕ್ಷಿಸಿದರೆ ಯಾವುದು ವಾಸನೆ ಉಳಿಸುತ್ತದೆ (ಆಮ್ಲ) ಮತ್ತು ಯಾವುದು ನಾಶಮಾಡುತ್ತದೆ (ಕ್ಷಾರ) ಎಂದು ತಿಳಿಯುತ್ತದೆ.',
+        detail:'ನೀವು ಈಗಾಗಲೇ '+sol.name+' ಪರೀಕ್ಷಿಸಿದ್ದೀರಿ.\nಈಗ '+nb.name+' ಆರಿಸಿ ಮಿಶ್ರಣ ಮಾಡಿ.\n'+all+' ರಲ್ಲಿ '+testedSol.size+' ಮುಗಿದಿದೆ - ಮುಂದುವರಿಯಿರಿ ಅಥವಾ ಯಾವಾಗ ಬೇಕಾದರೂ ನಿಲ್ಲಿಸಿ.',
+        line:'ಈಗಾಗಲೇ '+sol.name+' ಪರೀಕ್ಷಿಸಿದ್ದೀರಿ. ಈಗ '+nb.name+' ಪ್ರಯತ್ನಿಸಿ. ('+all+' ರಲ್ಲಿ '+testedSol.size+' ಪರೀಕ್ಷಿಸಲಾಗಿದೆ)',
+        voice:nb.name+' ಪ್ರಯತ್ನಿಸಿ.', glow:untested, submit:untested, key:'next-'+untested.dataset.solution};
     }
-    window.__eduRound = {native:true,
-      hint:sol.name+' ಜೊತೆ ಈರುಳ್ಳಿ ಮಿಶ್ರಣ ಮಾಡಿ ವಾಸನೆ ಪರಿಶೀಲಿಸಿ.',hintVoice:'ಮಿಶ್ರಣ ಮಾಡಿ ವಾಸನೆ ಪರಿಶೀಲಿಸಿ.',
-      why:'ಈರುಳ್ಳಿ ಒಂದು ವಾಸನೆ ಸೂಚಕ: ಆಮ್ಲದೊಂದಿಗೆ ವಾಸನೆ ಉಳಿಯುತ್ತದೆ, ಕ್ಷಾರದೊಂದಿಗೆ ಮಾಯವಾಗುತ್ತದೆ.',
-      detail:'ಹಂತ 1 - ನೀವು '+sol.name+' ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.\nಹಂತ 2 - "ಒಟ್ಟಿಗೆ ಮಿಶ್ರಣ ಮಾಡಿ" ಒತ್ತಿ.\nಹಂತ 3 - ವಾಸನೆ ಉಳಿದರೆ ಆಮ್ಲ; ವಾಸನೆ ಹೋದರೆ ಕ್ಷಾರ.\nಏಕೆ - ಕ್ಷಾರಗಳು ಈರುಳ್ಳಿಯ ಗಂಧಕ ಸಂಯುಕ್ತಗಳನ್ನು ಒಡೆಯುತ್ತವೆ, ಆಮ್ಲಗಳು ಇಲ್ಲ.',
-      line:'ನೀವು '+sol.name+' ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ. ಈರುಳ್ಳಿ ಮಿಶ್ರಣ ಮಾಡಿ ವಾಸನೆ ಉಳಿಯುತ್ತದೆಯೇ ನೋಡಿ.',
-      voice:'ಮಿಶ್ರಣ ಮಾಡಿ ವಾಸನೆ ಪರಿಶೀಲಿಸಿ.', glow:mixBtn, submit:mixBtn, key:'mix-'+state.solution};
   }catch(e){}
 }
 function coachResult(sol){
   try{
-    testedTypes.add(sol.type);
-    var line, voice;
-    if(sol.type==='acidic'){ line='ಈರುಳ್ಳಿ ವಾಸನೆ ಇನ್ನೂ ಇದೆ - '+sol.name+' ಒಂದು ಆಮ್ಲ. ಆಮ್ಲಗಳು ವಾಸನೆಯನ್ನು ಉಳಿಸುತ್ತವೆ.'; voice=sol.name+' ಒಂದು ಆಮ್ಲ.'; }
-    else { line='ಈರುಳ್ಳಿ ವಾಸನೆ ಹೋಯಿತು - '+sol.name+' ಒಂದು ಕ್ಷಾರ. ಕ್ಷಾರಗಳು ವಾಸನೆಯನ್ನು ನಾಶಮಾಡುತ್ತವೆ.'; voice=sol.name+' ಒಂದು ಕ್ಷಾರ.'; }
+    testedSol.add(state.solution); testedTypes.add(sol.type);
+    var all = solBtns().length;
+    var base;
+    if(sol.type==='acidic'){ base='ಈರುಳ್ಳಿ ವಾಸನೆ ಇನ್ನೂ ಇದೆ - '+sol.name+' ಒಂದು ಆಮ್ಲ. ಆಮ್ಲಗಳು ವಾಸನೆಯನ್ನು ಉಳಿಸುತ್ತವೆ.'; }
+    else { base='ಈರುಳ್ಳಿ ವಾಸನೆ ಹೋಯಿತು - '+sol.name+' ಒಂದು ಕ್ಷಾರ. ಕ್ಷಾರಗಳು ವಾಸನೆಯನ್ನು ನಾಶಮಾಡುತ್ತವೆ.'; }
+    var untested = nextUntestedBtn();
+    var line, voice, glow, key;
+    if(untested){
+      var nb = SOLUTIONS[untested.dataset.solution];
+      line = base+' ('+all+' ರಲ್ಲಿ '+testedSol.size+' ಪರೀಕ್ಷಿಸಲಾಗಿದೆ) ಮುಂದೆ: '+nb.name+'.';
+      if(!coreNoted && testedTypes.has('acidic') && testedTypes.has('basic')){
+        coreNoted = true;
+        line = base+' ವಾಸನೆ ಆಮ್ಲಕ್ಕೆ ಉಳಿಯುವುದನ್ನು ಮತ್ತು ಕ್ಷಾರಕ್ಕೆ ಮಾಯವಾಗುವುದನ್ನು ನೋಡಿದ್ದೀರಿ - ಮುಖ್ಯ ಕಲ್ಪನೆ. ಅನ್ವೇಷಿಸಿ ಅಥವಾ ಮುಂದುವರಿಯಿರಿ. ಮುಂದೆ: '+nb.name+'.';
+      }
+      voice = sol.name+' ಒಂದು '+(sol.type==='acidic'?'ಆಮ್ಲ':'ಕ್ಷಾರ')+'. '+nb.name+' ಪ್ರಯತ್ನಿಸಿ.';
+      glow = untested; key = 'res-'+state.solution+'-'+Date.now();
+    } else {
+      line = base+' ಅಷ್ಟೇ - ಎಲ್ಲಾ '+all+' ದ್ರಾವಣಗಳು. ವಾಸನೆ ಆಮ್ಲಗಳಿಗೆ ಉಳಿಯಿತು, ಕ್ಷಾರಗಳಿಗೆ ಮಾಯವಾಯಿತು. ಚೆನ್ನಾಗಿ ಅನ್ವೇಷಿಸಿದಿರಿ!';
+      voice = sol.name+' - ನೀವು ಎಲ್ಲವನ್ನೂ ಪರೀಕ್ಷಿಸಿದ್ದೀರಿ.';
+      glow = null; key = 'done';
+    }
     window.__eduRound = {native:true,
       why:'ವಾಸನೆ ಸೂಚಕ ಬಣ್ಣವಿಲ್ಲದೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ: ವಾಸನೆ ಉಳಿದರೆ ಆಮ್ಲ, ವಾಸನೆ ಹೋದರೆ ಕ್ಷಾರ.',
       detail:'ವಾಸನೆ ಇನ್ನೂ ಇದ್ದರೆ ಆಮ್ಲ.\nವಾಸನೆ ಹೋದರೆ ಕ್ಷಾರ.\nಕೆಲವು ಸೂಚಕಗಳು ಬಣ್ಣದಿಂದಲ್ಲ, ವಾಸನೆಯಿಂದ ಗುರುತಿಸುತ್ತವೆ.',
-      line:line, voice:voice, key:'res-'+state.solution+'-'+Date.now()};
-    if(!softDone && testedTypes.has('acidic') && testedTypes.has('basic')){
-      softDone = true;
-      setTimeout(function(){ try{ window.__eduRound = {native:true,
-        line:'ಆಮ್ಲಕ್ಕೆ ಈರುಳ್ಳಿ ವಾಸನೆ ಉಳಿಯುವುದನ್ನು ಮತ್ತು ಕ್ಷಾರಕ್ಕೆ ಮಾಯವಾಗುವುದನ್ನು ನೋಡಿದ್ದೀರಿ. ಅದೇ ಮುಖ್ಯ ಕಲ್ಪನೆ.',
-        voice:'ಚೆನ್ನಾಗಿದೆ - ಎರಡೂ ನೋಡಿದ್ದೀರಿ.', key:'done'}; }catch(e){} }, 3500);
-    }
+      line:line, voice:voice, glow:glow, submit:untested||undefined, key:key};
   }catch(e){}
 }
 
