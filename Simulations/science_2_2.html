@@ -495,62 +495,73 @@ function resetTest() {
   resultBox.setAttribute('opacity', '0');
 }
 
-// ---- native one-clock coach (guide, not grader) ----
+// ---- native one-clock coach (guide, not grader; walks every option, allow finish) ----
+const testedSol = new Set();
 const testedTypes = new Set();
-let softDone = false;
-function findSolBtn(type){
-  var btns = Array.prototype.slice.call(container.querySelectorAll('.solution-btn'));
-  for (var i=0;i<btns.length;i++){ var s=SOLUTIONS[btns[i].dataset.solution]; if(s&&s.type===type) return btns[i]; }
-  return null;
-}
+let coreNoted = false;
+function solBtns(){ return Array.prototype.slice.call(container.querySelectorAll('.solution-btn')); }
+function nextUntestedBtn(){ var b=solBtns(); for(var i=0;i<b.length;i++){ if(!testedSol.has(b[i].dataset.solution)) return b[i]; } return null; }
 function coachGuide(){
   try{
     if(state.animating) return;
     var sol = SOLUTIONS[state.solution];
-    var haveA = testedTypes.has('acidic'), haveB = testedTypes.has('basic');
-    if(haveA && !haveB && sol.type!=='basic'){
+    var all = solBtns().length;
+    var untested = nextUntestedBtn();
+    if(!untested){
       window.__eduRound = {native:true,
-        hint:'Try a base next to see the opposite change.',hintVoice:'Now try a base.',
-        why:'Testing both an acid and a base shows both litmus changes.',
-        detail:'You have tested an acid.\nNow pick a base - soap or lime water - and dip again.\nWatch the red litmus turn blue.',
-        line:'Good - now try a base like soap or lime water to see the opposite.',
-        voice:'Now try a base.', glow:findSolBtn('basic'), key:'nudge-base'};
+        why:'Testing every solution shows the full range: acids, bases, and neutrals.',
+        detail:'Acids turned blue litmus red.\nBases turned red litmus blue.\nNeutrals changed neither.\nYou have now seen all three.',
+        line:'You have tested all '+all+' solutions - acids, bases, and neutrals. Great exploring!',
+        voice:'You have tested them all.', key:'done'};
       return;
     }
-    if(haveB && !haveA && sol.type!=='acidic'){
+    if(!testedSol.has(state.solution)){
       window.__eduRound = {native:true,
-        hint:'Try an acid next to see the opposite change.',hintVoice:'Now try an acid.',
-        why:'Testing both an acid and a base shows both litmus changes.',
-        detail:'You have tested a base.\nNow pick an acid - lemon or vinegar - and dip again.\nWatch the blue litmus turn red.',
-        line:'Good - now try an acid like lemon or vinegar to see the opposite.',
-        voice:'Now try an acid.', glow:findSolBtn('acidic'), key:'nudge-acid'};
-      return;
+        hint:'Dip the papers to test '+sol.name+'.',hintVoice:'Dip the papers.',
+        why:'Blue litmus turns red in acid; red litmus turns blue in base; neither changes if neutral.',
+        detail:'Step 1 - You picked '+sol.name+'.\nStep 2 - Tap Dip Papers.\nStep 3 - Watch which litmus changes.\nWhy it works - acids release H+ (blue to red); bases release OH- (red to blue).',
+        line:'Dip the papers to test '+sol.name+'. ('+testedSol.size+' of '+all+' tested)',
+        voice:'Dip the papers.', glow:testBtn, submit:testBtn, key:'dip-'+state.solution};
+    } else {
+      var nb = SOLUTIONS[untested.dataset.solution];
+      window.__eduRound = {native:true,
+        hint:'Pick the next untested solution: '+nb.name+'.',hintVoice:'Try '+nb.name+' next.',
+        why:'Working through every solution shows which are acids, bases, and neutrals.',
+        detail:'You already tested '+sol.name+'.\nPick '+nb.name+' next and dip again.\n'+testedSol.size+' of '+all+' done - keep going, or stop whenever you like.',
+        line:'Already tested '+sol.name+'. Now try '+nb.name+'. ('+testedSol.size+' of '+all+' tested)',
+        voice:'Try '+nb.name+' next.', glow:untested, submit:untested, key:'next-'+untested.dataset.solution};
     }
-    window.__eduRound = {native:true,
-      hint:'Dip the papers to test '+sol.name+'.',hintVoice:'Dip the papers.',
-      why:'Blue litmus turns red in acid; red litmus turns blue in base; neither changes if neutral.',
-      detail:'Step 1 - You picked '+sol.name+'.\nStep 2 - Tap Dip Papers.\nStep 3 - Watch which litmus changes colour.\nWhy it works - acids release H+ (blue to red); bases release OH- (red to blue).',
-      line:'You picked '+sol.name+'. Dip the papers to see which litmus changes.',
-      voice:'Dip the papers.', glow:testBtn, submit:testBtn, key:'dip-'+state.solution};
   }catch(e){}
 }
 function coachResult(sol){
   try{
-    testedTypes.add(sol.type);
-    var line, voice;
-    if(sol.type==='acidic'){ line='Blue litmus turned red - '+sol.name+' is an acid.'; voice=sol.name+' is an acid.'; }
-    else if(sol.type==='basic'){ line='Red litmus turned blue - '+sol.name+' is a base.'; voice=sol.name+' is a base.'; }
-    else { line='Neither paper changed - '+sol.name+' is neutral.'; voice=sol.name+' is neutral.'; }
+    testedSol.add(state.solution); testedTypes.add(sol.type);
+    var all = solBtns().length;
+    var base;
+    if(sol.type==='acidic'){ base='Blue litmus turned red - '+sol.name+' is an acid.'; }
+    else if(sol.type==='basic'){ base='Red litmus turned blue - '+sol.name+' is a base.'; }
+    else { base='Neither paper changed - '+sol.name+' is neutral.'; }
+    var typeWord = (sol.type==='acidic'?'an acid':sol.type==='basic'?'a base':'neutral');
+    var untested = nextUntestedBtn();
+    var line, voice, glow, key;
+    if(untested){
+      var nb = SOLUTIONS[untested.dataset.solution];
+      line = base+' ('+testedSol.size+' of '+all+' tested) Next: '+nb.name+'.';
+      if(!coreNoted && testedTypes.has('acidic') && testedTypes.has('basic')){
+        coreNoted = true;
+        line = base+' You have now seen an acid and a base - the core idea. Keep exploring the rest, or move on. Next: '+nb.name+'.';
+      }
+      voice = sol.name+' is '+typeWord+'. Try '+nb.name+'.';
+      glow = untested; key = 'res-'+state.solution+'-'+Date.now();
+    } else {
+      line = base+' That is all '+all+' - acids, bases, and neutrals. Great exploring!';
+      voice = sol.name+' - you have tested them all.';
+      glow = null; key = 'done';
+    }
     window.__eduRound = {native:true,
       why:'The litmus colour change tells you the type: acid, base, or neutral.',
-      detail:'Blue litmus to red means acid.\nRed litmus to blue means base.\nNo change means neutral.',
-      line:line, voice:voice, key:'res-'+state.solution+'-'+Date.now()};
-    if(!softDone && testedTypes.has('acidic') && testedTypes.has('basic')){
-      softDone = true;
-      setTimeout(function(){ try{ window.__eduRound = {native:true,
-        line:'You have tested an acid and a base and seen both litmus changes. That is the core idea.',
-        voice:'Nice - you have seen both.', key:'done'}; }catch(e){} }, 3500);
-    }
+      detail:'Blue litmus to red means acid.\nRed litmus to blue means base.\nNo change means neutral.\nTest each solution to see the full set.',
+      line:line, voice:voice, glow:glow, submit:untested||undefined, key:key};
   }catch(e){}
 }
 
