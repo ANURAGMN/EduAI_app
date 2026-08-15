@@ -428,6 +428,7 @@ function burnMagnesium() {
       <strong>Reaction:</strong> 2Mg + O₂ → 2MgO<br><br>
       Now let's dissolve it in water and test if it's acidic or basic!
     `;
+    coachOx();
   }, 2500);
 }
 
@@ -476,6 +477,7 @@ function dissolveInWater() {
         <strong>Reaction:</strong> MgO + H₂O → Mg(OH)₂<br><br>
         Now let's test if this solution is acidic or basic using litmus paper!
       `;
+      coachOx();
     }
   };
   
@@ -507,8 +509,46 @@ function testWithLitmus() {
       This proves that <strong>Magnesium Oxide is a BASIC oxide</strong>.<br><br>
       <strong>Conclusion:</strong> When metals burn in oxygen, they form <strong>metal oxides that are basic in nature</strong>.
     `;
+    coachOx();
   }, 1000);
 }
+
+// ---- native one-clock coach (step machine) ----
+function coachOx(){
+  try{
+    var burnB=document.getElementById('burn-btn'), disB=document.getElementById('dissolve-btn'), testB=document.getElementById('test-btn');
+    if(burnB && !burnB.disabled){
+      window.__eduRound = {native:true,
+        hint:'Burn the magnesium ribbon.',hintVoice:'Burn the magnesium.',
+        why:'A metal burns in oxygen to form a metal oxide, and metal oxides are basic.',
+        detail:'Step 1 - Burn the magnesium ribbon (bright white flame).\nStep 2 - Dissolve the white oxide in water.\nStep 3 - Test with litmus.\nWhy it works - metal + oxygen makes a basic oxide.\nSafety - never look straight at burning magnesium.',
+        line:'Burn the magnesium ribbon and watch the bright white flame.',
+        voice:'Burn the magnesium.', glow:burnB, submit:burnB, key:'mox-burn'};
+    } else if(disB && !disB.disabled){
+      window.__eduRound = {native:true,
+        hint:'Dissolve the white magnesium oxide in water.',hintVoice:'Dissolve it in water.',
+        why:'The metal oxide (MgO) dissolves to make a base - magnesium hydroxide.',
+        detail:'Magnesium burned to magnesium oxide (2Mg + O2 -> 2MgO).\nNow dissolve that white oxide in water.\nMgO + H2O -> Mg(OH)2, a base.',
+        line:'White magnesium oxide formed. Now dissolve it in water.',
+        voice:'Dissolve it in water.', glow:disB, submit:disB, key:'mox-dissolve'};
+    } else if(testB && !testB.disabled){
+      window.__eduRound = {native:true,
+        hint:'Test the solution with litmus.',hintVoice:'Test with litmus.',
+        why:'A metal oxide dissolved in water is basic, so it turns red litmus blue.',
+        detail:'The solution is magnesium hydroxide, a base.\nDip the litmus papers.\nA base turns red litmus blue.',
+        line:'Now test the solution with litmus - a metal oxide turns red litmus blue.',
+        voice:'Test with litmus.', glow:testB, submit:testB, key:'mox-test'};
+    } else {
+      window.__eduRound = {native:true,
+        why:'Metal + oxygen -> metal oxide, and metal oxides are basic (they turn red litmus blue).',
+        detail:'Magnesium burned to magnesium oxide.\nDissolved, it made a base (magnesium hydroxide).\nRed litmus turned blue - proof it is basic.\nContrast - non-metal oxides are acidic (see the sulfur sim).',
+        line:'Red litmus turned blue - magnesium oxide is basic. Metal oxides are basic.',
+        voice:'Metal oxides are basic.', key:'mox-done'};
+    }
+  }catch(e){}
+}
+coachOx();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

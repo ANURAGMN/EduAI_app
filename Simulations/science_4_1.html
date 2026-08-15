@@ -404,6 +404,7 @@ function selectMaterial(name, icon, malleable, color, btn) {
     <strong>${name.charAt(0).toUpperCase() + name.slice(1)}</strong> is a <strong>${malleable ? 'METAL' : 'NON-METAL'}</strong>.<br><br>
     Let's see what happens when we hammer it! Will it flatten or break?
   `;
+  coachMatSelect();
 }
 
 function hammerMaterial() {
@@ -468,11 +469,62 @@ function hammerMaterial() {
     // Update results
     document.getElementById('malleable-items').textContent = malleableList.length ? malleableList.join(', ') : '-';
     document.getElementById('brittle-items').textContent = brittleList.length ? brittleList.join(', ') : '-';
-    
+    coachMatResult();
     hammerBtn.textContent = '🔨 Select another material';
     selectedMaterial = null;
   }, 300);
 }
+
+// ---- native one-clock coach (walks every material, allow finish) ----
+function matBtns(){ return Array.prototype.slice.call(document.querySelectorAll('.material-btn')); }
+function nextUntestedMat(){ var b=matBtns(); for(var i=0;i<b.length;i++){ if(!b[i].classList.contains('tested')) return b[i]; } return null; }
+function testedMatCount(){ return matBtns().filter(function(b){return b.classList.contains('tested');}).length; }
+var seenMalleable = false, seenBrittle = false, matDone = false;
+function coachMatSelect(){
+  try{
+    var nm = (selectedMaterial||'').charAt(0).toUpperCase()+(selectedMaterial||'').slice(1);
+    window.__eduRound = {native:true,
+      hint:'Hammer the '+nm+' to see if it flattens or shatters.',hintVoice:'Hammer it.',
+      why:'Metals flatten under a hammer (malleable); brittle non-metals shatter.',
+      detail:'Step 1 - You picked '+nm+'.\nStep 2 - Tap the hammer.\nStep 3 - Flattens = malleable metal; shatters = brittle non-metal.\nWhy it works - metal layers slide without breaking; non-metal bonds crack.\nTip - gold is so malleable it is beaten into gold leaf.',
+      line:'Hammer the '+nm+' - will it flatten or shatter? ('+testedMatCount()+' of '+matBtns().length+' tested)',
+      voice:'Hammer it.', glow:hammerBtn, submit:hammerBtn, key:'hammer-'+(selectedMaterial||'')};
+  }catch(e){}
+}
+function coachMatResult(){
+  try{
+    if(isMalleable) seenMalleable = true; else seenBrittle = true;
+    var nm = (selectedMaterial||'').charAt(0).toUpperCase()+(selectedMaterial||'').slice(1);
+    var all = matBtns().length, tc = testedMatCount();
+    var base = isMalleable
+      ? nm+' flattened into a sheet - it is malleable, like most metals.'
+      : nm+' shattered - it is brittle, not malleable. Non-metals break instead of bending.';
+    var untested = nextUntestedMat();
+    var line, voice, glow, key;
+    if(untested){
+      var un = untested.querySelector('.name').textContent;
+      line = base+' ('+tc+' of '+all+' tested) Next: '+un+'.';
+      if(!matDone && seenMalleable && seenBrittle){ matDone=true; line = base+' You have now seen a malleable metal and a brittle non-metal - the core idea. Keep going or stop. Next: '+un+'.'; }
+      voice = (isMalleable?nm+' is malleable.':nm+' is brittle.')+' Try '+un+'.';
+      glow = untested; key = 'res-'+(selectedMaterial||'')+'-'+Date.now();
+    } else {
+      line = base+' That is all '+all+' - metals flatten, non-metals shatter.';
+      voice = nm+' - you have tested them all.'; glow = null; key = 'done';
+    }
+    window.__eduRound = {native:true,
+      why:'Malleability separates metals (flatten under a hammer) from non-metals (shatter).',
+      detail:'Flattens = malleable metal.\nShatters = brittle non-metal.\nMetal atom-layers slide; non-metal bonds crack.',
+      line:line, voice:voice, glow:glow, submit:untested||undefined, key:key};
+  }catch(e){}
+}
+// idle
+window.__eduRound = {native:true,
+  hint:'Tap a material, then hammer it.',hintVoice:'Test each material.',
+  why:'Metals are malleable - they flatten into sheets; non-metals are brittle and shatter.',
+  detail:'Step 1 - Pick a material.\nStep 2 - Hammer it.\nStep 3 - Flattens = malleable metal; shatters = brittle non-metal.\nWhy it works - metallic bonding lets layers slip without breaking.\nTip - gold is beaten into gold leaf because it is so malleable.',
+  line:'Tap each material and hammer it - metals flatten into sheets, non-metals shatter. (0 of '+matBtns().length+' tested)',
+  voice:'Test each material.', glow:matBtns(), key:'materials'};
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>
