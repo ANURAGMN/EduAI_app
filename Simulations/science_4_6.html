@@ -446,7 +446,41 @@ function updateDays(days) {
       <strong>Conclusion:</strong> Iron rusts only when <strong>both oxygen (from air) AND water</strong> are present together!
     `;
   }
+  coachRust(days);
 }
+
+// ---- native one-clock coach (time-slider reveal) ----
+function rustSlider(){ return document.getElementById('days-slider'); }
+function rustDetail(){
+  return 'Tube A - dry air only: water is missing, so no rust.\nTube B - boiled water + oil: air is sealed out, so no rust.\nTube C - air and water together: rust forms.\nWhy it works - iron + oxygen + water make iron oxide (rust).\nTip - oiling or painting iron keeps air and moisture out.';
+}
+function coachRust(days){
+  try{
+    if(days>=7){
+      window.__eduRound = {native:true,
+        why:'Rusting needs BOTH oxygen and water; remove either one and iron stays shiny.',
+        detail:rustDetail(),
+        line:'Day 7: only tube C rusted - iron needs air AND water together. Water alone (tube B) is not enough.',
+        voice:'Iron needs both air and water.', key:'rust-done'};
+    } else if(days===0){
+      window.__eduRound = {native:true,
+        hint:'Drag the days slider and watch the three nails.',hintVoice:'Drag the days slider.',
+        why:'Rusting needs both oxygen and water; the three tubes remove one, the other, or neither.',
+        detail:rustDetail(),
+        line:'Drag the days slider to see which nail rusts: dry air, boiled water + oil, or air + water.',
+        voice:'Drag the days slider.', glow:rustSlider(), submit:rustSlider(), key:'rust-idle'};
+    } else {
+      window.__eduRound = {native:true,
+        hint:'Only the air + water nail is changing.',hintVoice:'Only tube C is rusting.',
+        why:'Only tube C has both oxygen and water, so only it rusts.',
+        detail:rustDetail(),
+        line:'Day '+days+': only the air + water nail (tube C) is rusting. Keep dragging to day 7.',
+        voice:'Only tube C is rusting.', glow:rustSlider(), submit:rustSlider(), key:'rust-prog'};
+    }
+  }catch(e){}
+}
+coachRust(0);
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

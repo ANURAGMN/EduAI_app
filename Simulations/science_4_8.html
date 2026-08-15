@@ -445,6 +445,7 @@ function burnSulfur() {
       <strong>Reaction:</strong> S + O₂ → SO₂<br><br>
       Now let's dissolve it in water and test its nature!
     `;
+    coachOx();
   }, 3000);
 }
 
@@ -473,6 +474,7 @@ function dissolveGas() {
       <strong>Reaction:</strong> SO₂ + H₂O → H₂SO₃<br><br>
       Now let's test if this solution is really acidic using litmus paper!
     `;
+    coachOx();
   }, 1000);
 }
 
@@ -501,8 +503,46 @@ function testWithLitmus() {
       This proves that <strong>Sulfur Dioxide is an ACIDIC oxide</strong>.<br><br>
       <strong>Conclusion:</strong> When non-metals burn in oxygen, they form <strong>non-metal oxides that are acidic in nature</strong>.
     `;
+    coachOx();
   }, 1000);
 }
+
+// ---- native one-clock coach (step machine) ----
+function coachOx(){
+  try{
+    var burnB=document.getElementById('burn-btn'), disB=document.getElementById('dissolve-btn'), testB=document.getElementById('test-btn');
+    if(burnB && !burnB.disabled){
+      window.__eduRound = {native:true,
+        hint:'Burn the sulfur.',hintVoice:'Burn the sulfur.',
+        why:'A non-metal burns in oxygen to form a non-metal oxide, and non-metal oxides are acidic.',
+        detail:'Step 1 - Burn the sulfur (forms sulfur dioxide gas).\nStep 2 - Dissolve the gas in water.\nStep 3 - Test with litmus.\nWhy it works - non-metal + oxygen makes an acidic oxide.',
+        line:'Burn the sulfur and collect the sulfur dioxide gas.',
+        voice:'Burn the sulfur.', glow:burnB, submit:burnB, key:'nox-burn'};
+    } else if(disB && !disB.disabled){
+      window.__eduRound = {native:true,
+        hint:'Dissolve the sulfur dioxide gas in water.',hintVoice:'Dissolve it in water.',
+        why:'The non-metal oxide (SO2) dissolves to make an acid - sulfurous acid.',
+        detail:'Sulfur burned to sulfur dioxide (S + O2 -> SO2).\nNow dissolve that gas in water.\nSO2 + H2O -> H2SO3, an acid.',
+        line:'Sulfur dioxide collected. Now dissolve it in water.',
+        voice:'Dissolve it in water.', glow:disB, submit:disB, key:'nox-dissolve'};
+    } else if(testB && !testB.disabled){
+      window.__eduRound = {native:true,
+        hint:'Test the solution with litmus.',hintVoice:'Test with litmus.',
+        why:'A non-metal oxide dissolved in water is acidic, so it turns blue litmus red.',
+        detail:'The solution is sulfurous acid.\nDip the litmus papers.\nAn acid turns blue litmus red.',
+        line:'Now test the solution with litmus - a non-metal oxide turns blue litmus red.',
+        voice:'Test with litmus.', glow:testB, submit:testB, key:'nox-test'};
+    } else {
+      window.__eduRound = {native:true,
+        why:'Non-metal + oxygen -> non-metal oxide, and non-metal oxides are acidic (turn blue litmus red).',
+        detail:'Sulfur burned to sulfur dioxide.\nDissolved, it made an acid (sulfurous acid).\nBlue litmus turned red - proof it is acidic.\nContrast - metal oxides are basic (see the magnesium sim).',
+        line:'Blue litmus turned red - sulfur dioxide is acidic. Non-metal oxides are acidic.',
+        voice:'Non-metal oxides are acidic.', key:'nox-done'};
+    }
+  }catch(e){}
+}
+coachOx();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

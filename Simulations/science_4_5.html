@@ -387,6 +387,7 @@ function selectMaterial(name, icon, conductor, color, btn) {
     <strong>${name.charAt(0).toUpperCase() + name.slice(1)}</strong> is a <strong>${conductor ? 'METAL' : 'NON-METAL'}</strong>.<br><br>
     Will it allow electricity to flow and light up the bulb? Let's find out!
   `;
+  coachMatSelect();
 }
 
 function testMaterial() {
@@ -439,11 +440,62 @@ function testMaterial() {
     // Update results
     document.getElementById('conductor-items').textContent = conductorList.length ? conductorList.join(', ') : '-';
     document.getElementById('insulator-items').textContent = insulatorList.length ? insulatorList.join(', ') : '-';
-    
+    coachMatResult();
     testBtn.textContent = '⚡ Select another material';
     selectedMaterial = null;
   }, 500);
 }
+
+// ---- native one-clock coach (walks every material, allow finish) ----
+function matBtns(){ return Array.prototype.slice.call(document.querySelectorAll('.material-btn')); }
+function nextUntestedMat(){ var b=matBtns(); for(var i=0;i<b.length;i++){ if(!b[i].classList.contains('tested')) return b[i]; } return null; }
+function testedMatCount(){ return matBtns().filter(function(b){return b.classList.contains('tested');}).length; }
+function capName(s){ s=s||''; return s.charAt(0).toUpperCase()+s.slice(1); }
+var seenCond = false, seenIns = false, matDone = false;
+function coachMatSelect(){
+  try{
+    var nm = capName(selectedMaterial);
+    window.__eduRound = {native:true,
+      hint:'Test the '+nm+' in the circuit.',hintVoice:'Test it.',
+      why:'Metals conduct (bulb lights); insulators block the current.',
+      detail:'Step 1 - You placed '+nm+' in the circuit.\nStep 2 - Tap Test.\nStep 3 - Bulb lights = conductor; stays dark = insulator.\nWhy it works - metals have free electrons that carry current; insulators do not.\nTip - wires are metal inside, plastic outside, for safety.',
+      line:'Test the '+nm+' - will the bulb light? ('+testedMatCount()+' of '+matBtns().length+' tested)',
+      voice:'Test it.', glow:testBtn, submit:testBtn, key:'test-'+(selectedMaterial||'')};
+  }catch(e){}
+}
+function coachMatResult(){
+  try{
+    if(isConductor) seenCond = true; else seenIns = true;
+    var nm = capName(selectedMaterial); var all = matBtns().length, tc = testedMatCount();
+    var base = isConductor
+      ? 'Bulb glows - '+nm+' is a conductor; metals carry current.'
+      : 'Stays dark - '+nm+' is an insulator; it blocks the current.';
+    var untested = nextUntestedMat();
+    var line, voice, glow, key;
+    if(untested){
+      var un = untested.querySelector('.name').textContent;
+      line = base+' ('+tc+' of '+all+' tested) Next: '+un+'.';
+      if(!matDone && seenCond && seenIns){ matDone=true; line = base+' You have now seen a conductor and an insulator - the core idea. Keep going or stop. Next: '+un+'.'; }
+      voice = (isConductor?nm+' conducts.':nm+' is an insulator.')+' Try '+un+'.';
+      glow = untested; key = 'res-'+(selectedMaterial||'')+'-'+Date.now();
+    } else {
+      line = base+' That is all '+all+' - metals conduct, non-metals insulate.';
+      voice = nm+' - you have tested them all.'; glow = null; key = 'done';
+    }
+    window.__eduRound = {native:true,
+      why:'Metals have free electrons that carry current; insulators hold theirs tightly.',
+      detail:'Bulb lights = conductor (metal).\nStays dark = insulator (non-metal).\nThat is why wires are metal inside and plastic outside.',
+      line:line, voice:voice, glow:glow, submit:untested||undefined, key:key};
+  }catch(e){}
+}
+// idle
+window.__eduRound = {native:true,
+  hint:'Tap a material, then test it in the circuit.',hintVoice:'Test each material.',
+  why:'Metals conduct electricity (the bulb lights); non-metals are insulators.',
+  detail:'Step 1 - Pick a material.\nStep 2 - Tap Test.\nStep 3 - Bulb lights = conductor; stays dark = insulator.\nWhy it works - metals share free electrons that carry current.\nTip - that is why wires are metal inside, plastic (insulator) outside.',
+  line:'Tap each material and test it - metals light the bulb, non-metals don’t. (0 of '+matBtns().length+' tested)',
+  voice:'Test each material.', glow:matBtns(), key:'materials'};
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

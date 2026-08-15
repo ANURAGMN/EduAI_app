@@ -396,9 +396,50 @@ function strikeObject(name, icon, isSonorous, btn) {
     // Update results
     document.getElementById('sonorous-items').textContent = sonorousList.length ? sonorousList.join(', ') : '-';
     document.getElementById('not-sonorous-items').textContent = notSonorousList.length ? notSonorousList.join(', ') : '-';
-    
+    coachObjResult(name, isSonorous);
   }, 100);
 }
+
+// ---- native one-clock coach (walks every object, allow finish; one-tap strike) ----
+function objBtns(){ return Array.prototype.slice.call(document.querySelectorAll('.object-btn')); }
+function nextUntestedObj(){ var b=objBtns(); for(var i=0;i<b.length;i++){ if(!b[i].classList.contains('tested')) return b[i]; } return null; }
+function testedObjCount(){ return objBtns().filter(function(b){return b.classList.contains('tested');}).length; }
+function objName(el){ var n=el&&el.querySelector('.name'); return n?n.textContent:'the next object'; }
+function capName(s){ s=s||''; return s.charAt(0).toUpperCase()+s.slice(1); }
+var seenSon = false, seenNotSon = false, objDone = false;
+function coachObjResult(name, sonorous){
+  try{
+    if(sonorous) seenSon = true; else seenNotSon = true;
+    var nm = capName(name); var all = objBtns().length, tc = testedObjCount();
+    var base = sonorous
+      ? nm+' rang clearly - metals are sonorous.'
+      : nm+' gave a dull thud - it is not sonorous.';
+    var untested = nextUntestedObj();
+    var line, voice, glow, key;
+    if(untested){
+      var un = objName(untested);
+      line = base+' ('+tc+' of '+all+' tested) Next: '+un+'.';
+      if(!objDone && seenSon && seenNotSon){ objDone=true; line = base+' You have now heard a sonorous metal and a dull non-metal - the core idea. Keep going or stop. Next: '+un+'.'; }
+      voice = (sonorous?nm+' is sonorous.':nm+' is not sonorous.')+' Try '+un+'.';
+      glow = untested; key = 'res-'+(name||'')+'-'+Date.now();
+    } else {
+      line = base+' That is all '+all+' - metals ring, non-metals thud.';
+      voice = nm+' - you have tested them all.'; glow = null; key = 'done';
+    }
+    window.__eduRound = {native:true,
+      why:'Sonority separates metals (ring when struck) from non-metals (dull thud).',
+      detail:'A clear ring = sonorous metal.\nA dull thud = non-metal.\nMetals vibrate together and sustain sound; non-metals absorb it.',
+      line:line, voice:voice, glow:glow, submit:untested||undefined, key:key};
+  }catch(e){}
+}
+// idle
+window.__eduRound = {native:true,
+  hint:'Strike each object and listen.',hintVoice:'Strike each object.',
+  why:'Metals are sonorous - they ring when struck; non-metals give a dull thud.',
+  detail:'Step 1 - Tap an object to strike it.\nStep 2 - Listen: a clear ring or a dull thud.\nStep 3 - Ring = sonorous metal; thud = non-metal.\nWhy it works - metal atoms vibrate together and sustain the sound.\nTip - that is why bells and cymbals are metal.',
+  line:'Strike each object and listen - metals ring, non-metals thud. (0 of '+objBtns().length+' tested)',
+  voice:'Strike each object.', glow:objBtns(), key:'objects'};
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

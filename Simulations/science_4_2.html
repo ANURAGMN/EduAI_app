@@ -391,6 +391,7 @@ function selectMaterial(name, icon, ductile, color, btn) {
     <strong>${name.charAt(0).toUpperCase() + name.slice(1)}</strong> is a <strong>${ductile ? 'METAL' : 'NON-METAL'}</strong>.<br><br>
     Let's see if we can draw it into a thin wire by pulling it through a narrow hole (die).
   `;
+  coachMatSelect();
 }
 
 function drawWire() {
@@ -447,6 +448,7 @@ function drawWire() {
         `;
         
         updateResults();
+        coachMatResult(saveMaterial, saveDuctile);
       }
     };
     
@@ -486,6 +488,7 @@ function drawWire() {
         `;
         
         updateResults();
+        coachMatResult(saveMaterial, saveDuctile);
       }
     };
     
@@ -500,6 +503,57 @@ function updateResults() {
   document.getElementById('not-ductile-items').textContent = notDuctileList.length ? notDuctileList.join(', ') : '-';
   pullBtn.textContent = '➡️ Select another material';
 }
+
+// ---- native one-clock coach (walks every material, allow finish) ----
+function matBtns(){ return Array.prototype.slice.call(document.querySelectorAll('.material-btn')); }
+function nextUntestedMat(){ var b=matBtns(); for(var i=0;i<b.length;i++){ if(!b[i].classList.contains('tested')) return b[i]; } return null; }
+function testedMatCount(){ return matBtns().filter(function(b){return b.classList.contains('tested');}).length; }
+function capName(s){ s=s||''; return s.charAt(0).toUpperCase()+s.slice(1); }
+var seenDuctile = false, seenNot = false, matDone = false;
+function coachMatSelect(){
+  try{
+    var nm = capName(selectedMaterial);
+    window.__eduRound = {native:true,
+      hint:'Pull the '+nm+' through the die to see if it draws into a wire.',hintVoice:'Pull it through.',
+      why:'Ductile metals stretch into wires; non-metals snap.',
+      detail:'Step 1 - You picked '+nm+'.\nStep 2 - Tap Pull ... Through Die.\nStep 3 - Stretches into a wire = ductile metal; breaks = non-metal.\nWhy it works - metal atoms slide while keeping their bonds; non-metal bonds snap.\nTip - copper is drawn into the wires in your home.',
+      line:'Pull the '+nm+' through the die - will it draw into a wire or break? ('+testedMatCount()+' of '+matBtns().length+' tested)',
+      voice:'Pull it through.', glow:pullBtn, submit:pullBtn, key:'pull-'+(selectedMaterial||'')};
+  }catch(e){}
+}
+function coachMatResult(name, ductile){
+  try{
+    if(ductile) seenDuctile = true; else seenNot = true;
+    var nm = capName(name); var all = matBtns().length, tc = testedMatCount();
+    var base = ductile
+      ? nm+' stretched into a thin wire - it is ductile, like most metals.'
+      : nm+' broke when pulled - it is not ductile. Non-metals snap under tension.';
+    var untested = nextUntestedMat();
+    var line, voice, glow, key;
+    if(untested){
+      var un = untested.querySelector('.name').textContent;
+      line = base+' ('+tc+' of '+all+' tested) Next: '+un+'.';
+      if(!matDone && seenDuctile && seenNot){ matDone=true; line = base+' You have now seen a ductile metal and a non-ductile non-metal - the core idea. Keep going or stop. Next: '+un+'.'; }
+      voice = (ductile?nm+' is ductile.':nm+' is not ductile.')+' Try '+un+'.';
+      glow = untested; key = 'res-'+(name||'')+'-'+Date.now();
+    } else {
+      line = base+' That is all '+all+' - ductile metals draw into wires, non-metals break.';
+      voice = nm+' - you have tested them all.'; glow = null; key = 'done';
+    }
+    window.__eduRound = {native:true,
+      why:'Ductility separates metals (draw into wires) from non-metals (snap).',
+      detail:'Stretches into a wire = ductile metal.\nBreaks = non-metal.\nMetal atoms slide while keeping bonds; non-metal bonds snap.',
+      line:line, voice:voice, glow:glow, submit:untested||undefined, key:key};
+  }catch(e){}
+}
+// idle
+window.__eduRound = {native:true,
+  hint:'Tap a material, then pull it through the die.',hintVoice:'Test each material.',
+  why:'Ductile metals can be drawn into thin wires; non-metals snap.',
+  detail:'Step 1 - Pick a material.\nStep 2 - Pull it through the die.\nStep 3 - Draws into a wire = ductile metal; breaks = non-metal.\nWhy it works - metal atoms slide while keeping their bonds.\nTip - copper wiring works because copper is ductile.',
+  line:'Tap each material and pull it through the die - metals draw into wires, non-metals break. (0 of '+matBtns().length+' tested)',
+  voice:'Test each material.', glow:matBtns(), key:'materials'};
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

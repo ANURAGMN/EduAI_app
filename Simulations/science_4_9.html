@@ -434,6 +434,7 @@ function showProperty(prop, btn) {
   document.getElementById('nonmetal-icon').textContent = data.nonmetal.icon;
   document.getElementById('nonmetal-value').textContent = data.nonmetal.value;
   document.getElementById('nonmetal-example').textContent = data.nonmetal.example;
+  coachProp(prop);
 }
 
 function loadQuestion() {
@@ -466,7 +467,7 @@ function checkAnswer(answer, btn) {
   }
   
   document.getElementById('score-display').textContent = `Score: ${score}/${total}`;
-  
+  coachQuizAns(answer === q.answer);
   // Next question after delay
   setTimeout(() => {
     currentQuestion = (currentQuestion + 1) % quizQuestions.length;
@@ -476,6 +477,52 @@ function checkAnswer(answer, btn) {
 
 // Initialize
 loadQuestion();
+
+// ---- native one-clock coach (walk 8 properties, then quiz) ----
+var PROP_ORDER = ['lustre','malleability','ductility','sonority','heat','electricity','hardness','oxide'];
+var seenProps = new Set();
+function propBtns(){ return Array.prototype.slice.call(document.querySelectorAll('.prop-btn')); }
+function propCard(k){ var i=PROP_ORDER.indexOf(k); return propBtns()[i]||null; }
+function nextUnseenProp(){ for(var i=0;i<PROP_ORDER.length;i++){ if(!seenProps.has(PROP_ORDER[i])) return PROP_ORDER[i]; } return null; }
+function propQuizBtns(){ return [document.getElementById('quiz-metal'),document.getElementById('quiz-nonmetal')].filter(Boolean); }
+function coachProp(prop){
+  try{
+    seenProps.add(prop);
+    var d = properties[prop] || {title:prop, metal:{value:''}, nonmetal:{value:''}};
+    var contrast = 'Metals: '+d.metal.value+'; non-metals: '+d.nonmetal.value+'.';
+    var next = nextUnseenProp();
+    var line, glow;
+    if(next){
+      line = d.title+' — '+contrast+' ('+seenProps.size+' of 8 seen) Next: '+next+'.';
+      glow = propCard(next);
+    } else {
+      line = d.title+' — '+contrast+' You have compared all 8 properties — now try the quiz below.';
+      glow = propQuizBtns();
+    }
+    window.__eduRound = {native:true,
+      hint:'Compare each property for metals vs non-metals.',hintVoice:'Compare each property.',
+      why:'Metals and non-metals differ across a consistent set of properties - lustre, malleability, conductivity, oxides, and more.',
+      detail:'Metals: shiny, malleable, ductile, sonorous, good conductors, basic oxides.\nNon-metals: dull, brittle, poor conductors, acidic oxides.\nExceptions matter - graphite conducts; sodium is soft; mercury is liquid.',
+      line:line, voice:'Compare each property.', glow:glow, submit:(next?propCard(next):undefined), key:'prop-'+prop};
+  }catch(e){}
+}
+function coachQuizAns(correct){
+  try{
+    window.__eduRound = {native:true,
+      why:'Each question maps to a metal/non-metal property you compared above.',
+      detail:'Beaten into sheets / drawn into wires / rings / conducts / basic oxide = metal.\nBrittle / dull / acidic oxide = non-metal.',
+      line:(correct?'Correct!':'Not quite — check the property comparison above.'),
+      voice:(correct?'Correct.':'Check the comparison above.'), key:'quiz-a-'+Date.now()};
+  }catch(e){}
+}
+// idle
+window.__eduRound = {native:true,
+  hint:'Tap each property to compare metals and non-metals.',hintVoice:'Compare each property.',
+  why:'Metals and non-metals differ across a consistent set of properties.',
+  detail:'Metals: shiny, malleable, ductile, sonorous, conductive, basic oxides.\nNon-metals: dull, brittle, poor conductors, acidic oxides.\nExceptions - graphite conducts; sodium is soft; mercury is liquid.',
+  line:'Tap each property to compare metals and non-metals, then try the quiz. (0 of 8 seen)',
+  voice:'Compare each property.', glow:propBtns(), key:'props'};
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

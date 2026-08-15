@@ -335,7 +335,7 @@ function startExperiment() {
   steam.classList.add('boil');
   
   tempDisplay.textContent = '🌡️ Water: 80°C - Observing heat transfer...';
-  
+  coachHeat(false);
   interval = setInterval(() => {
     time++;
     timer.textContent = `Time: ${time} seconds`;
@@ -401,9 +401,38 @@ function startExperiment() {
         <strong>Wooden spoon:</strong> ${Math.round(woodTemp)}°C - Stayed cool (POOR CONDUCTOR/INSULATOR)<br><br>
         <strong>Conclusion:</strong> Metals transfer heat energy quickly through their atoms. Wood traps heat and doesn't transfer it well.
       `;
+      coachHeat(true);
     }
   }, 1000);
 }
+
+// ---- native one-clock coach (single guided experiment) ----
+function coachHeat(done){
+  try{
+    if(done){
+      window.__eduRound = {native:true,
+        why:'Metals have free electrons that pass heat along quickly; wood does not, so it stays cool.',
+        detail:'The metal spoon reached about 70C - it conducts heat fast.\nThe wooden spoon stayed near 30C - it barely conducts.\nWhy it works - free electrons carry heat in metals.\nTip - pans are metal but their handles are wood or plastic (insulators).',
+        line:'The metal spoon got hot fast; the wooden spoon stayed cool - metals are good heat conductors.',
+        voice:'Metal conducts heat fast.', key:'heat-done'};
+    } else {
+      window.__eduRound = {native:true,
+        hint:'Watch which spoon heats up faster.',hintVoice:'Watch the spoons.',
+        why:'Metals conduct heat quickly via free electrons; wood is a poor conductor.',
+        detail:'Both spoons sit in hot water.\nThe metal handle heats fast; the wooden one stays cool.\nThat is why pans have wooden or plastic handles.',
+        line:'Heating - watch the metal spoon get hot while the wooden one stays cool.',
+        voice:'Watch the spoons.', key:'heat-run'};
+    }
+  }catch(e){}
+}
+// idle
+window.__eduRound = {native:true,
+  hint:'Put a metal and a wooden spoon in hot water and start.',hintVoice:'Start the experiment.',
+  why:'Metals conduct heat quickly (free electrons); wood is a poor conductor (insulator).',
+  detail:'Step 1 - Tap Start.\nStep 2 - Both spoons sit in hot water.\nStep 3 - The metal handle heats far faster than the wooden one.\nWhy it works - free electrons carry the heat.\nTip - that is why pans are metal but handles are plastic/wood.',
+  line:'Put a metal spoon and a wooden spoon in hot water - tap Start and watch which heats up faster.',
+  voice:'Start the experiment.', glow:startBtn, submit:startBtn, key:'heat-idle'};
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>
