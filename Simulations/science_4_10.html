@@ -624,6 +624,58 @@ function render(){
 
   wireExample();
   wireQuiz();
+  coach410();
+}
+
+// ---- native one-clock coach (lighter contract; complements, not duplicates, the mascot) ----
+function coach410(){
+  try{
+    var pb = primaryBtn;
+    var pub = function(o){ o.native = true; window.__eduRound = o; };
+    if(idx>=2 && idx<2+EXAMPLES.length){
+      var ex = EXAMPLES[idx-2], st = exState[idx] || {};
+      if(st.guessed==null){
+        pub({ hint:'Think about the property, not the material.',hintVoice:'Pick the reason.',
+          why:'Each use is chosen for a property: '+ex.property+'.', detail:ex.blurb,
+          line:'Why is '+ex.title+' made of '+ex.materials+'? Pick the reason.',
+          voice:'Pick the reason.', glow:Array.prototype.slice.call(document.querySelectorAll('.guess-opt')), key:'ex'+idx+'-guess' });
+      } else if(!st.tested){
+        pub({ hint:'Run the test to check your guess.',hintVoice:'Run the test.',
+          why:'A quick test shows the property in action.', detail:ex.blurb,
+          line:'Run the test to verify your guess.', voice:'Run the test.',
+          glow:document.getElementById('testBtn'), submit:document.getElementById('testBtn'), key:'ex'+idx+'-test' });
+      } else {
+        var hit = st.guessed===ex.correct;
+        pub({ why:ex.blurb, detail:ex.blurb,
+          line:(hit?'Correct — ':'The key property is ')+ex.property+'. Tap Continue.',
+          voice:(hit?'Correct.':'Note the property.'), glow:pb, submit:pb, key:'ex'+idx+'-done-'+Date.now() });
+      }
+    } else if(idx>=3+EXAMPLES.length && idx<3+EXAMPLES.length+QUIZ.length){
+      var qi = idx-(3+EXAMPLES.length), q = QUIZ[qi], qst = quizState['q'+qi] || {};
+      if(!qst.checked){
+        pub({ hint:'Does the use need to conduct, bend, or ring — or resist those?',hintVoice:'Metal or non-metal?',
+          why:'Sort by the property the use needs.', detail:q.why,
+          line:'Is "'+q.q+'" a metal or a non-metal use? Pick a bin.', voice:'Metal or non-metal?',
+          glow:[document.getElementById('binMetal'),document.getElementById('binNonmetal')].filter(Boolean), key:'q'+qi });
+      } else {
+        var ok = qst.selected===q.correct;
+        pub({ why:q.why, detail:q.why,
+          line:(ok?'Correct — ':'Not quite — ')+q.why, voice:(ok?'Correct.':'Not quite.'),
+          glow:pb, submit:pb, key:'q'+qi+'-a-'+Date.now() });
+      }
+    } else {
+      var line = idx===0 ? 'Guess why each material is used, test it, then sort real examples.'
+        : idx===1 ? 'Property first, material second — learn the property and the material follows.'
+        : idx===(2+EXAMPLES.length) ? 'Now sort each real application into metal or non-metal.'
+        : idx===(3+EXAMPLES.length+QUIZ.length) ? 'Round complete — tap Continue.'
+        : idx===(4+EXAMPLES.length+QUIZ.length) ? 'The Iron Pillar of Delhi: 1600+ years, no rust.'
+        : idx===(5+EXAMPLES.length+QUIZ.length) ? 'Recycling metals saves huge energy — tap Finish.'
+        : 'Lesson complete — materials are chosen for their properties.';
+      pub({ why:'Metals: shiny, conduct heat & electricity, malleable, ductile, sonorous, basic oxides. Non-metals: the opposite, acidic oxides.',
+        detail:'Metals conduct heat and electricity, are malleable, ductile and sonorous, and form basic oxides.\nNon-metals are dull, brittle, poor conductors, and form acidic oxides.',
+        line:line, voice:'Tap Continue.', glow:pb, submit:pb, key:'step-'+idx });
+    }
+  }catch(e){}
 }
 
 function wireExample(){
@@ -785,5 +837,6 @@ modalExit.addEventListener('click', ()=>{ exitModal.style.display='none'; resetA
 
 render();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

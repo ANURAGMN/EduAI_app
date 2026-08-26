@@ -272,12 +272,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>🏁 Heat Race: Conductors vs Insulators</h1>
+  <h1>ðŸ Heat Race: Conductors vs Insulators</h1>
   <p>Which material transfers heat fastest?</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-title">ðŸ“š Key Concept</div>
   <div class="concept-text">
     <strong>Conductors</strong> (metals) transfer heat quickly. <strong>Insulators</strong> (wood, plastic, glass) transfer heat slowly. Race them to see the difference!
   </div>
@@ -285,101 +285,101 @@ body {
 
 <div class="sim-card">
   <div class="mode-selector">
-    <button class="mode-btn active" onclick="selectMode('race', this)">🏁 Race Mode</button>
-    <button class="mode-btn" onclick="selectMode('compare', this)">📊 Compare Mode</button>
+    <button class="mode-btn active" onclick="selectMode('race', this)">ðŸ Race Mode</button>
+    <button class="mode-btn" onclick="selectMode('compare', this)">ðŸ“Š Compare Mode</button>
   </div>
   
   <div class="race-visual">
-    <div class="race-title">🔥 Heat Transfer Race 🏁</div>
+    <div class="race-title">ðŸ”¥ Heat Transfer Race ðŸ</div>
     
     <div class="finish-line"></div>
     <div class="finish-label">FINISH</div>
     
     <!-- Metal Track -->
-    <div class="heat-source" style="top: 60px;">🔥</div>
+    <div class="heat-source" style="top: 60px;">ðŸ”¥</div>
     <div class="race-track" style="top: 55px;" onclick="selectTrack('metal')">
       <div class="track-label">Metal</div>
       <div class="track-bg track-metal">
         <div class="heat-progress progress-metal" id="progress-metal"></div>
       </div>
-      <div class="track-icon">🥄</div>
-      <div class="winner-badge" id="badge-metal">🥇 1st</div>
+      <div class="track-icon">ðŸ¥„</div>
+      <div class="winner-badge" id="badge-metal">ðŸ¥‡ 1st</div>
     </div>
     
     <!-- Wood Track -->
-    <div class="heat-source" style="top: 115px;">🔥</div>
+    <div class="heat-source" style="top: 115px;">ðŸ”¥</div>
     <div class="race-track" style="top: 110px;" onclick="selectTrack('wood')">
       <div class="track-label">Wood</div>
       <div class="track-bg track-wood">
         <div class="heat-progress progress-wood" id="progress-wood"></div>
       </div>
-      <div class="track-icon">🪵</div>
-      <div class="winner-badge" id="badge-wood">🥈 2nd</div>
+      <div class="track-icon">ðŸªµ</div>
+      <div class="winner-badge" id="badge-wood">ðŸ¥ˆ 2nd</div>
     </div>
     
     <!-- Glass Track -->
-    <div class="heat-source" style="top: 170px;">🔥</div>
+    <div class="heat-source" style="top: 170px;">ðŸ”¥</div>
     <div class="race-track" style="top: 165px;" onclick="selectTrack('glass')">
       <div class="track-label">Glass</div>
       <div class="track-bg track-glass">
         <div class="heat-progress progress-glass" id="progress-glass"></div>
       </div>
-      <div class="track-icon">🫙</div>
-      <div class="winner-badge" id="badge-glass">🥉 3rd</div>
+      <div class="track-icon">ðŸ«™</div>
+      <div class="winner-badge" id="badge-glass">ðŸ¥‰ 3rd</div>
     </div>
     
     <!-- Plastic Track -->
-    <div class="heat-source" style="top: 225px;">🔥</div>
+    <div class="heat-source" style="top: 225px;">ðŸ”¥</div>
     <div class="race-track" style="top: 220px;" onclick="selectTrack('plastic')">
       <div class="track-label">Plastic</div>
       <div class="track-bg track-plastic">
         <div class="heat-progress progress-plastic" id="progress-plastic"></div>
       </div>
-      <div class="track-icon">🥤</div>
+      <div class="track-icon">ðŸ¥¤</div>
       <div class="winner-badge" id="badge-plastic">4th</div>
     </div>
   </div>
   
   <div class="controls">
-    <button class="control-btn start-btn" id="start-btn" onclick="startRace()">🏁 Start Race!</button>
-    <button class="control-btn reset-btn" onclick="resetRace()">🔄 Reset</button>
+    <button class="control-btn start-btn" id="start-btn" onclick="startRace()">ðŸ Start Race!</button>
+    <button class="control-btn reset-btn" onclick="resetRace()">ðŸ”„ Reset</button>
   </div>
   
-  <div class="timer-display" id="timer">⏱️ 0.0 seconds</div>
+  <div class="timer-display" id="timer">â±ï¸ 0.0 seconds</div>
 </div>
 
 <div class="results-panel" id="results-panel" style="display: none;">
-  <div class="results-title">📊 Race Results</div>
+  <div class="results-title">ðŸ“Š Race Results</div>
   <div class="results-grid">
     <div class="result-item conductor">
-      <div class="name">🥄 Metal</div>
+      <div class="name">ðŸ¥„ Metal</div>
       <div class="time" id="result-metal">--</div>
-      <div class="type">⚡ CONDUCTOR</div>
+      <div class="type">âš¡ CONDUCTOR</div>
     </div>
     <div class="result-item insulator">
-      <div class="name">🪵 Wood</div>
+      <div class="name">ðŸªµ Wood</div>
       <div class="time" id="result-wood">--</div>
-      <div class="type">🛡️ INSULATOR</div>
+      <div class="type">ðŸ›¡ï¸ INSULATOR</div>
     </div>
     <div class="result-item insulator">
-      <div class="name">🫙 Glass</div>
+      <div class="name">ðŸ«™ Glass</div>
       <div class="time" id="result-glass">--</div>
-      <div class="type">🛡️ INSULATOR</div>
+      <div class="type">ðŸ›¡ï¸ INSULATOR</div>
     </div>
     <div class="result-item insulator">
-      <div class="name">🥤 Plastic</div>
+      <div class="name">ðŸ¥¤ Plastic</div>
       <div class="time" id="result-plastic">--</div>
-      <div class="type">🛡️ INSULATOR</div>
+      <div class="type">ðŸ›¡ï¸ INSULATOR</div>
     </div>
   </div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">🎯 What This Shows</div>
+  <div class="takeaway-title">ðŸŽ¯ What This Shows</div>
   <div class="takeaway-text">
-    • <strong>Metal wins</strong> - it's a great conductor!<br>
-    • <strong>Insulators are slow</strong> - they resist heat flow<br>
-    • That's why pan bodies are metal but handles are plastic/wood!
+    â€¢ <strong>Metal wins</strong> - it's a great conductor!<br>
+    â€¢ <strong>Insulators are slow</strong> - they resist heat flow<br>
+    â€¢ That's why pan bodies are metal but handles are plastic/wood!
   </div>
 </div>
 
@@ -440,7 +440,7 @@ function startRace() {
   
   timerInterval = setInterval(() => {
     timer += 0.1;
-    document.getElementById('timer').textContent = `⏱️ ${timer.toFixed(1)} seconds`;
+    document.getElementById('timer').textContent = `â±ï¸ ${timer.toFixed(1)} seconds`;
     
     // Update each track
     Object.keys(progress).forEach(material => {
@@ -468,7 +468,7 @@ function startRace() {
 }
 
 function showBadge(material, position) {
-  const badges = ['🥇 1st', '🥈 2nd', '🥉 3rd', '4th'];
+  const badges = ['ðŸ¥‡ 1st', 'ðŸ¥ˆ 2nd', 'ðŸ¥‰ 3rd', '4th'];
   const badge = document.getElementById(`badge-${material}`);
   badge.textContent = badges[position - 1];
   badge.classList.add('show');
@@ -497,12 +497,13 @@ function resetRace() {
     document.getElementById(`progress-${material}`).style.width = '0%';
   });
   
-  document.getElementById('timer').textContent = '⏱️ 0.0 seconds';
+  document.getElementById('timer').textContent = 'â±ï¸ 0.0 seconds';
   document.getElementById('start-btn').disabled = false;
   document.getElementById('results-panel').style.display = 'none';
   
   document.querySelectorAll('.winner-badge').forEach(b => b.classList.remove('show'));
 }
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

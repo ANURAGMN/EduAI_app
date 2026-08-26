@@ -261,12 +261,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>☀️ Interactive Sundial</h1>
+  <h1>â˜€ï¸ Interactive Sundial</h1>
   <p>Move the Sun and watch the shadow tell time!</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">📚 How Sundials Work</div>
+  <div class="concept-title">ðŸ“š How Sundials Work</div>
   <div class="concept-text">
     A sundial uses the Sun's position in the sky to cast a <strong>shadow</strong> from a vertical stick (gnomon). As the Sun moves, the shadow moves, pointing to different hour marks.
   </div>
@@ -274,19 +274,19 @@ body {
 
 <div class="sim-card">
   <div class="time-control">
-    <label>☀️ Move the Sun across the sky (6 AM - 6 PM):</label>
+    <label>â˜€ï¸ Move the Sun across the sky (6 AM - 6 PM):</label>
     <input type="range" id="time-slider" min="6" max="18" value="12" step="0.5" oninput="updateSundial(this.value)">
     <div class="time-display">
-      <span>🌅 6 AM</span>
-      <span>☀️ 12 PM</span>
-      <span>🌇 6 PM</span>
+      <span>ðŸŒ… 6 AM</span>
+      <span>â˜€ï¸ 12 PM</span>
+      <span>ðŸŒ‡ 6 PM</span>
     </div>
   </div>
   
   <div class="current-time" id="current-time">12:00 PM</div>
   
   <div class="sundial-visual">
-    <div class="time-period" id="time-period">☀️ Noon</div>
+    <div class="time-period" id="time-period">â˜€ï¸ Noon</div>
     
     <div class="sun" id="sun">
       <div class="sun-rays">
@@ -332,19 +332,19 @@ body {
 </div>
 
 <div class="info-panel">
-  <div class="info-title">🔬 The Science</div>
+  <div class="info-title">ðŸ”¬ The Science</div>
   <div class="info-text">
-    The Earth rotates <strong>15° per hour</strong>. As the Sun appears to move across the sky (east to west), the shadow of the gnomon sweeps across the dial face, acting like a clock hand!
+    The Earth rotates <strong>15Â° per hour</strong>. As the Sun appears to move across the sky (east to west), the shadow of the gnomon sweeps across the dial face, acting like a clock hand!
   </div>
 </div>
 
 <div class="limitations">
-  <div class="limitations-title">⚠️ Limitations of Sundials</div>
+  <div class="limitations-title">âš ï¸ Limitations of Sundials</div>
   <div class="limitations-text">
-    • ❌ Don't work at <strong>night</strong><br>
-    • ❌ Don't work on <strong>cloudy days</strong><br>
-    • ❌ Need <strong>adjustment</strong> for different latitudes<br>
-    • ❌ Accuracy limited to ~15-30 minutes
+    â€¢ âŒ Don't work at <strong>night</strong><br>
+    â€¢ âŒ Don't work on <strong>cloudy days</strong><br>
+    â€¢ âŒ Need <strong>adjustment</strong> for different latitudes<br>
+    â€¢ âŒ Accuracy limited to ~15-30 minutes
   </div>
 </div>
 
@@ -385,20 +385,21 @@ function updateSundial(hours) {
   
   // Update time period
   if (hours < 9) {
-    timePeriod.textContent = '🌅 Morning';
+    timePeriod.textContent = 'ðŸŒ… Morning';
   } else if (hours < 12) {
-    timePeriod.textContent = '☀️ Late Morning';
+    timePeriod.textContent = 'â˜€ï¸ Late Morning';
   } else if (hours < 14) {
-    timePeriod.textContent = '☀️ Noon';
+    timePeriod.textContent = 'â˜€ï¸ Noon';
   } else if (hours < 17) {
-    timePeriod.textContent = '🌤️ Afternoon';
+    timePeriod.textContent = 'ðŸŒ¤ï¸ Afternoon';
   } else {
-    timePeriod.textContent = '🌇 Evening';
+    timePeriod.textContent = 'ðŸŒ‡ Evening';
   }
 }
 
 // Initialize
 updateSundial(12);
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

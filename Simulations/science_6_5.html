@@ -228,12 +228,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>🌸 Understanding Menstruation</h1>
+  <h1>ðŸŒ¸ Understanding Menstruation</h1>
   <p>A natural part of growing up</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-title">ðŸ“š Key Concept</div>
   <div class="concept-text">
     <strong>Menstruation</strong> (periods) is a natural monthly cycle in girls/women where the uterus sheds its lining. It typically begins during puberty (ages 10-15) and is a sign of reproductive health.
   </div>
@@ -255,7 +255,7 @@ body {
   </div>
   
   <div class="day-slider">
-    <label>📅 Explore the Cycle (28-day average):</label>
+    <label>ðŸ“… Explore the Cycle (28-day average):</label>
     <input type="range" id="day-slider" min="1" max="28" value="1" oninput="updateCycle(this.value)">
   </div>
   
@@ -292,14 +292,14 @@ body {
 </div>
 
 <div class="phase-info" id="phase-info">
-  <div class="phase-title" id="phase-title">🔴 Menstruation (Days 1-5)</div>
+  <div class="phase-title" id="phase-title">ðŸ”´ Menstruation (Days 1-5)</div>
   <div class="phase-text" id="phase-text">
     This is when the uterine lining sheds, resulting in bleeding that lasts 3-7 days. It's the start of a new cycle. Using sanitary pads or other menstrual products keeps you comfortable and hygienic.
   </div>
 </div>
 
 <div class="myth-buster">
-  <div class="myth-title">🚫 Breaking Myths</div>
+  <div class="myth-title">ðŸš« Breaking Myths</div>
   <div class="myth-text">
     <strong>Myth:</strong> "Menstruating girls are impure or should be isolated"<br>
     <strong>Fact:</strong> Menstruation is a <strong>completely natural biological process</strong>. There is nothing impure about it!<br><br>
@@ -309,14 +309,14 @@ body {
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">🎯 Important Points</div>
+  <div class="takeaway-title">ðŸŽ¯ Important Points</div>
   <div class="takeaway-text">
-    • Cycle length varies (21-35 days is normal)<br>
-    • Periods last 3-7 days<br>
-    • Maintain hygiene with sanitary products<br>
-    • Menstruation stops during pregnancy<br>
-    • It naturally ends around age 45-55 (menopause)<br>
-    • If you have concerns, talk to a parent or doctor
+    â€¢ Cycle length varies (21-35 days is normal)<br>
+    â€¢ Periods last 3-7 days<br>
+    â€¢ Maintain hygiene with sanitary products<br>
+    â€¢ Menstruation stops during pregnancy<br>
+    â€¢ It naturally ends around age 45-55 (menopause)<br>
+    â€¢ If you have concerns, talk to a parent or doctor
   </div>
 </div>
 
@@ -326,25 +326,25 @@ body {
 const phases = {
   menstruation: {
     days: [1, 2, 3, 4, 5],
-    title: '🔴 Menstruation (Days 1-5)',
+    title: 'ðŸ”´ Menstruation (Days 1-5)',
     text: 'This is when the uterine lining sheds, resulting in bleeding that lasts 3-7 days. It\'s the start of a new cycle. Using sanitary pads or other menstrual products keeps you comfortable and hygienic.',
     color: '#e91e63'
   },
   follicular: {
     days: [6, 7, 8, 9, 10, 11, 12, 13],
-    title: '🟠 Follicular Phase (Days 6-13)',
+    title: 'ðŸŸ  Follicular Phase (Days 6-13)',
     text: 'After menstruation, the uterine lining begins to thicken again. The body prepares for potential pregnancy. Energy levels often increase during this phase.',
     color: '#ff9800'
   },
   ovulation: {
     days: [14],
-    title: '🟢 Ovulation (Day 14)',
+    title: 'ðŸŸ¢ Ovulation (Day 14)',
     text: 'An egg is released from the ovary. This is when pregnancy can occur if the egg is fertilized. Some may feel mild discomfort. This phase lasts about 24 hours.',
     color: '#4caf50'
   },
   luteal: {
     days: [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28],
-    title: '🔵 Luteal Phase (Days 15-28)',
+    title: 'ðŸ”µ Luteal Phase (Days 15-28)',
     text: 'The body continues preparing for possible pregnancy. If no pregnancy occurs, hormone levels drop, and the cycle begins again. Some may experience PMS symptoms (mood changes, bloating) in the last few days.',
     color: '#2196f3'
   }
@@ -398,5 +398,6 @@ function jumpToPhase(phaseName) {
 // Initialize
 updateCycle(1);
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

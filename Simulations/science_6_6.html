@@ -184,12 +184,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>💭 Emotional Changes</h1>
+  <h1>ðŸ’­ Emotional Changes</h1>
   <p>Understanding your feelings during adolescence</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-title">ðŸ“š Key Concept</div>
   <div class="concept-text">
     During adolescence, <strong>hormones</strong> can cause stronger emotions and mood swings. Feeling happy, sad, excited, or confused - sometimes all in one day - is completely normal!
   </div>
@@ -203,37 +203,37 @@ body {
   
   <div class="emotions-grid" id="emotions-grid">
     <div class="emotion-btn" onclick="selectEmotion('sad', this)">
-      <div class="emoji">😢</div>
+      <div class="emoji">ðŸ˜¢</div>
       <div class="name">Sad</div>
     </div>
     <div class="emotion-btn" onclick="selectEmotion('angry', this)">
-      <div class="emoji">😠</div>
+      <div class="emoji">ðŸ˜ </div>
       <div class="name">Angry</div>
     </div>
     <div class="emotion-btn" onclick="selectEmotion('anxious', this)">
-      <div class="emoji">😰</div>
+      <div class="emoji">ðŸ˜°</div>
       <div class="name">Anxious</div>
     </div>
     <div class="emotion-btn" onclick="selectEmotion('jealous', this)">
-      <div class="emoji">😒</div>
+      <div class="emoji">ðŸ˜’</div>
       <div class="name">Jealous</div>
     </div>
     <div class="emotion-btn" onclick="selectEmotion('confused', this)">
-      <div class="emoji">😕</div>
+      <div class="emoji">ðŸ˜•</div>
       <div class="name">Confused</div>
     </div>
     <div class="emotion-btn" onclick="selectEmotion('okay', this)">
-      <div class="emoji">🙂</div>
+      <div class="emoji">ðŸ™‚</div>
       <div class="name">It's okay</div>
     </div>
   </div>
   
   <div class="response-panel" id="response-panel">
-    <div class="response-title" id="response-title">✓ That's a valid feeling!</div>
+    <div class="response-title" id="response-title">âœ“ That's a valid feeling!</div>
     <div class="response-text" id="response-text"></div>
   </div>
   
-  <button class="next-btn" id="next-btn" onclick="nextScenario()">Next Scenario →</button>
+  <button class="next-btn" id="next-btn" onclick="nextScenario()">Next Scenario â†’</button>
   
   <div class="progress-dots" id="progress-dots">
     <div class="progress-dot current"></div>
@@ -245,43 +245,43 @@ body {
 </div>
 
 <div class="coping-strategies">
-  <div class="coping-title">💪 Positive Ways to Handle Emotions</div>
+  <div class="coping-title">ðŸ’ª Positive Ways to Handle Emotions</div>
   <div class="strategy-list">
     <div class="strategy-item">
-      <div class="icon">🎵</div>
+      <div class="icon">ðŸŽµ</div>
       <div class="text">Music & Dance</div>
     </div>
     <div class="strategy-item">
-      <div class="icon">⚽</div>
+      <div class="icon">âš½</div>
       <div class="text">Sports & Exercise</div>
     </div>
     <div class="strategy-item">
-      <div class="icon">📝</div>
+      <div class="icon">ðŸ“</div>
       <div class="text">Writing/Journaling</div>
     </div>
     <div class="strategy-item">
-      <div class="icon">🗣️</div>
+      <div class="icon">ðŸ—£ï¸</div>
       <div class="text">Talk to someone</div>
     </div>
     <div class="strategy-item">
-      <div class="icon">🧘</div>
+      <div class="icon">ðŸ§˜</div>
       <div class="text">Deep breathing</div>
     </div>
     <div class="strategy-item">
-      <div class="icon">🎨</div>
+      <div class="icon">ðŸŽ¨</div>
       <div class="text">Creative activities</div>
     </div>
   </div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">🎯 Remember</div>
+  <div class="takeaway-title">ðŸŽ¯ Remember</div>
   <div class="takeaway-text">
-    • <strong>All emotions are valid</strong> - there's no "wrong" way to feel<br>
-    • Mood swings are normal during adolescence<br>
-    • It's okay to ask for help when feelings are overwhelming<br>
-    • Channeling emotions into positive activities helps<br>
-    • Talk to parents, teachers, or counselors when needed
+    â€¢ <strong>All emotions are valid</strong> - there's no "wrong" way to feel<br>
+    â€¢ Mood swings are normal during adolescence<br>
+    â€¢ It's okay to ask for help when feelings are overwhelming<br>
+    â€¢ Channeling emotions into positive activities helps<br>
+    â€¢ Talk to parents, teachers, or counselors when needed
   </div>
 </div>
 
@@ -390,7 +390,7 @@ function selectEmotion(emotion, btn) {
   btn.classList.add('selected');
   
   const scenario = scenarios[currentScenario];
-  responseTitle.textContent = '✓ That\'s a valid feeling!';
+  responseTitle.textContent = 'âœ“ That\'s a valid feeling!';
   responseText.textContent = scenario.responses[emotion];
   
   responsePanel.classList.add('show');
@@ -402,7 +402,7 @@ function nextScenario() {
   
   if (currentScenario >= scenarios.length) {
     // Quiz complete
-    questionText.textContent = '🎉 Great job exploring emotions!';
+    questionText.textContent = 'ðŸŽ‰ Great job exploring emotions!';
     scenarioText.textContent = 'Understanding your feelings is the first step to managing them well.';
     document.getElementById('emotions-grid').style.display = 'none';
     responsePanel.classList.remove('show');
@@ -422,5 +422,6 @@ function nextScenario() {
 // Initialize
 loadScenario();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

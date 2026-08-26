@@ -218,12 +218,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>🚆 Uniform Linear Motion</h1>
+  <h1>ðŸš† Uniform Linear Motion</h1>
   <p>Constant speed in a straight line</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">📚 What is Uniform Linear Motion?</div>
+  <div class="concept-title">ðŸ“š What is Uniform Linear Motion?</div>
   <div class="concept-text">
     An object is in <strong>uniform linear motion</strong> when it moves in a <strong>straight line</strong> at <strong>constant speed</strong>. It covers <strong>equal distances in equal time intervals</strong>.
   </div>
@@ -231,7 +231,7 @@ body {
 
 <div class="sim-card">
   <div class="speed-control">
-    <label>🚆 Set Train Speed:</label>
+    <label>ðŸš† Set Train Speed:</label>
     <input type="range" id="speed-slider" min="10" max="100" value="50" oninput="updateSpeed(this.value)">
     <div class="speed-value" id="speed-value">50 km/h</div>
   </div>
@@ -246,17 +246,17 @@ body {
       <span>8 km</span>
       <span>10 km</span>
     </div>
-    <div class="train" id="train">🚆</div>
+    <div class="train" id="train">ðŸš†</div>
   </div>
   
   <div class="controls">
-    <button class="control-btn start-btn" id="start-btn" onclick="startMotion()">▶️ Start</button>
-    <button class="control-btn stop-btn" onclick="stopMotion()">⏸️ Pause</button>
-    <button class="control-btn reset-btn" onclick="resetMotion()">🔄 Reset</button>
+    <button class="control-btn start-btn" id="start-btn" onclick="startMotion()">â–¶ï¸ Start</button>
+    <button class="control-btn stop-btn" onclick="stopMotion()">â¸ï¸ Pause</button>
+    <button class="control-btn reset-btn" onclick="resetMotion()">ðŸ”„ Reset</button>
   </div>
   
   <div class="data-table">
-    <div class="table-title">📊 Distance vs Time Data</div>
+    <div class="table-title">ðŸ“Š Distance vs Time Data</div>
     <div class="table-row table-header">
       <div class="table-cell">Time</div>
       <div class="table-cell">0s</div>
@@ -276,7 +276,7 @@ body {
   </div>
   
   <div class="graph-section">
-    <div class="graph-title">📈 Distance-Time Graph</div>
+    <div class="graph-title">ðŸ“ˆ Distance-Time Graph</div>
     <div class="graph-container">
       <canvas id="graph-canvas" class="graph-canvas"></canvas>
       <div class="graph-labels label-y">Distance (m)</div>
@@ -286,12 +286,12 @@ body {
 </div>
 
 <div class="characteristic-box">
-  <div class="char-title">✨ Key Characteristics</div>
+  <div class="char-title">âœ¨ Key Characteristics</div>
   <div class="char-text">
-    • Speed is <strong>constant</strong> throughout<br>
-    • <strong>Equal distances</strong> in equal time intervals<br>
-    • Distance-time graph is a <strong>straight line</strong><br>
-    • The steeper the line, the <strong>higher the speed</strong>
+    â€¢ Speed is <strong>constant</strong> throughout<br>
+    â€¢ <strong>Equal distances</strong> in equal time intervals<br>
+    â€¢ Distance-time graph is a <strong>straight line</strong><br>
+    â€¢ The steeper the line, the <strong>higher the speed</strong>
   </div>
 </div>
 
@@ -321,7 +321,7 @@ function updateSpeed(value) {
 function startMotion() {
   if (isMoving) return;
   isMoving = true;
-  document.getElementById('start-btn').textContent = '⏸️ Running...';
+  document.getElementById('start-btn').textContent = 'â¸ï¸ Running...';
   animate();
 }
 
@@ -361,14 +361,14 @@ function animate() {
     animationId = requestAnimationFrame(animate);
   } else {
     isMoving = false;
-    document.getElementById('start-btn').textContent = '✓ Complete';
+    document.getElementById('start-btn').textContent = 'âœ“ Complete';
   }
 }
 
 function stopMotion() {
   isMoving = false;
   cancelAnimationFrame(animationId);
-  document.getElementById('start-btn').textContent = '▶️ Start';
+  document.getElementById('start-btn').textContent = 'â–¶ï¸ Start';
 }
 
 function resetMotion() {
@@ -377,7 +377,7 @@ function resetMotion() {
   position = 0;
   dataPoints = [];
   train.style.left = '10px';
-  document.getElementById('start-btn').textContent = '▶️ Start';
+  document.getElementById('start-btn').textContent = 'â–¶ï¸ Start';
   
   for (let i = 1; i <= 4; i++) {
     document.getElementById(`d${i}`).textContent = '--';
@@ -467,5 +467,6 @@ function drawGraph() {
 updateSpeed(50);
 drawGraph();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

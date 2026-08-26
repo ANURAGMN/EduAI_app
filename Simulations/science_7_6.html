@@ -295,12 +295,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>☀️ Radiation</h1>
+  <h1>â˜€ï¸ Radiation</h1>
   <p>Interactive - control the heat source!</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-title">ðŸ“š Key Concept</div>
   <div class="concept-text">
     <strong>Radiation</strong> transfers heat without any medium - through empty space! Move the slider to see how distance affects heat intensity.
   </div>
@@ -309,31 +309,31 @@ body {
 <div class="sim-card">
   <div class="controls">
     <button class="control-btn active" onclick="setSource('fire', this)">
-      <span class="emoji">🔥</span>
+      <span class="emoji">ðŸ”¥</span>
       Fireplace
     </button>
     <button class="control-btn" onclick="setSource('sun', this)">
-      <span class="emoji">☀️</span>
+      <span class="emoji">â˜€ï¸</span>
       Sun
     </button>
     <button class="control-btn" onclick="setSource('pan', this)">
-      <span class="emoji">🍳</span>
+      <span class="emoji">ðŸ³</span>
       Hot Pan
     </button>
   </div>
   
   <div class="distance-control">
-    <label>📏 Adjust Distance from Heat Source:</label>
+    <label>ðŸ“ Adjust Distance from Heat Source:</label>
     <input type="range" id="distance-slider" min="1" max="10" value="5" oninput="updateDistance(this.value)">
     <div class="distance-value">
-      <span>🔥 Close</span>
-      <span>Far 🧊</span>
+      <span>ðŸ”¥ Close</span>
+      <span>Far ðŸ§Š</span>
     </div>
   </div>
   
   <div class="radiation-visual" id="visual">
     <div class="heat-source">
-      <div class="source-icon" id="source-icon">🔥</div>
+      <div class="source-icon" id="source-icon">ðŸ”¥</div>
       <div class="source-label" id="source-label">Fireplace</div>
     </div>
     
@@ -346,9 +346,9 @@ body {
     </div>
     
     <div class="receiver" id="receiver">
-      <div class="receiver-icon" id="receiver-icon">🧍</div>
+      <div class="receiver-icon" id="receiver-icon">ðŸ§</div>
       <div class="receiver-label" id="receiver-label">You</div>
-      <div class="temp-indicator temp-warm" id="temp-indicator">🌡️ Warm</div>
+      <div class="temp-indicator temp-warm" id="temp-indicator">ðŸŒ¡ï¸ Warm</div>
     </div>
     
     <div class="intensity-meter" id="intensity-meter">Intensity: 50%</div>
@@ -356,31 +356,31 @@ body {
 </div>
 
 <div class="color-experiment">
-  <div class="color-title">👕 Experiment: Dark vs Light Colors</div>
+  <div class="color-title">ðŸ‘• Experiment: Dark vs Light Colors</div>
   <div class="color-test">
     <div class="color-box dark selected" onclick="selectColor('dark', this)">
-      <div class="temp" id="dark-temp">🔥</div>
+      <div class="temp" id="dark-temp">ðŸ”¥</div>
       <div class="label">Black Shirt</div>
     </div>
     <div class="color-box light" onclick="selectColor('light', this)">
-      <div class="temp" id="light-temp">❄️</div>
+      <div class="temp" id="light-temp">â„ï¸</div>
       <div class="label">White Shirt</div>
     </div>
   </div>
   <div class="color-result" id="color-result">
-    <strong>Dark colors ABSORB</strong> more radiated heat → Feel hotter!<br>
-    <strong>Light colors REFLECT</strong> radiated heat → Stay cooler!
+    <strong>Dark colors ABSORB</strong> more radiated heat â†’ Feel hotter!<br>
+    <strong>Light colors REFLECT</strong> radiated heat â†’ Stay cooler!
   </div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">🎯 Remember</div>
+  <div class="takeaway-title">ðŸŽ¯ Remember</div>
   <div class="takeaway-text">
-    • Radiation needs <strong>NO medium</strong><br>
-    • Heat intensity <strong>decreases with distance</strong><br>
-    • <strong>Dark colors absorb</strong> more heat<br>
-    • <strong>Light colors reflect</strong> heat<br>
-    • Wear white in summer, dark in winter!
+    â€¢ Radiation needs <strong>NO medium</strong><br>
+    â€¢ Heat intensity <strong>decreases with distance</strong><br>
+    â€¢ <strong>Dark colors absorb</strong> more heat<br>
+    â€¢ <strong>Light colors reflect</strong> heat<br>
+    â€¢ Wear white in summer, dark in winter!
   </div>
 </div>
 
@@ -391,9 +391,9 @@ let currentSource = 'fire';
 let distance = 5;
 
 const sources = {
-  fire: { icon: '🔥', label: 'Fireplace', receiver: '🧍', receiverLabel: 'You' },
-  sun: { icon: '☀️', label: 'The Sun', receiver: '🌍', receiverLabel: 'Earth' },
-  pan: { icon: '🍳', label: 'Hot Pan', receiver: '✋', receiverLabel: 'Your Hand' }
+  fire: { icon: 'ðŸ”¥', label: 'Fireplace', receiver: 'ðŸ§', receiverLabel: 'You' },
+  sun: { icon: 'â˜€ï¸', label: 'The Sun', receiver: 'ðŸŒ', receiverLabel: 'Earth' },
+  pan: { icon: 'ðŸ³', label: 'Hot Pan', receiver: 'âœ‹', receiverLabel: 'Your Hand' }
 };
 
 const sourceIcon = document.getElementById('source-icon');
@@ -435,13 +435,13 @@ function updateDistance(value) {
   
   if (intensity >= 70) {
     tempIndicator.classList.add('temp-hot');
-    tempIndicator.textContent = '🔥 HOT!';
+    tempIndicator.textContent = 'ðŸ”¥ HOT!';
   } else if (intensity >= 40) {
     tempIndicator.classList.add('temp-warm');
-    tempIndicator.textContent = '🌡️ Warm';
+    tempIndicator.textContent = 'ðŸŒ¡ï¸ Warm';
   } else {
     tempIndicator.classList.add('temp-cold');
-    tempIndicator.textContent = '❄️ Cool';
+    tempIndicator.textContent = 'â„ï¸ Cool';
   }
   
   // Update wave visibility based on distance
@@ -462,14 +462,15 @@ function selectColor(color, el) {
   const result = document.getElementById('color-result');
   
   if (color === 'dark') {
-    result.innerHTML = '<strong>Dark colors ABSORB</strong> more radiated heat → Feel hotter!<br>That\'s why black shirts feel warm in sunlight.';
+    result.innerHTML = '<strong>Dark colors ABSORB</strong> more radiated heat â†’ Feel hotter!<br>That\'s why black shirts feel warm in sunlight.';
   } else {
-    result.innerHTML = '<strong>Light colors REFLECT</strong> radiated heat → Stay cooler!<br>That\'s why white clothes are preferred in summer.';
+    result.innerHTML = '<strong>Light colors REFLECT</strong> radiated heat â†’ Stay cooler!<br>That\'s why white clothes are preferred in summer.';
   }
 }
 
 // Initialize
 updateDistance(5);
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

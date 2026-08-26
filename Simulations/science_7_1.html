@@ -252,12 +252,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>☀️ Sources of Heat</h1>
+  <h1>â˜€ï¸ Sources of Heat</h1>
   <p>The Sun and regional temperature differences</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-title">ðŸ“š Key Concept</div>
   <div class="concept-text">
     The <strong>Sun</strong> is the main source of heat for Earth. Places near the equator receive more direct sunlight and are warmer than places farther away. Geography also affects local temperatures.
   </div>
@@ -278,51 +278,51 @@ body {
     <div class="earth">
       <div class="equator-line"></div>
       <div class="equator-label">Equator</div>
-      <div class="location-marker marker-kerala active" onclick="selectRegion('kerala', this)">🌴</div>
-      <div class="location-marker marker-delhi" onclick="selectRegion('delhi', this)">🏛️</div>
-      <div class="location-marker marker-sikkim" onclick="selectRegion('sikkim', this)">🏔️</div>
+      <div class="location-marker marker-kerala active" onclick="selectRegion('kerala', this)">ðŸŒ´</div>
+      <div class="location-marker marker-delhi" onclick="selectRegion('delhi', this)">ðŸ›ï¸</div>
+      <div class="location-marker marker-sikkim" onclick="selectRegion('sikkim', this)">ðŸ”ï¸</div>
     </div>
   </div>
   
   <div class="region-tabs">
     <div class="region-tab active" onclick="selectRegion('kerala', this)">
-      <span class="emoji">🌴</span>
+      <span class="emoji">ðŸŒ´</span>
       Kerala
     </div>
     <div class="region-tab" onclick="selectRegion('delhi', this)">
-      <span class="emoji">🏛️</span>
+      <span class="emoji">ðŸ›ï¸</span>
       Delhi
     </div>
     <div class="region-tab" onclick="selectRegion('sikkim', this)">
-      <span class="emoji">🏔️</span>
+      <span class="emoji">ðŸ”ï¸</span>
       Sikkim
     </div>
   </div>
 </div>
 
 <div class="region-info" id="region-info">
-  <div class="region-title" id="region-title">🌴 Kerala - Tropical Climate</div>
+  <div class="region-title" id="region-title">ðŸŒ´ Kerala - Tropical Climate</div>
   <div class="region-text" id="region-text">
     Kerala is located close to the equator, receiving more direct sunlight throughout the year. It's also a <strong>coastal state</strong>, so the sea keeps temperatures moderate and humidity high.
   </div>
-  <div class="temp-badge temp-hot" id="temp-badge">🌡️ Average: 25-32°C (Warm & Humid)</div>
+  <div class="temp-badge temp-hot" id="temp-badge">ðŸŒ¡ï¸ Average: 25-32Â°C (Warm & Humid)</div>
 </div>
 
 <div class="comparison-box">
-  <div class="comparison-title">🌍 Factors Affecting Temperature</div>
+  <div class="comparison-title">ðŸŒ Factors Affecting Temperature</div>
   <div class="factor-row">
     <div class="factor-item">
-      <div class="icon">📍</div>
+      <div class="icon">ðŸ“</div>
       <div class="label">Latitude</div>
       <div class="desc">Distance from equator</div>
     </div>
     <div class="factor-item">
-      <div class="icon">⛰️</div>
+      <div class="icon">â›°ï¸</div>
       <div class="label">Altitude</div>
       <div class="desc">Height above sea level</div>
     </div>
     <div class="factor-item">
-      <div class="icon">🌊</div>
+      <div class="icon">ðŸŒŠ</div>
       <div class="label">Proximity to Sea</div>
       <div class="desc">Coastal vs inland</div>
     </div>
@@ -330,13 +330,13 @@ body {
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">🎯 Remember</div>
+  <div class="takeaway-title">ðŸŽ¯ Remember</div>
   <div class="takeaway-text">
-    • The <strong>Sun</strong> is Earth's primary heat source<br>
-    • Places near the <strong>equator</strong> are warmer<br>
-    • <strong>Mountains</strong> are colder due to high altitude<br>
-    • <strong>Coastal areas</strong> have moderate temperatures<br>
-    • These differences create India's diverse climates!
+    â€¢ The <strong>Sun</strong> is Earth's primary heat source<br>
+    â€¢ Places near the <strong>equator</strong> are warmer<br>
+    â€¢ <strong>Mountains</strong> are colder due to high altitude<br>
+    â€¢ <strong>Coastal areas</strong> have moderate temperatures<br>
+    â€¢ These differences create India's diverse climates!
   </div>
 </div>
 
@@ -345,21 +345,21 @@ body {
 <script>
 const regions = {
   kerala: {
-    title: '🌴 Kerala - Tropical Climate',
+    title: 'ðŸŒ´ Kerala - Tropical Climate',
     text: 'Kerala is located close to the equator, receiving more direct sunlight throughout the year. It\'s also a <strong>coastal state</strong>, so the sea keeps temperatures moderate and humidity high.',
-    temp: '🌡️ Average: 25-32°C (Warm & Humid)',
+    temp: 'ðŸŒ¡ï¸ Average: 25-32Â°C (Warm & Humid)',
     tempClass: 'temp-hot'
   },
   delhi: {
-    title: '🏛️ Delhi - Extreme Climate',
-    text: 'Delhi is farther from the equator and far from the sea (inland). It experiences <strong>extreme temperatures</strong> - very hot summers (up to 45°C) and cold winters (down to 5°C).',
-    temp: '🌡️ Range: 5-45°C (Extreme Variation)',
+    title: 'ðŸ›ï¸ Delhi - Extreme Climate',
+    text: 'Delhi is farther from the equator and far from the sea (inland). It experiences <strong>extreme temperatures</strong> - very hot summers (up to 45Â°C) and cold winters (down to 5Â°C).',
+    temp: 'ðŸŒ¡ï¸ Range: 5-45Â°C (Extreme Variation)',
     tempClass: 'temp-moderate'
   },
   sikkim: {
-    title: '🏔️ Sikkim - Cold Mountain Climate',
-    text: 'Sikkim is in the <strong>Himalayas</strong> at high altitude. Even though it\'s in India, it\'s cold most of the year because temperature decreases with altitude (about 6°C per 1000m).',
-    temp: '🌡️ Average: 5-20°C (Cold)',
+    title: 'ðŸ”ï¸ Sikkim - Cold Mountain Climate',
+    text: 'Sikkim is in the <strong>Himalayas</strong> at high altitude. Even though it\'s in India, it\'s cold most of the year because temperature decreases with altitude (about 6Â°C per 1000m).',
+    temp: 'ðŸŒ¡ï¸ Average: 5-20Â°C (Cold)',
     tempClass: 'temp-cold'
   }
 };
@@ -392,5 +392,6 @@ function selectRegion(region, element) {
   tempBadge.className = `temp-badge ${data.tempClass}`;
 }
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

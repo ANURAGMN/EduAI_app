@@ -225,12 +225,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>🏁 Speed Race</h1>
+  <h1>ðŸ Speed Race</h1>
   <p>Who finishes 1 km first?</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">📚 Understanding Speed</div>
+  <div class="concept-title">ðŸ“š Understanding Speed</div>
   <div class="concept-text">
     Higher speed = cover distance faster. In this race, all racers travel <strong>1 km</strong>. Who arrives first depends on their <strong>speed</strong>!
   </div>
@@ -239,25 +239,25 @@ body {
 <div class="sim-card">
   <div class="race-setup">
     <div class="racer-setup">
-      <div class="icon">🚶</div>
+      <div class="icon">ðŸš¶</div>
       <div class="name">Walker</div>
       <input type="number" id="speed-walker" value="5" min="1" max="10">
       <div class="unit">km/h</div>
     </div>
     <div class="racer-setup">
-      <div class="icon">🚴</div>
+      <div class="icon">ðŸš´</div>
       <div class="name">Cyclist</div>
       <input type="number" id="speed-cyclist" value="20" min="5" max="40">
       <div class="unit">km/h</div>
     </div>
     <div class="racer-setup">
-      <div class="icon">🚗</div>
+      <div class="icon">ðŸš—</div>
       <div class="name">Car</div>
       <input type="number" id="speed-car" value="60" min="20" max="120">
       <div class="unit">km/h</div>
     </div>
     <div class="racer-setup">
-      <div class="icon">🚆</div>
+      <div class="icon">ðŸš†</div>
       <div class="name">Train</div>
       <input type="number" id="speed-train" value="100" min="50" max="200">
       <div class="unit">km/h</div>
@@ -274,10 +274,10 @@ body {
     <div class="finish-line"></div>
     <div class="finish-label">FINISH</div>
     
-    <div class="racer racer-walker" id="racer-walker">🚶</div>
-    <div class="racer racer-cyclist" id="racer-cyclist">🚴</div>
-    <div class="racer racer-car" id="racer-car">🚗</div>
-    <div class="racer racer-train" id="racer-train">🚆</div>
+    <div class="racer racer-walker" id="racer-walker">ðŸš¶</div>
+    <div class="racer racer-cyclist" id="racer-cyclist">ðŸš´</div>
+    <div class="racer racer-car" id="racer-car">ðŸš—</div>
+    <div class="racer racer-train" id="racer-train">ðŸš†</div>
     
     <div class="distance-markers">
       <span>0</span>
@@ -289,8 +289,8 @@ body {
   </div>
   
   <div class="controls">
-    <button class="control-btn start-btn" id="start-btn" onclick="startRace()">🏁 Start Race!</button>
-    <button class="control-btn reset-btn" onclick="resetRace()">🔄 Reset</button>
+    <button class="control-btn start-btn" id="start-btn" onclick="startRace()">ðŸ Start Race!</button>
+    <button class="control-btn reset-btn" onclick="resetRace()">ðŸ”„ Reset</button>
   </div>
   
   <div class="timer-display">
@@ -300,12 +300,12 @@ body {
 </div>
 
 <div class="results-panel" id="results-panel" style="display: none;">
-  <div class="results-title">🏆 Race Results</div>
+  <div class="results-title">ðŸ† Race Results</div>
   <div id="results-list"></div>
 </div>
 
 <div class="calculation-box" id="calc-box" style="display: none;">
-  <div class="calc-title">📐 Time Calculation</div>
+  <div class="calc-title">ðŸ“ Time Calculation</div>
   <div class="calc-text" id="calc-text"></div>
 </div>
 
@@ -318,7 +318,7 @@ let raceTime = 0;
 const distance = 1; // km
 
 const racers = ['walker', 'cyclist', 'car', 'train'];
-const icons = { walker: '🚶', cyclist: '🚴', car: '🚗', train: '🚆' };
+const icons = { walker: 'ðŸš¶', cyclist: 'ðŸš´', car: 'ðŸš—', train: 'ðŸš†' };
 const names = { walker: 'Walker', cyclist: 'Cyclist', car: 'Car', train: 'Train' };
 
 let positions = {};
@@ -393,9 +393,9 @@ function endRace() {
   document.getElementById('results-panel').style.display = 'block';
   document.getElementById('calc-box').style.display = 'block';
   
-  const ranks = ['🥇', '🥈', '🥉', '4️⃣'];
+  const ranks = ['ðŸ¥‡', 'ðŸ¥ˆ', 'ðŸ¥‰', '4ï¸âƒ£'];
   let resultsHTML = '';
-  let calcText = 'Time = Distance ÷ Speed\n\n';
+  let calcText = 'Time = Distance Ã· Speed\n\n';
   
   finishOrder.forEach((racer, index) => {
     const time = finishTimes[racer];
@@ -413,7 +413,7 @@ function endRace() {
     `;
     
     const calcTime = (distance / speeds[racer] * 3600).toFixed(1);
-    calcText += `${names[racer]}: 1 km ÷ ${speeds[racer]} km/h = ${calcTime}s\n`;
+    calcText += `${names[racer]}: 1 km Ã· ${speeds[racer]} km/h = ${calcTime}s\n`;
   });
   
   document.getElementById('results-list').innerHTML = resultsHTML;
@@ -435,5 +435,6 @@ function resetRace() {
   document.getElementById('calc-box').style.display = 'none';
 }
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

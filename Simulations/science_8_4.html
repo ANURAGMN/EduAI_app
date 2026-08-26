@@ -239,12 +239,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>⏱️ Pendulum Time Period Experiment</h1>
+  <h1>â±ï¸ Pendulum Time Period Experiment</h1>
   <p>Compare pendulums of different lengths!</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">📚 Experiment Goal</div>
+  <div class="concept-title">ðŸ“š Experiment Goal</div>
   <div class="concept-text">
     Test whether <strong>length affects time period</strong>. We'll swing three pendulums of different lengths and measure how long each takes to complete 10 oscillations.
   </div>
@@ -253,17 +253,17 @@ body {
 <div class="sim-card">
   <div class="experiment-setup">
     <div class="pendulum-setup active" onclick="selectPendulum('short', this)">
-      <div class="icon">🔴</div>
+      <div class="icon">ðŸ”´</div>
       <div class="name">Short</div>
       <div class="length">50 cm</div>
     </div>
     <div class="pendulum-setup" onclick="selectPendulum('medium', this)">
-      <div class="icon">🟢</div>
+      <div class="icon">ðŸŸ¢</div>
       <div class="name">Medium</div>
       <div class="length">100 cm</div>
     </div>
     <div class="pendulum-setup" onclick="selectPendulum('long', this)">
-      <div class="icon">🔵</div>
+      <div class="icon">ðŸ”µ</div>
       <div class="name">Long</div>
       <div class="length">150 cm</div>
     </div>
@@ -298,8 +298,8 @@ body {
   </div>
   
   <div class="controls">
-    <button class="control-btn start-btn" id="start-btn" onclick="startExperiment()">▶️ Start Experiment</button>
-    <button class="control-btn reset-btn" onclick="resetExperiment()">🔄 Reset</button>
+    <button class="control-btn start-btn" id="start-btn" onclick="startExperiment()">â–¶ï¸ Start Experiment</button>
+    <button class="control-btn reset-btn" onclick="resetExperiment()">ðŸ”„ Reset</button>
   </div>
   
   <div class="stopwatch">
@@ -316,19 +316,19 @@ body {
     <div class="table-cell">Period (T)</div>
   </div>
   <div class="table-row">
-    <div class="table-cell">🔴 Short</div>
+    <div class="table-cell">ðŸ”´ Short</div>
     <div class="table-cell">50 cm</div>
     <div class="table-cell" id="time-short">--</div>
     <div class="table-cell highlight" id="period-short">--</div>
   </div>
   <div class="table-row">
-    <div class="table-cell">🟢 Medium</div>
+    <div class="table-cell">ðŸŸ¢ Medium</div>
     <div class="table-cell">100 cm</div>
     <div class="table-cell" id="time-medium">--</div>
     <div class="table-cell highlight" id="period-medium">--</div>
   </div>
   <div class="table-row">
-    <div class="table-cell">🔵 Long</div>
+    <div class="table-cell">ðŸ”µ Long</div>
     <div class="table-cell">150 cm</div>
     <div class="table-cell" id="time-long">--</div>
     <div class="table-cell highlight" id="period-long">--</div>
@@ -336,17 +336,17 @@ body {
 </div>
 
 <div class="observation" id="observation" style="display: none;">
-  <div class="observation-title">🔬 Observation</div>
+  <div class="observation-title">ðŸ”¬ Observation</div>
   <div class="observation-text" id="observation-text"></div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">🎯 What to Look For</div>
+  <div class="takeaway-title">ðŸŽ¯ What to Look For</div>
   <div class="takeaway-text">
-    • Which pendulum completes 10 swings fastest?<br>
-    • How does length affect time period?<br>
-    • <strong>Longer pendulum = Longer time period</strong><br>
-    • This is why grandfather clocks use long pendulums!
+    â€¢ Which pendulum completes 10 swings fastest?<br>
+    â€¢ How does length affect time period?<br>
+    â€¢ <strong>Longer pendulum = Longer time period</strong><br>
+    â€¢ This is why grandfather clocks use long pendulums!
   </div>
 </div>
 
@@ -360,7 +360,7 @@ let timerInterval;
 let oscillationCount = 0;
 let results = { short: null, medium: null, long: null };
 
-// Theoretical time periods (T = 2π√(L/g))
+// Theoretical time periods (T = 2Ï€âˆš(L/g))
 const periods = {
   short: 2 * Math.PI * Math.sqrt(0.5 / 9.8),  // ~1.42s
   medium: 2 * Math.PI * Math.sqrt(1.0 / 9.8), // ~2.01s
@@ -457,11 +457,11 @@ function checkAllDone() {
     document.getElementById('observation').style.display = 'block';
     document.getElementById('observation-text').innerHTML = `
       <strong>Results Analysis:</strong><br>
-      • Short (50cm): Period = ${results.short.period.toFixed(2)}s<br>
-      • Medium (100cm): Period = ${results.medium.period.toFixed(2)}s<br>
-      • Long (150cm): Period = ${results.long.period.toFixed(2)}s<br><br>
+      â€¢ Short (50cm): Period = ${results.short.period.toFixed(2)}s<br>
+      â€¢ Medium (100cm): Period = ${results.medium.period.toFixed(2)}s<br>
+      â€¢ Long (150cm): Period = ${results.long.period.toFixed(2)}s<br><br>
       <strong>Conclusion:</strong> Longer pendulum = Longer time period!<br>
-      When length doubled (50→100cm), period increased by ~${((results.medium.period / results.short.period - 1) * 100).toFixed(0)}%
+      When length doubled (50â†’100cm), period increased by ~${((results.medium.period / results.short.period - 1) * 100).toFixed(0)}%
     `;
   }
 }
@@ -488,5 +488,6 @@ function resetExperiment() {
   });
 }
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

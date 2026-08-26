@@ -158,12 +158,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>🌱 Physical Changes During Puberty</h1>
+  <h1>ðŸŒ± Physical Changes During Puberty</h1>
   <p>Understanding the changes in your body</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-title">ðŸ“š Key Concept</div>
   <div class="concept-text">
     <strong>Puberty</strong> is when your body starts changing from a child's body to an adult's body. These changes are <strong>natural and normal</strong> - they happen to everyone!
   </div>
@@ -171,9 +171,9 @@ body {
 
 <div class="sim-card">
   <div class="category-tabs">
-    <button class="cat-tab active" onclick="selectCategory('common', this)">🔄 Common Changes</button>
-    <button class="cat-tab" onclick="selectCategory('boys', this)">👦 In Boys</button>
-    <button class="cat-tab" onclick="selectCategory('girls', this)">👧 In Girls</button>
+    <button class="cat-tab active" onclick="selectCategory('common', this)">ðŸ”„ Common Changes</button>
+    <button class="cat-tab" onclick="selectCategory('boys', this)">ðŸ‘¦ In Boys</button>
+    <button class="cat-tab" onclick="selectCategory('girls', this)">ðŸ‘§ In Girls</button>
   </div>
   
   <div class="changes-list" id="changes-list">
@@ -189,24 +189,24 @@ body {
 </div>
 
 <div class="secondary-info">
-  <div class="secondary-title">📖 Secondary Sexual Characteristics</div>
+  <div class="secondary-title">ðŸ“– Secondary Sexual Characteristics</div>
   <div class="secondary-text">
     These physical changes are called <strong>secondary sexual characteristics</strong>. They help distinguish males from females but are not directly involved in reproduction.<br><br>
     <strong>Examples:</strong><br>
-    • Facial hair in boys<br>
-    • Breast development in girls<br>
-    • Voice changes<br>
-    • Body hair growth
+    â€¢ Facial hair in boys<br>
+    â€¢ Breast development in girls<br>
+    â€¢ Voice changes<br>
+    â€¢ Body hair growth
   </div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">🎯 Remember</div>
+  <div class="takeaway-title">ðŸŽ¯ Remember</div>
   <div class="takeaway-text">
-    • All these changes are <strong>100% normal</strong><br>
-    • Everyone experiences them at different times<br>
-    • Some changes may start earlier or later - that's okay!<br>
-    • If you have concerns, talk to a parent or doctor
+    â€¢ All these changes are <strong>100% normal</strong><br>
+    â€¢ Everyone experiences them at different times<br>
+    â€¢ Some changes may start earlier or later - that's okay!<br>
+    â€¢ If you have concerns, talk to a parent or doctor
   </div>
 </div>
 
@@ -216,28 +216,28 @@ body {
 const changesData = {
   common: [
     { 
-      icon: '📏', 
+      icon: 'ðŸ“', 
       title: 'Growth Spurt', 
       desc: 'Rapid increase in height and weight',
       detail: 'During puberty, your body produces growth hormones that make you grow faster. You might grow 8-12 cm in a single year! This is called a "growth spurt." Your hands and feet often grow first, which is why you might feel a bit clumsy sometimes.',
       normal: 'This happens to everyone during adolescence!'
     },
     { 
-      icon: '🌿', 
+      icon: 'ðŸŒ¿', 
       title: 'Body Hair', 
       desc: 'Hair grows in new places',
       detail: 'Hair starts growing in your underarms (armpits) and pubic area. This is caused by hormones and is a sign that your body is maturing. The amount and thickness of hair varies from person to person - all variations are normal.',
       normal: 'Body hair is a natural part of growing up!'
     },
     { 
-      icon: '😓', 
+      icon: 'ðŸ˜“', 
       title: 'Sweating More', 
       desc: 'Increased perspiration and body odor',
       detail: 'Your sweat glands become more active during puberty, especially in the armpits. This can cause body odor. This is why regular bathing and using deodorant becomes important during adolescence.',
       normal: 'Just remember to practice good hygiene!'
     },
     { 
-      icon: '🔴', 
+      icon: 'ðŸ”´', 
       title: 'Skin Changes', 
       desc: 'Acne and pimples may appear',
       detail: 'Hormones cause your skin to produce more oil. When pores get clogged with oil and dead skin cells, pimples (acne) can form. This is very common during puberty. Keeping your face clean and avoiding touching pimples helps.',
@@ -246,21 +246,21 @@ const changesData = {
   ],
   boys: [
     { 
-      icon: '🎤', 
+      icon: 'ðŸŽ¤', 
       title: 'Voice Deepens', 
       desc: 'Voice becomes lower and deeper',
       detail: 'The voice box (larynx) grows larger in boys, making the voice deeper. During this change, the voice might "crack" or squeak sometimes - this is temporary and completely normal. You might also notice an "Adam\'s apple" forming in the throat.',
       normal: 'Voice cracking is just part of the process!'
     },
     { 
-      icon: '💪', 
+      icon: 'ðŸ’ª', 
       title: 'Broader Shoulders', 
       desc: 'Shoulders become wider',
       detail: 'Boys develop broader shoulders and a more muscular build during puberty. The chest becomes wider and muscles start developing more easily. This is due to testosterone, the main male hormone.',
       normal: 'Your body is developing adult proportions!'
     },
     { 
-      icon: '🧔', 
+      icon: 'ðŸ§”', 
       title: 'Facial Hair', 
       desc: 'Hair grows on face',
       detail: 'Hair starts appearing on the upper lip, chin, and cheeks. This usually starts light and becomes thicker over time. Some boys get facial hair early, others later - everyone is different. Eventually, shaving may be needed.',
@@ -269,21 +269,21 @@ const changesData = {
   ],
   girls: [
     { 
-      icon: '📐', 
+      icon: 'ðŸ“', 
       title: 'Body Shape Changes', 
       desc: 'Hips become wider',
       detail: 'Girls develop wider hips and a curvier body shape during puberty. This is the body preparing for potential motherhood in the future. Fat distribution changes, with more in the hips and thighs.',
       normal: 'These changes are a natural part of female development!'
     },
     { 
-      icon: '🌸', 
+      icon: 'ðŸŒ¸', 
       title: 'Breast Development', 
       desc: 'Breasts begin to develop',
       detail: 'Breast development is usually the first sign of puberty in girls. It starts with breast buds and develops over several years. One breast may grow faster than the other at first - this is normal and they usually even out.',
       normal: 'Development happens at different rates - all are normal!'
     },
     { 
-      icon: '🔄', 
+      icon: 'ðŸ”„', 
       title: 'Menstruation Begins', 
       desc: 'Monthly periods start',
       detail: 'Menstruation (periods) typically begins 2-3 years after breast development starts. This is when the uterus sheds its lining monthly. It\'s a sign that the reproductive system is maturing. We\'ll learn more about this in another simulation!',
@@ -335,12 +335,13 @@ function showDetail(index, element) {
   detailTitle.textContent = `${change.icon} ${change.title}`;
   detailText.innerHTML = `
     ${change.detail}<br><br>
-    <span class="normal-badge">✓ ${change.normal}</span>
+    <span class="normal-badge">âœ“ ${change.normal}</span>
   `;
 }
 
 // Initialize
 renderChanges();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

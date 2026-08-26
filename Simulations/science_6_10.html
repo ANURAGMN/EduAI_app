@@ -221,12 +221,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>🚫 Say No to Harmful Substances</h1>
+  <h1>ðŸš« Say No to Harmful Substances</h1>
   <p>Protect your health and future</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-title">ðŸ“š Key Concept</div>
   <div class="concept-text">
     Tobacco, alcohol, and drugs are <strong>addictive</strong> and harmful to your developing body and mind. Learning to say NO is an important life skill. It's okay to refuse - your health matters most!
   </div>
@@ -242,21 +242,21 @@ body {
   
   <div class="response-options" id="response-options">
     <div class="response-btn yes" onclick="selectResponse(false, this)">
-      <div class="response-icon">😟</div>
+      <div class="response-icon">ðŸ˜Ÿ</div>
       <div class="response-text">Take it to fit in - you don't want to seem uncool</div>
     </div>
     <div class="response-btn no" onclick="selectResponse(true, this)">
-      <div class="response-icon">💪</div>
+      <div class="response-icon">ðŸ’ª</div>
       <div class="response-text">Say "No thanks, I'm good" and stay confident</div>
     </div>
   </div>
   
   <div class="feedback-panel" id="feedback-panel">
-    <div class="feedback-title" id="feedback-title">✅ Great choice!</div>
+    <div class="feedback-title" id="feedback-title">âœ… Great choice!</div>
     <div class="feedback-text" id="feedback-text"></div>
   </div>
   
-  <button class="next-btn" id="next-btn" onclick="nextScenario()">Next Scenario →</button>
+  <button class="next-btn" id="next-btn" onclick="nextScenario()">Next Scenario â†’</button>
   
   <div class="progress-bar">
     <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
@@ -264,31 +264,31 @@ body {
 </div>
 
 <div class="substances-info">
-  <div class="substances-title">⚠️ Harmful Substances to Avoid</div>
+  <div class="substances-title">âš ï¸ Harmful Substances to Avoid</div>
   <div class="substance-list">
     <div class="substance-item">
-      <div class="icon">🚬</div>
+      <div class="icon">ðŸš¬</div>
       <div>
         <div class="text">Tobacco/Cigarettes</div>
         <div class="danger">Causes cancer, lung disease</div>
       </div>
     </div>
     <div class="substance-item">
-      <div class="icon">🍺</div>
+      <div class="icon">ðŸº</div>
       <div>
         <div class="text">Alcohol</div>
         <div class="danger">Damages liver, brain</div>
       </div>
     </div>
     <div class="substance-item">
-      <div class="icon">💊</div>
+      <div class="icon">ðŸ’Š</div>
       <div>
         <div class="text">Drugs</div>
         <div class="danger">Highly addictive, deadly</div>
       </div>
     </div>
     <div class="substance-item">
-      <div class="icon">☁️</div>
+      <div class="icon">â˜ï¸</div>
       <div>
         <div class="text">Vaping/E-cigarettes</div>
         <div class="danger">Harmful chemicals</div>
@@ -298,19 +298,19 @@ body {
 </div>
 
 <div class="helpline">
-  <div class="helpline-title">🆘 Need Help? Call</div>
-  <div class="helpline-number">📞 14446</div>
+  <div class="helpline-title">ðŸ†˜ Need Help? Call</div>
+  <div class="helpline-number">ðŸ“ž 14446</div>
   <div class="helpline-text">National De-addiction Helpline (Toll-free, 24/7)<br>Nasha Mukt Bharat Abhiyaan</div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">🎯 Ways to Say No</div>
+  <div class="takeaway-title">ðŸŽ¯ Ways to Say No</div>
   <div class="takeaway-text">
-    • <strong>"No thanks, I'm good"</strong> - Simple and direct<br>
-    • <strong>"I have to go now"</strong> - Leave the situation<br>
-    • <strong>"My parents would be upset"</strong> - Blame someone else<br>
-    • <strong>"I'm into sports, can't risk it"</strong> - Give a reason<br>
-    • <strong>Just walk away</strong> - You don't owe an explanation
+    â€¢ <strong>"No thanks, I'm good"</strong> - Simple and direct<br>
+    â€¢ <strong>"I have to go now"</strong> - Leave the situation<br>
+    â€¢ <strong>"My parents would be upset"</strong> - Blame someone else<br>
+    â€¢ <strong>"I'm into sports, can't risk it"</strong> - Give a reason<br>
+    â€¢ <strong>Just walk away</strong> - You don't owe an explanation
   </div>
 </div>
 
@@ -374,11 +374,11 @@ function loadScenario() {
   
   responseOptions.innerHTML = `
     <div class="response-btn yes" onclick="selectResponse(false, this)">
-      <div class="response-icon">😟</div>
+      <div class="response-icon">ðŸ˜Ÿ</div>
       <div class="response-text">Go along with it to avoid conflict</div>
     </div>
     <div class="response-btn no" onclick="selectResponse(true, this)">
-      <div class="response-icon">💪</div>
+      <div class="response-icon">ðŸ’ª</div>
       <div class="response-text">Say "No thanks" and stay firm</div>
     </div>
   `;
@@ -398,13 +398,13 @@ function selectResponse(isCorrect, btn) {
   
   if (isCorrect) {
     btn.classList.add('correct');
-    feedbackTitle.textContent = '✅ Great choice!';
+    feedbackTitle.textContent = 'âœ… Great choice!';
     feedbackText.textContent = scenario.correct;
     feedbackPanel.classList.remove('wrong-feedback');
   } else {
     btn.classList.add('wrong');
     document.querySelector('.response-btn.no').classList.add('correct');
-    feedbackTitle.textContent = '⚠️ Think again...';
+    feedbackTitle.textContent = 'âš ï¸ Think again...';
     feedbackText.textContent = scenario.wrong;
     feedbackPanel.classList.add('wrong-feedback');
   }
@@ -417,7 +417,7 @@ function nextScenario() {
   currentScenario++;
   
   if (currentScenario >= scenarios.length) {
-    scenarioTitle.textContent = '🎉 Congratulations!';
+    scenarioTitle.textContent = 'ðŸŽ‰ Congratulations!';
     scenarioText.textContent = 'You\'ve learned important ways to say NO to harmful substances. Remember, protecting your health is always the right choice!';
     responseOptions.innerHTML = '';
     feedbackPanel.classList.remove('show');
@@ -432,5 +432,6 @@ function nextScenario() {
 // Initialize
 loadScenario();
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>

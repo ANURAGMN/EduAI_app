@@ -5,7 +5,7 @@
 <meta name="color-scheme" content="light">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#e65100">
-<title>Oxygen & Combustion – Candle Experiment</title>
+<title>Oxygen & Combustion â€“ Candle Experiment</title>
 
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -170,12 +170,12 @@ svg { width: 100%; height: 100%; }
 <div id="app">
 
 <div class="header">
-  <h1>🕯️ Candle Under Glass</h1>
+  <h1>ðŸ•¯ï¸ Candle Under Glass</h1>
   <p>Why does the candle go out?</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">📚 Key Concept</div>
+  <div class="concept-title">ðŸ“š Key Concept</div>
   <div class="concept-text">
     <strong>Oxygen is essential for combustion.</strong> When a candle is covered with a glass jar, the oxygen inside gets used up. Without oxygen, the flame goes out - proving oxygen's role in burning!
   </div>
@@ -183,7 +183,7 @@ svg { width: 100%; height: 100%; }
 
 <div class="sim-card">
   <div class="visual">
-    <div class="timer-display" id="timer-display">⏱️ 0s</div>
+    <div class="timer-display" id="timer-display">â±ï¸ 0s</div>
     <div class="status-display" id="status-display">Ready</div>
     <svg viewBox="0 0 400 300" id="scene">
       <!-- Table/surface -->
@@ -222,17 +222,17 @@ svg { width: 100%; height: 100%; }
       
       <!-- Oxygen indicators (inside jar when covered) -->
       <g id="oxygen-indicators" style="display:none">
-        <text x="165" y="120" font-size="10" fill="#4fc3f7" id="o2-1">O₂</text>
-        <text x="210" y="100" font-size="10" fill="#4fc3f7" id="o2-2">O₂</text>
-        <text x="185" y="140" font-size="10" fill="#4fc3f7" id="o2-3">O₂</text>
-        <text x="220" y="130" font-size="10" fill="#4fc3f7" id="o2-4">O₂</text>
+        <text x="165" y="120" font-size="10" fill="#4fc3f7" id="o2-1">Oâ‚‚</text>
+        <text x="210" y="100" font-size="10" fill="#4fc3f7" id="o2-2">Oâ‚‚</text>
+        <text x="185" y="140" font-size="10" fill="#4fc3f7" id="o2-3">Oâ‚‚</text>
+        <text x="220" y="130" font-size="10" fill="#4fc3f7" id="o2-4">Oâ‚‚</text>
       </g>
       
       <!-- CO2 indicators -->
       <g id="co2-indicators" style="display:none">
-        <text x="165" y="120" font-size="10" fill="#ffab91">CO₂</text>
-        <text x="210" y="100" font-size="10" fill="#ffab91">CO₂</text>
-        <text x="185" y="140" font-size="10" fill="#ffab91">CO₂</text>
+        <text x="165" y="120" font-size="10" fill="#ffab91">COâ‚‚</text>
+        <text x="210" y="100" font-size="10" fill="#ffab91">COâ‚‚</text>
+        <text x="185" y="140" font-size="10" fill="#ffab91">COâ‚‚</text>
       </g>
       
       <!-- Labels -->
@@ -241,34 +241,34 @@ svg { width: 100%; height: 100%; }
   </div>
   
   <div class="controls">
-    <button class="ctrl-btn light" id="btn-light" onclick="lightCandle()">🔥 Light Candle</button>
-    <button class="ctrl-btn cover" id="btn-cover" onclick="coverWithJar()" disabled>🫙 Cover with Jar</button>
-    <button class="ctrl-btn reset" id="btn-reset" onclick="resetExperiment()" disabled>🔄 Reset</button>
+    <button class="ctrl-btn light" id="btn-light" onclick="lightCandle()">ðŸ”¥ Light Candle</button>
+    <button class="ctrl-btn cover" id="btn-cover" onclick="coverWithJar()" disabled>ðŸ«™ Cover with Jar</button>
+    <button class="ctrl-btn reset" id="btn-reset" onclick="resetExperiment()" disabled>ðŸ”„ Reset</button>
   </div>
 </div>
 
 <div class="observation-box">
-  <div class="obs-title">👁️ Observation</div>
+  <div class="obs-title">ðŸ‘ï¸ Observation</div>
   <div class="obs-text" id="obs-text">
     Click "Light Candle" to start the experiment. Then cover it with a glass jar to see what happens!
   </div>
 </div>
 
 <div class="learning-panel">
-  <div class="learning-title">🔬 What's Happening?</div>
+  <div class="learning-title">ðŸ”¬ What's Happening?</div>
   <div class="learning-text" id="learning-text">
     This classic experiment proves that <strong>oxygen is necessary for burning</strong>.<br><br>
-    When the jar covers the candle, oxygen inside the jar gets consumed. The flame produces <strong>carbon dioxide (CO₂)</strong> and <strong>water vapor</strong>. When oxygen runs out, the flame dies!
+    When the jar covers the candle, oxygen inside the jar gets consumed. The flame produces <strong>carbon dioxide (COâ‚‚)</strong> and <strong>water vapor</strong>. When oxygen runs out, the flame dies!
   </div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">🎯 Scientific Conclusion</div>
+  <div class="takeaway-title">ðŸŽ¯ Scientific Conclusion</div>
   <div class="takeaway-text">
     <strong>Combustion requires oxygen!</strong><br><br>
-    • The candle uses up O₂ inside the jar<br>
-    • CO₂ and H₂O are produced (chemical change)<br>
-    • No oxygen = no fire<br><br>
+    â€¢ The candle uses up Oâ‚‚ inside the jar<br>
+    â€¢ COâ‚‚ and Hâ‚‚O are produced (chemical change)<br>
+    â€¢ No oxygen = no fire<br><br>
     This is why fire extinguishers work by cutting off oxygen supply!
   </div>
 </div>
@@ -303,19 +303,19 @@ function lightCandle() {
   btnLight.disabled = true;
   btnCover.disabled = false;
   
-  statusDisplay.textContent = '🔥 Burning';
+  statusDisplay.textContent = 'ðŸ”¥ Burning';
   statusDisplay.style.background = '#ff9800';
   
   obsText.innerHTML = `
     The candle is now <strong>burning</strong>!<br><br>
-    It's using oxygen from the air and releasing heat, light, CO₂, and water vapor. Now cover it with the jar to see what happens!
+    It's using oxygen from the air and releasing heat, light, COâ‚‚, and water vapor. Now cover it with the jar to see what happens!
   `;
   
   learningText.innerHTML = `
     <strong>Right now:</strong><br>
-    • Candle wax (fuel) is burning<br>
-    • Oxygen from air supports the flame<br>
-    • Heat keeps the reaction going<br><br>
+    â€¢ Candle wax (fuel) is burning<br>
+    â€¢ Oxygen from air supports the flame<br>
+    â€¢ Heat keeps the reaction going<br><br>
     This is the <strong>fire triangle</strong> in action! What happens if we limit the oxygen?
   `;
 }
@@ -330,7 +330,7 @@ function coverWithJar() {
   
   btnCover.disabled = true;
   
-  statusDisplay.textContent = '🫙 Covered';
+  statusDisplay.textContent = 'ðŸ«™ Covered';
   statusDisplay.style.background = '#2196f3';
   
   obsText.innerHTML = `
@@ -342,7 +342,7 @@ function coverWithJar() {
   timer = 0;
   timerInterval = setInterval(() => {
     timer++;
-    timerDisplay.textContent = `⏱️ ${timer}s`;
+    timerDisplay.textContent = `â±ï¸ ${timer}s`;
     
     // Fade out oxygen indicators over time
     const opacity = Math.max(0, 1 - (timer / 5));
@@ -353,7 +353,7 @@ function coverWithJar() {
     if (timer === 2) {
       obsText.innerHTML = `
         <strong>Oxygen decreasing...</strong><br><br>
-        The flame is consuming the O₂ inside the jar. CO₂ is being produced!
+        The flame is consuming the Oâ‚‚ inside the jar. COâ‚‚ is being produced!
       `;
     }
     
@@ -383,24 +383,24 @@ function coverWithJar() {
         oxygenIndicators.style.display = 'none';
         co2Indicators.style.display = 'block';
         
-        statusDisplay.textContent = '💨 Extinguished';
+        statusDisplay.textContent = 'ðŸ’¨ Extinguished';
         statusDisplay.style.background = '#607d8b';
         
         btnReset.disabled = false;
         
         obsText.innerHTML = `
-          <strong style="color:#c62828">🕯️ The candle went out!</strong><br><br>
+          <strong style="color:#c62828">ðŸ•¯ï¸ The candle went out!</strong><br><br>
           After ~5 seconds, all the oxygen inside the jar was used up. Without oxygen, <strong>combustion cannot continue</strong>!<br><br>
-          The jar is now filled with CO₂ (you could test this with lime water - it would turn milky!)
+          The jar is now filled with COâ‚‚ (you could test this with lime water - it would turn milky!)
         `;
         
         learningText.innerHTML = `
-          <strong style="color:#2e7d32">✅ Experiment Complete!</strong><br><br>
+          <strong style="color:#2e7d32">âœ… Experiment Complete!</strong><br><br>
           <strong>What we proved:</strong><br>
-          • Oxygen is <strong>essential</strong> for burning<br>
-          • The flame used up O₂ in the jar<br>
-          • CO₂ was produced (a new substance = chemical change)<br>
-          • No oxygen → Fire goes out<br><br>
+          â€¢ Oxygen is <strong>essential</strong> for burning<br>
+          â€¢ The flame used up Oâ‚‚ in the jar<br>
+          â€¢ COâ‚‚ was produced (a new substance = chemical change)<br>
+          â€¢ No oxygen â†’ Fire goes out<br><br>
           This is why smothering a fire (covering it) works!
         `;
       }, 500);
@@ -441,7 +441,7 @@ function resetExperiment() {
   btnCover.disabled = true;
   btnReset.disabled = true;
   
-  timerDisplay.textContent = '⏱️ 0s';
+  timerDisplay.textContent = 'â±ï¸ 0s';
   statusDisplay.textContent = 'Ready';
   statusDisplay.style.background = '#4caf50';
   
@@ -451,9 +451,10 @@ function resetExperiment() {
   
   learningText.innerHTML = `
     This classic experiment proves that <strong>oxygen is necessary for burning</strong>.<br><br>
-    When the jar covers the candle, oxygen inside the jar gets consumed. The flame produces <strong>carbon dioxide (CO₂)</strong> and <strong>water vapor</strong>. When oxygen runs out, the flame dies!
+    When the jar covers the candle, oxygen inside the jar gets consumed. The flame produces <strong>carbon dioxide (COâ‚‚)</strong> and <strong>water vapor</strong>. When oxygen runs out, the flame dies!
   `;
 }
 </script>
+  <script src="edu-coach.js"></script>
 </body>
 </html>
