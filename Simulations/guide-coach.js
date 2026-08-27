@@ -2,16 +2,23 @@
  * guide-coach.js - generic guide-driven coach for simulations that don't publish their own rounds.
  * ------------------------------------------------------------------------------------------------
  * Works with edu-coach.js (V4 "one-clock"). edu-coach.js polls window.__eduRound every ~300ms and
- * shows any native round that has a `line`. Chapters 2-4 set __eduRound themselves; Ch.5-8 never did,
- * so their coach stayed silent. This script fills that gap WITHOUT per-page authoring: it loads the
+ * renders the current native round: its `line` (+ voice), an optional `hint`, and glows any `glow`
+ * element. Chapters 2-4 set __eduRound themselves; Ch.5-8 (and several KN chapters) never did, so
+ * their coach stayed silent. This script fills that gap WITHOUT per-page authoring: it loads the
  * page's already-hosted `<simfile>.guide.json` and drives the coach from it -
  *   - mission line on load,
- *   - one teach step per learner interaction (any click / change in the sim),
+ *   - one teach step per learner interaction,
+ *   - a `hint` from the guide's `coach.whenStuck` bank (the "if you're stuck" nudge),
+ *   - a `glow` on the step's `target` control when that control can be found in the page,
  *   - the guide's `done` line at the end.
  *
- * It is deliberately conservative:
- *   - If the page publishes its OWN native round (Ch.2-4 style), this script stands down.
- *   - Text + voice only (no per-control glow), so it is safe on any sim regardless of its DOM.
+ * Glow is best-effort: a step glows only when the guide gives a `target` AND that label resolves to
+ * an on-page control (many science guides - especially Kannada - omit targets, so those steps guide
+ * by text + voice only). Progression follows the glowed control: clicking it advances the step; if a
+ * step has no resolvable target, any interaction advances.
+ *
+ * It stands down if the page publishes its OWN native round (Ch.2-4 style), so it never fights a
+ * hand-authored coach.
  *
  * Include AFTER edu-coach.js:
  *   <script src="edu-coach.js"></script>
@@ -33,50 +40,110 @@
   if (!base) return;
   var GUIDE_URL = base + ".guide.json"; // hosted next to the sim (EN or _kn)
 
-  var steps = [];
+  var stepObjs = []; // { text, target }
   var mission = "";
   var doneLine = "";
+  var stuck = []; // coach.whenStuck bank
+  var wrong = []; // coach.whenWrong bank (used as "why")
   var idx = 0; // 0 = mission, 1..N = steps, >N = done
   var ready = false;
   var standDown = false; // page drives its own coach -> we back off
+  var boundTarget = null; // element we attached a one-time advance handler to
 
   function pageHasOwnRound() {
     var r = window.__eduRound;
     return !!(r && typeof r === "object" && r.native && (r.line || r.glow || r.hint));
   }
 
-  function publish(line, opts) {
-    if (!line) return;
-    opts = opts || {};
-    window.__eduRound = {
-      native: true,
-      line: line,
-      voice: opts.voice != null ? opts.voice : line,
-      why: opts.why,
-      detail: opts.detail,
-      key: opts.key || "guide-" + idx,
-    };
+  // Resolve a guide `target` label to an on-page control. Try as a CSS selector first, then match
+  // the visible text of clickable elements (buttons, [onclick], [role=button], links, common btns).
+  function resolveTarget(label) {
+    if (!label) return null;
+    try {
+      var bySel = document.querySelector(label);
+      if (bySel) return bySel;
+    } catch (e) {}
+    var norm = String(label).trim().toLowerCase();
+    if (!norm) return null;
+    var nodes = document.querySelectorAll(
+      "button,[role=button],[onclick],a,.btn,.control-btn,.option,.choice,.card,.lane,input[type=button],input[type=submit]"
+    );
+    var list = [].slice.call(nodes);
+    // exact text match first, then substring either way
+    var exact = list.filter(function (el) {
+      var t = (el.innerText || el.value || "").trim().toLowerCase();
+      return t && t === norm;
+    })[0];
+    if (exact) return exact;
+    return (
+      list.filter(function (el) {
+        var t = (el.innerText || el.value || "").trim().toLowerCase();
+        return t && (t.indexOf(norm) > -1 || norm.indexOf(t) > -1);
+      })[0] || null
+    );
+  }
+
+  function bankPick(bank, n) {
+    if (!bank || !bank.length) return undefined;
+    return bank[n % bank.length];
+  }
+
+  function publish(round) {
+    round.native = true;
+    if (round.voice == null) round.voice = round.line;
+    window.__eduRound = round;
   }
 
   function render() {
     if (!ready || standDown) return;
+    boundTarget = null;
+
     if (idx <= 0) {
-      publish(mission || steps[0] || "", {
-        voice: mission || steps[0] || "",
-        detail: steps.join("\n"),
+      publish({
+        line: mission || (stepObjs[0] && stepObjs[0].text) || "",
+        detail: stepObjs
+          .map(function (s) {
+            return s.text;
+          })
+          .join("\n"),
+        hint: bankPick(stuck, 0),
         key: "guide-mission",
       });
-    } else if (idx <= steps.length) {
-      var s = steps[idx - 1];
-      publish(s, { voice: s, key: "guide-step-" + idx });
-    } else {
-      publish(doneLine || "Done - move on when you're ready.", { key: "guide-done" });
+      return;
     }
+
+    if (idx <= stepObjs.length) {
+      var s = stepObjs[idx - 1];
+      var el = s.target ? resolveTarget(s.target) : null;
+      publish({
+        line: s.text,
+        hint: bankPick(stuck, idx - 1),
+        hintVoice: bankPick(stuck, idx - 1),
+        why: bankPick(wrong, idx - 1),
+        glow: el || undefined,
+        key: "guide-step-" + idx,
+      });
+      // Progression: clicking the glowed control advances; otherwise any interaction does (below).
+      if (el) {
+        boundTarget = el;
+        el.addEventListener(
+          "click",
+          function onHit() {
+            el.removeEventListener("click", onHit, true);
+            advance();
+          },
+          true
+        );
+      }
+      return;
+    }
+
+    publish({ line: doneLine || "Done - move on when you're ready.", key: "guide-done" });
   }
 
   function advance() {
     if (!ready || standDown) return;
-    if (idx > steps.length) return; // already at done
+    if (idx > stepObjs.length) return; // already at done
     idx += 1;
     render();
   }
@@ -92,9 +159,11 @@
         var coach = g.coach || {};
         mission = coach.mission || g.title || "";
         doneLine = coach.done || "";
-        steps = (g.steps || [])
+        stuck = Array.isArray(coach.whenStuck) ? coach.whenStuck : [];
+        wrong = Array.isArray(coach.whenWrong) ? coach.whenWrong : [];
+        stepObjs = (g.steps || [])
           .map(function (s) {
-            return s && s.text ? String(s.text) : "";
+            return s && s.text ? { text: String(s.text), target: s.target || null } : null;
           })
           .filter(Boolean);
         ready = true;
@@ -111,15 +180,29 @@
       .catch(function () {});
   } catch (e) {}
 
-  // Any interaction advances the guide. Capture phase so it fires even if the sim stops propagation.
+  // A click lands on edu-coach.js's own UI (web only; in-app the coach is a native card, not DOM).
+  // Tapping "Hint" / "Explain" must NOT advance the step - it drives edu-coach's own hint->glow
+  // reveal. So ignore clicks inside the coach overlays.
+  function inCoachUI(t) {
+    if (!t || !t.closest) return false;
+    return !!t.closest("#__eduBar,#__eduKnowMore,#__eduModal,#__eduModalBody,[data-hint],[data-m]");
+  }
+
+  // Fallback progression: an interaction advances, EXCEPT (a) a click on the glowed target (its own
+  // handler above advances, so we'd double-count) or (b) a click on the coach UI. Capture phase so it
+  // fires even if the sim stops propagation.
   ["click", "change"].forEach(function (ev) {
     document.addEventListener(
       ev,
-      function () {
+      function (e) {
         if (!ready) return;
         if (!standDown && pageHasOwnRound()) {
           standDown = true;
           return;
+        }
+        if (inCoachUI(e.target)) return; // hint/explain taps drive reveal, not progression
+        if (boundTarget && e.target && (e.target === boundTarget || (boundTarget.contains && boundTarget.contains(e.target)))) {
+          return; // the target's own handler advances
         }
         advance();
       },
