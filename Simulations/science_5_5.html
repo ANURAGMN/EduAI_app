@@ -5,7 +5,7 @@
 <meta name="color-scheme" content="light">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ff5722">
-<title>Fire Triangle â€“ Requirements for Combustion</title>
+<title>Fire Triangle – Requirements for Combustion</title>
 
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -152,12 +152,12 @@ svg { width: 100%; height: 100%; }
 <div id="app">
 
 <div class="header">
-  <h1>ðŸ”¥ Fire Triangle</h1>
+  <h1>🔥 Fire Triangle</h1>
   <p>What does fire need to burn?</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š Key Concept</div>
+  <div class="concept-title">📚 Key Concept</div>
   <div class="concept-text">
     Fire (combustion) requires <strong>three things</strong>: a <strong>fuel</strong> (combustible material), <strong>oxygen</strong> (from air), and <strong>heat</strong> (to reach ignition temperature). Remove any one and the fire goes out!
   </div>
@@ -178,18 +178,18 @@ svg { width: 100%; height: 100%; }
       
       <!-- Fuel icon position -->
       <g id="fuel-icon" transform="translate(100, 180)" style="opacity:0.3">
-        <text x="0" y="0" font-size="35">ðŸªµ</text>
+        <text x="0" y="0" font-size="35">🪵</text>
       </g>
       
       <!-- Oxygen icon position -->
       <g id="oxygen-icon" transform="translate(180, 200)" style="opacity:0.3">
-        <text x="0" y="0" font-size="30">ðŸ’¨</text>
-        <text x="35" y="0" font-size="12" fill="#90a4ae">Oâ‚‚</text>
+        <text x="0" y="0" font-size="30">💨</text>
+        <text x="35" y="0" font-size="12" fill="#90a4ae">Oâ''</text>
       </g>
       
       <!-- Heat icon position -->
       <g id="heat-icon" transform="translate(270, 180)" style="opacity:0.3">
-        <text x="0" y="0" font-size="35">ðŸŒ¡ï¸</text>
+        <text x="0" y="0" font-size="35">🌡️</text>
       </g>
       
       <!-- Fire (shown when all 3 present) -->
@@ -216,17 +216,17 @@ svg { width: 100%; height: 100%; }
   
   <div class="controls-grid">
     <div class="element-btn" id="btn-fuel" onclick="toggleElement('fuel', this)">
-      <div class="icon">ðŸªµ</div>
+      <div class="icon">🪵</div>
       <div class="name">FUEL</div>
       <div class="desc">Combustible material</div>
     </div>
     <div class="element-btn" id="btn-oxygen" onclick="toggleElement('oxygen', this)">
-      <div class="icon">ðŸ’¨</div>
+      <div class="icon">💨</div>
       <div class="name">OXYGEN</div>
-      <div class="desc">From air (Oâ‚‚)</div>
+      <div class="desc">From air (Oâ'')</div>
     </div>
     <div class="element-btn" id="btn-heat" onclick="toggleElement('heat', this)">
-      <div class="icon">ðŸŒ¡ï¸</div>
+      <div class="icon">🌡️</div>
       <div class="name">HEAT</div>
       <div class="desc">Ignition temperature</div>
     </div>
@@ -234,24 +234,24 @@ svg { width: 100%; height: 100%; }
 </div>
 
 <div class="result-panel" id="result-panel">
-  <div class="result-title" id="result-title">ðŸ”º Fire Triangle</div>
+  <div class="result-title" id="result-title">🔺 Fire Triangle</div>
   <div class="result-text" id="result-text">
     Toggle each element on/off to see what happens. Fire needs ALL THREE elements to burn!
   </div>
 </div>
 
 <div class="learning-panel">
-  <div class="learning-title">ðŸ”¬ How to Stop Fire</div>
+  <div class="learning-title">🔬 How to Stop Fire</div>
   <div class="learning-text" id="learning-text">
     <strong>Remove FUEL:</strong> Take away the burning material<br>
-    <strong>Remove OXYGEN:</strong> Cover with blanket or use COâ‚‚ extinguisher<br>
+    <strong>Remove OXYGEN:</strong> Cover with blanket or use COâ'' extinguisher<br>
     <strong>Remove HEAT:</strong> Pour water to cool it down<br><br>
     Fire extinguishers work by removing one or more of these elements!
   </div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">ðŸŽ¯ Remember</div>
+  <div class="takeaway-title">🎯 Remember</div>
   <div class="takeaway-text">
     <strong>Combustion</strong> is a chemical change where fuel reacts with oxygen, producing heat and light.<br><br>
     <strong>Ignition temperature</strong> = minimum temperature needed to start burning. Different materials have different ignition temperatures!
@@ -296,15 +296,15 @@ function toggleElement(type, btn) {
   if (allPresent) {
     fireDisplay.style.display = 'block';
     noFireDisplay.style.display = 'none';
-    statusBadge.textContent = 'ðŸ”¥ FIRE BURNING!';
+    statusBadge.textContent = '🔥 FIRE BURNING!';
     statusBadge.className = 'status-badge fire';
     
-    resultTitle.textContent = 'ðŸ”¥ Fire is Burning!';
+    resultTitle.textContent = '🔥 Fire is Burning!';
     resultText.innerHTML = `
       All three elements are present:<br>
-      âœ… <strong>Fuel</strong> provides material to burn<br>
-      âœ… <strong>Oxygen</strong> supports combustion<br>
-      âœ… <strong>Heat</strong> reached ignition temperature<br><br>
+      ✅ <strong>Fuel</strong> provides material to burn<br>
+      ✅ <strong>Oxygen</strong> supports combustion<br>
+      ✅ <strong>Heat</strong> reached ignition temperature<br><br>
       The fire will keep burning as long as all three are present!
     `;
   } else {
@@ -319,7 +319,7 @@ function toggleElement(type, btn) {
     
     statusBadge.textContent = `Missing: ${missing.join(', ')}`;
     
-    resultTitle.textContent = 'âŒ No Fire';
+    resultTitle.textContent = '❌ No Fire';
     
     if (missing.length === 3) {
       resultText.textContent = 'Select all three elements to start a fire!';

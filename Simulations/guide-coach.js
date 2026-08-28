@@ -188,6 +188,15 @@
     return !!t.closest("#__eduBar,#__eduKnowMore,#__eduModal,#__eduModalBody,[data-hint],[data-m]");
   }
 
+  // When the current step names a `target` and we found the control, ONLY that click advances —
+  // otherwise any sim tap races ahead of edu-coach's Hint→glow reveal (Socratic staging).
+  function allowGenericAdvance() {
+    if (idx <= 0 || idx > stepObjs.length) return true;
+    var s = stepObjs[idx - 1];
+    if (!s || !s.target) return true;
+    return !boundTarget; // unresolved target → fall back to any interaction
+  }
+
   // Fallback progression: an interaction advances, EXCEPT (a) a click on the glowed target (its own
   // handler above advances, so we'd double-count) or (b) a click on the coach UI. Capture phase so it
   // fires even if the sim stops propagation.
@@ -204,6 +213,7 @@
         if (boundTarget && e.target && (e.target === boundTarget || (boundTarget.contains && boundTarget.contains(e.target)))) {
           return; // the target's own handler advances
         }
+        if (!allowGenericAdvance()) return;
         advance();
       },
       true

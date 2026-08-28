@@ -155,12 +155,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>ðŸ‘ Desirable vs Undesirable</h1>
+  <h1>👍 Desirable vs Undesirable</h1>
   <p>Are all changes good for us?</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š Key Concept</div>
+  <div class="concept-title">📚 Key Concept</div>
   <div class="concept-text">
     Changes can be <strong>desirable</strong> (useful, beneficial) or <strong>undesirable</strong> (harmful, unwanted). The same change can be desirable in one situation and undesirable in another!
   </div>
@@ -168,7 +168,7 @@ body {
 
 <div class="sim-card">
   <div class="question-card" id="question-card">
-    <div class="question-icon" id="q-icon">ðŸ¥›</div>
+    <div class="question-icon" id="q-icon">🥛</div>
     <div class="question-info">
       <div class="question-title" id="q-title">Milk turning into Curd</div>
       <div class="question-desc" id="q-desc">Bacteria convert milk to curd overnight</div>
@@ -177,10 +177,10 @@ body {
   
   <div class="choice-btns">
     <button class="choice-btn" id="btn-desirable" onclick="checkAnswer(true)">
-      âœ… Desirable<br><span style="font-size:9px">Useful/Beneficial</span>
+      ✅ Desirable<br><span style="font-size:9px">Useful/Beneficial</span>
     </button>
     <button class="choice-btn" id="btn-undesirable" onclick="checkAnswer(false)">
-      âŒ Undesirable<br><span style="font-size:9px">Harmful/Unwanted</span>
+      ❌ Undesirable<br><span style="font-size:9px">Harmful/Unwanted</span>
     </button>
   </div>
   
@@ -194,17 +194,17 @@ body {
 </div>
 
 <div class="context-panel">
-  <div class="context-title">ðŸ¤” Context Matters!</div>
+  <div class="context-title">🤔 Context Matters!</div>
   <div class="context-text" id="context-text">
     The same change can be viewed differently based on the situation:<br><br>
-    â€¢ <strong>Fire:</strong> Desirable for cooking, undesirable in a forest<br>
-    â€¢ <strong>Decomposition:</strong> Desirable in composting, undesirable for food<br>
-    â€¢ <strong>Rain:</strong> Desirable for crops, undesirable during floods
+    • <strong>Fire:</strong> Desirable for cooking, undesirable in a forest<br>
+    • <strong>Decomposition:</strong> Desirable in composting, undesirable for food<br>
+    • <strong>Rain:</strong> Desirable for crops, undesirable during floods
   </div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">ðŸŽ¯ Key Understanding</div>
+  <div class="takeaway-title">🎯 Key Understanding</div>
   <div class="takeaway-text">
     <strong>Desirable changes</strong> help us or nature in some way.<br>
     <strong>Undesirable changes</strong> cause harm or loss.<br><br>
@@ -217,70 +217,70 @@ body {
 <script>
 const questions = [
   { 
-    icon: 'ðŸ¥›', 
+    icon: '🥛', 
     title: 'Milk turning into Curd', 
     desc: 'Bacteria convert milk to curd overnight',
     desirable: true,
     feedback: 'Curd is nutritious and delicious! Making curd from milk is a beneficial chemical change that gives us yogurt, lassi, and other dairy products.'
   },
   { 
-    icon: 'ðŸ”©', 
+    icon: '🔩', 
     title: 'Rusting of Iron', 
     desc: 'Iron objects develop brown rust over time',
     desirable: false,
     feedback: 'Rusting weakens iron structures, damages tools, and costs billions in repairs. It\'s an undesirable chemical change we try to prevent.'
   },
   { 
-    icon: 'ðŸ³', 
+    icon: '🍳', 
     title: 'Cooking Food', 
     desc: 'Raw ingredients become cooked meals',
     desirable: true,
     feedback: 'Cooking makes food safer, tastier, and easier to digest. It\'s a desirable change that humans have used for thousands of years!'
   },
   { 
-    icon: 'ðŸŒ', 
+    icon: '🍌', 
     title: 'Fruit Rotting', 
     desc: 'Fresh fruits become spoiled and inedible',
     desirable: false,
     feedback: 'Rotting fruit wastes food and can cause illness. However, in nature, this decomposition returns nutrients to soil!'
   },
   { 
-    icon: 'ðŸŒ±', 
+    icon: '🌱', 
     title: 'Seed Germination', 
     desc: 'Seeds sprout into young plants',
     desirable: true,
     feedback: 'Germination is how plants reproduce! This desirable change is essential for agriculture and maintaining ecosystems.'
   },
   { 
-    icon: 'ðŸ­', 
+    icon: '🏭', 
     title: 'Air Pollution', 
     desc: 'Factories release smoke into the air',
     desirable: false,
     feedback: 'Air pollution causes health problems and climate change. It\'s an undesirable byproduct we must reduce.'
   },
   { 
-    icon: 'ðŸ¥¬', 
+    icon: '🥬', 
     title: 'Composting', 
     desc: 'Kitchen waste turns into fertilizer',
     desirable: true,
     feedback: 'Composting converts waste into valuable fertilizer! It\'s a desirable way to recycle organic matter.'
   },
   { 
-    icon: 'ðŸ¦·', 
+    icon: '🦷', 
     title: 'Tooth Decay', 
     desc: 'Bacteria damage teeth over time',
     desirable: false,
     feedback: 'Tooth decay causes pain and health issues. It\'s an undesirable change we prevent with brushing and dental care.'
   },
   { 
-    icon: 'ðŸž', 
+    icon: '🍞', 
     title: 'Making Bread', 
     desc: 'Yeast makes dough rise and bake into bread',
     desirable: true,
-    feedback: 'Bread-making uses fermentation (yeast producing COâ‚‚) to create fluffy, delicious bread. A very desirable change!'
+    feedback: 'Bread-making uses fermentation (yeast producing COâ'') to create fluffy, delicious bread. A very desirable change!'
   },
   { 
-    icon: 'ðŸŒ¡ï¸', 
+    icon: '🌡️', 
     title: 'Global Warming', 
     desc: 'Earth\'s temperature is rising',
     desirable: false,
@@ -305,7 +305,7 @@ const progressText = document.getElementById('progress-text');
 
 function loadQuestion() {
   if (currentIndex >= questions.length) {
-    qIcon.textContent = 'ðŸŽ‰';
+    qIcon.textContent = '🎉';
     qTitle.textContent = 'Quiz Complete!';
     qDesc.textContent = `You got ${score} out of ${questions.length} correct!`;
     btnDesirable.style.display = 'none';
@@ -350,11 +350,11 @@ function checkAnswer(isDesirable) {
   // Show feedback
   if (correct) {
     feedbackPanel.classList.add('correct');
-    feedbackTitle.textContent = 'âœ… Correct!';
+    feedbackTitle.textContent = '✅ Correct!';
     score++;
   } else {
     feedbackPanel.classList.add('wrong');
-    feedbackTitle.textContent = 'âŒ Not quite!';
+    feedbackTitle.textContent = '❌ Not quite!';
   }
   
   feedbackText.textContent = q.feedback;
@@ -363,7 +363,7 @@ function checkAnswer(isDesirable) {
   // Update score bar
   const dot = document.createElement('div');
   dot.className = `score-dot ${correct ? 'correct' : 'wrong'}`;
-  dot.textContent = correct ? 'âœ“' : 'âœ—';
+  dot.textContent = correct ? '✓' : '✗';
   scoreBar.appendChild(dot);
   
   // Next question after delay

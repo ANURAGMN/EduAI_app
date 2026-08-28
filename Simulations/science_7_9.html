@@ -334,12 +334,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>ðŸŒ Infiltration Race</h1>
+  <h1>🌍 Infiltration Race</h1>
   <p>Which soil lets water through fastest?</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š Key Concept</div>
+  <div class="concept-title">📚 Key Concept</div>
   <div class="concept-text">
     <strong>Infiltration</strong> is water seeping into ground. Speed depends on <strong>particle size</strong> - larger particles = bigger gaps = faster water flow!
   </div>
@@ -348,20 +348,20 @@ body {
 <div class="sim-card">
   <div class="controls">
     <button class="control-btn" id="rain-btn" onclick="makeItRain()">
-      ðŸŒ§ï¸ Make It Rain!
+      🌧️ Make It Rain!
     </button>
     <button class="control-btn" onclick="resetRace()">
-      ðŸ”„ Reset
+      🔄 Reset
     </button>
   </div>
   
   <div class="infiltration-race">
-    <div class="rain-cloud" id="rain-cloud">ðŸŒ§ï¸</div>
+    <div class="rain-cloud" id="rain-cloud">🌧️</div>
     
     <div class="rain-drops" id="rain-drops">
-      <span class="rain-drop">ðŸ’§</span>
-      <span class="rain-drop">ðŸ’§</span>
-      <span class="rain-drop">ðŸ’§</span>
+      <span class="rain-drop">💧</span>
+      <span class="rain-drop">💧</span>
+      <span class="rain-drop">💧</span>
     </div>
     
     <div class="ground-line"></div>
@@ -369,7 +369,7 @@ body {
     <div class="soil-columns">
       <!-- Gravel Column -->
       <div class="soil-column" onclick="showSoilInfo('gravel')">
-        <div class="soil-header gravel-header">ðŸª¨ GRAVEL</div>
+        <div class="soil-header gravel-header">🪨 GRAVEL</div>
         <div class="soil-body gravel-body">
           <div class="particles" id="gravel-particles"></div>
           <div class="water-drop" id="water-gravel"></div>
@@ -382,11 +382,11 @@ body {
       
       <!-- Sand Column -->
       <div class="soil-column" onclick="showSoilInfo('sand')">
-        <div class="soil-header sand-header">ðŸ–ï¸ SAND</div>
+        <div class="soil-header sand-header">🏖️ SAND</div>
         <div class="soil-body sand-body">
           <div class="particles" id="sand-particles"></div>
           <div class="water-drop" id="water-sand"></div>
-          <div class="speed-badge speed-medium" id="badge-sand">ðŸ’§ Medium</div>
+          <div class="speed-badge speed-medium" id="badge-sand">💧 Medium</div>
           <div class="aquifer-level">
             <div class="aquifer-label">Aquifer</div>
           </div>
@@ -395,11 +395,11 @@ body {
       
       <!-- Clay Column -->
       <div class="soil-column" onclick="showSoilInfo('clay')">
-        <div class="soil-header clay-header">ðŸ§± CLAY</div>
+        <div class="soil-header clay-header">🧱 CLAY</div>
         <div class="soil-body clay-body">
           <div class="particles" id="clay-particles"></div>
           <div class="water-drop" id="water-clay"></div>
-          <div class="speed-badge speed-slow" id="badge-clay">ðŸ¢ Slow</div>
+          <div class="speed-badge speed-slow" id="badge-clay">🐢 Slow</div>
           <div class="aquifer-level">
             <div class="aquifer-label">Aquifer</div>
           </div>
@@ -408,32 +408,32 @@ body {
     </div>
   </div>
   
-  <div class="timer-display" id="timer">â±ï¸ Tap "Make It Rain" to start!</div>
+  <div class="timer-display" id="timer">⏱️ Tap "Make It Rain" to start!</div>
 </div>
 
 <div class="results-panel" id="results" style="display: none;">
-  <div class="results-title">ðŸ† Infiltration Race Results</div>
+  <div class="results-title">🏆 Infiltration Race Results</div>
   <div class="results-grid">
     <div class="result-item first">
-      <div class="name">ðŸª¨ Gravel</div>
+      <div class="name">🪨 Gravel</div>
       <div class="time" id="time-gravel">--</div>
-      <div class="rank">ðŸ¥‡ 1st Place</div>
+      <div class="rank">🥇 1st Place</div>
     </div>
     <div class="result-item second">
-      <div class="name">ðŸ–ï¸ Sand</div>
+      <div class="name">🏖️ Sand</div>
       <div class="time" id="time-sand">--</div>
-      <div class="rank">ðŸ¥ˆ 2nd Place</div>
+      <div class="rank">🥈 2nd Place</div>
     </div>
     <div class="result-item third">
-      <div class="name">ðŸ§± Clay</div>
+      <div class="name">🧱 Clay</div>
       <div class="time" id="time-clay">--</div>
-      <div class="rank">ðŸ¥‰ 3rd Place</div>
+      <div class="rank">🥉 3rd Place</div>
     </div>
   </div>
 </div>
 
 <div class="comparison-table">
-  <div class="table-title">ðŸ“Š Why the Difference?</div>
+  <div class="table-title">📊 Why the Difference?</div>
   <div class="table-row">
     <div class="table-cell cell-header">Soil</div>
     <div class="table-cell cell-header">Particle Size</div>
@@ -441,31 +441,31 @@ body {
     <div class="table-cell cell-header">Water Speed</div>
   </div>
   <div class="table-row">
-    <div class="table-cell">ðŸª¨ Gravel</div>
+    <div class="table-cell">🪨 Gravel</div>
     <div class="table-cell">Large</div>
     <div class="table-cell">Big gaps</div>
     <div class="table-cell" style="background:#c8e6c9;">âš¡ Fast</div>
   </div>
   <div class="table-row">
-    <div class="table-cell">ðŸ–ï¸ Sand</div>
+    <div class="table-cell">🏖️ Sand</div>
     <div class="table-cell">Medium</div>
     <div class="table-cell">Medium gaps</div>
-    <div class="table-cell" style="background:#fff3e0;">ðŸ’§ Medium</div>
+    <div class="table-cell" style="background:#fff3e0;">💧 Medium</div>
   </div>
   <div class="table-row">
-    <div class="table-cell">ðŸ§± Clay</div>
+    <div class="table-cell">🧱 Clay</div>
     <div class="table-cell">Tiny</div>
     <div class="table-cell">Almost none</div>
-    <div class="table-cell" style="background:#ffcdd2;">ðŸ¢ Very Slow</div>
+    <div class="table-cell" style="background:#ffcdd2;">🐢 Very Slow</div>
   </div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">ðŸŽ¯ Real World Impact</div>
+  <div class="takeaway-title">🎯 Real World Impact</div>
   <div class="takeaway-text">
-    â€¢ <strong>Gravel beds</strong> are used for drainage<br>
-    â€¢ <strong>Clay soil</strong> can cause flooding (water can't seep in)<br>
-    â€¢ <strong>Concrete cities</strong> prevent infiltration â†’ groundwater depletion!
+    • <strong>Gravel beds</strong> are used for drainage<br>
+    • <strong>Clay soil</strong> can cause flooding (water can't seep in)<br>
+    • <strong>Concrete cities</strong> prevent infiltration → groundwater depletion!
   </div>
 </div>
 
@@ -529,7 +529,7 @@ function makeItRain() {
   // Start timer
   timerInterval = setInterval(() => {
     timer += 0.1;
-    document.getElementById('timer').textContent = `â±ï¸ ${timer.toFixed(1)} seconds`;
+    document.getElementById('timer').textContent = `⏱️ ${timer.toFixed(1)} seconds`;
     
     // Update water positions
     ['gravel', 'sand', 'clay'].forEach(soil => {
@@ -589,7 +589,7 @@ function resetRace() {
     document.getElementById(`badge-${soil}`).classList.remove('show');
   });
   
-  document.getElementById('timer').textContent = 'â±ï¸ Tap "Make It Rain" to start!';
+  document.getElementById('timer').textContent = '⏱️ Tap "Make It Rain" to start!';
   document.getElementById('rain-btn').disabled = false;
   document.getElementById('results').style.display = 'none';
 }

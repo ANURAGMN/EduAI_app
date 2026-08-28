@@ -366,12 +366,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>ðŸ”¥ Conduction of Heat</h1>
+  <h1>🔥 Conduction of Heat</h1>
   <p>Interactive experiment - control the heat!</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š Key Concept</div>
+  <div class="concept-title">📚 Key Concept</div>
   <div class="concept-text">
     <strong>Conduction</strong> transfers heat through solids from hot to cold regions. Watch the wax pins drop as heat travels along the metal strip!
   </div>
@@ -380,21 +380,21 @@ body {
 <div class="sim-card">
   <div class="controls">
     <button class="control-btn" id="start-btn" onclick="startExperiment()">
-      ðŸ”¥ Start Heating
+      🔥 Start Heating
     </button>
     <button class="control-btn" onclick="resetExperiment()">
-      ðŸ”„ Reset
+      🔄 Reset
     </button>
   </div>
   
   <div class="heat-slider">
-    <label>ðŸŒ¡ï¸ Adjust Flame Intensity:</label>
+    <label>🌡️ Adjust Flame Intensity:</label>
     <input type="range" id="heat-level" min="1" max="3" value="2" oninput="adjustHeat(this.value)">
     <div class="heat-value" id="heat-value">Medium Heat</div>
   </div>
   
   <div class="experiment-visual">
-    <div class="timer-display" id="timer">â±ï¸ 0.0s</div>
+    <div class="timer-display" id="timer">⏱️ 0.0s</div>
     
     <div class="flame-container">
       <div class="flame" id="flame">
@@ -435,21 +435,21 @@ body {
 </div>
 
 <div class="particle-view">
-  <div class="particle-title">ðŸ”¬ Particle View - How Conduction Works</div>
+  <div class="particle-title">🔬 Particle View - How Conduction Works</div>
   <div class="particles-container">
     <div class="particle cold" id="p1">1</div>
-    <div class="particle-arrow">â†’</div>
+    <div class="particle-arrow">→</div>
     <div class="particle cold" id="p2">2</div>
-    <div class="particle-arrow">â†’</div>
+    <div class="particle-arrow">→</div>
     <div class="particle cold" id="p3">3</div>
-    <div class="particle-arrow">â†’</div>
+    <div class="particle-arrow">→</div>
     <div class="particle cold" id="p4">4</div>
   </div>
   <div class="particle-label">Hot particles vibrate faster and transfer energy to neighbors (particles don't move, only energy does!)</div>
 </div>
 
 <div class="results-panel">
-  <div class="results-title">ðŸ“Š Pin Drop Times</div>
+  <div class="results-title">📊 Pin Drop Times</div>
   <div class="pin-times">
     <div class="pin-time" id="time1">
       <div class="num">Pin 1</div>
@@ -471,12 +471,12 @@ body {
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">ðŸŽ¯ What This Shows</div>
+  <div class="takeaway-title">🎯 What This Shows</div>
   <div class="takeaway-text">
-    â€¢ Heat travels from <strong>hot to cold</strong> end<br>
-    â€¢ Pins closer to flame drop <strong>first</strong><br>
-    â€¢ Higher heat = <strong>faster</strong> conduction<br>
-    â€¢ Particles <strong>vibrate</strong> but don't move position
+    • Heat travels from <strong>hot to cold</strong> end<br>
+    • Pins closer to flame drop <strong>first</strong><br>
+    • Higher heat = <strong>faster</strong> conduction<br>
+    • Particles <strong>vibrate</strong> but don't move position
   </div>
 </div>
 
@@ -510,7 +510,7 @@ const dropSchedule = {
 
 function adjustHeat(value) {
   heatLevel = parseInt(value);
-  const labels = ['Low Heat ðŸ”¥', 'Medium Heat ðŸ”¥ðŸ”¥', 'High Heat ðŸ”¥ðŸ”¥ðŸ”¥'];
+  const labels = ['Low Heat 🔥', 'Medium Heat 🔥🔥', 'High Heat 🔥🔥🔥'];
   document.getElementById('heat-value').textContent = labels[heatLevel - 1];
   
   flame.className = 'flame';
@@ -523,13 +523,13 @@ function startExperiment() {
   
   isRunning = true;
   timer = 0;
-  startBtn.textContent = 'ðŸ”¥ Heating...';
+  startBtn.textContent = '🔥 Heating...';
   startBtn.disabled = true;
   
   // Start timer
   timerInterval = setInterval(() => {
     timer += 0.1;
-    timerDisplay.textContent = `â±ï¸ ${timer.toFixed(1)}s`;
+    timerDisplay.textContent = `⏱️ ${timer.toFixed(1)}s`;
     
     // Update heat gradient
     const maxTime = dropSchedule[heatLevel][3];
@@ -551,7 +551,7 @@ function startExperiment() {
     if (droppedPins.every(d => d)) {
       setTimeout(() => {
         clearInterval(timerInterval);
-        startBtn.textContent = 'âœ“ Complete!';
+        startBtn.textContent = '✓ Complete!';
       }, 500);
     }
   }, 100);
@@ -591,9 +591,9 @@ function resetExperiment() {
   pinDropTimes = [0, 0, 0, 0];
   droppedPins = [false, false, false, false];
   
-  timerDisplay.textContent = 'â±ï¸ 0.0s';
+  timerDisplay.textContent = '⏱️ 0.0s';
   heatGradient.style.width = '0%';
-  startBtn.textContent = 'ðŸ”¥ Start Heating';
+  startBtn.textContent = '🔥 Start Heating';
   startBtn.disabled = false;
   
   for (let i = 1; i <= 4; i++) {

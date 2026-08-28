@@ -216,12 +216,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>ðŸ“ Growth During Adolescence</h1>
+  <h1>📏 Growth During Adolescence</h1>
   <p>Watch how height and weight change over time</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š Key Concept</div>
+  <div class="concept-title">📚 Key Concept</div>
   <div class="concept-text">
     During adolescence, there's a <strong>growth spurt</strong> - a rapid increase in height and weight. Boys typically grow taller and develop broader shoulders; girls may develop earlier and gain weight in different areas.
   </div>
@@ -229,7 +229,7 @@ body {
 
 <div class="sim-card">
   <div class="age-slider">
-    <label>ðŸŽ‚ Select Age to See Growth:</label>
+    <label>🎂 Select Age to See Growth:</label>
     <input type="range" id="age-slider" min="5" max="20" value="12" oninput="updateGrowth(this.value)">
   </div>
   
@@ -254,12 +254,12 @@ body {
   
   <div class="stats-row">
     <div class="stat-card height">
-      <div class="stat-label">ðŸ“ Average Height</div>
+      <div class="stat-label">📏 Average Height</div>
       <div class="stat-value" id="height-value">145 cm</div>
       <div class="stat-change" id="height-change">Growing steadily</div>
     </div>
     <div class="stat-card weight">
-      <div class="stat-label">âš–ï¸ Average Weight</div>
+      <div class="stat-label">⚖️ Average Weight</div>
       <div class="stat-value" id="weight-value">38 kg</div>
       <div class="stat-change" id="weight-change">Healthy range</div>
     </div>
@@ -267,14 +267,14 @@ body {
 </div>
 
 <div class="growth-info" id="growth-info">
-  <div class="growth-title" id="growth-title">ðŸŒŸ Age 12: Early Adolescence</div>
+  <div class="growth-title" id="growth-title">🌟 Age 12: Early Adolescence</div>
   <div class="growth-text" id="growth-text">
     This is when puberty often begins! The body starts producing hormones that trigger growth changes. You may notice you're growing faster than before.
   </div>
 </div>
 
 <div class="puberty-highlight">
-  <div class="puberty-title">ðŸ“Š Growth Spurt Facts</div>
+  <div class="puberty-title">📊 Growth Spurt Facts</div>
   <div class="puberty-text">
     <strong>Girls:</strong> Growth spurt usually happens between ages 10-14<br>
     <strong>Boys:</strong> Growth spurt usually happens between ages 12-16<br><br>
@@ -283,7 +283,7 @@ body {
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">ðŸŽ¯ Remember</div>
+  <div class="takeaway-title">🎯 Remember</div>
   <div class="takeaway-text">
     Everyone grows at their own pace - some earlier, some later. This is completely <strong>normal</strong>! Good nutrition, exercise, and sleep help you grow to your full potential.
   </div>
@@ -337,19 +337,19 @@ function updateGrowth(age) {
   const weightGrowth = data.weight - prevData.weight;
   
   if (heightGrowth >= 6) {
-    heightChange.textContent = `ðŸš€ Growth spurt! +${heightGrowth}cm/year`;
+    heightChange.textContent = `🚀 Growth spurt! +${heightGrowth}cm/year`;
     heightChange.style.color = '#4caf50';
   } else if (heightGrowth >= 4) {
-    heightChange.textContent = `ðŸ“ˆ Growing fast! +${heightGrowth}cm/year`;
+    heightChange.textContent = `📈 Growing fast! +${heightGrowth}cm/year`;
     heightChange.style.color = '#ff9800';
   } else {
-    heightChange.textContent = `ðŸ“Š Steady growth +${heightGrowth}cm/year`;
+    heightChange.textContent = `📊 Steady growth +${heightGrowth}cm/year`;
     heightChange.style.color = '#888';
   }
   
   weightChange.textContent = `+${weightGrowth}kg from last year`;
   
-  growthTitle.textContent = `ðŸŒŸ Age ${age}: ${data.stage}`;
+  growthTitle.textContent = `🌟 Age ${age}: ${data.stage}`;
   growthText.textContent = data.info;
   
   // Update visual figure

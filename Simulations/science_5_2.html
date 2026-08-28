@@ -5,7 +5,7 @@
 <meta name="color-scheme" content="light">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#7b1fa2">
-<title>Chemical Changes â€“ New Substances Formed</title>
+<title>Chemical Changes – New Substances Formed</title>
 
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -168,12 +168,12 @@ svg { width: 100%; height: 100%; }
 <div id="app">
 
 <div class="header">
-  <h1>âš—ï¸ Chemical Changes</h1>
+  <h1>⚗️ Chemical Changes</h1>
   <p>Changes where NEW substances are formed</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š Key Concept</div>
+  <div class="concept-title">📚 Key Concept</div>
   <div class="concept-text">
     In a <strong>chemical change</strong>, one or more <strong>new substances</strong> are formed. The original materials are transformed into something completely different through a chemical reaction.
   </div>
@@ -181,8 +181,8 @@ svg { width: 100%; height: 100%; }
 
 <div class="sim-card">
   <div class="experiment-tabs">
-    <button class="exp-tab active" onclick="selectExperiment('vinegar', this)">ðŸ§ª Vinegar + Baking Soda</button>
-    <button class="exp-tab" onclick="selectExperiment('limewater', this)">ðŸ’¨ COâ‚‚ + Lime Water</button>
+    <button class="exp-tab active" onclick="selectExperiment('vinegar', this)">🧪 Vinegar + Baking Soda</button>
+    <button class="exp-tab" onclick="selectExperiment('limewater', this)">💨 CO₂ + Lime Water</button>
   </div>
   
   <div class="visual">
@@ -193,14 +193,14 @@ svg { width: 100%; height: 100%; }
         <!-- Beaker -->
         <rect x="140" y="100" width="120" height="140" rx="5" fill="none" stroke="#90a4ae" stroke-width="3"/>
         <rect x="145" y="180" width="110" height="55" rx="3" fill="#fff" opacity="0.9" id="baking-soda"/>
-        <text x="200" y="210" font-size="10" fill="#666" text-anchor="middle">Baking Soda (NaHCOâ‚ƒ)</text>
+        <text x="200" y="210" font-size="10" fill="#666" text-anchor="middle">Baking Soda (NaHCO₃)</text>
         
         <!-- Vinegar bottle -->
         <g id="vinegar-bottle" transform="translate(300, 80)">
           <rect x="-20" y="0" width="40" height="80" rx="5" fill="#a5d6a7"/>
           <rect x="-10" y="-15" width="20" height="20" rx="3" fill="#81c784"/>
           <text x="0" y="50" font-size="8" fill="#2e7d32" text-anchor="middle">Vinegar</text>
-          <text x="0" y="60" font-size="7" fill="#2e7d32" text-anchor="middle">(CHâ‚ƒCOOH)</text>
+          <text x="0" y="60" font-size="7" fill="#2e7d32" text-anchor="middle">(CH₃COOH)</text>
         </g>
         
         <!-- Pouring vinegar (hidden) -->
@@ -225,9 +225,9 @@ svg { width: 100%; height: 100%; }
         
         <!-- CO2 gas rising -->
         <g id="co2-gas" style="display:none">
-          <text x="160" y="120" font-size="12" fill="#90a4ae">COâ‚‚â†‘</text>
-          <text x="200" y="110" font-size="12" fill="#90a4ae">COâ‚‚â†‘</text>
-          <text x="230" y="125" font-size="12" fill="#90a4ae">COâ‚‚â†‘</text>
+          <text x="160" y="120" font-size="12" fill="#90a4ae">CO₂↑</text>
+          <text x="200" y="110" font-size="12" fill="#90a4ae">CO₂↑</text>
+          <text x="230" y="125" font-size="12" fill="#90a4ae">CO₂↑</text>
         </g>
       </g>
       
@@ -236,12 +236,12 @@ svg { width: 100%; height: 100%; }
         <!-- Test tube with lime water -->
         <rect x="170" y="80" width="60" height="150" rx="30" fill="none" stroke="#90a4ae" stroke-width="3"/>
         <rect x="175" y="150" width="50" height="75" rx="25" fill="#e0e0e0" opacity="0.3" id="limewater"/>
-        <text x="200" y="250" font-size="10" fill="#666" text-anchor="middle">Lime Water Ca(OH)â‚‚</text>
+        <text x="200" y="250" font-size="10" fill="#666" text-anchor="middle">Lime Water Ca(OH)â''</text>
         
         <!-- Straw for blowing -->
         <g id="straw">
           <rect x="195" y="20" width="10" height="100" fill="#ffcc80"/>
-          <text x="250" y="60" font-size="10" fill="#fff">â† Blow air</text>
+          <text x="250" y="60" font-size="10" fill="#fff">← Blow air</text>
         </g>
         
         <!-- Bubbles in lime water (hidden) -->
@@ -261,18 +261,18 @@ svg { width: 100%; height: 100%; }
   </div>
   
   <div class="controls">
-    <button class="mix-btn" id="mix-btn" onclick="performReaction()">ðŸ§ª Mix the Chemicals</button>
+    <button class="mix-btn" id="mix-btn" onclick="performReaction()">🧪 Mix the Chemicals</button>
   </div>
 </div>
 
 <div class="equation-box" id="equation-box">
-  <div class="equation-title">âš—ï¸ Chemical Equation</div>
-  <div class="equation" id="equation">NaHCOâ‚ƒ + CHâ‚ƒCOOH â†’ COâ‚‚ + Hâ‚‚O + CHâ‚ƒCOONa</div>
-  <div class="equation-explain" id="equation-explain">Baking Soda + Vinegar â†’ Carbon Dioxide + Water + Sodium Acetate</div>
+  <div class="equation-title">⚗️ Chemical Equation</div>
+  <div class="equation" id="equation">NaHCO₃ + CH₃COOH → CO₂ + H₂O + CH₃COONa</div>
+  <div class="equation-explain" id="equation-explain">Baking Soda + Vinegar → Carbon Dioxide + Water + Sodium Acetate</div>
 </div>
 
 <div class="learning-panel">
-  <div class="learning-title">ðŸ”¬ What's Happening?</div>
+  <div class="learning-title">🔬 What's Happening?</div>
   <div class="learning-text" id="learning-text">
     This experiment shows a <strong>chemical change</strong>.<br><br>
     When vinegar (acid) meets baking soda (base), they react to form <strong>completely new substances</strong>: carbon dioxide gas (the bubbles!), water, and sodium acetate.
@@ -280,14 +280,14 @@ svg { width: 100%; height: 100%; }
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">ðŸŽ¯ Signs of Chemical Change</div>
+  <div class="takeaway-title">🎯 Signs of Chemical Change</div>
   <div class="takeaway-text">
     Look for these signs:<br>
-    â€¢ <strong>Gas bubbles</strong> forming<br>
-    â€¢ <strong>Color change</strong><br>
-    â€¢ <strong>Temperature change</strong> (hot or cold)<br>
-    â€¢ <strong>Precipitate</strong> (solid) forming<br>
-    â€¢ <strong>New smell</strong><br><br>
+    • <strong>Gas bubbles</strong> forming<br>
+    • <strong>Color change</strong><br>
+    • <strong>Temperature change</strong> (hot or cold)<br>
+    • <strong>Precipitate</strong> (solid) forming<br>
+    • <strong>New smell</strong><br><br>
     Chemical changes are usually <strong>irreversible</strong>!
   </div>
 </div>
@@ -330,22 +330,22 @@ function selectExperiment(type, btn) {
   mixBtn.disabled = false;
   
   if (type === 'vinegar') {
-    mixBtn.textContent = 'ðŸ§ª Pour Vinegar into Baking Soda';
+    mixBtn.textContent = '🧪 Pour Vinegar into Baking Soda';
     statusBadge.textContent = 'Ready to mix';
-    equation.textContent = 'NaHCOâ‚ƒ + CHâ‚ƒCOOH â†’ COâ‚‚ + Hâ‚‚O + CHâ‚ƒCOONa';
-    equationExplain.textContent = 'Baking Soda + Vinegar â†’ Carbon Dioxide + Water + Sodium Acetate';
+    equation.textContent = 'NaHCO₃ + CH₃COOH → CO₂ + H₂O + CH₃COONa';
+    equationExplain.textContent = 'Baking Soda + Vinegar → Carbon Dioxide + Water + Sodium Acetate';
     learningText.innerHTML = `
       This experiment shows a <strong>chemical change</strong>.<br><br>
       When vinegar (acid) meets baking soda (base), they react to form <strong>completely new substances</strong>: carbon dioxide gas (the bubbles!), water, and sodium acetate.
     `;
   } else {
-    mixBtn.textContent = 'ðŸ’¨ Blow Air (COâ‚‚) into Lime Water';
+    mixBtn.textContent = '💨 Blow Air (CO₂) into Lime Water';
     statusBadge.textContent = 'Ready to blow';
-    equation.textContent = 'Ca(OH)â‚‚ + COâ‚‚ â†’ CaCOâ‚ƒ + Hâ‚‚O';
-    equationExplain.textContent = 'Lime Water + Carbon Dioxide â†’ Calcium Carbite (milky) + Water';
+    equation.textContent = 'Ca(OH)₂ + CO₂ → CaCO₃ + H₂O';
+    equationExplain.textContent = 'Lime Water + Carbon Dioxide → Calcium Carbite (milky) + Water';
     learningText.innerHTML = `
-      This experiment shows how to <strong>test for COâ‚‚ gas</strong>.<br><br>
-      When we blow air into lime water, the COâ‚‚ in our breath reacts with calcium hydroxide to form <strong>calcium carbonate</strong> - a white substance that makes the water look milky!
+      This experiment shows how to <strong>test for COâ'' gas</strong>.<br><br>
+      When we blow air into lime water, the COâ'' in our breath reacts with calcium hydroxide to form <strong>calcium carbonate</strong> - a white substance that makes the water look milky!
     `;
   }
 }
@@ -358,7 +358,7 @@ function performReaction() {
   
   if (currentExperiment === 'vinegar') {
     // Vinegar + Baking Soda reaction
-    statusBadge.textContent = 'â³ Pouring vinegar...';
+    statusBadge.textContent = '⏳ Pouring vinegar...';
     document.getElementById('pour-vinegar').style.display = 'block';
     
     setTimeout(() => {
@@ -366,45 +366,45 @@ function performReaction() {
       document.getElementById('baking-soda').style.display = 'none';
       document.getElementById('fizz-mixture').style.display = 'block';
       document.getElementById('bubbles').style.display = 'block';
-      statusBadge.textContent = 'ðŸ«§ Reaction happening!';
+      statusBadge.textContent = '🫧 Reaction happening!';
     }, 800);
     
     setTimeout(() => {
       document.getElementById('co2-gas').style.display = 'block';
-      statusBadge.textContent = 'âœ… Chemical Change Complete!';
+      statusBadge.textContent = '✅ Chemical Change Complete!';
       
       learningText.innerHTML = `
-        <strong style="color:#7b1fa2">âœ… Chemical Change Observed!</strong><br><br>
+        <strong style="color:#7b1fa2">✅ Chemical Change Observed!</strong><br><br>
         <strong>What happened:</strong><br>
-        â€¢ Vigorous <strong>bubbling</strong> (COâ‚‚ gas released)<br>
-        â€¢ The baking soda <strong>disappeared</strong><br>
-        â€¢ <strong>New substances</strong> formed!<br><br>
+        • Vigorous <strong>bubbling</strong> (CO₂ gas released)<br>
+        • The baking soda <strong>disappeared</strong><br>
+        • <strong>New substances</strong> formed!<br><br>
         The original substances (vinegar & baking soda) are <strong>gone forever</strong> - you can't get them back. This is a chemical change!
       `;
       
-      mixBtn.textContent = 'âœ… Reaction Complete';
+      mixBtn.textContent = '✅ Reaction Complete';
     }, 1500);
     
   } else {
     // Lime water + CO2 reaction
-    statusBadge.textContent = 'ðŸ’¨ Blowing air...';
+    statusBadge.textContent = '💨 Blowing air...';
     document.getElementById('limewater-bubbles').style.display = 'block';
     
     setTimeout(() => {
       document.getElementById('limewater').style.display = 'none';
       document.getElementById('milky-limewater').style.display = 'block';
-      statusBadge.textContent = 'âœ… Lime Water Turned Milky!';
+      statusBadge.textContent = '✅ Lime Water Turned Milky!';
       
       learningText.innerHTML = `
-        <strong style="color:#7b1fa2">âœ… Chemical Change Observed!</strong><br><br>
+        <strong style="color:#7b1fa2">✅ Chemical Change Observed!</strong><br><br>
         <strong>What happened:</strong><br>
-        â€¢ Clear lime water turned <strong>milky white</strong><br>
-        â€¢ A new substance (<strong>CaCOâ‚ƒ</strong>) formed<br>
-        â€¢ This is how we <strong>test for COâ‚‚</strong>!<br><br>
-        The milkiness is caused by tiny particles of calcium carbonate (chalk!) suspended in water. This proves COâ‚‚ was present!
+        • Clear lime water turned <strong>milky white</strong><br>
+        • A new substance (<strong>CaCO₃</strong>) formed<br>
+        • This is how we <strong>test for CO₂</strong>!<br><br>
+        The milkiness is caused by tiny particles of calcium carbonate (chalk!) suspended in water. This proves COâ'' was present!
       `;
       
-      mixBtn.textContent = 'âœ… Test Complete';
+      mixBtn.textContent = '✅ Test Complete';
     }, 1500);
   }
 }

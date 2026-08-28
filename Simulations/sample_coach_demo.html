@@ -112,7 +112,7 @@
   function coachLine(){
     var t=target(),gap=t-current;
     if(done){return {txt:'You built <b>'+fmt(t)+'</b>! Tap <b>Next target</b> to try another.',glow:'next'};}
-    if(current>t){return {txt:'That’s <b>over</b> '+fmt(t)+' by '+fmt(current-t)+'. Tap <b>Reset</b> and use a smaller button.',glow:'reset'};}
+    if(current>t){return {txt:'That's <b>over</b> '+fmt(t)+' by '+fmt(current-t)+'. Tap <b>Reset</b> and use a smaller button.',glow:'reset'};}
     // learner-paced levels
     if(hintLevel===0){return {txt:'Build <b>'+fmt(t)+'</b>. You have '+fmt(current)+', so '+fmt(gap)+' to go. Which button gets you closest without going over? <span class="tag">(think, or tap Hint)</span>',glow:null};}
     if(hintLevel===1){return {txt:'Nudge: fill the <b>biggest place first</b> — pick the largest button that still fits under '+fmt(t)+'.',glow:null};}

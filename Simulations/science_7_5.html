@@ -313,12 +313,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>ðŸŒŠ Land and Sea Breeze</h1>
+  <h1>🌊 Land and Sea Breeze</h1>
   <p>Nature's air conditioning near coasts!</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š Key Concept</div>
+  <div class="concept-title">📚 Key Concept</div>
   <div class="concept-text">
     Land heats and cools <strong>faster</strong> than water. This difference creates wind patterns near coasts - <strong>sea breeze</strong> during the day and <strong>land breeze</strong> at night.
   </div>
@@ -327,11 +327,11 @@ body {
 <div class="sim-card">
   <div class="time-toggle">
     <button class="time-btn day active" onclick="setTime('day', this)">
-      <span class="emoji">â˜€ï¸</span>
+      <span class="emoji">☀️</span>
       Daytime
     </button>
     <button class="time-btn night" onclick="setTime('night', this)">
-      <span class="emoji">ðŸŒ™</span>
+      <span class="emoji">🌙</span>
       Nighttime
     </button>
   </div>
@@ -349,7 +349,7 @@ body {
       <div class="star" style="top: 45px; left: 350px; animation-delay: 1.2s;"></div>
     </div>
     
-    <div class="breeze-name" id="breeze-name">ðŸŒ¬ï¸ Sea Breeze</div>
+    <div class="breeze-name" id="breeze-name">🌬️ Sea Breeze</div>
     
     <div class="wind-arrows" id="wind-arrows">
       <div class="wind-arrow">
@@ -365,11 +365,11 @@ body {
     
     <div class="landscape">
       <div class="sea">
-        <div class="temp-indicator temp-sea" id="temp-sea">ðŸŒŠ</div>
+        <div class="temp-indicator temp-sea" id="temp-sea">🌊</div>
         <div class="sea-label">SEA (Cool)</div>
       </div>
       <div class="land">
-        <div class="temp-indicator temp-land" id="temp-land">ðŸ”¥</div>
+        <div class="temp-indicator temp-land" id="temp-land">🔥</div>
         <div class="land-label">LAND (Hot)</div>
       </div>
     </div>
@@ -377,23 +377,23 @@ body {
 </div>
 
 <div class="explanation day-exp" id="explanation">
-  <div class="explanation-title" id="exp-title">â˜€ï¸ Sea Breeze (Daytime)</div>
+  <div class="explanation-title" id="exp-title">☀️ Sea Breeze (Daytime)</div>
   <div class="explanation-text" id="exp-text">
     During the day, <strong>land heats up faster</strong> than the sea. Hot air over the land rises. Cool air from the sea rushes in to replace it. This cool wind from sea to land is called <strong>sea breeze</strong>.
   </div>
   <div class="key-point">
-    <div class="icon">ðŸ’¡</div>
+    <div class="icon">💡</div>
     <div class="text">Sea breeze provides relief from heat in coastal areas during hot afternoons!</div>
   </div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">ðŸŽ¯ Key Difference</div>
+  <div class="takeaway-title">🎯 Key Difference</div>
   <div class="takeaway-text">
-    â€¢ <strong>Land</strong> heats and cools quickly (specific heat is low)<br>
-    â€¢ <strong>Water</strong> heats and cools slowly (specific heat is high)<br>
-    â€¢ Day: Land hot â†’ Air rises â†’ Sea breeze blows in<br>
-    â€¢ Night: Sea warm â†’ Air rises â†’ Land breeze blows out
+    • <strong>Land</strong> heats and cools quickly (specific heat is low)<br>
+    • <strong>Water</strong> heats and cools slowly (specific heat is high)<br>
+    • Day: Land hot → Air rises → Sea breeze blows in<br>
+    • Night: Sea warm → Air rises → Land breeze blows out
   </div>
 </div>
 
@@ -426,7 +426,7 @@ function setTime(time, btn) {
     moon.style.display = 'none';
     stars.style.display = 'none';
     
-    breezeName.textContent = 'ðŸŒ¬ï¸ Sea Breeze';
+    breezeName.textContent = '🌬️ Sea Breeze';
     
     // Wind from sea to land (left to right)
     windArrows.innerHTML = `
@@ -441,13 +441,13 @@ function setTime(time, btn) {
       </div>
     `;
     
-    tempSea.textContent = 'ðŸŒŠ';
-    tempLand.textContent = 'ðŸ”¥';
+    tempSea.textContent = '🌊';
+    tempLand.textContent = '🔥';
     seaLabel.textContent = 'SEA (Cool)';
     landLabel.textContent = 'LAND (Hot)';
     
     explanation.className = 'explanation day-exp';
-    expTitle.textContent = 'â˜€ï¸ Sea Breeze (Daytime)';
+    expTitle.textContent = '☀️ Sea Breeze (Daytime)';
     expText.innerHTML = 'During the day, <strong>land heats up faster</strong> than the sea. Hot air over the land rises. Cool air from the sea rushes in to replace it. This cool wind from sea to land is called <strong>sea breeze</strong>.';
     
   } else {
@@ -457,7 +457,7 @@ function setTime(time, btn) {
     moon.style.display = 'block';
     stars.style.display = 'block';
     
-    breezeName.textContent = 'ðŸŒ¬ï¸ Land Breeze';
+    breezeName.textContent = '🌬️ Land Breeze';
     
     // Wind from land to sea (right to left)
     windArrows.innerHTML = `
@@ -472,13 +472,13 @@ function setTime(time, btn) {
       </div>
     `;
     
-    tempSea.textContent = 'ðŸ”¥';
-    tempLand.textContent = 'â„ï¸';
+    tempSea.textContent = '🔥';
+    tempLand.textContent = '❄️';
     seaLabel.textContent = 'SEA (Warm)';
     landLabel.textContent = 'LAND (Cool)';
     
     explanation.className = 'explanation night-exp';
-    expTitle.textContent = 'ðŸŒ™ Land Breeze (Nighttime)';
+    expTitle.textContent = '🌙 Land Breeze (Nighttime)';
     expText.innerHTML = 'At night, <strong>land cools down faster</strong> than the sea. The sea remains relatively warm. Warm air over the sea rises. Cool air from the land moves toward the sea. This wind from land to sea is called <strong>land breeze</strong>.';
   }
 }

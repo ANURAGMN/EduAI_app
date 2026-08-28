@@ -524,12 +524,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>ðŸ’§ The Water Cycle</h1>
+  <h1>💧 The Water Cycle</h1>
   <p>Interactive simulation - tap elements to explore!</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š Key Concept</div>
+  <div class="concept-title">📚 Key Concept</div>
   <div class="concept-text">
     The <strong>Sun's heat</strong> drives the water cycle. Tap on the sun, clouds, rain, or labels to learn about each stage!
   </div>
@@ -538,21 +538,21 @@ body {
 <div class="sim-card">
   <div class="controls">
     <button class="control-btn" id="play-btn" onclick="toggleAnimation()">
-      <span class="icon" id="play-icon">â–¶ï¸</span>
+      <span class="icon" id="play-icon">▶️</span>
       <span id="play-text">Play All</span>
     </button>
     <button class="control-btn" id="guided-btn" onclick="startGuidedMode()">
-      <span class="icon">ðŸ“–</span>
+      <span class="icon">📖</span>
       Step-by-Step
     </button>
     <button class="control-btn" onclick="resetSimulation()">
-      <span class="icon">ðŸ”„</span>
+      <span class="icon">🔄</span>
       Reset
     </button>
   </div>
   
   <div class="cycle-visual" id="cycle-visual">
-    <div class="instruction-overlay" id="instruction">ðŸ‘† Tap elements or use controls above</div>
+    <div class="instruction-overlay" id="instruction">👆 Tap elements or use controls above</div>
     
     <!-- Sun -->
     <div class="sun clickable" id="sun" onclick="showInfo('sun')"></div>
@@ -603,21 +603,21 @@ body {
     
     <!-- Land -->
     <div class="land clickable" onclick="showInfo('runoff')">
-      <div class="tree" style="right: 90px;">ðŸŒ³</div>
-      <div class="tree" style="right: 50px;">ðŸŒ²</div>
+      <div class="tree" style="right: 90px;">🌳</div>
+      <div class="tree" style="right: 50px;">🌲</div>
     </div>
     
     <!-- Stage Labels -->
-    <div class="stage-label label-evap" onclick="showInfo('evaporation')">â˜€ï¸ Evaporation</div>
-    <div class="stage-label label-cond" onclick="showInfo('condensation')">â˜ï¸ Condensation</div>
-    <div class="stage-label label-precip" onclick="showInfo('precipitation')">ðŸŒ§ï¸ Precipitation</div>
-    <div class="stage-label label-runoff" onclick="showInfo('runoff')">ðŸžï¸ Runoff</div>
-    <div class="stage-label label-collect" onclick="showInfo('collection')">ðŸ’§ Collection</div>
+    <div class="stage-label label-evap" onclick="showInfo('evaporation')">☀️ Evaporation</div>
+    <div class="stage-label label-cond" onclick="showInfo('condensation')">☁️ Condensation</div>
+    <div class="stage-label label-precip" onclick="showInfo('precipitation')">🌧️ Precipitation</div>
+    <div class="stage-label label-runoff" onclick="showInfo('runoff')">🏞️ Runoff</div>
+    <div class="stage-label label-collect" onclick="showInfo('collection')">💧 Collection</div>
     
     <!-- Info Popup -->
     <div class="info-popup" id="info-popup">
-      <button class="close-popup" onclick="hideInfo()">âœ•</button>
-      <div class="info-popup-title" id="popup-title">â˜€ï¸ Evaporation</div>
+      <button class="close-popup" onclick="hideInfo()">✕</button>
+      <div class="info-popup-title" id="popup-title">☀️ Evaporation</div>
       <div class="info-popup-text" id="popup-text">
         The Sun's heat causes water from oceans, rivers, and lakes to evaporate into water vapor.
       </div>
@@ -634,18 +634,18 @@ body {
   </div>
   
   <div class="nav-buttons" id="nav-buttons" style="display: none;">
-    <button class="nav-btn prev" id="prev-btn" onclick="prevStep()">â† Previous</button>
-    <button class="nav-btn next" id="next-btn" onclick="nextStep()">Next â†’</button>
+    <button class="nav-btn prev" id="prev-btn" onclick="prevStep()">← Previous</button>
+    <button class="nav-btn next" id="next-btn" onclick="nextStep()">Next →</button>
   </div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">ðŸŽ¯ The Cycle Never Stops!</div>
+  <div class="takeaway-title">🎯 The Cycle Never Stops!</div>
   <div class="takeaway-text">
-    â€¢ <strong>Evaporation:</strong> Water â†’ Water vapor (Sun heats)<br>
-    â€¢ <strong>Condensation:</strong> Vapor â†’ Clouds (cooling)<br>
-    â€¢ <strong>Precipitation:</strong> Rain, snow, hail falls<br>
-    â€¢ <strong>Collection:</strong> Water returns to oceans & ground
+    • <strong>Evaporation:</strong> Water → Water vapor (Sun heats)<br>
+    • <strong>Condensation:</strong> Vapor → Clouds (cooling)<br>
+    • <strong>Precipitation:</strong> Rain, snow, hail falls<br>
+    • <strong>Collection:</strong> Water returns to oceans & ground
   </div>
 </div>
 
@@ -654,27 +654,27 @@ body {
 <script>
 const stageInfo = {
   sun: {
-    title: 'â˜€ï¸ The Sun - Energy Source',
+    title: '☀️ The Sun - Energy Source',
     text: 'The Sun provides the <strong>heat energy</strong> that powers the entire water cycle. Without the Sun, water wouldn\'t evaporate and the cycle would stop!'
   },
   evaporation: {
-    title: 'â˜€ï¸ Evaporation',
+    title: '☀️ Evaporation',
     text: 'The Sun\'s heat causes water from oceans, rivers, lakes, and wet soil to <strong>evaporate</strong> (turn into invisible water vapor). Plants also release water vapor through <strong>transpiration</strong>.'
   },
   condensation: {
-    title: 'â˜ï¸ Condensation',
+    title: '☁️ Condensation',
     text: 'As water vapor rises, it <strong>cools down</strong>. Cool air can\'t hold as much moisture, so vapor <strong>condenses</strong> into tiny water droplets that form clouds.'
   },
   precipitation: {
-    title: 'ðŸŒ§ï¸ Precipitation',
+    title: '🌧️ Precipitation',
     text: 'When water droplets in clouds become heavy enough, they fall as <strong>precipitation</strong> - rain, snow, sleet, or hail depending on temperature.'
   },
   runoff: {
-    title: 'ðŸžï¸ Runoff & Infiltration',
+    title: '🏞️ Runoff & Infiltration',
     text: 'Water that falls on land either <strong>runs off</strong> into streams and rivers, or <strong>infiltrates</strong> (seeps) into the ground to become groundwater.'
   },
   collection: {
-    title: 'ðŸ’§ Collection',
+    title: '💧 Collection',
     text: 'Water collects in <strong>oceans, lakes, and rivers</strong>, or is stored underground as groundwater. From here, the cycle begins again!'
   }
 };
@@ -750,7 +750,7 @@ function toggleAnimation() {
   if (isPlaying) {
     instruction.classList.add('hidden');
     playBtn.classList.add('active');
-    document.getElementById('play-icon').textContent = 'â¸ï¸';
+    document.getElementById('play-icon').textContent = '⏸️';
     document.getElementById('play-text').textContent = 'Pause';
     
     // Activate all animations
@@ -761,7 +761,7 @@ function toggleAnimation() {
     runoffContainer.classList.add('active');
   } else {
     playBtn.classList.remove('active');
-    document.getElementById('play-icon').textContent = 'â–¶ï¸';
+    document.getElementById('play-icon').textContent = '▶️';
     document.getElementById('play-text').textContent = 'Play All';
     
     clearHighlights();
@@ -776,7 +776,7 @@ function startGuidedMode() {
   instruction.classList.add('hidden');
   guidedBtn.classList.add('active');
   playBtn.classList.remove('active');
-  document.getElementById('play-icon').textContent = 'â–¶ï¸';
+  document.getElementById('play-icon').textContent = '▶️';
   document.getElementById('play-text').textContent = 'Play All';
   
   stepIndicator.style.display = 'flex';
@@ -806,7 +806,7 @@ function updateGuidedStep() {
   
   // Update navigation buttons
   document.getElementById('prev-btn').disabled = currentStep === 0;
-  document.getElementById('next-btn').textContent = currentStep === steps.length - 1 ? 'Finish âœ“' : 'Next â†’';
+  document.getElementById('next-btn').textContent = currentStep === steps.length - 1 ? 'Finish ✓' : 'Next →';
   
   // Show info for current step
   showInfo(steps[currentStep]);
@@ -840,7 +840,7 @@ function resetSimulation() {
   
   playBtn.classList.remove('active');
   guidedBtn.classList.remove('active');
-  document.getElementById('play-icon').textContent = 'â–¶ï¸';
+  document.getElementById('play-icon').textContent = '▶️';
   document.getElementById('play-text').textContent = 'Play All';
   
   stepIndicator.style.display = 'none';

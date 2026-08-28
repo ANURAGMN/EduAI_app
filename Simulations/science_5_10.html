@@ -5,7 +5,7 @@
 <meta name="color-scheme" content="light">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#5d4037">
-<title>Weathering & Erosion â€“ Slow Natural Changes</title>
+<title>Weathering & Erosion – Slow Natural Changes</title>
 
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -204,12 +204,12 @@ svg { width: 100%; height: 100%; }
 <div id="app">
 
 <div class="header">
-  <h1>ðŸ”ï¸ Weathering & Erosion</h1>
+  <h1>🏔️ Weathering & Erosion</h1>
   <p>Slow changes that shape our Earth</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š Key Concept</div>
+  <div class="concept-title">📚 Key Concept</div>
   <div class="concept-text">
     <strong>Weathering</strong> breaks rocks into smaller pieces. <strong>Erosion</strong> moves those pieces to new locations. Together, they shape mountains, valleys, and create soil over thousands of years!
   </div>
@@ -217,13 +217,13 @@ svg { width: 100%; height: 100%; }
 
 <div class="sim-card">
   <div class="mode-tabs">
-    <button class="mode-tab active" onclick="selectMode('mountain', this)">ðŸ”ï¸ Mountain</button>
-    <button class="mode-tab" onclick="selectMode('river', this)">ðŸŒŠ River Rocks</button>
-    <button class="mode-tab" onclick="selectMode('cliff', this)">ðŸª¨ Sea Cliff</button>
+    <button class="mode-tab active" onclick="selectMode('mountain', this)">🏔️ Mountain</button>
+    <button class="mode-tab" onclick="selectMode('river', this)">🌊 River Rocks</button>
+    <button class="mode-tab" onclick="selectMode('cliff', this)">🪨 Sea Cliff</button>
   </div>
   
   <div class="visual">
-    <div class="time-display" id="time-display">â³ Present Day</div>
+    <div class="time-display" id="time-display">⏳ Present Day</div>
     <svg viewBox="0 0 400 260" id="scene">
       <!-- Mountain Scene -->
       <g id="mountain-scene">
@@ -334,7 +334,7 @@ svg { width: 100%; height: 100%; }
   
   <div class="controls">
     <div class="time-slider">
-      <label>â³ Time Travel: Slide to see changes over time</label>
+      <label>⏳ Time Travel: Slide to see changes over time</label>
       <input type="range" id="time-slider" min="0" max="100" value="0" oninput="updateTime(this.value)">
       <div class="time-markers">
         <span>Now</span>
@@ -348,7 +348,7 @@ svg { width: 100%; height: 100%; }
 </div>
 
 <div class="process-panel">
-  <div class="process-title">ðŸ”¬ What's Happening?</div>
+  <div class="process-title">🔬 What's Happening?</div>
   <div class="process-text" id="process-text">
     Move the time slider to see how weathering and erosion slowly transform the landscape over thousands to millions of years!
   </div>
@@ -356,32 +356,32 @@ svg { width: 100%; height: 100%; }
 
 <div class="types-panel">
   <div class="type-card physical">
-    <div class="title">âš’ï¸ Physical Weathering</div>
+    <div class="title">⚒️ Physical Weathering</div>
     <div class="items">
-      â€¢ Temperature changes crack rocks<br>
-      â€¢ Ice expands in cracks<br>
-      â€¢ Plant roots split rocks<br>
-      â€¢ Wind/water wear down surface
+      • Temperature changes crack rocks<br>
+      • Ice expands in cracks<br>
+      • Plant roots split rocks<br>
+      • Wind/water wear down surface
     </div>
   </div>
   <div class="type-card chemical">
-    <div class="title">ðŸ§ª Chemical Weathering</div>
+    <div class="title">🧪 Chemical Weathering</div>
     <div class="items">
-      â€¢ Water dissolves minerals<br>
-      â€¢ Acid rain reacts with rock<br>
-      â€¢ Oxygen causes oxidation<br>
-      â€¢ Creates new substances
+      • Water dissolves minerals<br>
+      • Acid rain reacts with rock<br>
+      • Oxygen causes oxidation<br>
+      • Creates new substances
     </div>
   </div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">ðŸŽ¯ Earth's Slow Sculptors</div>
+  <div class="takeaway-title">🎯 Earth's Slow Sculptors</div>
   <div class="takeaway-text">
     Weathering and erosion are <strong>extremely slow</strong> but powerful!<br><br>
-    â€¢ Grand Canyon: Carved over 5-6 million years<br>
-    â€¢ Smooth river pebbles: Thousands of years of tumbling<br>
-    â€¢ Soil formation: Centuries of rock breakdown<br><br>
+    • Grand Canyon: Carved over 5-6 million years<br>
+    • Smooth river pebbles: Thousands of years of tumbling<br>
+    • Soil formation: Centuries of rock breakdown<br><br>
     These irreversible changes continuously reshape our planet!
   </div>
 </div>
@@ -413,15 +413,15 @@ function updateTime(value) {
   
   // Update time display
   if (value === 0) {
-    timeDisplay.textContent = 'â³ Present Day';
+    timeDisplay.textContent = '⏳ Present Day';
   } else if (value < 25) {
-    timeDisplay.textContent = `â³ ${Math.round(value * 40)} years`;
+    timeDisplay.textContent = `⏳ ${Math.round(value * 40)} years`;
   } else if (value < 50) {
-    timeDisplay.textContent = `â³ ${Math.round((value - 25) * 400)} years`;
+    timeDisplay.textContent = `⏳ ${Math.round((value - 25) * 400)} years`;
   } else if (value < 75) {
-    timeDisplay.textContent = `â³ ${Math.round((value - 50) * 4000)} years`;
+    timeDisplay.textContent = `⏳ ${Math.round((value - 50) * 4000)} years`;
   } else {
-    timeDisplay.textContent = `â³ ${Math.round((value - 75) * 40000)} years`;
+    timeDisplay.textContent = `⏳ ${Math.round((value - 75) * 40000)} years`;
   }
   
   if (currentMode === 'mountain') {
@@ -469,31 +469,31 @@ function updateMountain(value) {
   // Update process text
   if (value < 25) {
     processText.innerHTML = `
-      <strong>ðŸ”ï¸ Mountain Weathering Begins</strong><br><br>
-      â€¢ Temperature changes cause rocks to expand and contract<br>
-      â€¢ Small cracks form in the rock surface<br>
-      â€¢ Water seeps into cracks and freezes, expanding them
+      <strong>🏔️ Mountain Weathering Begins</strong><br><br>
+      • Temperature changes cause rocks to expand and contract<br>
+      • Small cracks form in the rock surface<br>
+      • Water seeps into cracks and freezes, expanding them
     `;
   } else if (value < 50) {
     processText.innerHTML = `
-      <strong>âš’ï¸ Physical Weathering Accelerates</strong><br><br>
-      â€¢ Cracks widen as ice wedging continues<br>
-      â€¢ Rocks begin breaking off the mountain<br>
-      â€¢ Plant roots grow into cracks, splitting rocks further
+      <strong>⚒️ Physical Weathering Accelerates</strong><br><br>
+      • Cracks widen as ice wedging continues<br>
+      • Rocks begin breaking off the mountain<br>
+      • Plant roots grow into cracks, splitting rocks further
     `;
   } else if (value < 75) {
     processText.innerHTML = `
-      <strong>ðŸª¨ Erosion Moves Material Downhill</strong><br><br>
-      â€¢ Gravity pulls loose rocks down slopes<br>
-      â€¢ Rain washes smaller particles to the base<br>
-      â€¢ Sediment accumulates, forming gentler slopes
+      <strong>🪨 Erosion Moves Material Downhill</strong><br><br>
+      • Gravity pulls loose rocks down slopes<br>
+      • Rain washes smaller particles to the base<br>
+      • Sediment accumulates, forming gentler slopes
     `;
   } else {
     processText.innerHTML = `
-      <strong>ðŸŒ„ Mountain is Much Smaller!</strong><br><br>
-      â€¢ Peak has eroded significantly over millions of years<br>
-      â€¢ Sediment has spread far from the original mountain<br>
-      â€¢ Eventually becomes rolling hills, then flat plains!
+      <strong>🌄 Mountain is Much Smaller!</strong><br><br>
+      • Peak has eroded significantly over millions of years<br>
+      • Sediment has spread far from the original mountain<br>
+      • Eventually becomes rolling hills, then flat plains!
     `;
   }
 }
@@ -526,31 +526,31 @@ function updateRiver(value) {
   
   if (value < 25) {
     processText.innerHTML = `
-      <strong>ðŸŒŠ River Erosion Begins</strong><br><br>
-      â€¢ Fast-moving water carries sand and small rocks<br>
-      â€¢ These particles scrape against larger rocks<br>
-      â€¢ Sharp edges slowly wear down
+      <strong>🌊 River Erosion Begins</strong><br><br>
+      • Fast-moving water carries sand and small rocks<br>
+      • These particles scrape against larger rocks<br>
+      • Sharp edges slowly wear down
     `;
   } else if (value < 50) {
     processText.innerHTML = `
-      <strong>ðŸ’§ Rocks Becoming Smoother</strong><br><br>
-      â€¢ Constant tumbling rounds the rocks<br>
-      â€¢ Smaller pieces break off and become pebbles<br>
-      â€¢ This is called "abrasion"
+      <strong>💧 Rocks Becoming Smoother</strong><br><br>
+      • Constant tumbling rounds the rocks<br>
+      • Smaller pieces break off and become pebbles<br>
+      • This is called "abrasion"
     `;
   } else if (value < 75) {
     processText.innerHTML = `
-      <strong>ðŸª¨ Pebbles and Sand Form</strong><br><br>
-      â€¢ Large rocks are now smooth pebbles<br>
-      â€¢ Fine particles create sand deposits<br>
-      â€¢ River slows, depositing sediment
+      <strong>🪨 Pebbles and Sand Form</strong><br><br>
+      • Large rocks are now smooth pebbles<br>
+      • Fine particles create sand deposits<br>
+      • River slows, depositing sediment
     `;
   } else {
     processText.innerHTML = `
-      <strong>ðŸ–ï¸ Smooth Pebbles Complete!</strong><br><br>
-      â€¢ Angular rocks are now smooth, round pebbles<br>
-      â€¢ Sand has accumulated on the riverbed<br>
-      â€¢ This is how beaches and riverbeds form!
+      <strong>🏖️ Smooth Pebbles Complete!</strong><br><br>
+      • Angular rocks are now smooth, round pebbles<br>
+      • Sand has accumulated on the riverbed<br>
+      • This is how beaches and riverbeds form!
     `;
   }
 }
@@ -586,31 +586,31 @@ function updateCliff(value) {
   
   if (value < 25) {
     processText.innerHTML = `
-      <strong>ðŸŒŠ Wave Erosion Begins</strong><br><br>
-      â€¢ Waves constantly hit the cliff base<br>
-      â€¢ Hydraulic action forces water into cracks<br>
-      â€¢ Salt and chemicals weaken the rock
+      <strong>🌊 Wave Erosion Begins</strong><br><br>
+      • Waves constantly hit the cliff base<br>
+      • Hydraulic action forces water into cracks<br>
+      • Salt and chemicals weaken the rock
     `;
   } else if (value < 50) {
     processText.innerHTML = `
-      <strong>ðŸ•³ï¸ Cave Forming</strong><br><br>
-      â€¢ Waves carve out a cave at the base<br>
-      â€¢ Softer rock erodes faster than hard rock<br>
-      â€¢ The cliff above is now unsupported
+      <strong>🕳️ Cave Forming</strong><br><br>
+      • Waves carve out a cave at the base<br>
+      • Softer rock erodes faster than hard rock<br>
+      • The cliff above is now unsupported
     `;
   } else if (value < 75) {
     processText.innerHTML = `
-      <strong>ðŸ’¥ Cliff Collapse</strong><br><br>
-      â€¢ The cave grows until the roof collapses<br>
-      â€¢ Large chunks of cliff fall into the sea<br>
-      â€¢ The cliff line retreats inland
+      <strong>💥 Cliff Collapse</strong><br><br>
+      • The cave grows until the roof collapses<br>
+      • Large chunks of cliff fall into the sea<br>
+      • The cliff line retreats inland
     `;
   } else {
     processText.innerHTML = `
-      <strong>ðŸ—¿ Sea Stack Forms!</strong><br><br>
-      â€¢ Part of the cliff is now isolated from land<br>
-      â€¢ This pillar of rock is called a "sea stack"<br>
-      â€¢ Eventually it will erode completely too!
+      <strong>🗿 Sea Stack Forms!</strong><br><br>
+      • Part of the cliff is now isolated from land<br>
+      • This pillar of rock is called a "sea stack"<br>
+      • Eventually it will erode completely too!
     `;
   }
 }

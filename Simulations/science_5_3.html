@@ -161,12 +161,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>ðŸ”„ Reversible vs Irreversible</h1>
+  <h1>🔄 Reversible vs Irreversible</h1>
   <p>Can we get the original substance back?</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š Key Concept</div>
+  <div class="concept-title">📚 Key Concept</div>
   <div class="concept-text">
     <strong>Reversible changes</strong> can be undone - you can get the original back.<br>
     <strong>Irreversible changes</strong> cannot be undone - the original is lost forever.
@@ -180,7 +180,7 @@ body {
   
   <div id="question-container">
     <div class="change-item" id="current-item">
-      <div class="change-icon" id="item-icon">ðŸ§Š</div>
+      <div class="change-icon" id="item-icon">🧊</div>
       <div class="change-info">
         <div class="change-name" id="item-name">Melting Ice</div>
         <div class="change-desc" id="item-desc">Ice cube turns into water</div>
@@ -189,10 +189,10 @@ body {
     
     <div class="buttons-row">
       <button class="choice-btn" id="btn-reversible" onclick="checkAnswer(true)">
-        âœ… Reversible<br><span style="font-size:9px">Can reverse it</span>
+        ✅ Reversible<br><span style="font-size:9px">Can reverse it</span>
       </button>
       <button class="choice-btn" id="btn-irreversible" onclick="checkAnswer(false)">
-        âŒ Irreversible<br><span style="font-size:9px">Cannot reverse</span>
+        ❌ Irreversible<br><span style="font-size:9px">Cannot reverse</span>
       </button>
     </div>
   </div>
@@ -205,26 +205,26 @@ body {
 
 <div class="score-panel">
   <div class="score-card rev">
-    <div class="label">âœ… Reversible</div>
+    <div class="label">✅ Reversible</div>
     <div class="count" id="rev-count">0</div>
   </div>
   <div class="score-card irrev">
-    <div class="label">âŒ Irreversible</div>
+    <div class="label">❌ Irreversible</div>
     <div class="count" id="irrev-count">0</div>
   </div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">ðŸŽ¯ Quick Guide</div>
+  <div class="takeaway-title">🎯 Quick Guide</div>
   <div class="takeaway-text">
     <strong>Usually Reversible:</strong><br>
-    â€¢ Changes of state (melting, freezing, boiling)<br>
-    â€¢ Stretching, bending, folding<br>
-    â€¢ Dissolving (sometimes)<br><br>
+    • Changes of state (melting, freezing, boiling)<br>
+    • Stretching, bending, folding<br>
+    • Dissolving (sometimes)<br><br>
     <strong>Usually Irreversible:</strong><br>
-    â€¢ Burning, cooking, rusting<br>
-    â€¢ Cutting, breaking, crushing<br>
-    â€¢ Chemical reactions
+    • Burning, cooking, rusting<br>
+    • Cutting, breaking, crushing<br>
+    • Chemical reactions
   </div>
 </div>
 
@@ -232,25 +232,25 @@ body {
 
 <script>
 const changes = [
-  { icon: 'ðŸ§Š', name: 'Melting Ice', desc: 'Ice cube turns into water', reversible: true, 
+  { icon: '🧊', name: 'Melting Ice', desc: 'Ice cube turns into water', reversible: true, 
     explain: 'You can freeze the water again to get ice back! Change of state is usually reversible.' },
-  { icon: 'ðŸ“„', name: 'Folding Paper', desc: 'Paper folded into a shape', reversible: true,
+  { icon: '📄', name: 'Folding Paper', desc: 'Paper folded into a shape', reversible: true,
     explain: 'You can unfold the paper to get the flat sheet back. The paper molecules haven\'t changed.' },
-  { icon: 'ðŸ”¥', name: 'Burning Paper', desc: 'Paper burns to ash', reversible: false,
+  { icon: '🔥', name: 'Burning Paper', desc: 'Paper burns to ash', reversible: false,
     explain: 'You cannot turn ash back into paper! Burning is a chemical change that creates new substances.' },
-  { icon: 'ðŸ¥›', name: 'Making Curd', desc: 'Milk becomes curd', reversible: false,
+  { icon: '🥛', name: 'Making Curd', desc: 'Milk becomes curd', reversible: false,
     explain: 'You cannot turn curd back into milk! The milk proteins have changed chemically.' },
-  { icon: 'ðŸ’§', name: 'Boiling Water', desc: 'Water turns to steam', reversible: true,
-    explain: 'Steam can condense back to water. It\'s still Hâ‚‚O, just in a different state!' },
-  { icon: 'ðŸ¥•', name: 'Cutting Vegetables', desc: 'Vegetables chopped into pieces', reversible: false,
+  { icon: '💧', name: 'Boiling Water', desc: 'Water turns to steam', reversible: true,
+    explain: 'Steam can condense back to water. It\'s still Hâ''O, just in a different state!' },
+  { icon: '🥕', name: 'Cutting Vegetables', desc: 'Vegetables chopped into pieces', reversible: false,
     explain: 'You cannot un-chop vegetables! Even though it\'s a physical change, it\'s irreversible.' },
-  { icon: 'ðŸŽˆ', name: 'Inflating Balloon', desc: 'Balloon fills with air', reversible: true,
+  { icon: '🎈', name: 'Inflating Balloon', desc: 'Balloon fills with air', reversible: true,
     explain: 'You can deflate the balloon to get it back to original. The rubber hasn\'t changed.' },
-  { icon: 'ðŸ³', name: 'Cooking Egg', desc: 'Raw egg becomes cooked', reversible: false,
+  { icon: '🍳', name: 'Cooking Egg', desc: 'Raw egg becomes cooked', reversible: false,
     explain: 'A cooked egg cannot become raw again! The proteins have changed permanently.' },
-  { icon: 'ðŸ§ˆ', name: 'Melting Butter', desc: 'Solid butter melts', reversible: true,
+  { icon: '🧈', name: 'Melting Butter', desc: 'Solid butter melts', reversible: true,
     explain: 'Put it in the fridge and it solidifies again! The butter molecules are the same.' },
-  { icon: 'ðŸ”©', name: 'Rusting Iron', desc: 'Iron nail gets rusty', reversible: false,
+  { icon: '🔩', name: 'Rusting Iron', desc: 'Iron nail gets rusty', reversible: false,
     explain: 'Rust (iron oxide) cannot easily become iron again. A chemical change occurred.' }
 ];
 
@@ -272,9 +272,9 @@ const progressFill = document.getElementById('progress-fill');
 function loadQuestion() {
   if (currentIndex >= changes.length) {
     // Quiz complete
-    itemName.textContent = 'ðŸŽ‰ Quiz Complete!';
+    itemName.textContent = '🎉 Quiz Complete!';
     itemDesc.textContent = `You identified ${revCount + irrevCount} changes correctly!`;
-    itemIcon.textContent = 'ðŸ†';
+    itemIcon.textContent = '🏆';
     btnReversible.style.display = 'none';
     btnIrreversible.style.display = 'none';
     return;
@@ -308,7 +308,7 @@ function checkAnswer(isReversible) {
   
   if (correct) {
     feedbackBox.classList.add('correct');
-    feedbackTitle.textContent = 'âœ… Correct!';
+    feedbackTitle.textContent = '✅ Correct!';
     if (change.reversible) {
       btnReversible.classList.add('reversible');
       revCount++;
@@ -318,7 +318,7 @@ function checkAnswer(isReversible) {
     }
   } else {
     feedbackBox.classList.add('wrong');
-    feedbackTitle.textContent = 'âŒ Not quite!';
+    feedbackTitle.textContent = '❌ Not quite!';
     if (change.reversible) {
       btnReversible.classList.add('reversible');
     } else {

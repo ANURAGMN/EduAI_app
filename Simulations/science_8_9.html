@@ -249,12 +249,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>ðŸš— Non-Uniform Linear Motion</h1>
+  <h1>🚗 Non-Uniform Linear Motion</h1>
   <p>Speed changes during motion</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š What is Non-Uniform Motion?</div>
+  <div class="concept-title">📚 What is Non-Uniform Motion?</div>
   <div class="concept-text">
     In <strong>non-uniform motion</strong>, an object's speed <strong>changes</strong> over time. It covers <strong>unequal distances in equal time intervals</strong>. Most real-world motion is non-uniform!
   </div>
@@ -263,15 +263,15 @@ body {
 <div class="sim-card">
   <div class="mode-selector">
     <button class="mode-btn active" onclick="setMode('accelerate', this)">
-      <span class="icon">ðŸš€</span>
+      <span class="icon">🚀</span>
       Accelerating
     </button>
     <button class="mode-btn" onclick="setMode('decelerate', this)">
-      <span class="icon">ðŸ›‘</span>
+      <span class="icon">🛑</span>
       Braking
     </button>
     <button class="mode-btn" onclick="setMode('traffic', this)">
-      <span class="icon">ðŸš¦</span>
+      <span class="icon">🚦</span>
       City Traffic
     </button>
   </div>
@@ -284,7 +284,7 @@ body {
     <div class="road">
       <div class="road-line"></div>
     </div>
-    <div class="car" id="car">ðŸš—</div>
+    <div class="car" id="car">🚗</div>
   </div>
   
   <div class="data-display">
@@ -299,12 +299,12 @@ body {
   </div>
   
   <div class="controls">
-    <button class="control-btn start-btn" id="start-btn" onclick="startMotion()">â–¶ï¸ Start</button>
-    <button class="control-btn reset-btn" onclick="resetMotion()">ðŸ”„ Reset</button>
+    <button class="control-btn start-btn" id="start-btn" onclick="startMotion()">▶️ Start</button>
+    <button class="control-btn reset-btn" onclick="resetMotion()">🔄 Reset</button>
   </div>
   
   <div class="data-table">
-    <div class="table-title">ðŸ“Š Distances in Each Second (Non-Uniform!)</div>
+    <div class="table-title">📊 Distances in Each Second (Non-Uniform!)</div>
     <div class="table-row table-header">
       <div class="table-cell">Interval</div>
       <div class="table-cell">0-1s</div>
@@ -324,7 +324,7 @@ body {
   </div>
   
   <div class="graph-section">
-    <div class="graph-title">ðŸ“ˆ Distance-Time Graph (Curved!)</div>
+    <div class="graph-title">📈 Distance-Time Graph (Curved!)</div>
     <div class="graph-container">
       <canvas id="graph-canvas" class="graph-canvas"></canvas>
     </div>
@@ -332,7 +332,7 @@ body {
 </div>
 
 <div class="comparison-box">
-  <div class="comp-title">ðŸ”„ Uniform vs Non-Uniform</div>
+  <div class="comp-title">🔄 Uniform vs Non-Uniform</div>
   <div class="comparison-grid">
     <div class="comp-item">
       <div class="comp-type">Uniform Motion</div>
@@ -393,7 +393,7 @@ function getSpeedAtTime(t) {
 function startMotion() {
   if (isMoving) return;
   isMoving = true;
-  document.getElementById('start-btn').textContent = 'â¸ï¸ Running...';
+  document.getElementById('start-btn').textContent = '⏸️ Running...';
   animate();
 }
 
@@ -439,7 +439,7 @@ function animate() {
     animationId = requestAnimationFrame(animate);
   } else {
     isMoving = false;
-    document.getElementById('start-btn').textContent = 'âœ“ Complete';
+    document.getElementById('start-btn').textContent = '✓ Complete';
   }
 }
 
@@ -455,7 +455,7 @@ function resetMotion() {
   lastIntervalTime = 0;
   
   car.style.left = '20px';
-  document.getElementById('start-btn').textContent = 'â–¶ï¸ Start';
+  document.getElementById('start-btn').textContent = '▶️ Start';
   document.getElementById('speed-display').textContent = '0';
   document.getElementById('time-display').textContent = '0.0 s';
   document.getElementById('distance-display').textContent = '0 m';

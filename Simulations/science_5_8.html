@@ -5,7 +5,7 @@
 <meta name="color-scheme" content="light">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#d32f2f">
-<title>Combustion Examples â€“ Burning Materials</title>
+<title>Combustion Examples – Burning Materials</title>
 
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -169,12 +169,12 @@ svg { width: 100%; height: 100%; }
 <div id="app">
 
 <div class="header">
-  <h1>ðŸ”¥ Combustion Examples</h1>
+  <h1>🔥 Combustion Examples</h1>
   <p>Different materials burn differently!</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š Key Concept</div>
+  <div class="concept-title">📚 Key Concept</div>
   <div class="concept-text">
     <strong>Combustion</strong> is a chemical reaction where a substance reacts with oxygen, producing heat, light, and new substances. Different fuels burn with different flames and products!
   </div>
@@ -255,7 +255,7 @@ svg { width: 100%; height: 100%; }
         <g id="flame-white" style="display:none">
           <circle cx="0" cy="0" r="40" fill="#fff" opacity="0.9"/>
           <circle cx="0" cy="0" r="25" fill="#fff"/>
-          <text x="0" y="60" font-size="10" fill="#fff" text-anchor="middle">âš ï¸ Extremely bright!</text>
+          <text x="0" y="60" font-size="10" fill="#fff" text-anchor="middle">⚠️ Extremely bright!</text>
         </g>
         
         <!-- Blue flame (sulfur) -->
@@ -281,27 +281,27 @@ svg { width: 100%; height: 100%; }
   
   <div class="materials-grid">
     <div class="material-btn" onclick="selectMaterial('magnesium', this)">
-      <div class="icon">âœ¨</div>
+      <div class="icon">✨</div>
       <div class="name">Magnesium</div>
     </div>
     <div class="material-btn" onclick="selectMaterial('paper', this)">
-      <div class="icon">ðŸ“„</div>
+      <div class="icon">📄</div>
       <div class="name">Paper</div>
     </div>
     <div class="material-btn" onclick="selectMaterial('wood', this)">
-      <div class="icon">ðŸªµ</div>
+      <div class="icon">🪵</div>
       <div class="name">Wood</div>
     </div>
     <div class="material-btn" onclick="selectMaterial('charcoal', this)">
-      <div class="icon">â¬›</div>
+      <div class="icon">⬛</div>
       <div class="name">Charcoal</div>
     </div>
     <div class="material-btn" onclick="selectMaterial('sulfur', this)">
-      <div class="icon">ðŸŸ¡</div>
+      <div class="icon">🟡</div>
       <div class="name">Sulfur</div>
     </div>
     <div class="material-btn" onclick="selectMaterial('match', this)">
-      <div class="icon">ðŸ”¥</div>
+      <div class="icon">🔥</div>
       <div class="name">Matchstick</div>
     </div>
   </div>
@@ -312,30 +312,30 @@ svg { width: 100%; height: 100%; }
 </div>
 
 <div class="equation-box" id="equation-box">
-  <div class="equation-title">âš—ï¸ Combustion Reaction</div>
-  <div class="equation" id="equation">Fuel + Oâ‚‚ â†’ Products + Heat + Light</div>
+  <div class="equation-title">⚗️ Combustion Reaction</div>
+  <div class="equation" id="equation">Fuel + O₂ → Products + Heat + Light</div>
   <div class="equation-products" id="equation-products">Select a material to see its specific reaction</div>
 </div>
 
 <div class="learning-panel">
-  <div class="learning-title">ðŸ”¬ Combustion Properties</div>
+  <div class="learning-title">🔬 Combustion Properties</div>
   <div class="learning-text" id="learning-text">
     Different materials have different:<br>
-    â€¢ <strong>Ignition temperatures</strong> (ease of catching fire)<br>
-    â€¢ <strong>Flame colors</strong> (depends on elements)<br>
-    â€¢ <strong>Products</strong> (what's formed after burning)<br><br>
+    • <strong>Ignition temperatures</strong> (ease of catching fire)<br>
+    • <strong>Flame colors</strong> (depends on elements)<br>
+    • <strong>Products</strong> (what's formed after burning)<br><br>
     Select a material and burn it to learn more!
   </div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">ðŸŽ¯ Key Points</div>
+  <div class="takeaway-title">🎯 Key Points</div>
   <div class="takeaway-text">
     <strong>All combustion reactions:</strong><br>
-    â€¢ Are chemical changes (irreversible)<br>
-    â€¢ Need oxygen to occur<br>
-    â€¢ Release heat and light<br>
-    â€¢ Form new substances (usually COâ‚‚, Hâ‚‚O, or oxides)
+    • Are chemical changes (irreversible)<br>
+    • Need oxygen to occur<br>
+    • Release heat and light<br>
+    • Form new substances (usually CO₂, H₂O, or oxides)
   </div>
 </div>
 
@@ -347,72 +347,72 @@ const materials = {
     name: 'Magnesium Ribbon',
     element: 'mat-magnesium',
     flame: 'flame-white',
-    equation: '2Mg + Oâ‚‚ â†’ 2MgO',
+    equation: '2Mg + O₂ → 2MgO',
     products: 'Produces: Magnesium Oxide (white ash) + Brilliant white light',
-    learning: `<strong style="color:#9c27b0">âœ¨ Magnesium Burns with Brilliant White Light!</strong><br><br>
-      â€¢ <strong>Flame:</strong> Extremely bright white (don't look directly!)<br>
-      â€¢ <strong>Product:</strong> White powdery ash (MgO - basic oxide)<br>
-      â€¢ <strong>Used in:</strong> Fireworks, flares, photography flash<br><br>
+    learning: `<strong style="color:#9c27b0">✨ Magnesium Burns with Brilliant White Light!</strong><br><br>
+      • <strong>Flame:</strong> Extremely bright white (don't look directly!)<br>
+      • <strong>Product:</strong> White powdery ash (MgO - basic oxide)<br>
+      • <strong>Used in:</strong> Fireworks, flares, photography flash<br><br>
       The intense white light is why magnesium was used in old camera flashes!`
   },
   paper: {
     name: 'Paper',
     element: 'mat-paper',
     flame: 'flame-yellow',
-    equation: 'Paper (C,H,O) + Oâ‚‚ â†’ COâ‚‚ + Hâ‚‚O',
+    equation: 'Paper (C,H,O) + O₂ → CO₂ + H₂O',
     products: 'Produces: Carbon dioxide + Water vapor + Ash',
-    learning: `<strong style="color:#ff9800">ðŸ“„ Paper Burns with Yellow Flame!</strong><br><br>
-      â€¢ <strong>Flame:</strong> Yellow/orange (typical organic material)<br>
-      â€¢ <strong>Products:</strong> COâ‚‚, Hâ‚‚O, and gray ash<br>
-      â€¢ <strong>Ignition temp:</strong> ~233Â°C (Fahrenheit 451!)<br><br>
+    learning: `<strong style="color:#ff9800">📄 Paper Burns with Yellow Flame!</strong><br><br>
+      • <strong>Flame:</strong> Yellow/orange (typical organic material)<br>
+      • <strong>Products:</strong> CO₂, H₂O, and gray ash<br>
+      • <strong>Ignition temp:</strong> ~233°C (Fahrenheit 451!)<br><br>
       Paper is made of cellulose (carbon, hydrogen, oxygen) - it burns easily!`
   },
   wood: {
     name: 'Wood',
     element: 'mat-wood',
     flame: 'flame-yellow',
-    equation: 'Wood (C,H,O) + Oâ‚‚ â†’ COâ‚‚ + Hâ‚‚O + Ash',
+    equation: 'Wood (C,H,O) + O₂ → CO₂ + H₂O + Ash',
     products: 'Produces: Carbon dioxide + Water vapor + Charcoal/Ash',
-    learning: `<strong style="color:#8d6e63">ðŸªµ Wood Burns with Orange-Yellow Flame!</strong><br><br>
-      â€¢ <strong>Flame:</strong> Orange-yellow, crackling<br>
-      â€¢ <strong>Products:</strong> COâ‚‚, Hâ‚‚O, smoke, ash<br>
-      â€¢ <strong>Burns slower than paper</strong> (denser material)<br><br>
+    learning: `<strong style="color:#8d6e63">🪵 Wood Burns with Orange-Yellow Flame!</strong><br><br>
+      • <strong>Flame:</strong> Orange-yellow, crackling<br>
+      • <strong>Products:</strong> CO₂, H₂O, smoke, ash<br>
+      • <strong>Burns slower than paper</strong> (denser material)<br><br>
       Wood has been humanity's primary fuel for thousands of years!`
   },
   charcoal: {
     name: 'Charcoal',
     element: 'mat-charcoal',
     flame: 'glow-red',
-    equation: 'C + Oâ‚‚ â†’ COâ‚‚',
+    equation: 'C + O₂ → CO₂',
     products: 'Produces: Carbon dioxide + Heat (glows red, no visible flame)',
-    learning: `<strong style="color:#ff5722">â¬› Charcoal Glows Red-Hot!</strong><br><br>
-      â€¢ <strong>No visible flame</strong> - just glowing embers<br>
-      â€¢ <strong>Product:</strong> Mainly COâ‚‚<br>
-      â€¢ <strong>Burns very hot</strong> - used for cooking/BBQ<br><br>
+    learning: `<strong style="color:#ff5722">⬛ Charcoal Glows Red-Hot!</strong><br><br>
+      • <strong>No visible flame</strong> - just glowing embers<br>
+      • <strong>Product:</strong> Mainly CO₂<br>
+      • <strong>Burns very hot</strong> - used for cooking/BBQ<br><br>
       Charcoal is almost pure carbon - it burns cleaner than wood!`
   },
   sulfur: {
     name: 'Sulfur',
     element: 'mat-sulfur',
     flame: 'flame-blue',
-    equation: 'S + Oâ‚‚ â†’ SOâ‚‚',
+    equation: 'S + O₂ → SO₂',
     products: 'Produces: Sulfur dioxide (pungent smell) - TOXIC!',
-    learning: `<strong style="color:#2196f3">ðŸŸ¡ Sulfur Burns with Blue Flame!</strong><br><br>
-      â€¢ <strong>Flame:</strong> Characteristic blue color<br>
-      â€¢ <strong>Product:</strong> SOâ‚‚ (sulfur dioxide) - acidic, toxic gas<br>
-      â€¢ <strong>Smell:</strong> Pungent, choking (rotten eggs)<br><br>
-      âš ï¸ Only burn sulfur in well-ventilated areas or labs!`
+    learning: `<strong style="color:#2196f3">🟡 Sulfur Burns with Blue Flame!</strong><br><br>
+      • <strong>Flame:</strong> Characteristic blue color<br>
+      • <strong>Product:</strong> SO₂ (sulfur dioxide) - acidic, toxic gas<br>
+      • <strong>Smell:</strong> Pungent, choking (rotten eggs)<br><br>
+      ⚠️ Only burn sulfur in well-ventilated areas or labs!`
   },
   match: {
     name: 'Matchstick',
     element: 'mat-match',
     flame: 'flame-yellow',
-    equation: 'Match head + Friction â†’ Fire â†’ Wood burns',
-    products: 'Match head ignites, then wood burns producing COâ‚‚ + Hâ‚‚O',
-    learning: `<strong style="color:#d32f2f">ðŸ”¥ Matchstick - Two-Stage Burning!</strong><br><br>
-      â€¢ <strong>Stage 1:</strong> Red phosphorus ignites from friction<br>
-      â€¢ <strong>Stage 2:</strong> Heat ignites the wooden stick<br>
-      â€¢ <strong>Products:</strong> Various oxides, COâ‚‚, Hâ‚‚O<br><br>
+    equation: 'Match head + Friction → Fire → Wood burns',
+    products: 'Match head ignites, then wood burns producing COâ'' + Hâ''O',
+    learning: `<strong style="color:#d32f2f">🔥 Matchstick - Two-Stage Burning!</strong><br><br>
+      • <strong>Stage 1:</strong> Red phosphorus ignites from friction<br>
+      • <strong>Stage 2:</strong> Heat ignites the wooden stick<br>
+      • <strong>Products:</strong> Various oxides, CO₂, H₂O<br><br>
       The match head has chemicals that ignite at low temperature when rubbed!`
   }
 };
@@ -456,7 +456,7 @@ function selectMaterial(type, btn) {
   
   materialLabel.textContent = mat.name;
   burnBtn.disabled = false;
-  burnBtn.textContent = `ðŸ”¥ Burn ${mat.name}`;
+  burnBtn.textContent = `🔥 Burn ${mat.name}`;
   
   equation.textContent = mat.equation;
   equationProducts.textContent = mat.products;
@@ -468,7 +468,7 @@ function burnMaterial() {
   burnBtn.disabled = true;
   const mat = materials[selectedMaterial];
   
-  materialLabel.textContent = `ðŸ”¥ Burning ${mat.name}...`;
+  materialLabel.textContent = `🔥 Burning ${mat.name}...`;
   
   // Show burning effect
   burnEffect.style.display = 'block';
@@ -488,7 +488,7 @@ function burnMaterial() {
       ash.style.display = 'block';
     }
     
-    materialLabel.textContent = `âœ… ${mat.name} burned completely!`;
+    materialLabel.textContent = `✅ ${mat.name} burned completely!`;
     learningText.innerHTML = mat.learning;
     
     selectedBtn.classList.add('done');

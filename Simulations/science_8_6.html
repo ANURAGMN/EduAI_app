@@ -209,38 +209,38 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>ðŸƒ Speed Calculator</h1>
+  <h1>🏃 Speed Calculator</h1>
   <p>Calculate speed, distance, or time!</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š Speed Formula</div>
+  <div class="concept-title">📚 Speed Formula</div>
   <div class="concept-text">
     <strong>Speed</strong> tells us how fast an object is moving. It's the distance covered per unit time.
   </div>
   <div class="formula-display">
-    <div class="formula-big">Speed = Distance Ã· Time</div>
+    <div class="formula-big">Speed = Distance ÷ Time</div>
   </div>
 </div>
 
 <div class="sim-card">
   <div class="mode-tabs">
     <button class="mode-tab active" onclick="setMode('speed', this)">
-      <span class="emoji">ðŸƒ</span>
+      <span class="emoji">🏃</span>
       Find Speed
     </button>
     <button class="mode-tab" onclick="setMode('distance', this)">
-      <span class="emoji">ðŸ“</span>
+      <span class="emoji">📏</span>
       Find Distance
     </button>
     <button class="mode-tab" onclick="setMode('time', this)">
-      <span class="emoji">â±ï¸</span>
+      <span class="emoji">⏱️</span>
       Find Time
     </button>
   </div>
   
   <div class="input-group" id="distance-group">
-    <div class="input-label">ðŸ“ Distance</div>
+    <div class="input-label">📏 Distance</div>
     <div class="input-row">
       <input type="number" class="input-field" id="distance-input" value="100" min="0">
       <div class="unit-label">km</div>
@@ -248,7 +248,7 @@ body {
   </div>
   
   <div class="input-group" id="time-group">
-    <div class="input-label">â±ï¸ Time</div>
+    <div class="input-label">⏱️ Time</div>
     <div class="input-row">
       <input type="number" class="input-field" id="time-input" value="2" min="0" step="0.1">
       <div class="unit-label">h</div>
@@ -256,14 +256,14 @@ body {
   </div>
   
   <div class="input-group" id="speed-group" style="display: none;">
-    <div class="input-label">ðŸƒ Speed</div>
+    <div class="input-label">🏃 Speed</div>
     <div class="input-row">
       <input type="number" class="input-field" id="speed-input" value="50" min="0">
       <div class="unit-label">km/h</div>
     </div>
   </div>
   
-  <button class="calculate-btn" onclick="calculate()">ðŸ”¢ Calculate</button>
+  <button class="calculate-btn" onclick="calculate()">🔢 Calculate</button>
   
   <div class="result-panel" id="result-panel">
     <div class="result-label" id="result-label">Speed</div>
@@ -272,46 +272,46 @@ body {
   </div>
   
   <div class="working-panel" id="working-panel">
-    <div class="working-title">ðŸ“ Working:</div>
+    <div class="working-title">📝 Working:</div>
     <div class="working-text" id="working-text">
-      Speed = Distance Ã· Time<br>
-      Speed = 100 km Ã· 2 h<br>
+      Speed = Distance ÷ Time<br>
+      Speed = 100 km ÷ 2 h<br>
       Speed = 50 km/h
     </div>
   </div>
 </div>
 
 <div class="examples-box">
-  <div class="examples-title">ðŸŒŸ Real-World Speeds</div>
+  <div class="examples-title">🌟 Real-World Speeds</div>
   <div class="example-item">
-    <span>ðŸš¶ Walking</span>
+    <span>🚶 Walking</span>
     <span>~5 km/h</span>
   </div>
   <div class="example-item">
-    <span>ðŸš´ Cycling</span>
+    <span>🚴 Cycling</span>
     <span>~15-25 km/h</span>
   </div>
   <div class="example-item">
-    <span>ðŸš— Car (city)</span>
+    <span>🚗 Car (city)</span>
     <span>~40-60 km/h</span>
   </div>
   <div class="example-item">
-    <span>ðŸš† Train</span>
+    <span>🚆 Train</span>
     <span>~80-160 km/h</span>
   </div>
   <div class="example-item">
-    <span>âœˆï¸ Airplane</span>
+    <span>✈️ Airplane</span>
     <span>~800-900 km/h</span>
   </div>
 </div>
 
 <div class="conversion-note">
-  <div class="conversion-title">ðŸ”„ Unit Conversion</div>
+  <div class="conversion-title">🔄 Unit Conversion</div>
   <div class="conversion-text">
     <strong>km/h to m/s:</strong> Divide by 3.6<br>
-    Example: 36 km/h = 36 Ã· 3.6 = 10 m/s<br><br>
+    Example: 36 km/h = 36 ÷ 3.6 = 10 m/s<br><br>
     <strong>m/s to km/h:</strong> Multiply by 3.6<br>
-    Example: 10 m/s = 10 Ã— 3.6 = 36 km/h
+    Example: 10 m/s = 10 × 3.6 = 36 km/h
   </div>
 </div>
 
@@ -363,7 +363,7 @@ function calculate() {
         working = 'Cannot divide by zero!';
       } else {
         result = distance / time;
-        working = `Speed = Distance Ã· Time\nSpeed = ${distance} km Ã· ${time} h\nSpeed = ${result.toFixed(2)} km/h`;
+        working = `Speed = Distance ÷ Time\nSpeed = ${distance} km ÷ ${time} h\nSpeed = ${result.toFixed(2)} km/h`;
       }
       label = 'Speed';
       unit = 'km/h';
@@ -373,7 +373,7 @@ function calculate() {
       result = speed * time;
       label = 'Distance';
       unit = 'km';
-      working = `Distance = Speed Ã— Time\nDistance = ${speed} km/h Ã— ${time} h\nDistance = ${result.toFixed(2)} km`;
+      working = `Distance = Speed × Time\nDistance = ${speed} km/h × ${time} h\nDistance = ${result.toFixed(2)} km`;
       break;
       
     case 'time':
@@ -382,7 +382,7 @@ function calculate() {
         working = 'Cannot divide by zero!';
       } else {
         result = distance / speed;
-        working = `Time = Distance Ã· Speed\nTime = ${distance} km Ã· ${speed} km/h\nTime = ${result.toFixed(2)} h`;
+        working = `Time = Distance ÷ Speed\nTime = ${distance} km ÷ ${speed} km/h\nTime = ${result.toFixed(2)} h`;
       }
       label = 'Time';
       unit = 'hours';

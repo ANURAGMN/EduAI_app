@@ -429,12 +429,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>â° History of Timekeeping</h1>
+  <h1>⏰ History of Timekeeping</h1>
   <p>From ancient sundials to atomic clocks</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š Key Concept</div>
+  <div class="concept-title">📚 Key Concept</div>
   <div class="concept-text">
     Humans have always needed to measure time. Early methods used <strong>repeating natural events</strong> (sun, moon, seasons). Later inventions used <strong>repeating processes</strong> (pendulums, vibrations).
   </div>
@@ -445,7 +445,7 @@ body {
     <div class="timeline-line"></div>
     
     <div class="clock-item active" onclick="selectClock('sundial', this)">
-      <div class="clock-dot">â˜€ï¸</div>
+      <div class="clock-dot">☀️</div>
       <div class="clock-content">
         <div class="clock-name">Sundial</div>
         <div class="clock-era">~3500 BCE - Ancient Egypt</div>
@@ -454,7 +454,7 @@ body {
     </div>
     
     <div class="clock-item" onclick="selectClock('water', this)">
-      <div class="clock-dot">ðŸ’§</div>
+      <div class="clock-dot">💧</div>
       <div class="clock-content">
         <div class="clock-name">Water Clock (Clepsydra)</div>
         <div class="clock-era">~1500 BCE - Ancient India (Ghatika-yantra)</div>
@@ -463,7 +463,7 @@ body {
     </div>
     
     <div class="clock-item" onclick="selectClock('hourglass', this)">
-      <div class="clock-dot">â³</div>
+      <div class="clock-dot">⏳</div>
       <div class="clock-content">
         <div class="clock-name">Hourglass</div>
         <div class="clock-era">~8th Century CE</div>
@@ -472,7 +472,7 @@ body {
     </div>
     
     <div class="clock-item" onclick="selectClock('candle', this)">
-      <div class="clock-dot">ðŸ•¯ï¸</div>
+      <div class="clock-dot">🕯️</div>
       <div class="clock-content">
         <div class="clock-name">Candle Clock</div>
         <div class="clock-era">~9th Century CE</div>
@@ -481,7 +481,7 @@ body {
     </div>
     
     <div class="clock-item" onclick="selectClock('pendulum', this)">
-      <div class="clock-dot">ðŸ•°ï¸</div>
+      <div class="clock-dot">🕰️</div>
       <div class="clock-content">
         <div class="clock-name">Pendulum Clock</div>
         <div class="clock-era">1656 CE - Christiaan Huygens</div>
@@ -490,7 +490,7 @@ body {
     </div>
     
     <div class="clock-item" onclick="selectClock('quartz', this)">
-      <div class="clock-dot">âŒš</div>
+      <div class="clock-dot">⌚</div>
       <div class="clock-content">
         <div class="clock-name">Quartz Clock</div>
         <div class="clock-era">1927 CE - Modern Era</div>
@@ -501,23 +501,23 @@ body {
 </div>
 
 <div class="demo-area" id="demo-area">
-  <div class="demo-title" id="demo-title">â˜€ï¸ Sundial Demo</div>
+  <div class="demo-title" id="demo-title">☀️ Sundial Demo</div>
   <div id="demo-content">
     <div class="sundial" id="sundial">
       <div class="sundial-gnomon" id="sundial-gnomon"></div>
     </div>
   </div>
   <div class="demo-label" id="demo-label">Shadow moves as the Sun crosses the sky</div>
-  <button class="play-btn" id="play-btn" onclick="playDemo()">â–¶ï¸ Animate</button>
+  <button class="play-btn" id="play-btn" onclick="playDemo()">▶️ Animate</button>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">ðŸŽ¯ Evolution of Accuracy</div>
+  <div class="takeaway-title">🎯 Evolution of Accuracy</div>
   <div class="takeaway-text">
-    â€¢ <strong>Sundial:</strong> Accuracy ~ 15-30 minutes<br>
-    â€¢ <strong>Pendulum:</strong> Accuracy ~ 15 seconds/day<br>
-    â€¢ <strong>Quartz:</strong> Accuracy ~ 1 second/day<br>
-    â€¢ <strong>Atomic:</strong> Accuracy ~ 1 second in millions of years!
+    • <strong>Sundial:</strong> Accuracy ~ 15-30 minutes<br>
+    • <strong>Pendulum:</strong> Accuracy ~ 15 seconds/day<br>
+    • <strong>Quartz:</strong> Accuracy ~ 1 second/day<br>
+    • <strong>Atomic:</strong> Accuracy ~ 1 second in millions of years!
   </div>
 </div>
 
@@ -529,32 +529,32 @@ let animationInterval;
 
 const demos = {
   sundial: {
-    title: 'â˜€ï¸ Sundial Demo',
+    title: '☀️ Sundial Demo',
     label: 'Shadow moves as the Sun crosses the sky',
     html: `<div class="sundial" id="sundial"><div class="sundial-gnomon" id="sundial-gnomon"></div></div>`
   },
   water: {
-    title: 'ðŸ’§ Water Clock Demo',
+    title: '💧 Water Clock Demo',
     label: 'Water drains at constant rate - marks show time',
     html: `<div class="water-clock"><div class="water-vessel"><div class="water-level" id="water-level" style="height: 80%;"></div></div><div class="water-marks"><span>1h</span><span>2h</span><span>3h</span><span>4h</span></div></div>`
   },
   hourglass: {
-    title: 'â³ Hourglass Demo',
+    title: '⏳ Hourglass Demo',
     label: 'Sand flows through narrow neck',
     html: `<div class="hourglass"><div class="hourglass-top"><div class="sand-top" id="sand-top" style="height: 80%;"></div></div><div class="sand-flow" id="sand-flow"></div><div class="hourglass-bottom"><div class="sand-bottom" id="sand-bottom" style="height: 10%;"></div></div></div>`
   },
   candle: {
-    title: 'ðŸ•¯ï¸ Candle Clock Demo',
+    title: '🕯️ Candle Clock Demo',
     label: 'Candle burns down past marks showing hours',
-    html: `<div class="candle-clock"><div class="candle"><div class="candle-flame">ðŸ”¥</div><div class="candle-marks"><div class="candle-mark"></div><div class="candle-mark"></div><div class="candle-mark"></div><div class="candle-mark"></div></div><div class="candle-burned" id="candle-burned" style="height: 10%;"></div></div></div>`
+    html: `<div class="candle-clock"><div class="candle"><div class="candle-flame">🔥</div><div class="candle-marks"><div class="candle-mark"></div><div class="candle-mark"></div><div class="candle-mark"></div><div class="candle-mark"></div></div><div class="candle-burned" id="candle-burned" style="height: 10%;"></div></div></div>`
   },
   pendulum: {
-    title: 'ðŸ•°ï¸ Pendulum Clock Demo',
+    title: '🕰️ Pendulum Clock Demo',
     label: 'Pendulum swings at constant rate',
     html: `<div class="modern-clock" id="pendulum-clock"><div class="clock-face"></div><div class="clock-hand hour-hand"></div><div class="clock-hand minute-hand"></div><div class="clock-hand second-hand" id="second-hand"></div><div class="clock-center"></div></div>`
   },
   quartz: {
-    title: 'âŒš Quartz Clock Demo',
+    title: '⌚ Quartz Clock Demo',
     label: 'Crystal vibrates 32,768 times per second!',
     html: `<div class="modern-clock"><div class="clock-face"></div><div class="clock-hand hour-hand"></div><div class="clock-hand minute-hand"></div><div class="clock-hand second-hand" id="second-hand"></div><div class="clock-center"></div></div>`
   }
@@ -571,15 +571,15 @@ function selectClock(type, element) {
   document.getElementById('demo-title').textContent = demo.title;
   document.getElementById('demo-content').innerHTML = demo.html;
   document.getElementById('demo-label').textContent = demo.label;
-  document.getElementById('play-btn').textContent = 'â–¶ï¸ Animate';
+  document.getElementById('play-btn').textContent = '▶️ Animate';
 }
 
 function playDemo() {
   clearInterval(animationInterval);
   const btn = document.getElementById('play-btn');
   
-  if (btn.textContent.includes('â–¶ï¸')) {
-    btn.textContent = 'â¸ï¸ Pause';
+  if (btn.textContent.includes('▶️')) {
+    btn.textContent = '⏸️ Pause';
     
     switch(currentClock) {
       case 'sundial':
@@ -632,7 +632,7 @@ function playDemo() {
         break;
     }
   } else {
-    btn.textContent = 'â–¶ï¸ Animate';
+    btn.textContent = '▶️ Animate';
     if (currentClock === 'hourglass') {
       document.getElementById('sand-flow')?.classList.remove('flowing');
     }

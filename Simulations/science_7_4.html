@@ -376,12 +376,12 @@ body {
 <div id="app">
 
 <div class="header">
-  <h1>ðŸŒŠ Convection Currents</h1>
+  <h1>🌊 Convection Currents</h1>
   <p>Interactive - control the heat and watch particles move!</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š Key Concept</div>
+  <div class="concept-title">📚 Key Concept</div>
   <div class="concept-text">
     <strong>Convection</strong> transfers heat by fluid movement. Hot fluid rises (less dense), cold fluid sinks (more dense). Tap particles to track them!
   </div>
@@ -390,35 +390,35 @@ body {
 <div class="sim-card">
   <div class="mode-tabs">
     <button class="mode-tab active" onclick="selectMode('water', this)">
-      <span class="emoji">ðŸ’§</span>
+      <span class="emoji">💧</span>
       Water
     </button>
     <button class="mode-tab" onclick="selectMode('air', this)">
-      <span class="emoji">ðŸ’¨</span>
+      <span class="emoji">💨</span>
       Air
     </button>
   </div>
   
   <div class="controls">
     <button class="control-btn" id="heat-btn" onclick="toggleHeat()">
-      <span id="heat-icon">ðŸ”¥</span>
+      <span id="heat-icon">🔥</span>
       <span id="heat-text">Turn On Heat</span>
     </button>
     <button class="control-btn" onclick="toggleArrows()">
-      <span>ðŸ”„</span>
+      <span>🔄</span>
       Show Current
     </button>
   </div>
   
   <div class="temp-control" id="temp-control">
-    <label>ðŸŒ¡ï¸ Temperature Control:</label>
+    <label>🌡️ Temperature Control:</label>
     <input type="range" id="temp-slider" min="0" max="100" value="0" oninput="adjustTemp(this.value)">
-    <div class="temp-value" id="temp-value">Cold (0Â°C)</div>
+    <div class="temp-value" id="temp-value">Cold (0°C)</div>
   </div>
   
   <div class="convection-visual" id="convection-visual">
     <div class="info-panel" id="info-panel">
-      ðŸ‘† Turn on heat and watch the convection current form!
+      👆 Turn on heat and watch the convection current form!
     </div>
     
     <!-- Water mode -->
@@ -433,15 +433,15 @@ body {
         
         <!-- Current arrows -->
         <div class="current-arrows">
-          <div class="current-arrow arrow-up" style="bottom: 60px; left: 20px;">â¬†ï¸</div>
-          <div class="current-arrow arrow-up" style="bottom: 90px; left: 40px;">â¬†ï¸</div>
-          <div class="current-arrow arrow-down" style="top: 40px; right: 20px;">â¬‡ï¸</div>
-          <div class="current-arrow arrow-down" style="top: 70px; right: 40px;">â¬‡ï¸</div>
+          <div class="current-arrow arrow-up" style="bottom: 60px; left: 20px;">⬆️</div>
+          <div class="current-arrow arrow-up" style="bottom: 90px; left: 40px;">⬆️</div>
+          <div class="current-arrow arrow-down" style="top: 40px; right: 20px;">⬇️</div>
+          <div class="current-arrow arrow-down" style="top: 70px; right: 40px;">⬇️</div>
         </div>
       </div>
       
       <div class="flame-container">
-        <div class="flame off" id="water-flame">ðŸ”¥</div>
+        <div class="flame off" id="water-flame">🔥</div>
         <div class="flame-label">Heat Source</div>
       </div>
     </div>
@@ -449,30 +449,30 @@ body {
     <!-- Air mode -->
     <div id="air-mode" class="hidden">
       <div class="room-visual" style="display: block;">
-        <div class="heater off" id="room-heater">ðŸ”¥</div>
-        <div class="air-particle" id="ap1" style="bottom: 50px; left: 60px;">ðŸ’¨</div>
-        <div class="air-particle" id="ap2" style="bottom: 60px; left: 40px;">ðŸ’¨</div>
-        <div class="air-particle" id="ap3" style="top: 30px; right: 40px;">ðŸ’¨</div>
-        <div class="air-particle" id="ap4" style="top: 50px; right: 60px;">ðŸ’¨</div>
+        <div class="heater off" id="room-heater">🔥</div>
+        <div class="air-particle" id="ap1" style="bottom: 50px; left: 60px;">💨</div>
+        <div class="air-particle" id="ap2" style="bottom: 60px; left: 40px;">💨</div>
+        <div class="air-particle" id="ap3" style="top: 30px; right: 40px;">💨</div>
+        <div class="air-particle" id="ap4" style="top: 50px; right: 60px;">💨</div>
       </div>
     </div>
   </div>
 </div>
 
 <div class="explanation" id="explanation">
-  <div class="explanation-title" id="exp-title">ðŸ”¬ How It Works</div>
+  <div class="explanation-title" id="exp-title">🔬 How It Works</div>
   <div class="explanation-text" id="exp-text">
     Turn on the heat to see convection in action! Hot water at the bottom <strong>expands and becomes lighter</strong>, so it rises. Cooler water from the top <strong>sinks to replace it</strong>, creating a continuous circular flow.
   </div>
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">ðŸŽ¯ Remember</div>
+  <div class="takeaway-title">🎯 Remember</div>
   <div class="takeaway-text">
-    â€¢ Convection happens in <strong>fluids</strong> (liquids & gases)<br>
-    â€¢ Hot fluid <strong>rises</strong> (less dense)<br>
-    â€¢ Cold fluid <strong>sinks</strong> (more dense)<br>
-    â€¢ Creates <strong>convection currents</strong>
+    • Convection happens in <strong>fluids</strong> (liquids & gases)<br>
+    • Hot fluid <strong>rises</strong> (less dense)<br>
+    • Cold fluid <strong>sinks</strong> (more dense)<br>
+    • Creates <strong>convection currents</strong>
   </div>
 </div>
 
@@ -523,7 +523,7 @@ function toggleHeat() {
   if (isHeating) {
     infoPanel.classList.add('hidden');
     heatBtn.classList.add('active');
-    document.getElementById('heat-icon').textContent = 'â„ï¸';
+    document.getElementById('heat-icon').textContent = '❄️';
     document.getElementById('heat-text').textContent = 'Turn Off Heat';
     
     waterFlame.classList.remove('off');
@@ -536,7 +536,7 @@ function toggleHeat() {
     animateTemperature();
   } else {
     heatBtn.classList.remove('active');
-    document.getElementById('heat-icon').textContent = 'ðŸ”¥';
+    document.getElementById('heat-icon').textContent = '🔥';
     document.getElementById('heat-text').textContent = 'Turn On Heat';
     
     waterFlame.classList.add('off');
@@ -618,7 +618,7 @@ function updateTempDisplay(temp) {
   else if (temp > 50) label = 'Warm';
   else if (temp > 25) label = 'Lukewarm';
   
-  document.getElementById('temp-value').textContent = `${label} (${temp}Â°C)`;
+  document.getElementById('temp-value').textContent = `${label} (${temp}°C)`;
 }
 
 function trackParticle(el) {
@@ -637,14 +637,14 @@ function resetAnimation() {
   updateTempDisplay(0);
   
   heatBtn.classList.remove('active');
-  document.getElementById('heat-icon').textContent = 'ðŸ”¥';
+  document.getElementById('heat-icon').textContent = '🔥';
   document.getElementById('heat-text').textContent = 'Turn On Heat';
   
   waterFlame.classList.add('off');
   roomHeater.classList.add('off');
   
   stopConvection();
-  infoPanel.textContent = 'ðŸ‘† Turn on heat and watch the convection current form!';
+  infoPanel.textContent = '👆 Turn on heat and watch the convection current form!';
   infoPanel.classList.remove('hidden');
 }
 </script>

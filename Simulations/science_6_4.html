@@ -203,12 +203,12 @@ svg { width: 100%; height: 100%; }
 <div id="app">
 
 <div class="header">
-  <h1>ðŸŽ¤ Voice Changes During Puberty</h1>
+  <h1>🎤 Voice Changes During Puberty</h1>
   <p>Why does your voice change?</p>
 </div>
 
 <div class="concept-card">
-  <div class="concept-title">ðŸ“š Key Concept</div>
+  <div class="concept-title">📚 Key Concept</div>
   <div class="concept-text">
     During puberty, the <strong>larynx (voice box)</strong> grows larger. In boys, this causes a significant deepening of the voice. In girls, the change is more subtle.
   </div>
@@ -216,8 +216,8 @@ svg { width: 100%; height: 100%; }
 
 <div class="sim-card">
   <div class="gender-tabs">
-    <button class="gender-tab boys active" onclick="selectGender('boys', this)">ðŸ‘¦ Boys</button>
-    <button class="gender-tab girls" onclick="selectGender('girls', this)">ðŸ‘§ Girls</button>
+    <button class="gender-tab boys active" onclick="selectGender('boys', this)">👦 Boys</button>
+    <button class="gender-tab girls" onclick="selectGender('girls', this)">👧 Girls</button>
   </div>
   
   <div class="visual">
@@ -249,7 +249,7 @@ svg { width: 100%; height: 100%; }
   </div>
   
   <div class="stage-selector">
-    <label>ðŸ“… Select Stage:</label>
+    <label>📅 Select Stage:</label>
     <div class="stage-btns">
       <button class="stage-btn active" onclick="selectStage('before', this)">Before Puberty</button>
       <button class="stage-btn" onclick="selectStage('during', this)">During Puberty</button>
@@ -274,22 +274,22 @@ svg { width: 100%; height: 100%; }
 </div>
 
 <div class="larynx-info" id="larynx-info">
-  <div class="larynx-title" id="larynx-title">ðŸ”¬ Before Puberty</div>
+  <div class="larynx-title" id="larynx-title">🔬 Before Puberty</div>
   <div class="larynx-text" id="larynx-text">
     The larynx (voice box) is small in children, producing a higher-pitched voice. Boys and girls have similar voice pitches at this stage.
   </div>
 </div>
 
 <div class="comparison-panel">
-  <div class="comparison-title">ðŸ“Š Voice Change Comparison</div>
+  <div class="comparison-title">📊 Voice Change Comparison</div>
   <div class="comparison-row">
     <div class="compare-box">
-      <div class="icon">ðŸ‘¦</div>
+      <div class="icon">👦</div>
       <div class="label">Boys' Voice</div>
       <div class="value">Deepens significantly<br>(about 1 octave lower)</div>
     </div>
     <div class="compare-box">
-      <div class="icon">ðŸ‘§</div>
+      <div class="icon">👧</div>
       <div class="label">Girls' Voice</div>
       <div class="value">Slight change<br>(about 3 notes lower)</div>
     </div>
@@ -297,12 +297,12 @@ svg { width: 100%; height: 100%; }
 </div>
 
 <div class="takeaway">
-  <div class="takeaway-title">ðŸŽ¯ Fun Facts</div>
+  <div class="takeaway-title">🎯 Fun Facts</div>
   <div class="takeaway-text">
-    â€¢ <strong>Voice cracking</strong> in boys is temporary - it happens as muscles adjust to the larger larynx<br>
-    â€¢ The <strong>Adam's apple</strong> is just the larynx showing through the skin<br>
-    â€¢ Voice changes usually complete by age 16-17 in boys<br>
-    â€¢ Everyone's voice is unique - that's what makes you, you!
+    • <strong>Voice cracking</strong> in boys is temporary - it happens as muscles adjust to the larger larynx<br>
+    • The <strong>Adam's apple</strong> is just the larynx showing through the skin<br>
+    • Voice changes usually complete by age 16-17 in boys<br>
+    • Everyone's voice is unique - that's what makes you, you!
   </div>
 </div>
 
@@ -431,7 +431,7 @@ function updateDisplay() {
   });
   
   // Info panel
-  larynxTitle.textContent = `ðŸ”¬ ${stageNames[currentStage]} - ${currentGender === 'boys' ? 'Boys' : 'Girls'}`;
+  larynxTitle.textContent = `🔬 ${stageNames[currentStage]} - ${currentGender === 'boys' ? 'Boys' : 'Girls'}`;
   larynxText.textContent = data.info;
 }
 

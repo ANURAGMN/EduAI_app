@@ -92,7 +92,7 @@
     var chips=document.getElementById('chips');chips.innerHTML='';clearGlow();
     var t=target(),gap=t-current;
     if(done){setLine('You built <b>'+fmt(t)+'</b>! Tap <b>Next target</b>.');document.getElementById('next').classList.add('glowg');return;}
-    if(current>t){setLine('That’s <b>over</b> '+fmt(t)+' by '+fmt(current-t)+'. Tap <b>Reset</b> and use a smaller button.');document.getElementById('reset').classList.add('glowg');return;}
+    if(current>t){setLine('That's <b>over</b> '+fmt(t)+' by '+fmt(current-t)+'. Tap <b>Reset</b> and use a smaller button.');document.getElementById('reset').classList.add('glowg');return;}
 
     if(mode==='ask'){
       if(hintLevel===0)setLine('Build <b>'+fmt(t)+'</b>. You have '+fmt(current)+', so '+fmt(gap)+' to go. Which button gets closest without going over? <span style="color:var(--muted)">(think, or tap Hint)</span>');
@@ -105,7 +105,7 @@
       glowFit();
     }
     else if(mode==='self'){
-      if(!askOpen){setLine('Build <b>'+fmt(t)+'</b>. You have '+fmt(current)+', so '+fmt(gap)+' to go. Try it — or let’s reason it out together.');chips.appendChild(chip('Help me think',function(){askOpen=true;renderCoach();}));}
+      if(!askOpen){setLine('Build <b>'+fmt(t)+'</b>. You have '+fmt(current)+', so '+fmt(gap)+' to go. Try it — or let's reason it out together.');chips.appendChild(chip('Help me think',function(){askOpen=true;renderCoach();}));}
       else{
         setLine('Which is the smartest next move — and why?');
         var f=fit();var opts=[{v:f,r:'Biggest button that still fits — fewest taps.'},{v:1,r:'the correct value but far too many taps.'}];
@@ -113,7 +113,7 @@
           if(o.v===f){chips.innerHTML='';setLine('Yes! <b>'+LABEL[f]+'</b> — '+o.r);glowFit();askOpen=false;selfWrong=0;}
           else{selfWrong++;
             if(selfWrong>=2){chips.innerHTML='';setLine('No worries — the smartest move is <b>'+LABEL[f]+'</b>: '+opts[0].r);glowFit();askOpen=false;selfWrong=0;}
-            else{setLine('Hmm — that’s '+o.r+' Try once more.');}
+            else{setLine('Hmm — that's '+o.r+' Try once more.');}
           }
         };chips.appendChild(b);});
       }
