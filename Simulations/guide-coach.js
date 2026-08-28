@@ -50,9 +50,16 @@
   var standDown = false; // page drives its own coach -> we back off
   var boundTarget = null; // element we attached a one-time advance handler to
 
+  // True only for a HAND-AUTHORED page coach (Ch.2–4). Our own published rounds also set
+  // `native:true`, so we must ignore keys we mint (guide-*) — otherwise the first tap after
+  // seeding thinks "the page owns the coach", stands down, and hint/glow never progress.
   function pageHasOwnRound() {
     var r = window.__eduRound;
-    return !!(r && typeof r === "object" && r.native && (r.line || r.glow || r.hint));
+    if (!(r && typeof r === "object" && r.native && (r.line || r.glow || r.hint))) return false;
+    if (r.fromGuide) return false;
+    var k = r.key != null ? String(r.key) : "";
+    if (k.indexOf("guide-") === 0) return false;
+    return true;
   }
 
   // Resolve a guide `target` label to an on-page control. Try as a CSS selector first, then match
@@ -90,6 +97,7 @@
 
   function publish(round) {
     round.native = true;
+    round.fromGuide = true; // so pageHasOwnRound() does not stand down on our own seed
     if (round.voice == null) round.voice = round.line;
     window.__eduRound = round;
   }
