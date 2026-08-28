@@ -11,10 +11,12 @@
       "target": "Heat"
     },
     {
-      "text": "Hot water is lighter, so it rises; cooler water is heavier, so it sinks. This sets up a loop called a convection current."
+      "text": "Hot water is lighter, so it rises; cooler water is heavier, so it sinks. This sets up a loop called a convection current.",
+      "target": "#temp-slider"
     },
     {
-      "text": "Hot rises, cold sinks, round and round. That's convection — the same reason warm air rises in a room."
+      "text": "Hot rises, cold sinks, round and round. That's convection — the same reason warm air rises in a room.",
+      "target": "#wp1"
     }
   ],
   "coach": {

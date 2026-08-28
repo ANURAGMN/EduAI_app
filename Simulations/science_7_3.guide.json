@@ -11,10 +11,12 @@
       "target": "Start Race"
     },
     {
-      "text": "The metal wins — heat races through it. Wood and plastic lag far behind; they're insulators."
+      "text": "The metal wins — heat races through it. Wood and plastic lag far behind; they're insulators.",
+      "target": "Compare Mode"
     },
     {
-      "text": "Conductors (metals) let heat through fast; insulators (wood, plastic, air) block it. That's why cooking pots are metal but their handles aren't."
+      "text": "Conductors (metals) let heat through fast; insulators (wood, plastic, air) block it. That's why cooking pots are metal but their handles aren't.",
+      "target": "Reset"
     }
   ],
   "coach": {

@@ -73,7 +73,10 @@
     var norm = String(label).trim().toLowerCase();
     if (!norm) return null;
     var nodes = document.querySelectorAll(
-      "button,[role=button],[onclick],a,.btn,.control-btn,.option,.choice,.card,.lane,input[type=button],input[type=submit]"
+      "button,[role=button],[onclick],a,.btn,.control-btn,.option,.choice,.card,.lane," +
+        ".region-tab,.time-btn,.color-box,.location-marker,.wax-pin,.mode-btn,.mode-tab," +
+        ".stage-btn,.method-card,.soil-card,.water-particle,.tab,.chip,.toggle," +
+        "input[type=button],input[type=submit],input[type=range]"
     );
     var list = [].slice.call(nodes);
     // exact text match first, then substring either way

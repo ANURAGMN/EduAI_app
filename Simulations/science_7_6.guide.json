@@ -11,10 +11,12 @@
       "target": "Black Shirt"
     },
     {
-      "text": "Dark colours absorb radiation and heat up fast. Now try a light colour — it reflects the rays and stays cooler."
+      "text": "Dark colours absorb radiation and heat up fast. Now try a light colour — it reflects the rays and stays cooler.",
+      "target": "White Shirt"
     },
     {
-      "text": "Radiation needs no medium (unlike conduction and convection). Dark absorbs, light reflects — that's why we wear light colours in summer."
+      "text": "Radiation needs no medium (unlike conduction and convection). Dark absorbs, light reflects — that's why we wear light colours in summer.",
+      "target": "Sun"
     }
   ],
   "coach": {

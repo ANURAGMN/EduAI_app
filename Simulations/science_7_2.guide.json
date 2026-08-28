@@ -11,10 +11,12 @@
       "target": "Start"
     },
     {
-      "text": "The pins drop one by one — the one nearest the flame first, then the next. That order shows heat moving along the rod."
+      "text": "The pins drop one by one — the one nearest the flame first, then the next. That order shows heat moving along the rod.",
+      "target": "#pin1"
     },
     {
-      "text": "Heat always flows from hot to cold through the material. That's conduction, and it works best in metals."
+      "text": "Heat always flows from hot to cold through the material. That's conduction, and it works best in metals.",
+      "target": "Reset"
     }
   ],
   "coach": {

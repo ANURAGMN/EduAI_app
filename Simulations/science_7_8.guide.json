@@ -11,10 +11,12 @@
       "target": "Next"
     },
     {
-      "text": "The Sun's heat evaporates water into vapour; it rises and cools into clouds (condensation); the clouds release rain or snow (precipitation)."
+      "text": "The Sun's heat evaporates water into vapour; it rises and cools into clouds (condensation); the clouds release rain or snow (precipitation).",
+      "target": "Evaporation"
     },
     {
-      "text": "The water collects in rivers, lakes and oceans, and the cycle starts again. The Sun's heat is what drives the whole loop."
+      "text": "The water collects in rivers, lakes and oceans, and the cycle starts again. The Sun's heat is what drives the whole loop.",
+      "target": "Condensation"
     }
   ],
   "coach": {

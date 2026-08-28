@@ -11,10 +11,12 @@
       "target": "Conduction"
     },
     {
-      "text": "Take boiling water on a stove: the pot heats by conduction, the water circulates by convection, and you feel radiation from the flame — all at once."
+      "text": "Take boiling water on a stove: the pot heats by conduction, the water circulates by convection, and you feel radiation from the flame — all at once.",
+      "target": "Inside water"
     },
     {
-      "text": "Conduction (through solids), convection (in fluids), radiation (as rays). Most everyday heating uses more than one of them together."
+      "text": "Conduction (through solids), convection (in fluids), radiation (as rays). Most everyday heating uses more than one of them together.",
+      "target": "Flame Pan"
     }
   ],
   "coach": {

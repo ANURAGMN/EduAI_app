@@ -11,10 +11,12 @@
       "target": "Make it Rain"
     },
     {
-      "text": "Sandy soil has big gaps, so water rushes through fastest. Clay soil is packed tight, so water soaks in slowly."
+      "text": "Sandy soil has big gaps, so water rushes through fastest. Clay soil is packed tight, so water soaks in slowly.",
+      "target": "Large"
     },
     {
-      "text": "Faster infiltration means more water reaches the groundwater below. Soil type decides how quickly rain soaks in."
+      "text": "Faster infiltration means more water reaches the groundwater below. Soil type decides how quickly rain soaks in.",
+      "target": "Reset"
     }
   ],
   "coach": {

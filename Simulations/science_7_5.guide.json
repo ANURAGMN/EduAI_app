@@ -11,7 +11,8 @@
       "target": "Day"
     },
     {
-      "text": "By day, land heats up faster than the sea. Hot air over land rises, and cool air blows in from the sea — a sea breeze."
+      "text": "By day, land heats up faster than the sea. Hot air over land rises, and cool air blows in from the sea — a sea breeze.",
+      "target": "Night"
     },
     {
       "text": "At night it flips: land cools faster than the sea, so air flows from land to sea — a land breeze. Same rule: cool air moves toward the warmer side."

@@ -8,13 +8,15 @@
     },
     {
       "text": "Tap a region to see its temperature — try a coastal one and an inland one.",
-      "target": "Coastal"
+      "target": "Kerala"
     },
     {
-      "text": "Places near the sea are milder — the sea warms up and cools down slowly, so it evens out the temperature."
+      "text": "Places near the sea are milder — the sea warms up and cools down slowly, so it evens out the temperature.",
+      "target": "Delhi"
     },
     {
-      "text": "Inland places, far from the sea, get hotter days and colder nights. Proximity to the sea is a big reason regions differ."
+      "text": "Inland places, far from the sea, get hotter days and colder nights. Proximity to the sea is a big reason regions differ.",
+      "target": "Sikkim"
     }
   ],
   "coach": {
