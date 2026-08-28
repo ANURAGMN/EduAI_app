@@ -144,8 +144,41 @@
   var G = [], bar = null, lastText = '', lastVoice = '', lastRK = '', hi = null, pv = null;
   function pkV() { if (pv) return pv; try { var vs = speechSynthesis.getVoices() || []; pv = vs.filter(function (v) { return /en[-_]?IN/i.test(v.lang); })[0] || vs.filter(function (v) { return /^en/i.test(v.lang); })[0] || null; } catch (e) {} return pv; }
   function say(txt) { if (!txt) return; try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(('' + txt).replace(/(?<=\d),(?=\d)/g, '')); u.rate = 1.05; var v = pkV(); if (v) u.voice = v; speechSynthesis.speak(u); } catch (e) {} }
-  function clearGlow() { G.forEach(function (e) { try { e.style.outline = ''; e.style.outlineOffset = ''; } catch (x) {} }); G = []; if (hi) { var o = hi.getAttribute('data-ph'); if (o !== null) { hi.setAttribute('placeholder', o); hi.removeAttribute('data-ph'); } hi = null; } }
-  function glow(el, kind) { if (!el) return; el.style.outline = '3px solid ' + (kind === 'submit' ? '#2e9e6b' : kind === 'input' ? '#5b8bff' : kind === 'answer' ? '#e5484d' : '#ff9500'); el.style.outlineOffset = '2px'; el.style.borderRadius = '8px'; G.push(el); }
+  // Visible pulse so WebView glow can't be missed (outline alone is easy to overlook on small buttons).
+  if (!document.getElementById('__eduGlowCSS')) {
+    try {
+      var gs = document.createElement('style'); gs.id = '__eduGlowCSS';
+      gs.textContent = '@keyframes __eduPulse{0%,100%{box-shadow:0 0 0 3px rgba(255,149,0,.55),0 0 14px rgba(255,149,0,.7)}50%{box-shadow:0 0 0 7px rgba(255,149,0,.35),0 0 22px rgba(255,149,0,.9)}}' +
+        '.edu-g-hint{outline:3px solid #ff9500 !important;outline-offset:3px !important;border-radius:8px !important;animation:__eduPulse 1s ease-in-out infinite !important}' +
+        '.edu-g-submit{outline:3px solid #2e9e6b !important;outline-offset:3px !important;border-radius:8px !important;box-shadow:0 0 0 5px rgba(46,158,107,.35) !important}' +
+        '.edu-g-input{outline:3px solid #5b8bff !important;outline-offset:3px !important;border-radius:8px !important}' +
+        '.edu-g-answer{outline:3px solid #e5484d !important;outline-offset:3px !important;border-radius:8px !important}';
+      (document.head || document.documentElement).appendChild(gs);
+    } catch (e) {}
+  }
+  function clearGlow() {
+    G.forEach(function (e) {
+      try {
+        e.style.outline = ''; e.style.outlineOffset = ''; e.style.boxShadow = ''; e.style.borderRadius = '';
+        if (e.classList) e.classList.remove('edu-g-hint', 'edu-g-submit', 'edu-g-input', 'edu-g-answer');
+      } catch (x) {}
+    });
+    G = [];
+    if (hi) { var o = hi.getAttribute('data-ph'); if (o !== null) { hi.setAttribute('placeholder', o); hi.removeAttribute('data-ph'); } hi = null; }
+  }
+  function glow(el, kind) {
+    if (!el) return;
+    var cls = kind === 'submit' ? 'edu-g-submit' : kind === 'input' ? 'edu-g-input' : kind === 'answer' ? 'edu-g-answer' : 'edu-g-hint';
+    var color = kind === 'submit' ? '#2e9e6b' : kind === 'input' ? '#5b8bff' : kind === 'answer' ? '#e5484d' : '#ff9500';
+    try {
+      el.style.outline = '3px solid ' + color;
+      el.style.outlineOffset = '3px';
+      el.style.borderRadius = '8px';
+      el.style.boxShadow = '0 0 0 5px ' + color + '59, 0 0 16px ' + color;
+      if (el.classList) el.classList.add(cls);
+    } catch (x) {}
+    G.push(el);
+  }
   function setBar(txt) { if (IN_APP) return; if (!bar) { bar = document.createElement('div'); bar.id = '__eduBar'; bar.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483647;max-height:40vh;overflow:auto;background:#0e1230;color:#fff;font:600 15px/1.4 system-ui,sans-serif;padding:12px 16px;border-radius:12px;box-shadow:0 -6px 24px rgba(0,0,0,.45)'; document.body.appendChild(bar); } bar.style.display = txt ? 'block' : 'none'; bar.textContent = txt ? ('Coach: ' + txt) : ''; }
   // Reserve page space so the fixed coach UI (bar + control row + Explain pill) never covers the sim's
   // own controls. Measures how far up from the viewport bottom the coach stack reaches and pads
@@ -332,9 +365,17 @@
     else reveal = curLevel >= (hasWhy ? 2 : 1); // self keeps: problem → nudge → reveal
     if (reveal) { renderReveal(o, key); }
     else {
+      // Hint-phase text stays Socratic, but ALWAYS glow the target when we know it.
+      // (Previously glow waited for Hint tap — users reported "no glow" because they never
+      // saw the control light up.)
       if (o.submit) glow(pubEl(o.submit), 'submit');
+      if (o.glow) {
+        var _gk0 = (o.glowKind === 'answer' ? 'answer' : 'hint');
+        var _gl0 = Array.isArray(o.glow) ? o.glow : [o.glow];
+        for (var _gi0 = 0; _gi0 < _gl0.length; _gi0++) { var _ge0 = pubEl(_gl0[_gi0]); if (_ge0) glow(_ge0, _gk0); }
+      }
       if (mode === 'self' && curLevel === 1 && hasWhy) {
-        emit(o.why, o.why, 'N:' + key); // nudge (the reasoning, no glow)
+        emit(o.why, o.why, 'N:' + key); // nudge (the reasoning)
       } else {
         var q = (mode === 'self') ? (o.hint + '  ·  Explain your thinking, then tap Hint.') : o.hint;
         emit(q, q, 'H:' + key); // speak exactly what's shown on the coach

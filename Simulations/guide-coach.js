@@ -102,11 +102,38 @@
     window.__eduRound = round;
   }
 
+  // Next resolvable target at or after step index `from` (1-based stepObjs index, or 0 = from start).
+  // Mission / text-only steps still glow the upcoming control so learners see WHERE to tap.
+  function nextTargetEl(from) {
+    var i = Math.max(0, from | 0);
+    for (; i < stepObjs.length; i++) {
+      var t = stepObjs[i] && stepObjs[i].target;
+      if (!t) continue;
+      var el = resolveTarget(t);
+      if (el) return { el: el, stepIdx: i + 1 };
+    }
+    return null;
+  }
+
+  function bindAdvanceOn(el) {
+    if (!el) return;
+    boundTarget = el;
+    el.addEventListener(
+      "click",
+      function onHit() {
+        el.removeEventListener("click", onHit, true);
+        advance();
+      },
+      true
+    );
+  }
+
   function render() {
     if (!ready || standDown) return;
     boundTarget = null;
 
     if (idx <= 0) {
+      var look0 = nextTargetEl(0);
       publish({
         line: mission || (stepObjs[0] && stepObjs[0].text) || "",
         detail: stepObjs
@@ -115,14 +142,21 @@
           })
           .join("\n"),
         hint: bankPick(stuck, 0),
+        glow: look0 ? look0.el : undefined,
         key: "guide-mission",
       });
+      // Don't bind advance on lookahead during mission — any tap advances (generic handler).
       return;
     }
 
     if (idx <= stepObjs.length) {
       var s = stepObjs[idx - 1];
       var el = s.target ? resolveTarget(s.target) : null;
+      // Text-only step: still glow the next actionable control so glow is never "missing".
+      if (!el) {
+        var look = nextTargetEl(idx); // next steps after current
+        if (look) el = look.el;
+      }
       publish({
         line: s.text,
         hint: bankPick(stuck, idx - 1),
@@ -131,17 +165,9 @@
         glow: el || undefined,
         key: "guide-step-" + idx,
       });
-      // Progression: clicking the glowed control advances; otherwise any interaction does (below).
-      if (el) {
-        boundTarget = el;
-        el.addEventListener(
-          "click",
-          function onHit() {
-            el.removeEventListener("click", onHit, true);
-            advance();
-          },
-          true
-        );
+      // Only bind advance when THIS step owns the target (not mere lookahead).
+      if (s.target && resolveTarget(s.target)) {
+        bindAdvanceOn(resolveTarget(s.target));
       }
       return;
     }
